@@ -1,6 +1,7 @@
-
 // authContext.jsx
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import Cookies from 'js-cookie';
+import {jwtDecode} from 'jwt-decode'; // Ensure you install this library for decoding JWTs
 import { axiosClient } from '../Api/API_Client';
 import { LOGIN } from '../Api/Endpoints';
 
@@ -8,38 +9,66 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
- 
-    // const login = (username, password) => {
-    //     if (username === 'admin@123' && password === 'password') {
-    //         setUser({ role: 'admin' });
-    //          return true
-    //     } else if (username === 'user' && password === 'password') {
-    //         setUser({ role: 'user' });
-    //         return true
-    //     } else{
-    //          return false
-    //     }
-    // };
+    const [isAuthenticated, setAuthenticated] = useState(false);
 
- const login = async(username, password)=>{
-    try {
-      const responce= await axiosClient.post(LOGIN,{email:username, password:password})
-        if (responce.status===200) {
-
-            console.log(responce.data);
-            
-            
+    // Check for token in cookies on app load
+    useEffect(() => {
+        const token = Cookies.get('authtoken'); // Retrieve the token from cookies
+        if (token) {
+            try {
+                const decodedToken = jwtDecode(token); // Decode the token
+                setUser(decodedToken); // Set user details from the decoded token
+                setAuthenticated(true); // Set authentication to true
+            } catch (error) {
+                console.error('Invalid token:', error);
+                Cookies.remove('authtoken'); // Clear invalid token
+                setAuthenticated(false);
+            }
         }
-    } catch (error) {
-        console.log(" no responce  or nothing ");
-        
-    }
- } 
+    }, []);
 
-    const logout = () => setUser(null);
+    // Login function
+    const login = async (username, password) => {
+        try {
+            const response = await axiosClient.post(LOGIN, { email: username, password: password });
+            if (response.status === 200) {
+                const jwtToken = response.data.token;
+
+                const expirationTime = new Date();
+                expirationTime.setMinutes(expirationTime.getMinutes() + 3); // Add 3 minutes to the current time
+                
+                Cookies.set('authtoken', jwtToken, {
+                  expires: expirationTime,  // Passing the Date object directly
+                  secure: true,
+                  sameSite: 'Strict'
+                });
+                
+                  
+
+                // Decode the token to extract user details
+                const decodedToken = jwtDecode(jwtToken);
+
+                // Update state
+                setUser(decodedToken);
+                setAuthenticated(true);
+
+                return true;
+            }
+        } catch (error) {
+            console.error('Login failed:', error);
+            return false;
+        }
+    };
+
+    // Logout function
+    const logout = () => {
+        setUser(null);
+        setAuthenticated(false);
+        Cookies.remove('authtoken'); // Clear the token from cookies
+    };
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout }}>
+        <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

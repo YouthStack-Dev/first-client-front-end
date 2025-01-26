@@ -7,7 +7,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useAuth()
+  const { login,Authenticated} = useAuth()
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
@@ -15,7 +15,11 @@ export default function LoginPage() {
     setError('');
     
     if (login(email, password)) {
-      navigate('/dashboard');
+      console.log( " i am insude he login method");
+   
+      console.log(Authenticated);
+      
+      navigate('/dashboard', { replace: true });
     } else {
       setError('Invalid credentials');
     }
