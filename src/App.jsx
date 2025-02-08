@@ -8,8 +8,6 @@ import { axiosClient } from './Api/API_Client';
 import LoginPage from './components/Login';
 
 
-
-
 const ProtectedRoute = ({ children, roles }) => {
     const { isAuthenticated, } = useAuth();
      const  user ='admin'
