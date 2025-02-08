@@ -2,9 +2,7 @@
 import React from 'react';
 import {  Route, Routes, Navigate } from 'react-router-dom';
 import Dashboard from './components/Dashbord';
-
 import { useAuth } from './store/ AuthProvider';
-
 import Drivers from './Components/Drivers';
 import { axiosClient } from './Api/API_Client';
 import LoginPage from './components/Login';

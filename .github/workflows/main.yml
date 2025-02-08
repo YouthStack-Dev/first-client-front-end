@@ -38,7 +38,7 @@ jobs:
           if [ -d "dist" ]; then  # Check if dist/ exists before deploying
             rsync -avz --exclude=node_modules --exclude=build --exclude=.git --exclude=.github \
             -e "ssh -i ~/.ssh/hostinger_deploy_key -o StrictHostKeyChecking=no -p 65002" \
-            dist/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/u734900206/domains/leantechlabs.in/public_html/mlt
+            dist/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/u734900206/domains/leantechlabs.in/public_html/fleetquest
           else
             echo "❌ Error: dist/ folder does not exist. Check your build step!"
             exit 1

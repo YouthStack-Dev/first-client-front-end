@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
                 // Decode the token to extract user details
                 const decodedToken = jwtDecode(jwtToken);
 
-                // Update state
+               
                 // setUser(decodedToken);
                 setAuthenticated(true);
 
