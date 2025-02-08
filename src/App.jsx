@@ -1,33 +1,43 @@
 // App.jsx
 import React from 'react';
 import {  Route, Routes, Navigate } from 'react-router-dom';
-
 import Dashboard from './components/Dashbord';
 
 import { useAuth } from './store/ AuthProvider';
-import LoginPage from './Components/Login';
+
 import Drivers from './Components/Drivers';
 import { axiosClient } from './Api/API_Client';
+import LoginPage from './components/Login';
+
 
 
 
 const ProtectedRoute = ({ children, roles }) => {
-    const { isAuthenticated, user } = useAuth();
-   console.log(isAuthenticated ," the user authenticated ha ");
-
+    const { isAuthenticated, } = useAuth();
+     const  user ='admin'
+    console.log('user', user );
+   
     if (!isAuthenticated) {
+        console.warn('User is not authenticated. Redirecting to login.');
         return <Navigate to="/login" />;
     }
 
-    if (roles && !roles.includes(user.role)) {
+    if (roles && (!user || !roles.includes(user))) {
+        console.log('User does not have the required role. Redirecting to dashboard.');
         return <Navigate to="/dashboard" />;
     }
 
     return children;
 };
 
+
+
+
 const hancleclick= async()=>{
- const responce = await  axiosClient.get("getdata")
+ const responce = await  axiosClient.get("create")
+
+ console.log(responce.data);
+ 
 }
 
 const App = () => {
@@ -42,7 +52,7 @@ const App = () => {
 
 
              {/*  This is Parent route  */}
-                <Route path="/dashboard" element={ <ProtectedRoute> <Dashboard /></ProtectedRoute>}> 
+                <Route path="/dashboard" element={ <ProtectedRoute > <Dashboard /></ProtectedRoute>}> 
                 {/*  this is chiled routes  */}
                  <Route index element={<h1> its a dashbord content
 
@@ -54,7 +64,7 @@ const App = () => {
                 </Route>
 
 
-                <Route path="*" element={<NotFound/>} />
+                <Route path="*" element={<NotFound/>} />    
             </Routes>
       
     );

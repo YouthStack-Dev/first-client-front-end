@@ -17,7 +17,6 @@ export const AuthProvider = ({ children }) => {
         if (token) {
             try {
                 const decodedToken = jwtDecode(token); // Decode the token
-                setUser(decodedToken); // Set user details from the decoded token
                 setAuthenticated(true); // Set authentication to true
             } catch (error) {
                 console.error('Invalid token:', error);
@@ -35,13 +34,14 @@ export const AuthProvider = ({ children }) => {
                 const jwtToken = response.data.token;
 
                 const expirationTime = new Date();
-                expirationTime.setMinutes(expirationTime.getMinutes() + 3); // Add 3 minutes to the current time
+                expirationTime.setMinutes(expirationTime.getMinutes() + 9000); // Add 3 minutes to the current time
                 
                 Cookies.set('authtoken', jwtToken, {
                   expires: expirationTime,  // Passing the Date object directly
                   secure: true,
                   sameSite: 'Strict'
                 });
+                setUser({role:"admin"}); // Set user details from the decoded token
                 
                   
 
@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }) => {
                 const decodedToken = jwtDecode(jwtToken);
 
                 // Update state
-                setUser(decodedToken);
+                // setUser(decodedToken);
                 setAuthenticated(true);
 
                 return true;
