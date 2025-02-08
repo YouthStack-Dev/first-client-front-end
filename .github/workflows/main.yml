@@ -1,0 +1,30 @@
+name: CI/CD for Express.js on VPS
+
+on:
+  push:
+    branches:
+      - main  # Trigger when code is pushed to main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy code to VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            cd /var/www/TripSheetBackend  # Change to your project directory
+            git fetch --all
+            git reset --hard origin/main  # Reset to the latest version
+            git pull origin main          # Pull the latest code
+            npm install                   # Install new dependencies
+            pm2 restart all               # Restart all PM2 processes
+          EOF
