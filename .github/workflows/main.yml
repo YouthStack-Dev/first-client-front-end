@@ -1,30 +1,45 @@
-name: CI/CD for Express.js on VPS
+name: Deploy React App to Hostinger
 
 on:
-  push:
+  pull_request:
     branches:
-      - main  # Trigger when code is pushed to main branch
+      - main
+    types:
+      - closed  # Trigger only when a PR is closed
+
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Deploy code to VPS
+      - name: Install Dependencies & Build
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            cd /var/www/TripSheetBackend  # Change to your project directory
-            git fetch --all
-            git reset --hard origin/main  # Reset to the latest version
-            git pull origin main          # Pull the latest code
-            npm install                   # Install new dependencies
-            pm2 restart all               # Restart all PM2 processes
-          EOF
+          npm install
+          npm run build
+          ls -la dist  # Debugging: Check if dist/ folder exists
+
+      - name: Setup SSH Key and Known Hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/hostinger_deploy_key
+          chmod 600 ~/.ssh/hostinger_deploy_key
+          ssh-keyscan -p 65002 -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Ensure Deployment Folder Exists on Hostinger
+        run: |
+          ssh -i ~/.ssh/hostinger_deploy_key -o StrictHostKeyChecking=no -p 65002 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "mkdir -p /home/u123262960/public_html/Tripsheetweb"
+
+      - name: Upload React Build Files to Hostinger
+        run: |
+          if [ -d "dist" ]; then  # Check if dist/ exists before deploying
+            rsync -avz --exclude=node_modules --exclude=build --exclude=.git --exclude=.github \
+            -e "ssh -i ~/.ssh/hostinger_deploy_key -o StrictHostKeyChecking=no -p 65002" \
+            dist/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/u734900206/domains/leantechlabs.in/public_html/mlt
+          else
+            echo "❌ Error: dist/ folder does not exist. Check your build step!"
+            exit 1
+          fi
