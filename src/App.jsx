@@ -34,13 +34,12 @@ const hancleclick= async()=>{
 
 const App = () => {
 
-    const { isAuthenticated, user } = useAuth();
+    // const { isAuthenticated, user } = useAuth();
     return (
       
             <Routes>
                 <Route path="/" element={<h1> THis is the landing page </h1>} />
-                <Route     path="/login"element={isAuthenticated ? <Navigate to="/dashboard"
-                 replace /> : <LoginPage />}/>
+                
 
 
              {/*  This is Parent route  */}
@@ -51,7 +50,7 @@ const App = () => {
                     <br />
                     <button onClick={hancleclick}> click here  </button>
                      </h1>} />
-                 <Route path="drivers" element={<Drivers/>} />
+                 <Route path="drivers" element={<h1> this is  Drivers </h1>} />
                  <Route path="settings" element={<h1> this is  Settings </h1>} />
                 </Route>
 
