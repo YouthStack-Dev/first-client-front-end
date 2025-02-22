@@ -17,7 +17,7 @@ const App = () => {
                  <Route index element={<h1> its a dashbord content
 
                     <br />
-                    <button onClick={hancleclick}> click here  </button>
+                    {/* <button onClick={hancleclick}> click here  </button> */}
                      </h1>} />
                  <Route path="drivers" element={<h1> this is  Drivers </h1>} />
                  <Route path="settings" element={<h1> this is  Settings </h1>} />
