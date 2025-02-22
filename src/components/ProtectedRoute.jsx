@@ -1,1 +1,4 @@
-const ProtectedRoute = (second) => { third }
+const ProtectedRoute = ({role}) => { 
+    
+
+}
