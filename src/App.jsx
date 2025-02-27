@@ -1,41 +1,57 @@
-// App.jsx
-import React from 'react';
-import {  Route, Routes, Navigate } from 'react-router-dom';
-
-const App = () => {
-
-   
-    return (
-      
-            <Routes>
-                <Route path="/" element={<h1> THis is the landing page hiii  man ss </h1>} />
-            
-
-               {/*  This is Parent route  */}
-                <Route path="/dashboard" element={ <h1> this is the dash board </h1>}> 
-                {/*  this is chiled routes  */}
-                 <Route index element={<h1> its a dashbord content
-
-                    <br />
-                    {/* <button onClick={hancleclick}> click here  </button> */}
-                     </h1>} />
-                 <Route path="drivers" element={<h1> this is  Drivers </h1>} />
-                 <Route path="settings" element={<h1> this is  Settings </h1>} />
-                </Route>
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 
-                <Route path="*" element={<NotFound/>} />    
-            </Routes>
-      
-    );
-};
+
+import { Outlet } from "react-router-dom";
+
+
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route index element={<h1> This is Home ..... </h1>} />
+        <Route path="about" element={<h1> This is About ..... </h1>} />
+
+        {/* Auth Routes */}
+        <Route element={<AuthLayout />}>
+       
+          <Route path="login" element={<h1> This is Login ..... </h1>} />
+          <Route path="register" element={<h1> This is Register ..... </h1> } />
+        </Route>
+
+        {/* Concerts Routes */}
+        <Route path="concerts">
+          <Route index element={<ConcertsHome   />} />
+          <Route path="*" element={<h1> This is ConcertsHome  city..... </h1>} />
+          <Route path="trending" element={<h1> This is trendig ..... </h1> } />
+        </Route>
+      </Routes>
+    </Router>
+  );
+}
 
 export default App;
 
 
-const NotFound =()=>{
 
-    return<>
-    <h1 className=' items-center test-2xl'> Page Not Found </h1>
-    </>
-}
+const AuthLayout = () => {
+  return (
+    <div>
+      <h2>Authentication</h2>
+      <Outlet /> {/* Renders Login or Register */}
+    </div>
+  );
+};
+
+
+const ConcertsHome = () => {
+    return (
+      <div>
+        <h2>Welcome to Concerts</h2>
+        <p>Find concerts in your city!</p>
+      </div>
+    );
+  };
+  
+  
