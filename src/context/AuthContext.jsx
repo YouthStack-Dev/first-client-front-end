@@ -1,6 +1,5 @@
 import { createContext, useContext, useState } from 'react';
-import { users } from '../util/auth';
-
+import { users } from '../utils/auth';
 
 const AuthContext = createContext(null);
 
