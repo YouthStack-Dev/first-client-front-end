@@ -40,16 +40,28 @@ function App() {
             <Route element={<Layout />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
+
               <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]} />}>
                 <Route path="/clients" element={<Clients />} />
                 <Route path="/bookings" element={<Bookings />} />
               </Route>
+
               <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR]} />}>
                 <Route path="/vehicles" element={<Vehicles />} />
+                <Route path="/vehicle-contract" element={<h1> this is vehicle contarct  management </h1>} />
+                <Route path="/vehicle-group" element={<h1> this is vehicle group  management </h1>} />
+              
               </Route>
+
+
               <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN]} />}>
                 <Route path="/vendors" element={<Vendors />} />
+                <Route path="/company-admins" element={<h1> this iscompany-admins management by suberadmin</h1>} />
+                <Route path="/subadmins" element={<h1> this is subadmin management by suberadmin</h1>} />
               </Route>
+
+
+
             </Route>
         </Routes>
       </Router>
