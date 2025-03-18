@@ -6,7 +6,7 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    return savedUser ? JSON.parse(savedUser) : "guest";
   });
 
   const login = (username, password) => {
@@ -36,6 +36,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+//  this is a custom hook   
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
