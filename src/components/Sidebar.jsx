@@ -8,7 +8,8 @@ import {
   Pin, PinOff,
   StretchVertical,
   CarTaxiFront,
-  Car
+  Car,
+  RouteIcon
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
@@ -107,7 +108,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
     {
       path: '/routing',
       name: 'Routing',
-      icon: CarTaxiFront,
+      icon: RouteIcon,
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
     },
     {
@@ -207,9 +208,9 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
       <div className="p-4 border-t border-gray-700">
         <button
           onClick={logout}
-          className="flex items-center justify-center w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          className="flex items-center justify-center w-full p-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
         >
-          <LogOut className="w-5 h-5" />
+          <LogOut size={16} />
           {isOpen && <span className="ml-2">Logout</span>}
         </button>
       </div>

@@ -13,7 +13,8 @@ import { useEffect, useRef, useState } from 'react';
 import ManageDrivers from './pages/ManageDrivers';
 import { Provider } from 'react-redux';
 import store from './store/store';
-import Routing from './pages/Routing';
+
+import RouteManagement from './pages/RouteManagement';
 
 // Layout component for authenticated pages
 
@@ -105,7 +106,7 @@ function App() {
 
               <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN]} />}>
                 <Route path="/vendors" element={<Vendors />} />
-                <Route path="/routing" element={<Routing/>} />
+                <Route path="/routing" element={<RouteManagement/>}/>
                 <Route path="/company-admins" element={<h1> this iscompany-admins management by suberadmin</h1>} />
                 <Route path="/subadmins" element={<h1> this is subadmin management by suberadmin</h1>} />
               </Route>

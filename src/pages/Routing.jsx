@@ -1,9 +1,10 @@
 import { MapContainer, TileLayer, Marker, Polyline } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import { Icon } from 'leaflet';
+import L from 'leaflet';
+import markerIconPng from 'leaflet/dist/images/marker-icon.png';
+import React from 'react';
 
-const customIcon = new Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+const customIcon = new L.Icon({
+  iconUrl: markerIconPng,
   iconSize: [25, 41],
   iconAnchor: [12, 41],
 });
@@ -33,47 +34,68 @@ const Routing = ({ bookings = staticBookings, routeGroups = staticRouteGroups, f
   };
 
   return (
-    <MapContainer center={fixedPoint} zoom={13} className="h-full w-full">
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
-      />
-      
-      {/* Fixed Point Marker */}
-      <Marker position={fixedPoint} icon={customIcon} />
-
-      {/* Static Points */}
-      {staticPoints.map((point) => (
-        <Marker key={point.id} position={point.location} icon={customIcon} />
-      ))}
-      <Polyline
-        positions={[fixedPoint, ...staticPoints.map(point => point.location)]}
-        color="green"
-        weight={4}
-        opacity={0.7}
-      />
-
-      {/* Selected (but not grouped) Bookings */}
-      {selectedBookings.map((booking) => (
-        <Marker key={booking.id} position={booking.location} icon={customIcon} />
-      ))}
-      {selectedBookings.map((booking) => (
-        <Polyline key={`polyline-${booking.id}`} positions={[fixedPoint, booking.location]} color="blue" weight={3} opacity={0.6} />
-      ))}
-
-      {/* Grouped Routes */}
-      {routeGroups.map((group) => {
-        const groupBookings = bookings.filter((b) => b.routeGroupId === group.id);
-        const routeColor = getRouteColor(group.id);
+    <div style={{ height: '600px', width: '600px', position: 'relative' }}>
+      <MapContainer
+        center={fixedPoint}
+        zoom={13}
+        style={{ height: '100%', width: '100%' }}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="© <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+        />
         
-        return groupBookings.map((booking) => (
-          <>
-            <Marker key={booking.id} position={booking.location} icon={customIcon} />
-            <Polyline key={`polyline-${booking.id}`} positions={[fixedPoint, booking.location]} color={routeColor} weight={4} opacity={0.8} />
-          </>
-        ));
-      })}
-    </MapContainer>
+        {/* Fixed Point Marker */}
+        <Marker position={fixedPoint} icon={customIcon} />
+
+        {/* Static Points */}
+        {staticPoints.map((point) => (
+          <Marker key={point.id} position={point.location} icon={customIcon} />
+        ))}
+        <Polyline
+          positions={[fixedPoint, ...staticPoints.map(point => point.location)]}
+          color="green"
+          weight={4}
+          opacity={0.7}
+        />
+
+        {/* Selected (but not grouped) Bookings */}
+        {selectedBookings.map((booking) => (
+          <Marker key={booking.id} position={booking.location} icon={customIcon} />
+        ))}
+        {selectedBookings.map((booking) => (
+          <Polyline
+            key={`polyline-${booking.id}`}
+            positions={[fixedPoint, booking.location]}
+            color="blue"
+            weight={3}
+            opacity={0.6}
+          />
+        ))}
+
+        {/* Grouped Routes */}
+        {routeGroups.map((group) => {
+          const groupBookings = bookings.filter((b) => b.routeGroupId === group.id);
+          const routeColor = getRouteColor(group.id);
+          
+          return (
+            <React.Fragment key={group.id}>
+              {groupBookings.map((booking) => (
+                <React.Fragment key={booking.id}>
+                  <Marker position={booking.location} icon={customIcon} />
+                  <Polyline
+                    positions={[fixedPoint, booking.location]}
+                    color={routeColor}
+                    weight={4}
+                    opacity={0.8}
+                  />
+                </React.Fragment>
+              ))}
+            </React.Fragment>
+          );
+        })}
+      </MapContainer>
+    </div>
   );
 };
 
