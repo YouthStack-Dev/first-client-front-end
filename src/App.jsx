@@ -15,6 +15,7 @@ import { Provider } from 'react-redux';
 import store from './store/store';
 
 import RouteManagement from './pages/RouteManagement';
+import Home from './pages/Home';
 
 // Layout component for authenticated pages
 
@@ -74,7 +75,7 @@ const Clients = () => <h1 className="text-2xl font-bold">Clients</h1>;
 const Vehicles = () => <h1 className="text-2xl font-bold">Vehicles</h1>;
 const Bookings = () => <h1 className="text-2xl font-bold">Bookings</h1>;
 const Vendors = () => <h1 className="text-2xl font-bold">Vendors</h1>;
-const Home=() => <h1 className="text-2xl font-bold">This is the landing page </h1>;
+
 function App() {
   return (
     <Provider store={store}>
