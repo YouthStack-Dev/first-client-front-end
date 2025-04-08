@@ -4,8 +4,8 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: true, // Your custom hostname
-    port: 5173, // Default port
+    host: "fleetquest.com", // Your custom hostname
+    port: 5174, // Default port
   }
 })
 

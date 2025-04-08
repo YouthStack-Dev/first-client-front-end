@@ -1,100 +1,141 @@
-import { MapContainer, TileLayer, Marker, Polyline } from 'react-leaflet';
-import L from 'leaflet';
-import markerIconPng from 'leaflet/dist/images/marker-icon.png';
-import React from 'react';
+import Map from '../components/Map';
+import { useState } from 'react';
+import RouteGroups from '../components/RouteGroups';
 
-const customIcon = new L.Icon({
-  iconUrl: markerIconPng,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
+const FIXED_POINT = { lat: 51.505, lng: -0.09 };
 
-const staticPoints = [
-  { id: '1', location: { lat: 37.7749, lng: -122.4194 } }, // San Francisco
-  { id: '2', location: { lat: 37.3382, lng: -121.8863 } }, // San Jose
-  { id: '3', location: { lat: 37.7749, lng: -121.5000 } }, // Example Point
+const vendors = [
+  {
+    id: 'v1',
+    name: 'Speed Taxi',
+    drivers: [
+      { id: 'd1', name: 'John Doe' },
+      { id: 'd2', name: 'Jane Smith' },
+    ],
+  },
+  {
+    id: 'v2',
+    name: 'City Cabs',
+    drivers: [
+      { id: 'd3', name: 'Mike Johnson' },
+      { id: 'd4', name: 'Sarah Wilson' },
+    ],
+  },
 ];
 
-const staticBookings = [
-  { id: '101', location: { lat: 37.7849, lng: -122.4094 }, selected: true, routeGroupId: null },
-  { id: '102', location: { lat: 37.7680, lng: -122.4300 }, selected: true, routeGroupId: 'group1' },
-];
+const Routing= () => {
 
-const staticRouteGroups = [
-  { id: 'group1', name: 'Route Group 1' },
-];
 
-const Routing = ({ bookings = staticBookings, routeGroups = staticRouteGroups, fixedPoint = { lat: 37.7749, lng: -122.4194 } }) => {
-  const selectedBookings = bookings.filter((booking) => booking.selected && !booking.routeGroupId);
-
-  const getRouteColor = (groupId) => {
-    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD'];
-    const index = parseInt(groupId.replace(/\D/g, ''), 10) % colors.length;
-    return colors[index];
+  const handleBookingSelect = (id) => {
+    setBookings(bookings.map(booking =>
+      booking.id === id
+        ? { ...booking, selected: !booking.selected }
+        : booking
+    ));
   };
 
+  const handleMergeSelected = () => {
+    const selectedBookings = bookings.filter(b => b.selected);
+    if (selectedBookings.length < 2) return;
+
+    const newGroupId = `group-${routeGroups.length + 1}`;
+    const newGroup = {
+      id: newGroupId,
+      bookingIds: selectedBookings.map(b => b.id),
+    };
+
+    setBookings(bookings.map(booking =>
+      booking.selected
+        ? { ...booking, selected: false, routeGroupId: newGroupId }
+        : booking
+    ));
+
+    setRouteGroups([...routeGroups, newGroup]);
+  };
+
+  const handleUnmergeRoute = (groupId) => {
+    setRouteGroups(routeGroups.filter(group => group.id !== groupId));
+    setBookings(bookings.map(booking =>
+      booking.routeGroupId === groupId
+        ? { ...booking, routeGroupId: undefined }
+        : booking
+    ));
+  };
+
+  const handleAssignVendor = (groupId, vendorId) => {
+    setRouteGroups(routeGroups.map(group =>
+      group.id === groupId
+        ? { ...group, assignedVendor: vendorId, assignedDriver: undefined }
+        : group
+    ));
+  };
+
+  const handleAssignDriver = (groupId, driverId) => {
+    setRouteGroups(routeGroups.map(group =>
+      group.id === groupId
+        ? { ...group, assignedDriver: driverId }
+        : group
+    ));
+  };
+
+   // Sample Data (Replace with actual state management/store)
+   const [routeGroups, setRouteGroups] = useState([
+    { id: "1", bookingIds: ["101", "102"], assignedVendor: "", assignedDriver: "" },
+  ]);
+
+  const [bookings, setBookings] = useState([
+    { id: "101", customerName: "John Doe", location: { lat: 40.7128, lng: -74.0060 }, companyId: "C1" },
+    { id: "102", customerName: "Jane Smith", location: { lat: 34.0522, lng: -118.2437 }, companyId: "C2" },
+  ]);
+
+  const [vendors, setVendors] = useState([
+    { id: "V1", name: "Vendor A", drivers: [{ id: "D1", name: "Driver X" }, { id: "D2", name: "Driver Y" }] },
+    { id: "V2", name: "Vendor B", drivers: [{ id: "D3", name: "Driver Z" }] },
+  ]);
+
+  // Function to assign a vendor to a route group
+  const onAssignVendor = (groupId, vendorId) => {
+    setRouteGroups((prevGroups) =>
+      prevGroups.map((group) =>
+        group.id === groupId ? { ...group, assignedVendor: vendorId } : group
+      )
+    );
+  };
+
+  // Function to assign a driver to a route group
+  const onAssignDriver = (groupId, driverId) => {
+    setRouteGroups((prevGroups) =>
+      prevGroups.map((group) =>
+        group.id === groupId ? { ...group, assignedDriver: driverId } : group
+      )
+    );
+  };
+
+  // Function to unmerge (remove) a route group
+  const onUnmergeRoute = (groupId) => {
+    setRouteGroups((prevGroups) => prevGroups.filter((group) => group.id !== groupId));
+  };
   return (
-    <div style={{ height: '600px', width: '600px', position: 'relative' }}>
-      <MapContainer
-        center={fixedPoint}
-        zoom={13}
-        style={{ height: '100%', width: '100%' }}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="© <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+    <div className="h-[calc(100vh-2rem)] flex">
+      <div className="w-1/2 h-full rounded-lg overflow-hidden shadow-lg">
+        <Map 
+          bookings={bookings} 
+          routeGroups={routeGroups}
+          fixedPoint={FIXED_POINT} 
         />
-        
-        {/* Fixed Point Marker */}
-        <Marker position={fixedPoint} icon={customIcon} />
-
-        {/* Static Points */}
-        {staticPoints.map((point) => (
-          <Marker key={point.id} position={point.location} icon={customIcon} />
-        ))}
-        <Polyline
-          positions={[fixedPoint, ...staticPoints.map(point => point.location)]}
-          color="green"
-          weight={4}
-          opacity={0.7}
+      </div>
+      <div className="w-1/2 pl-6 h-full overflow-y-auto">
+        <h1 className="text-2xl font-bold mb-6">Route Management</h1>
+     
+        <RouteGroups
+          routeGroups={routeGroups}
+          bookings={bookings}
+          vendors={vendors}
+          onAssignVendor={handleAssignVendor}
+          onAssignDriver={handleAssignDriver}
+          onUnmergeRoute={handleUnmergeRoute}
         />
-
-        {/* Selected (but not grouped) Bookings */}
-        {selectedBookings.map((booking) => (
-          <Marker key={booking.id} position={booking.location} icon={customIcon} />
-        ))}
-        {selectedBookings.map((booking) => (
-          <Polyline
-            key={`polyline-${booking.id}`}
-            positions={[fixedPoint, booking.location]}
-            color="blue"
-            weight={3}
-            opacity={0.6}
-          />
-        ))}
-
-        {/* Grouped Routes */}
-        {routeGroups.map((group) => {
-          const groupBookings = bookings.filter((b) => b.routeGroupId === group.id);
-          const routeColor = getRouteColor(group.id);
-          
-          return (
-            <React.Fragment key={group.id}>
-              {groupBookings.map((booking) => (
-                <React.Fragment key={booking.id}>
-                  <Marker position={booking.location} icon={customIcon} />
-                  <Polyline
-                    positions={[fixedPoint, booking.location]}
-                    color={routeColor}
-                    weight={4}
-                    opacity={0.8}
-                  />
-                </React.Fragment>
-              ))}
-            </React.Fragment>
-          );
-        })}
-      </MapContainer>
+      </div>
     </div>
   );
 };

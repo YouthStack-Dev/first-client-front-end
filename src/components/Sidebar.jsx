@@ -2,11 +2,11 @@ import { useAuth } from '../context/AuthContext';
 import { hasPermission } from '../utils/auth';
 import { ROLES } from '../utils/auth';
 import { 
-  Users, Truck, Calendar, Building2, 
+ Calendar, Building2, 
   LayoutDashboard, LogOut, User as UserIcon, 
   ChevronDown, UserCog, UserPlus, Users2,
   Pin, PinOff,
-  StretchVertical,
+
   CarTaxiFront,
   Car,
   RouteIcon
@@ -68,7 +68,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
 
   const menuItems = [
     {
-      path: '/dashboard',
+      path: '/',
       name: 'Dashboard',
       icon: LayoutDashboard,
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR]
@@ -156,7 +156,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
                     <item.icon className="w-5 h-5 min-w-[1.25rem]" />
                     {isOpen && (
                       <>
-                        <span className="ml-3 flex-1">{item.name}</span>
+                        <span className="ml-3 text-sm flex-1">{item.name}</span>
                         <ChevronDown
                           className={`w-5 h-5 transition-transform duration-200 ${
                             openDropdown[item.name] ? 'rotate-180' : ''
@@ -196,8 +196,8 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
                       : 'hover:bg-gray-700'
                   }`}
                 >
-                  <item.icon className="w-5 h-5 min-w-[1.25rem]" />
-                  {isOpen && <span className="ml-3">{item.name}</span>}
+                  <item.icon className="w-5 h-5 min-w-[1.25rem] " />
+                  {isOpen && <span className="ml-3 text-sm">{item.name}</span>}
                 </Link>
               )}
             </div>

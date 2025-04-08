@@ -26,7 +26,8 @@ export const users = [
 export const ROLES = {
   SUPER_ADMIN: 'SUPER_ADMIN',
   ADMIN: 'ADMIN',
-  VENDOR: 'VENDOR'
+  VENDOR: 'VENDOR',
+  CLIENT: 'CLIENT'
 };
 
 // Function to check if user has required role
