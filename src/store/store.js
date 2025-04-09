@@ -1,15 +1,22 @@
 import { configureStore } from "@reduxjs/toolkit";
-import driverReducer from "../redux/slices/driverSlice";
 import authApi from "../redux/rtkquery/authApi";
-
+import driverApi from "../redux/rtkquery/driverRtk";
+import driverReducer from "../redux/features/driverSlice";
+import userReducer from "../redux/features/userSlice";
+import { setupListeners } from "@reduxjs/toolkit/query";
 
 const store = configureStore({
   reducer: {
+    user: userReducer,
     driver: driverReducer,
-    [authApi.reducerPath]: authApi.reducer, // ✅ Add RTK Query API reducer
+    [authApi.reducerPath]: authApi.reducer,
+    [driverApi.reducerPath]: driverApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(authApi.middleware), // ✅ Add RTK Query middleware
+    getDefaultMiddleware().concat(authApi.middleware, driverApi.middleware),
 });
+
+// Optional but useful
+setupListeners(store.dispatch);
 
 export default store;

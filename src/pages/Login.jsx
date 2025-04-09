@@ -2,27 +2,51 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Lock, User } from "lucide-react";
 import { useLoginMutation } from "../redux/rtkquery/authApi";
-import { LocalClient } from "../Api/API_Client";
+import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
+import { useDispatch } from "react-redux";
+import { setUser } from "../redux/features/userSlice";
 
 const Login = () => {
   const [credentials, setCredentials] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const location = useLocation();
-
   const [login, { isLoading }] = useLoginMutation();
 
+
+  const dispatch = useDispatch();
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
+
     try {
-      const res = await login({ username: "admin1", password: "pass123" }).unwrap();
-      console.log("✅ Logged in", res);
+      const res = await login().unwrap(); // ✅ using real input
+      console.log("Login response", res);
+      const token = res.token;
+      if (!token) {
+        throw new Error("No token found in response");
+      }
+      const decoded = jwtDecode(token);
+      const expirationTime = decoded.exp * 1000;
+      console.log(" this is decoded exp ", expirationTime);
+      Cookies.set("auth_token", token, {
+        expires: expirationTime,
+        secure:  process.env.NODE_ENV === "production",// ❗ Set to false on localhost
+        sameSite: "Strict",
+      });
+      dispatch(setUser(decoded));
+      console.log("Token from cookie:", Cookies.get("auth_token")); // ✅ Must come after set
+      // console.log("✅ Token set in cookies");
+      navigate("/dashboard"); // or wherever you want to redirect
+  
     } catch (err) {
       console.error("❌ Login failed:", err);
+      setError("Invalid username or password");
     }
   };
   
+
+
 
   // const handleSubmit = async (e) => {
   //   e.preventDefault();
@@ -35,6 +59,11 @@ const Login = () => {
   //   }
   // };
   
+   const gettoken= ()=>{
+    const token = Cookies.get("auth_token");
+    console.log(" this is the token in the cookis",token);
+    
+   }
   
 
   return (
@@ -86,8 +115,9 @@ const Login = () => {
           >
             {isLoading ? "Logging in..." : "Login"}
           </button>
+        
         </form>
-
+        <button onClick={gettoken}>check</button>
         <div className="mt-4 text-sm text-gray-600">
           <p className="text-center">Demo Accounts:</p>
           <ul className="mt-2 space-y-1">

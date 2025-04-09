@@ -1,8 +1,10 @@
+import { useSelector } from 'react-redux';
 import { useAuth } from '../context/AuthContext';
 import { ROLES } from '../utils/auth';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const user = useSelector((state) => state.user?.user);
+
 
   const stats = [
     {

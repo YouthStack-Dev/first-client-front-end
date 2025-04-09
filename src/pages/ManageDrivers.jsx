@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Edit, MoreVertical, Plus, Search, Trash2, ChevronLeft, ChevronRight  } from 'lucide-react';
 import { InputField, Modal } from '../components/SmallComponents';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchDrivers } from '../redux/slices/driverSlice';
+
+import { useGetDriversQuery } from '../redux/rtkquery/driverRtk';
 
 
 // Memoized Driver List Component
-const DriverList = React.memo(({ drivers, menuOpen ,onNext,onPrev,currentPage ,totalPages}) => (
+const DriverList = React.memo(({ drivers, menuOpen ,onNext,onPrev,currentPage ,totalPages,isLoading}) => (
   <div className="rounded-lg overflow-hidden shadow-sm mt-2">
   {/* Table Container with Scroll */}
   <div className="overflow-auto h-[620px]">
@@ -23,7 +24,7 @@ const DriverList = React.memo(({ drivers, menuOpen ,onNext,onPrev,currentPage ,t
 
       {/* Table Body */}
       <tbody>
-        {drivers.length === 0 ? (
+        {drivers?.length === 0 ? (
           <tr>
             <td colSpan="4" className="p-4 text-center text-gray-500">
               No drivers found
@@ -34,7 +35,7 @@ const DriverList = React.memo(({ drivers, menuOpen ,onNext,onPrev,currentPage ,t
             <tr key={driver.id} className="border-b hover:bg-gray-50 transition">
               <td className="px-4 py-3">{driver.name}</td>
               <td className="px-4 py-3">{driver.phoneNo}</td>
-              <td className="px-4 py-3">{driver.vehicle.vehicleNo}</td>
+              <td className="px-4 py-3">{driver.vehicle.name}</td>
               <td className="px-4 py-3 text-center relative">
                 <button className="p-2 hover:bg-gray-100 rounded-full">
                   <MoreVertical size={20} className="text-gray-600" />
@@ -95,15 +96,16 @@ function ManageDrivers() {
 
 
   const[driverModal,setDriverModal]=useState(false)
-  const dispatch = useDispatch();
 
- // Accessing Redux state
- const { list: drivers, loading, error } = useSelector((state) => state.driver);
- useEffect(() => {
-  dispatch(fetchDrivers()); // Fetch drivers when the component mounts
-}, [dispatch]);
+  const { data, isLoading } = useGetDriversQuery();
+  const drivers = [...(data?.driver || [])].reverse();
 
-const totalPages = Math.ceil(drivers.length /30); // itemsPerPage = 10 or whatever
+  console.log(" is loading ",isLoading);
+  
+
+
+
+const totalPages = Math.ceil(10 /30); // itemsPerPage = 10 or whatever
   
 const onPrev = () => {
   if (currentPage > 1) setCurrentPage(currentPage - 1);
@@ -304,7 +306,7 @@ const handleDriverSubmit = (e) => {
         </Modal>
       </div>
 
-      <DriverList drivers={drivers} menuOpen={null} />
+      <DriverList drivers={drivers} menuOpen={null}  isLoading={isLoading}/>
 
 
     </>
