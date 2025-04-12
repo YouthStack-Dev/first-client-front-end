@@ -1,3 +1,16 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
+import GlobalApi from "../../utils/GlobalApi";
 
-export const driverApi=createApi()
+const driverApi = GlobalApi({
+  reducerPath: "driverApi",
+  endpoints: (builder) => ({
+    getDrivers: builder.query({
+      query: () => ({
+        url: "get-drivers",
+        method: "GET",
+      }),
+    }),
+  }),
+});
+
+export const { useGetDriversQuery } = driverApi;
+export default driverApi;

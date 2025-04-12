@@ -5,22 +5,23 @@ import {
  Calendar, Building2, 
   LayoutDashboard, LogOut, User as UserIcon, 
   ChevronDown, UserCog, UserPlus, Users2,
-  Pin, PinOff,
-
-  CarTaxiFront,
-  Car,
-  RouteIcon
+  Pin, PinOff, CarTaxiFront,Car,RouteIcon
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 
 const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
-  const { user, logout } = useAuth();
+  const {  logout } = useAuth();
   const location = useLocation();
   const [openDropdown, setOpenDropdown] = useState({});
   const [isHovered, setIsHovered] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  const user = useSelector((state) => state.user?.user);
+  
+  console.log(" this is the user in the side bar " ,user);
+  
   // Check if screen is mobile
   useEffect(() => {
     const checkMobile = () => {
@@ -68,7 +69,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
 
   const menuItems = [
     {
-      path: '/',
+      path: '/dashboard',
       name: 'Dashboard',
       icon: LayoutDashboard,
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR]

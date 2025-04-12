@@ -1,5 +1,3 @@
-
-
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -11,12 +9,13 @@ import { ROLES } from './utils/auth';
 import { Menu } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import ManageDrivers from './pages/ManageDrivers';
-import { Provider } from 'react-redux';
-import store from './store/store';
+import {  useDispatch } from 'react-redux';
 
 import RouteManagement from './pages/RouteManagement';
 import Home from './pages/Home';
-
+import { jwtDecode } from 'jwt-decode';
+import Cookies from "js-cookie";
+import { setUser } from './redux/features/userSlice';
 // Layout component for authenticated pages
 
 const Layout = () => {
@@ -77,49 +76,69 @@ const Bookings = () => <h1 className="text-2xl font-bold">Bookings</h1>;
 const Vendors = () => <h1 className="text-2xl font-bold">Vendors</h1>;
 
 function App() {
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(true); // ⬅️ hold until token is checked
+
+  useEffect(() => {
+    const token = Cookies.get("auth_token");
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        dispatch(setUser(decoded));
+      } catch (err) {
+        console.error("Invalid token");
+        Cookies.remove("auth_token");
+      }
+    }
+    setLoading(false); // ✅ done checking, now allow rendering
+  }, [dispatch]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-xl font-semibold">Loading ...</p>
+      </div>
+    );
+  }
+
   return (
-    <Provider store={store}>
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Public Routes */} 
+          {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
-          <Route path="/" element={<Home/>} />
+          <Route path="/" element={<Home />} />
 
+          {/* Protected Routes */}
+          <Route element={<Layout />}>
+          
 
-             {/* Protected Routes */}
-            <Route element={<Layout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-
-              <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]} />}>
-                <Route path="/clients" element={<Clients />} />
-                <Route path="/bookings" element={<Bookings />} />
-              </Route>
-
-              <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR]} />}>
-                <Route path="/vehicles" element={<Vehicles />} />
-                <Route path="/vehicle-contract" element={<h1> this is vehicle contarct  management </h1>} />
-                <Route path="/vehicle-group" element={<h1> this is vehicle group  management </h1>} />
-                <Route path="/drivers" element={<ManageDrivers />} />
-              </Route>
-
-
-              <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN]} />}>
-                <Route path="/vendors" element={<Vendors />} />
-                <Route path="/routing" element={<RouteManagement/>}/>
-                <Route path="/company-admins" element={<h1> this iscompany-admins management by suberadmin</h1>} />
-                <Route path="/subadmins" element={<h1> this is subadmin management by suberadmin</h1>} />
-              </Route>
-
-
-
+            <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]} />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/clients" element={<Clients />} />
+              <Route path="/bookings" element={<Bookings />} />
             </Route>
+
+            <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR]} />}>
+              <Route path="/vehicles" element={<Vehicles />} />
+              <Route path="/vehicle-contract" element={<h1> this is vehicle contract management </h1>} />
+              <Route path="/vehicle-group" element={<h1> this is vehicle group management </h1>} />
+              <Route path="/drivers" element={<ManageDrivers />} />
+            </Route>
+
+            <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN]} />}>
+              <Route path="/vendors" element={<Vendors />} />
+              <Route path="/routing" element={<RouteManagement />} />
+              <Route path="/company-admins" element={<h1> this is company-admins management by superadmin</h1>} />
+              <Route path="/subadmins" element={<h1> this is subadmin management by superadmin</h1>} />
+            </Route>
+          </Route>
         </Routes>
       </Router>
     </AuthProvider>
-    </Provider>
   );
 }
+
 
 export default App;
