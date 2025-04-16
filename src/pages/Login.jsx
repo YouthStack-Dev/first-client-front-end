@@ -40,31 +40,17 @@ const Login = () => {
       navigate("/dashboard"); // or wherever you want to redirect
   
     } catch (err) {
+      if (err.data==="Network Error") {
+      return  setError("Server not Conected");
+      }
       console.error("❌ Login failed:", err);
       setError("Invalid username or password");
     }
   };
   
 
-
-
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
   
-  //   try {
-  //     const res = await LocalClient.post("login",{ username: "admin1", password: "pass123" })
-  //     console.log("✅ Logged in", res);
-  //   } catch (err) {
-  //     console.error("❌ Login failed:", err);
-  //   }
-  // };
-  
-   const gettoken= ()=>{
-    const token = Cookies.get("auth_token");
-    console.log(" this is the token in the cookis",token);
-    
-   }
-  
+ 
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -117,7 +103,7 @@ const Login = () => {
           </button>
         
         </form>
-        <button onClick={gettoken}>check</button>
+
         <div className="mt-4 text-sm text-gray-600">
           <p className="text-center">Demo Accounts:</p>
           <ul className="mt-2 space-y-1">

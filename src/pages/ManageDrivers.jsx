@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Edit, MoreVertical, Plus, Search, Trash2, ChevronLeft, ChevronRight  } from 'lucide-react';
 import { InputField, Modal } from '../components/SmallComponents';
-import { useDispatch, useSelector } from 'react-redux';
 
 import { useGetDriversQuery } from '../redux/rtkquery/driverRtk';
 

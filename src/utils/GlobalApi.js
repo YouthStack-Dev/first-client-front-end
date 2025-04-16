@@ -4,7 +4,7 @@ import { axiosBaseQuery } from './Axious';
 const GlobalApi = (config) => {
   const defaultConfig = {
     baseQuery: axiosBaseQuery({
-      baseUrl: 'http://tenant1.fleetquest:3000/api/',
+      baseUrl: 'http://tenant1.fleetquest:3000/',
     }),
     keepUnusedDataFor: 3600,
     endpoints: (builder) => ({}),

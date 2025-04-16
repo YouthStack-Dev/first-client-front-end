@@ -1,9 +1,11 @@
 import axios from 'axios';
+import Cookies from 'js-cookie';
 
 export const axiosBaseQuery = ({ baseUrl } = { baseUrl: '' }) =>
-  
   async ({ url, method, data, params }) => {
     try {
+      const token = Cookies.get("auth_token"); // 👈 get token from cookies
+
       console.log("🔸 Axios Request →", {
         url: baseUrl + url,
         method,
@@ -16,7 +18,11 @@ export const axiosBaseQuery = ({ baseUrl } = { baseUrl: '' }) =>
         method,
         data,
         params,
-        withCredentials: true,
+        withCredentials: true, // needed if your backend checks cookies/sessions too
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+          'Content-Type': 'application/json',
+        },
       });
 
       console.log("✅ Axios Response →", result.data);
