@@ -132,12 +132,7 @@ const ScheduledBookings = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">Company Name</h1>
-        </div>
-      </div>
+      
 
       {/* Main Content */}
       <div className=" mx-auto px-4 py-6">
@@ -186,12 +181,7 @@ const ScheduledBookings = () => {
           </div>
         </div>
 
-        {/* Route Dashboard */}
-        <div className="bg-white rounded-lg shadow mb-6 p-4">
-          <h2 className="text-xl font-semibold mb-2">Route Management Dashboard</h2>
-          <p className="text-sm text-gray-500">STONEX</p>
-        </div>
-
+ 
         {/* Scrollable Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="overflow-y-auto max-h-[500px]">

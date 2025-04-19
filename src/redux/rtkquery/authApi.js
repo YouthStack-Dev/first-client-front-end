@@ -1,3 +1,4 @@
+import { API } from "../../Api/Endpoints";
 import GlobalApi  from "../../utils/GlobalApi";
 
 const authApi = GlobalApi({
@@ -5,7 +6,7 @@ const authApi = GlobalApi({
   endpoints: (builder) => ({
     login: builder.mutation({
       query: (credentials={ username: "superadmin1", password: "admin@123" }) => ({
-        url: "login",
+        url: API.LOGIN,
         method: "POST",
         data: credentials,
       }),

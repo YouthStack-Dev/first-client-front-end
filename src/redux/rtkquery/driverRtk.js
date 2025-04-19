@@ -1,3 +1,4 @@
+import { API } from "../../Api/Endpoints";
 import GlobalApi from "../../utils/GlobalApi";
 
 const driverApi = GlobalApi({
@@ -5,7 +6,7 @@ const driverApi = GlobalApi({
   endpoints: (builder) => ({
     getDrivers: builder.query({
       query: () => ({
-        url: "get-drivers",
+        url: API.GET_DRIVERS,
         method: "GET",
       }),
     }),

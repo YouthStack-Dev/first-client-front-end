@@ -17,7 +17,7 @@
       );
 
       if (foundUser) {
-        const userInfo = { ...foundUser };
+        const userInfo = { ...foundUser };  
         delete userInfo.password;
         setUser(userInfo);
         localStorage.setItem('user', JSON.stringify(userInfo));

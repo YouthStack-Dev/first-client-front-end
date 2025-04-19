@@ -9,7 +9,8 @@ import {
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { logoutUser } from '../redux/features/userSlice';
 
 const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
   const {  logout } = useAuth();
@@ -20,8 +21,12 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
 
   const user = useSelector((state) => state.user?.user);
   
-  console.log(" this is the user in the side bar " ,user);
-  
+  // console.log(" this is the user in the side bar " ,user);
+  const dispatch = useDispatch();
+
+const handleLogout = () => {
+  dispatch(logoutUser());
+};
   // Check if screen is mobile
   useEffect(() => {
     const checkMobile = () => {
@@ -208,7 +213,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
 
       <div className="p-4 border-t border-gray-700">
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className="flex items-center justify-center w-full p-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
         >
           <LogOut size={16} />

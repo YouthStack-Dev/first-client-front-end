@@ -16,6 +16,9 @@ import Home from './pages/Home';
 import { jwtDecode } from 'jwt-decode';
 import Cookies from "js-cookie";
 import { setUser } from './redux/features/userSlice';
+import ManageClients from './pages/ManageClients';
+import ManageVehicles from './pages/ManageVehicles';
+import BookingManagement from './pages/BookingManagement';
 // Layout component for authenticated pages
 
 const Layout = () => {
@@ -116,12 +119,12 @@ function App() {
 
             <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]} />}>
             <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/clients" element={<Clients />} />
-              <Route path="/bookings" element={<Bookings />} />
+              <Route path="/clients" element={<ManageClients/>} />
+              <Route path="/bookings" element={<BookingManagement />} />
             </Route>
 
             <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR]} />}>
-              <Route path="/vehicles" element={<Vehicles />} />
+              <Route path="/vehicles" element={<ManageVehicles/>} />
               <Route path="/vehicle-contract" element={<h1> this is vehicle contract management </h1>} />
               <Route path="/vehicle-group" element={<h1> this is vehicle group management </h1>} />
               <Route path="/drivers" element={<ManageDrivers />} />

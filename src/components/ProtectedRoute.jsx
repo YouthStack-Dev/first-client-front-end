@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 const ProtectedRoute = ({ roles }) => {
   const user = useSelector((state) => state.user.user);
   const location = useLocation();
-console.log(" the user in the Protected Route ",user);
+// console.log(" the user in the Protected Route ",user);
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
