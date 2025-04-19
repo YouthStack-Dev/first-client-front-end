@@ -131,7 +131,38 @@ const handleDriverSubmit = (e) => {
   // Close the modal
   setDriverModal(false);
 };
+const [driverList, setDriverList] = useState([]);
+useEffect(() => {
+  if (data?.driver) {
+    setDriverList([...data.driver].reverse());
+  }
+}, [data]);
 
+useEffect(() => {
+  const eventSource = new EventSource('http://fleetbackend.local:3000/api/driver-events');
+
+  eventSource.addEventListener('connected', (e) => {
+    console.log("SSE connection established");
+  });
+
+  eventSource.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      console.log("Received driver data:", data);
+      setDriverList(Array.isArray(data) ? data.reverse() : [data]);
+    } catch (err) {
+      console.error("Error parsing SSE data:", err);
+    }
+  };
+
+  eventSource.onerror = (err) => {
+    console.error("SSE error:", err);
+  };
+
+  return () => {
+    eventSource.close();
+  };
+}, []);
 
   return (
     <>

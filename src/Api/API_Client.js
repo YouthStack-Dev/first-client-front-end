@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Create instance
 export const LocalClient = axios.create({
-  baseURL: "http://tenant1.fleetquest:3000/api/",
+  baseURL: "http://fleetbackend.local/api/",
 });
 
 // Add a request interceptor
