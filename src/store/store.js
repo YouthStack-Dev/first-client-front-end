@@ -15,7 +15,10 @@ const store = configureStore({
     [clientApi.reducerPath]: clientApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(authApi.middleware, driverApi.middleware,clientApi.middleware),
+    getDefaultMiddleware().concat(authApi.middleware,
+       driverApi.middleware,
+       clientApi.middleware
+      ),
 });
 
 // Optional but useful

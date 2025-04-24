@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { BookingHistory } from '../components/BookingHistory';
 import BookingForm from '../components/BookingForm';
+import { useGetBookingsQuery } from '../redux/rtkquery/clientRtk';
 
 // Mock data - Replace with actual API calls
 const mockEmployees = [
@@ -13,127 +14,7 @@ const mockEmployees = [
 const mockBookings = [
   {
     id: "1",
-    employeeId: "EMP001",
-    employeeName: "John Doe",
-    type: "login",
-    status: "active",
-    shiftTime: "09:00",
-    date: "2024-02-20"
-  },
-  {
-    id: "2",
-    employeeId: "EMP002",
-    employeeName: "Jane Smith",
-    type: "logout",
-    status: "canceled",
-    shiftTime: "17:00",
-    date: "2024-02-20"
-  },
-  {
-    id: "1",
-    employeeId: "EMP001",
-    employeeName: "John Doe",
-    type: "login",
-    status: "active",
-    shiftTime: "09:00",
-    date: "2024-02-20"
-  },
-  {
-    id: "2",
-    employeeId: "EMP002",
-    employeeName: "Jane Smith",
-    type: "logout",
-    status: "canceled",
-    shiftTime: "17:00",
-    date: "2024-02-20"
-  } ,{
-    id: "1",
-    employeeId: "EMP001",
-    employeeName: "John Doe",
-    type: "login",
-    status: "active",
-    shiftTime: "09:00",
-    date: "2024-02-20"
-  },
-  {
-    id: "2",
-    employeeId: "EMP002",
-    employeeName: "Jane Smith",
-    type: "logout",
-    status: "canceled",
-    shiftTime: "17:00",
-    date: "2024-02-20"
-  } ,{
-    id: "1",
-    employeeId: "EMP001",
-    employeeName: "John Doe",
-    type: "login",
-    status: "active",
-    shiftTime: "09:00",
-    date: "2024-02-20"
-  },
-  {
-    id: "2",
-    employeeId: "EMP002",
-    employeeName: "Jane Smith",
-    type: "logout",
-    status: "canceled",
-    shiftTime: "17:00",
-    date: "2024-02-20"
-  }, {
-    id: "1",
-    employeeId: "EMP001",
-    employeeName: "John Doe",
-    type: "login",
-    status: "active",
-    shiftTime: "09:00",
-    date: "2024-02-20"
-  },
-  {
-    id: "2",
-    employeeId: "EMP002",
-    employeeName: "Jane Smith",
-    type: "logout",
-    status: "canceled",
-    shiftTime: "17:00",
-    date: "2024-02-20"
-  }, {
-    id: "1",
-    employeeId: "EMP001",
-    employeeName: "John Doe",
-    type: "login",
-    status: "active",
-    shiftTime: "09:00",
-    date: "2024-02-20"
-  },
-  {
-    id: "2",
-    employeeId: "EMP002",
-    employeeName: "Jane Smith",
-    type: "logout",
-    status: "canceled",
-    shiftTime: "17:00",
-    date: "2024-02-20"
-  }, {
-    id: "1",
-    employeeId: "EMP001",
-    employeeName: "John Doe",
-    type: "login",
-    status: "active",
-    shiftTime: "09:00",
-    date: "2024-02-20"
-  },
-  {
-    id: "2",
-    employeeId: "EMP002",
-    employeeName: "Jane Smith",
-    type: "logout",
-    status: "canceled",
-    shiftTime: "17:00",
-    date: "2024-02-20"
-  }, {
-    id: "1",
-    employeeId: "EMP001",
+    "customerId": "EMP001",
     employeeName: "John Doe",
     type: "login",
     status: "active",
@@ -152,9 +33,16 @@ const mockBookings = [
 ];
 
 const BookingManagement = () => {
-  const [bookings, setBookings] = useState(mockBookings);
+  const [bookings, setBookings] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { data, isLoading, isError } = useGetBookingsQuery();
+  useEffect(() => {
+    if (data) {
+      console.log(" this is the booking res" ,data.bookings );
+      setBookings(data.bookings)
 
+    }
+  }, [data]);
   const handleCreateBooking = (newBooking) => {
     const employee = mockEmployees.find(emp => emp.id === newBooking.employeeId);
     if (!employee) return;

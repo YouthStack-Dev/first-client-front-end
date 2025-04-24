@@ -39,7 +39,7 @@ export const API ={
 
     LOGIN:api+"login",
     GET_DRIVERS:api+"get-drivers",
-     GET_VEHICLES:api+"get-vehicles"
+    GET_VEHICLES:api+"get-vehicles"
     
      
 }

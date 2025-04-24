@@ -17,3 +17,4 @@ const GlobalApi = (config) => {
 };
 
 export default GlobalApi;
+

@@ -17,9 +17,16 @@ const clientApi = GlobalApi({
         url:API.GET_VEHICLES,
         method:"GET"
       })
+    }),
+    getBookings:builder.query({
+      query:(date)=>({
+      url:`api/get-bookings?date=${date}`,
+      method:"GET"
+      })
     })
-  }),
+  }), 
+ 
 });
 
-export const { useGetClientsQuery ,useGetVehiclesQuery} = clientApi;
+export const { useGetClientsQuery ,useGetVehiclesQuery ,useGetBookingsQuery} = clientApi;
 export default clientApi;

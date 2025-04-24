@@ -97,6 +97,7 @@ function ManageDrivers() {
   const[driverModal,setDriverModal]=useState(false)
 
   const { data, isLoading } = useGetDriversQuery();
+
   const drivers = [...(data?.driver || [])].reverse();
 
   console.log(" is loading ",isLoading);
@@ -104,7 +105,7 @@ function ManageDrivers() {
 
 
 
-const totalPages = Math.ceil(10 /30); // itemsPerPage = 10 or whatever
+const totalPages = Math.ceil(10 /30);
   
 const onPrev = () => {
   if (currentPage > 1) setCurrentPage(currentPage - 1);
@@ -337,10 +338,7 @@ useEffect(() => {
       </div>
 
       <DriverList drivers={drivers} menuOpen={null}  isLoading={isLoading}/>
-
-
     </>
   );
 }
-
 export default React.memo(ManageDrivers);
