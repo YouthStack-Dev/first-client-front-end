@@ -5,7 +5,7 @@ const authApi = GlobalApi({
   reducerPath: "authApi",
   endpoints: (builder) => ({
     login: builder.mutation({
-      query: (credentials={ username: "superadmin1", password: "admin@123" }) => ({
+      query: (credentials={ username: "admin1", password: "admin@123" }) => ({
         url: API.LOGIN,
         method: "POST",
         data: credentials,

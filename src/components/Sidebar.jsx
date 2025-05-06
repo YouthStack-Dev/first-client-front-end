@@ -106,6 +106,12 @@ const handleLogout = () => {
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
     },
     {
+      path: '/users',
+      name: 'Users',
+      icon: UserIcon,
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+    },
+    {
       path: '/drivers',
       name: 'Drivers',
       icon: CarTaxiFront,

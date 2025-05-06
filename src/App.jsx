@@ -19,6 +19,7 @@ import { setUser } from './redux/features/userSlice';
 import ManageClients from './pages/ManageClients';
 import ManageVehicles from './pages/ManageVehicles';
 import BookingManagement from './pages/BookingManagement';
+import ManageUser from './pages/ManageUser';
 // Layout component for authenticated pages
 
 const Layout = () => {
@@ -120,6 +121,7 @@ function App() {
             <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]} />}>
             <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/clients" element={<ManageClients/>} />
+              <Route path="/users" element={<ManageUser/>} />
               <Route path="/bookings" element={<BookingManagement />} />
             </Route>
 

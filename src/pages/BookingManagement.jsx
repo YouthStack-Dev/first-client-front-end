@@ -33,16 +33,27 @@ const mockBookings = [
 ];
 
 const BookingManagement = () => {
+  const [selectedDate, setSelectedDate] = useState("");
   const [bookings, setBookings] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { data, isLoading, isError } = useGetBookingsQuery();
-  useEffect(() => {
-    if (data) {
-      console.log(" this is the booking res" ,data.bookings );
-      setBookings(data.bookings)
+  const [shiftBookings, setShiftBookings] = useState([]);
+  const { data: response, isLoading, isError, refetch } = useGetBookingsQuery(selectedDate, {
+    skip: !selectedDate,
+    refetchOnMountOrArgChange: true, 
+  });
 
+
+
+  useEffect(() => {
+    if (selectedDate) {
+      console.log(" thsi si the bookings");
+      
+      setShiftBookings(response?.TimeShifts || []);
+     
+      
     }
-  }, [data]);
+  }, [selectedDate, response]);
+
   const handleCreateBooking = (newBooking) => {
     const employee = mockEmployees.find(emp => emp.id === newBooking.employeeId);
     if (!employee) return;

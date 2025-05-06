@@ -6,7 +6,7 @@ const GlobalApi = (config) => {
     baseQuery: axiosBaseQuery({
       baseUrl: 'http://fleetbackend.local:3000/',
     }),
-    keepUnusedDataFor: 3600,
+    keepUnusedDataFor: 60,
     endpoints: (builder) => ({}),
   };
 
