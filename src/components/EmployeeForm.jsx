@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { FormSteps } from './FormSteps';
-import { PersonalInfoForm } from './PersonalInfoForm';
-import { AddressForm } from './AddressForm';
-import { MoreDetailsForm } from './MoreDetailsForm';
-import { NavigationButtons } from './NavigationButtons';
+import FormSteps from './FormSteps';
+import PersonalInfoForm from './PersonalInfoForm';
+import AddressForm from './AddressForm';
+import MoreDetailsForm from './MoreDetailsForm';
+import NavigationButtons from './NavigationButtons';
+import HeaderWithAction from './HeaderWithAction';
 
 const initialFormData = {
   // Personal Info
@@ -37,7 +38,7 @@ const initialFormData = {
   otherOptions: '',
 };
 
-const EmployeeForm = ({ onClose }) => {
+const EmployeeForm = () => {
   const [formData, setFormData] = useState(initialFormData);
   const [currentStep, setCurrentStep] = useState('personalInfo');
   const [completedSteps, setCompletedSteps] = useState([]);
@@ -63,25 +64,25 @@ const EmployeeForm = ({ onClose }) => {
 
   const validatePersonalInfo = () => {
     const newErrors = {};
-    
+
     if (!formData.employeeName.trim()) {
       newErrors.employeeName = 'Employee name is required';
     }
-    
+
     if (!formData.employeeId.trim()) {
       newErrors.employeeId = 'Employee ID is required';
     }
-    
+
     if (!formData.emailId.trim()) {
       newErrors.emailId = 'Email ID is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.emailId)) {
       newErrors.emailId = 'Please enter a valid email address';
     }
-    
+
     if (!formData.gender) {
       newErrors.gender = 'Gender is required';
     }
-    
+
     if (!formData.office) {
       newErrors.office = 'Office is required';
     }
@@ -89,7 +90,7 @@ const EmployeeForm = ({ onClose }) => {
     if (formData.alternateMobileNumber && formData.mobileNumber === formData.alternateMobileNumber) {
       newErrors.alternateMobileNumber = 'Alternate mobile number should be different from primary mobile number';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -100,28 +101,30 @@ const EmployeeForm = ({ onClose }) => {
 
   const validateMoreDetails = () => {
     const newErrors = {};
-    
+
     if (!formData.project) {
       newErrors.project = 'Project is required';
     }
-    
+
     if (!formData.costCentre) {
       newErrors.costCentre = 'Cost Centre is required';
     }
-    
+
     if (!formData.businessUnit) {
       newErrors.businessUnit = 'Business Unit is required';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleNext = () => {
-    let isValid = false;
-    
+
+    let isValid = true; // change to false  after  development 
+
     if (currentStep === 'personalInfo') {
-      isValid = validatePersonalInfo();
+      // isValid = validatePersonalInfo();
+
       if (isValid) {
         setCurrentStep('address');
         if (!completedSteps.includes('personalInfo')) {
@@ -129,7 +132,7 @@ const EmployeeForm = ({ onClose }) => {
         }
       }
     } else if (currentStep === 'address') {
-      isValid = validateAddress();
+      isValid = validateAddress();  
       if (isValid) {
         setCurrentStep('moreDetails');
         if (!completedSteps.includes('address')) {
@@ -157,7 +160,7 @@ const EmployeeForm = ({ onClose }) => {
 
   const handleSubmit = () => {
     setIsSubmitting(true);
-    
+
     setTimeout(() => {
       console.log('Form submitted:', formData);
       setIsSubmitting(false);
@@ -165,18 +168,20 @@ const EmployeeForm = ({ onClose }) => {
       setFormData(initialFormData);
       setCurrentStep('personalInfo');
       setCompletedSteps([]);
-      onClose();
+     
     }, 1500);
   };
 
   const isFirstStep = currentStep === 'personalInfo';
   const isLastStep = currentStep === 'moreDetails';
 
-  return (
-    <div>
+  return (<>
+      <HeaderWithAction  title="NEW EMPLOYEE" showBackButton={true}  />
+
+    <div className='p-2 m-3 bg-white rounded-xl max-h-[700px] overflow-auto'>
       <FormSteps currentStep={currentStep} completedSteps={completedSteps} />
-      
-      <div className="mt-6">
+
+      <div className="mt-6 m-3">
         {currentStep === 'personalInfo' && (
           <PersonalInfoForm
             formData={formData}
@@ -185,7 +190,7 @@ const EmployeeForm = ({ onClose }) => {
             errors={errors}
           />
         )}
-        
+
         {currentStep === 'address' && (
           <AddressForm
             formData={formData}
@@ -194,7 +199,7 @@ const EmployeeForm = ({ onClose }) => {
             errors={errors}
           />
         )}
-        
+
         {currentStep === 'moreDetails' && (
           <MoreDetailsForm
             formData={formData}
@@ -203,7 +208,7 @@ const EmployeeForm = ({ onClose }) => {
           />
         )}
       </div>
-      
+
       <NavigationButtons
         currentStep={currentStep}
         onBack={handleBack}
@@ -213,6 +218,8 @@ const EmployeeForm = ({ onClose }) => {
         isSubmitting={isSubmitting}
       />
     </div>
+  </>
+
   );
 };
 

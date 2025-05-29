@@ -1,14 +1,40 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { MapPin } from 'lucide-react';
 
 const AddressForm = ({ formData, onChange, onCheckboxChange, errors }) => {
   return (
-    <div className="animate-fadeIn">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Address
-          </label>
+    <div className="animate-fadeIn grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Map Left */}
+      <div className="relative bg-gray-100 rounded-lg overflow-hidden min-h-[450px]">
+        <div className="absolute inset-0 flex items-center justify-center flex-col">
+          <MapPin className="w-12 h-12 text-gray-400" />
+          <p className="text-gray-500 mt-2">Map View (Google Maps API Integration)</p>
+        </div>
+        <div className="absolute bottom-4 right-4 flex space-x-2">
+          <button className="bg-white p-2 rounded-md shadow-md">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-plus">
+              <path d="M5 12h14" />
+              <path d="M12 5v14" />
+            </svg>
+          </button>
+          <button className="bg-white p-2 rounded-md shadow-md">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-minus">
+              <path d="M5 12h14" />
+            </svg>
+          </button>
+        </div>
+        <div className="absolute bottom-4 left-4 bg-white px-3 py-1 rounded-md shadow-md text-sm">
+          Distance: 0 km
+        </div>
+      </div>
+
+      {/* Form Right */}
+      <div className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
           <input
             type="text"
             name="address"
@@ -25,9 +51,7 @@ const AddressForm = ({ formData, onChange, onCheckboxChange, errors }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Geo Coordinates
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Geo Coordinates</label>
           <input
             type="text"
             name="geoCoordinates"
@@ -39,9 +63,7 @@ const AddressForm = ({ formData, onChange, onCheckboxChange, errors }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Landmark
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Landmark</label>
           <input
             type="text"
             name="landmark"
@@ -53,9 +75,7 @@ const AddressForm = ({ formData, onChange, onCheckboxChange, errors }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nodal Point
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Nodal Point</label>
           <select
             name="nodalPoint"
             value={formData.nodalPoint}
@@ -69,47 +89,32 @@ const AddressForm = ({ formData, onChange, onCheckboxChange, errors }) => {
           </select>
         </div>
 
-        <div>
-          <div className="flex items-center mt-4">
-            <input
-              type="checkbox"
-              id="showAll"
-              checked={formData.showAll}
-              onChange={(e) => onCheckboxChange('showAll', e.target.checked)}
-              className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 transition-colors"
-            />
-            <label htmlFor="showAll" className="ml-2 text-sm text-gray-700">
-              Show all
-            </label>
-          </div>
-        </div>
-      </div>
-
-      {/* Map Placeholder */}
-      <div className="mt-4 relative bg-gray-100 rounded-lg overflow-hidden" style={{ height: '400px' }}>
-        <div className="absolute inset-0 flex items-center justify-center flex-col">
-          <MapPin className="w-12 h-12 text-gray-400" />
-          <p className="text-gray-500 mt-2">Map View (Integration available with Google Maps API)</p>
-        </div>
-        <div className="absolute bottom-4 right-4 flex space-x-2">
-          <button className="bg-white p-2 rounded-md shadow-md">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-plus">
-              <path d="M5 12h14" />
-              <path d="M12 5v14" />
-            </svg>
-          </button>
-          <button className="bg-white p-2 rounded-md shadow-md">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-minus">
-              <path d="M5 12h14" />
-            </svg>
-          </button>
-        </div>
-        <div className="absolute bottom-4 left-4 bg-white px-3 py-1 rounded-md shadow-md text-sm">
-          Distance: 0 km
+        <div className="flex items-center mt-2">
+          <input
+            type="checkbox"
+            id="showAll"
+            checked={formData.showAll}
+            onChange={(e) => onCheckboxChange('showAll', e.target.checked)}
+            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 transition-colors"
+          />
+          <label htmlFor="showAll" className="ml-2 text-sm text-gray-700">Show all</label>
         </div>
       </div>
     </div>
   );
+};
+
+AddressForm.propTypes = {
+  formData: PropTypes.shape({
+    address: PropTypes.string,
+    geoCoordinates: PropTypes.string,
+    landmark: PropTypes.string,
+    nodalPoint: PropTypes.string,
+    showAll: PropTypes.bool,
+  }).isRequired,
+  onChange: PropTypes.func.isRequired,
+  onCheckboxChange: PropTypes.func.isRequired,
+  errors: PropTypes.object.isRequired,
 };
 
 export default AddressForm;

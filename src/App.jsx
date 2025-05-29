@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+
 import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar';
 import Login from './pages/Login';
@@ -20,6 +20,10 @@ import ManageClients from './pages/ManageClients';
 import ManageVehicles from './pages/ManageVehicles';
 import BookingManagement from './pages/BookingManagement';
 import ManageUser from './pages/ManageUser';
+import EmployeeForm from './components/EmployeeForm';
+import VehicleForm from './components/VehicleForm';
+import DriverForm from './components/DriverForm';
+import ManageVehicleTypes from './pages/ManageVehicleType';
 // Layout component for authenticated pages
 
 const Layout = () => {
@@ -73,10 +77,7 @@ const Layout = () => {
   );
 };
 
-// Placeholder components
-const Clients = () => <h1 className="text-2xl font-bold">Clients</h1>;
-const Vehicles = () => <h1 className="text-2xl font-bold">Vehicles</h1>;
-const Bookings = () => <h1 className="text-2xl font-bold">Bookings</h1>;
+
 const Vendors = () => <h1 className="text-2xl font-bold">Vendors</h1>;
 
 function App() {
@@ -106,7 +107,6 @@ function App() {
   }
 
   return (
-    <AuthProvider>
       <Router>
         <Routes>
           {/* Public Routes */}
@@ -121,14 +121,26 @@ function App() {
             <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]} />}>
             <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/clients" element={<ManageClients/>} />
+              <Route path="/users/create-employee" element={<EmployeeForm/>} />
               <Route path="/users" element={<ManageUser/>} />
               <Route path="/bookings" element={<BookingManagement />} />
+              <Route path="/vehicles/add-vehicle" element={<VehicleForm />} />
+              <Route path="/drivers/driver-form" element={<DriverForm />} />
+
+              <Route path="/manage-shift" element={<h1> this is shift management </h1>} />
+
+              <Route path="/shift-Categories" element={<h1> this isshift-Categories management </h1>} />
+
+              <Route path="/shedule-polysies" element={<h1> this is shedule-polysies management </h1>}/>
+
+
             </Route>
 
             <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR]} />}>
               <Route path="/vehicles" element={<ManageVehicles/>} />
+              <Route path="/routing" element={<RouteManagement />} />
               <Route path="/vehicle-contract" element={<h1> this is vehicle contract management </h1>} />
-              <Route path="/vehicle-group" element={<h1> this is vehicle group management </h1>} />
+              <Route path="/vehicle-group" element={<ManageVehicleTypes/>} />
               <Route path="/drivers" element={<ManageDrivers />} />
             </Route>
 
@@ -141,7 +153,6 @@ function App() {
           </Route>
         </Routes>
       </Router>
-    </AuthProvider>
   );
 }
 

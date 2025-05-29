@@ -2,30 +2,30 @@ import React, { useEffect, useState } from 'react';
 import { ArrowUpRight, ArrowDownRight, AlertTriangle, X } from 'lucide-react';
 import { useGetBookingsQuery } from '../redux/rtkquery/clientRtk';
 
-const ScheduledBookings = ({toogleRouting,isVisible,setRoutingData}) => {
+const ScheduledBookings = ({ toogleRouting, isVisible, setRoutingData }) => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedShiftType, setSelectedShiftType] = useState("All");
   const [openNewRouteEditor, setOpenNewRouteEditor] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedShift, setSelectedShift] = useState(null);
   const [shiftBookings, setShiftBookings] = useState([]);
+  // Permission states
+  const [hasRoutesPermission] = useState(true); // Permission for Routes Management
+  const [hasTripSheetsPermission] = useState(false); // Permission for TripSheets Management
 
   const handleButtonClick = (shift) => {
     setSelectedShift(shift);
     setShowBookingModal(true);
   };
 
-  
   const { data: response, isLoading, isError, refetch } = useGetBookingsQuery(selectedDate, {
     skip: !selectedDate,
-    refetchOnMountOrArgChange: true, // Force refetch when the date changes
+    refetchOnMountOrArgChange: true,
   });
 
   useEffect(() => {
     if (selectedDate) {
       setShiftBookings(response?.TimeShifts || []);
-     
-      
     }
   }, [selectedDate, response]);
 
@@ -36,7 +36,7 @@ const ScheduledBookings = ({toogleRouting,isVisible,setRoutingData}) => {
     { label: 'Update Pickup Time', value: 'Update Pickup Time' },
     { label: 'Delete Route', value: 'Delete Route' },
     { label: 'Download', value: 'Download' },
-    { label: 'Upload Vehicle', value: 'Upload Vehicle'}
+    { label: 'Upload Vehicle', value: 'Upload Vehicle' }
   ];
 
   const TripOptions = [
@@ -46,35 +46,35 @@ const ScheduledBookings = ({toogleRouting,isVisible,setRoutingData}) => {
     { label: 'Update Pickup Time', value: 'Update Pickup Time' },
     { label: 'Delete Route', value: 'Delete Route' },
     { label: 'Download', value: 'Download' },
-    { label: 'Upload Vehicle', value: 'Upload Vehicle'}
+    { label: 'Upload Vehicle', value: 'Upload Vehicle' }
   ];
-  let value = 0; 
+
+  let value = 0;
 
   const incrementVendorIdIfNeeded = (routes) => {
-   // Initialize outside the map so it doesn't reset on each iteration  
     routes.map((obj) => {
-      value = obj.vendorId === null ? 0 : ++value; // Post-increment
+      value = obj.vendorId === null ? 0 : ++value;
     });
     return value;
   };
-  
 
   const incrementVehicleIdIfNeeded = (routes) => {
-    // Initialize outside the map so it doesn't reset on each iteration  
-     routes.map((obj) => {
-       value = obj.vehicleId === null ? 0 : ++value; // Post-increment
-     });
-     return value;
-   };
-  
-   const handleRoutingview=(shift)=>{
-   
-    setRoutingData(shift?.routes)
-    toogleRouting(true)
-   }
+    routes.map((obj) => {
+      value = obj.vehicleId === null ? 0 : ++value;
+    });
+    return value;
+  };
+
+  const handleRoutingview = (shift) => {
+    setRoutingData(shift?.routes);
+    toogleRouting(true);
+  };
+
+  // Determine number of visible panels
+  const visiblePanelsCount = (hasRoutesPermission ? 1 : 0) + (hasTripSheetsPermission ? 1 : 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 " style={{ display: isVisible ? "block" : "none" }}>
+    <div className="min-h-screen bg-gray-50" style={{ display: isVisible ? "block" : "none" }}>
       <div className="mx-auto px-4 py-6">
         {/* Top Controls */}
         <div className="bg-white rounded-lg shadow p-4 mb-6">
@@ -89,7 +89,6 @@ const ScheduledBookings = ({toogleRouting,isVisible,setRoutingData}) => {
                   className="border border-gray-300 px-3 py-2 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-              
             </div>
 
             <div className="flex items-center gap-4 flex-wrap">
@@ -105,7 +104,6 @@ const ScheduledBookings = ({toogleRouting,isVisible,setRoutingData}) => {
                   <option value="Out">LogOut</option>
                 </select>
               </div>
-              
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">Open New Route Editor</span>
                 <div className="relative inline-block w-10 align-middle select-none">
@@ -122,163 +120,173 @@ const ScheduledBookings = ({toogleRouting,isVisible,setRoutingData}) => {
           </div>
         </div>
 
-        {/* Two Panel Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Routes Panel */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="bg-gray-50 p-3 border-b">
-              <h2 className="text-lg font-semibold text-gray-700">Routes Management</h2>
-              <div className="flex items-center justify-between">
+        {/* Dynamic Panel Layout */}
+        {visiblePanelsCount > 0 ? (
+          <div className={`grid ${visiblePanelsCount === 2 ? 'lg:grid-cols-2' : 'grid-cols-1'} gap-6`}>
+            {/* Routes Management Panel */}
+            {hasRoutesPermission && (
+              <div className="bg-white rounded-lg shadow overflow-hidden w-full">
+                <div className="bg-gray-50 p-3 border-b">
+                  <h2 className="text-lg font-semibold text-gray-700">Routes Management</h2>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <select className="text-sm border rounded px-2 py-1 mr-2 w-32">
+                        {shiftOptions.map((option, index) => (
+                          <option key={index} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition">
+                        GO
+                      </button>
+                    </div>
+                    <div className="p-2 text-sm">
+                      {/* <span>Total: {'NUMBERS'}</span> <br />
+                      <span>Total Custom: {'NUMBERS'}</span> */}
+                    </div>
+                  </div>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-gray-100 font-bold text-[13px] text-black">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-medium uppercase tracking-wider">Shift Time (Type)</th>
+                        <th className="px-4 py-3 text-left font-medium uppercase tracking-wider">Employees (Routes)</th>
+                        <th className="px-4 py-3 text-left font-medium uppercase tracking-wider">
                           <div className="flex items-center">
-                            <select className="text-sm border rounded px-2 py-1 mr-2 w-32">
-                            {shiftOptions.map((option, index) => (
-                            <option key={index} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                            </select>
-                            <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition">
-                              GO
-                            </button>
+                            <input type="checkbox" className="mr-2 h-4 w-4" />
+                            Manage Routes
                           </div>
-                          <div className='p-2 text-sm'>
-                          {/* <span>Total:{'NUMBERS'}</span> <br />
-                          <span>Total Custom:{'NUMBERS'}</span> */}
-                        </div>   
-                        </div>
-
-                        
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 text-sm ">
-                <thead className="bg-gray-100 font-bold  text-[13px] text-black">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium uppercase tracking-wider">Shift Time (Type)</th>
-                    <th className="px-4 py-3 text-left font-medium uppercase tracking-wider">Employees (Routes)</th>
-                    <th className="px-4 py-3 text-left font-medium  uppercase tracking-wider">
-                      <div className="flex items-center">
-                        <input type="checkbox" className="mr-2 h-4 w-4" />
-                        Manage Routes
-                      </div>
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium uppercase tracking-wider">Vehicles/Vendors/Routes</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {shiftBookings?.map((shift, index) => (
-                    <tr key={`route-${index}`} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="flex items-center">
-                          {shift.bookingType === "LOGIN" ? (
-                            <ArrowUpRight className="w-4 h-4 text-green-600 mr-2" />
-                          ) : (
-                            <ArrowDownRight className="w-4 h-4 text-red-600 mr-2" />
-                          )}
-                          <span>{shift.shift} ({shift.bookingType})</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-gray-600">
-
-                            <button 
-                              onClick={() => handleButtonClick(shift)}
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium uppercase tracking-wider">Vehicles/Vendors/Routes</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {shiftBookings?.map((shift, index) => (
+                        <tr key={`route-${index}`} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center">
+                              {shift.bookingType === "LOGIN" ? (
+                                <ArrowUpRight className="w-4 h-4 text-green-600 mr-2" />
+                              ) : (
+                                <ArrowDownRight className="w-4 h-4 text-red-600 mr-2" />
+                              )}
+                              <span>{shift.shift} ({shift.bookingType})</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-gray-600">
+                                <button
+                                  onClick={() => handleButtonClick(shift)}
+                                  className="ml-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition"
+                                >
+                                  {shift.routes?.length === 0 ? 'Schedule' : 'Routed'} {shift.bookings.length || "0"}
+                                </button>
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <input type="checkbox" className="h-4 w-4" />
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-gray-600">
+                            <button
+                              onClick={() => handleRoutingview(shift)}
                               className="ml-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition"
                             >
-                          {shift.routes?.length===0 ?'Schedule':'Routed'} {shift.bookings.length || "0"}  
+                              {`${shift?.routes?.length !== 0 ? incrementVendorIdIfNeeded(shift?.routes) : 0}/${shift?.routes?.length !== 0 ? incrementVehicleIdIfNeeded(shift?.routes) : 0}/${shift.routes.length}`}
                             </button>
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <input type="checkbox" className="h-4 w-4" />
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-gray-600">
-                        <button onClick={()=>handleRoutingview(shift)} className='ml-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition'>
-                     {`${shift?.routes?.length !== 0 ? incrementVendorIdIfNeeded(shift?.routes) : 0}/${shift?.routes?.length !== 0 ? incrementVehicleIdIfNeeded(shift?.routes) : 0}/${shift.routes.length}`}
-
-                        </button>
-                     
-                        <div className="mt-2">
-                          {selectedShiftType === "Upload Vehicle" && (
-                            <div className="flex items-center">
-                              <select className="text-sm border rounded px-2 py-1 mr-2 w-32">
-                                <option>Upload Vehicle</option>
-                              </select>
-                              <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition">
-                                GO
-                              </button>
-                              <span className="ml-2 text-sm text-gray-500">0/2/34</span>
-                              {index === 0 && <AlertTriangle className="w-4 h-4 text-amber-500 ml-2" />}
+                            <div className="mt-2">
+                              {selectedShiftType === "Upload Vehicle" && (
+                                <div className="flex items-center">
+                                  <select className="text-sm border rounded px-2 py-1 mr-2 w-32">
+                                    <option>Upload Vehicle</option>
+                                  </select>
+                                  <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition">
+                                    GO
+                                  </button>
+                                  <span className="ml-2 text-sm text-gray-500">0/2/34</span>
+                                  {index === 0 && <AlertTriangle className="w-4 h-4 text-amber-500 ml-2" />}
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
-          {/* TripSheets Panel */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="bg-gray-50 p-3 border-b">
-              <h2 className="text-lg font-semibold text-gray-700 mb-2">TripSheets Management</h2>
-              <div className="flex items-center">
-                      
+            {/* TripSheets Management Panel */}
+            {hasTripSheetsPermission && (
+              <div className="bg-white rounded-lg shadow overflow-hidden w-full">
+                <div className="bg-gray-50 p-3 border-b">
+                  <h2 className="text-lg font-semibold text-gray-700 mb-2">TripSheets Management</h2>
+                  <div className="flex items-center">
+                    <div className="flex items-center">
+                      <select className="text-sm border rounded px-2 py-1 mr-2 w-32">
+                        {TripOptions.map((val, i) => (
+                          <option key={i}>{val.label}</option>
+                        ))}
+                      </select>
+                      <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition">
+                        GO
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-gray-100 font-bold text-[13px] text-black">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-medium uppercase tracking-wider">Employees (TripSheet)</th>
+                        <th className="px-4 py-3 text-left font-medium uppercase tracking-wider">Fleet Mix (Vehicle Occupancy)</th>
+                        <th className="px-4 py-3 text-left font-medium uppercase tracking-wider">
                           <div className="flex items-center">
-                            <select className="text-sm border rounded px-2 py-1 mr-2 w-32">
-                             { TripOptions.map((val,i)=><option key={i}>{val.label}</option>)}
-                            </select>
-                            <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition">
-                              GO
-                            </button>
+                            <input type="checkbox" className="mr-2 h-4 w-4" />
+                            Manage TripSheets
                           </div>
-                        </div>
-            </div>
-            <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm ">
-            <thead className="bg-gray-100 font-bold  text-[13px] text-black">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium uppercase tracking-wider">Employees (TripSheet)</th>
-                    <th className="px-4 py-3 text-left font-medium uppercase tracking-wider">Fleet Mix (Vehicle Occupancy)</th>
-                    <th className="px-4 py-3 text-left font-medium uppercase tracking-wider">
-                      <div className="flex items-center">
-                        <input type="checkbox" className="mr-2 h-4 w-4" />
-                        Manage TripSheets
-                      </div>
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium   uppercase tracking-wider">Vehicles/Vendors/TripSheets</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {shiftBookings?.map((shift, index) => (
-                    <tr key={`tripsheet-${index}`} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <button 
-                          onClick={() => handleButtonClick(shift)}
-                          className="text-blue-600 hover:text-blue-800 transition"
-                        >
-                        {shift.bookings.length}
-                        </button>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span className="px-2 py-1 bg-gray-100 rounded text-gray-700">Generated</span>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <input type="checkbox" className="h-4 w-4" />
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-gray-600">
-                      {`${shift?.totalVehicle || 0}/${shift?.totalVendor || 0}/${shift.tripsheet?.length ||0 }`}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium uppercase tracking-wider">Vehicles/Vendors/TripSheets</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {shiftBookings?.map((shift, index) => (
+                        <tr key={`tripsheet-${index}`} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <button
+                              onClick={() => handleButtonClick(shift)}
+                              className="text-blue-600 hover:text-blue-800 transition"
+                            >
+                              {shift.bookings.length}
+                            </button>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <span className="px-2 py-1 bg-gray-100 rounded text-gray-700">Generated</span>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <input type="checkbox" className="h-4 w-4" />
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-gray-600">
+                            {`${shift?.totalVehicle || 0}/${shift?.totalVendor || 0}/${shift.tripsheet?.length || 0}`}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow p-6 text-center">
+            <h2 className="text-lg font-semibold text-gray-700">No Panels Available</h2>
+            <p className="text-gray-500 mt-2">You don’t have permission to view any panels.</p>
+          </div>
+        )}
       </div>
 
       {/* Booking Details Modal */}
@@ -289,7 +297,7 @@ const ScheduledBookings = ({toogleRouting,isVisible,setRoutingData}) => {
               <h3 className="text-lg font-semibold text-gray-800">
                 Booking Details - {selectedShift.shift} ({selectedShift.bookingType})
               </h3>
-              <button 
+              <button
                 onClick={() => setShowBookingModal(false)}
                 className="text-gray-500 hover:text-gray-700 transition"
               >

@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import { BookingHistory } from '../components/BookingHistory';
 import BookingForm from '../components/BookingForm';
 import { useGetBookingsQuery } from '../redux/rtkquery/clientRtk';
+import HeaderWithActionNoRoute from '../components/HeaderWithActionNoRoute';
 
 // Mock data - Replace with actual API calls
 const mockEmployees = [
@@ -73,17 +74,12 @@ const BookingManagement = () => {
     <div className=" bg-gray-100 px-4 sm:px-6">
       <div className="mx-auto">
         {/* Header */}
-        <div className="flex justify-between p-3 mb-3 bg-blue-200">
-          <h1 className="text-xl font-semibold text-gray-900">Booking Management</h1>
-
-          <button 
-            onClick={() => setIsModalOpen(true)} 
-            className="p-2 bg-blue-600 text-white rounded-lg flex items-center justify-center"
-          >
-            <Plus size={16} className="mr-1" />
-            Add Booking
-          </button>
-        </div>
+        <HeaderWithActionNoRoute
+            title="Manage Booking"
+            buttonLabel="Add"
+            showBackButton={false}
+            onButtonClick={() => setIsModalOpen(true)} // or any custom handler
+          />
 
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
           <div className="lg:col-span-2">

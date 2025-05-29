@@ -8,7 +8,7 @@ const PersonalInfoForm = ({
 }) => {
   return (
     <div className="animate-fadeIn">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Employee Name <span className="text-red-500">*</span>

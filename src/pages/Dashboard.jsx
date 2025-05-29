@@ -1,5 +1,4 @@
 import { useSelector } from 'react-redux';
-import { useAuth } from '../context/AuthContext';
 import { ROLES } from '../utils/auth';
 
 const Dashboard = () => {

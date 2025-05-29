@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Modal, InputField } from "../components/SmallComponents";
 import { useGetVehiclesQuery } from "../redux/rtkquery/clientRtk";
+import HeaderWithAction from "../components/HeaderWithAction";
 
 const VehicleList = React.memo(
   ({
@@ -167,16 +168,7 @@ function ManageVehicles() {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-2">
-      <div className="flex items-center justify-between mb-2">
-        <h1 className="text-2xl font-bold text-gray-800">Manage Vehicles</h1>
-        <button
-          onClick={() => setVehicleModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          <Plus size={20} />
-          Add Vehicle
-        </button>
-      </div>
+     <HeaderWithAction   title="Manage Vehicles" buttonLabel='Add' buttonRoute='add-vehicle'/>
 
       {/* Add Vehicle Modal */}
       <Modal

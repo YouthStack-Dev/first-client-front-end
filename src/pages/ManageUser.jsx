@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Edit, MoreVertical, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { InputField, Modal } from '../components/SmallComponents';
 import { useSearchClientsQuery } from '../redux/rtkquery/clientRtk'; // Assuming you're using RTK query
+import EmployeeForm from '../components/EmployeeForm';
+import { useNavigate } from 'react-router-dom';
+import HeaderWithAction from '../components/HeaderWithAction';
 
 const UserList = React.memo(({ users, menuOpen, onNext, onPrev, currentPage, totalPages, isLoading }) => (
   <div className="rounded-lg overflow-hidden shadow-sm mt-2">
@@ -138,65 +141,14 @@ const { data: clients, isFetching } = useSearchClientsQuery(debouncedQuery, {
       setSearchResults(clients);
     }
   }, [clients]);
+  const navigate = useNavigate();
 
   return (
     <>
       <div className="bg-white rounded-lg shadow-md p-2">
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="text-2xl font-bold text-gray-800">Manage Users</h1>
-          <button
-            onClick={() => setUserModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus size={20} />
-            Add User
-          </button>
-        </div>
+      <HeaderWithAction  title="Manage Users"  buttonLabel="Add User"    buttonRoute="create-employee"   />
 
-        <Modal
-          isOpen={userModal}
-          onClose={() => setUserModal(false)}
-          title="Add New User"
-          onSubmit={handleUserSubmit}
-        >
-          <InputField
-            label="User Name"
-            name="userName"
-            placeholder="Enter user name"
-            required
-          />
-
-          <InputField
-            label="Email"
-            name="email"
-            placeholder="Enter email"
-            type="email"
-            required
-          />
-
-          {/* Search Field for Clients */}
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Search Client</label>
-            <input
-              type="text"
-              className="border p-2 w-full rounded"
-              placeholder="Start typing client name..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-            {isFetching && <p className="text-sm text-gray-500">Searching...</p>}
-            <ul className="border mt-1 max-h-40 overflow-auto rounded shadow">
-              {searchResults?.map((client) => (
-                <li
-                  key={client.id}
-                  className="px-3 py-1 hover:bg-gray-100 cursor-pointer"
-                >
-                  {client.name}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </Modal>
+      
 
         <UserList
           users={paginatedUsers}

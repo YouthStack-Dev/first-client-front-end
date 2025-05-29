@@ -1,5 +1,5 @@
-import { useAuth } from '../context/AuthContext';
-import { hasPermission } from '../utils/auth';
+
+import { hasModuleAccess, hasPermission } from '../utils/auth';
 import { ROLES } from '../utils/auth';
 import { 
  Calendar, Building2, 
@@ -13,7 +13,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../redux/features/userSlice';
 
 const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
-  const {  logout } = useAuth();
+
   const location = useLocation();
   const [openDropdown, setOpenDropdown] = useState({});
   const [isHovered, setIsHovered] = useState(false);
@@ -72,65 +72,205 @@ const handleLogout = () => {
     }
   };
 
+  // const menuItems = [
+  //   {
+  //     path: '/dashboard',
+  //     name: 'Dashboard',
+  //     icon: LayoutDashboard,
+  //     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR]
+  //   },
+  //   {
+  //     name: 'User Management',
+  //     icon: UserIcon,
+  //     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+  //     subItems: [
+  //       { path: '/clients', name: 'Clients', icon: Users2, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
+  //       { path: '/company-admins', name:'Company Admins', icon: UserCog, roles: [ROLES.SUPER_ADMIN] },
+  //       { path: '/subadmins', name: 'Subadmins', icon: UserPlus, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] }
+  //     ]
+  //   },
+  //   {
+  //     name: 'Manage Vehicles',
+  //     icon: Car,
+  //     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+  //     subItems: [
+  //       { path: '/vehicles', name: 'Vehicles', icon: Users2, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
+  //       { path: '/vehicle-contract', name: 'Vehicle Contract', icon: UserCog, roles: [ROLES.SUPER_ADMIN] },
+  //       { path: '/vehicle-group', name: 'Vehicle Type', icon: UserPlus, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] }
+  //     ]
+  //   },
+  //   {
+  //     name: ' Scheduling Management',
+  //     icon: Car,
+  //     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+  //     subItems: [
+  //       { path: '/manage-shift', name: 'Manage Shift', icon: Users2, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
+  //       { path: '/shift-Categories', name: 'Manage Shift Categories', icon: UserCog, roles: [ROLES.SUPER_ADMIN ,ROLES.ADMIN] },
+  //       { path: '/shedule-polysies', name: 'Manage Shedule Polysies', icon: UserPlus, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] }
+  //     ]
+  //   },
+   
+  //   {
+  //     path: '/bookings',
+  //     name: 'Bookings',
+  //     icon: Calendar,
+  //     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+  //   },
+  //   {
+  //     path: '/users',
+  //     name: 'Users',
+  //     icon: UserIcon,
+  //     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+  //   },
+  //   {
+  //     path: '/drivers',
+  //     name: 'Drivers',
+  //     icon: CarTaxiFront,
+  //     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+  //   },
+  //   {
+  //     path: '/routing',
+  //     name: 'Routing',
+  //     icon: RouteIcon,
+  //     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+  //   },
+  //   {
+  //     path: '/vendors',
+  //     name: 'Vendors',
+  //     icon: Building2,
+  //     roles: [ROLES.SUPER_ADMIN]
+  //   },
+  // ];
+
   const menuItems = [
     {
       path: '/dashboard',
       name: 'Dashboard',
+      moduleName: 'Dashboard',
       icon: LayoutDashboard,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR]
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR],
     },
     {
       name: 'User Management',
       icon: UserIcon,
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
       subItems: [
-        { path: '/clients', name: 'Clients', icon: Users2, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
-        { path: '/company-admins', name:'Company Admins', icon: UserCog, roles: [ROLES.SUPER_ADMIN] },
-        { path: '/subadmins', name: 'Subadmins', icon: UserPlus, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] }
-      ]
+        {
+          path: '/clients',
+          name: 'Clients',
+          moduleName: 'Clients',
+          icon: Users2,
+          roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+        },
+        {
+          path: '/company-admins',
+          name: 'Company Admins',
+          moduleName: 'CompanyAdmins',
+          icon: UserCog,
+          roles: [ROLES.SUPER_ADMIN],
+        },
+        {
+          path: '/subadmins',
+          name: 'Subadmins',
+          moduleName: 'Subadmins',
+          icon: UserPlus,
+          roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+        },
+      ],
     },
     {
       name: 'Manage Vehicles',
       icon: Car,
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
       subItems: [
-        { path: '/vehicles', name: 'Vehicles', icon: Users2, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
-        { path: '/vehicle-contract', name: 'Vehicle Contract', icon: UserCog, roles: [ROLES.SUPER_ADMIN] },
-        { path: '/vehicle-group', name: 'Manage Vehicle Groups', icon: UserPlus, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] }
-      ]
+        {
+          path: '/vehicles',
+          name: 'Vehicles',
+          moduleName: 'Vehicles',
+          icon: Users2,
+          roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+        },
+        {
+          path: '/vehicle-contract',
+          name: 'Vehicle Contract',
+          moduleName: 'VehicleContract',
+          icon: UserCog,
+          roles: [ROLES.SUPER_ADMIN],
+        },
+        {
+          path: '/vehicle-group',
+          name: 'Vehicle Type',
+          moduleName: 'VehicleType',
+          icon: UserPlus,
+          roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+        },
+      ],
+    },
+    {
+      name: 'Scheduling Management',
+      icon: Car,
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+      subItems: [
+        {
+          path: '/manage-shift',
+          name: 'Manage Shift',
+          moduleName: 'ManageShift',
+          icon: Users2,
+          roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+        },
+        {
+          path: '/shift-Categories',
+          name: 'Manage Shift Categories',
+          moduleName: 'ShiftCategories',
+          icon: UserCog,
+          roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+        },
+        {
+          path: '/shedule-polysies',
+          name: 'Manage Schedule Policies',
+          moduleName: 'SchedulePolicies',
+          icon: UserPlus,
+          roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+        },
+      ],
     },
     {
       path: '/bookings',
       name: 'Bookings',
+      moduleName: 'Bookings',
       icon: Calendar,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
     },
     {
       path: '/users',
       name: 'Users',
+      moduleName: 'Users',
       icon: UserIcon,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
     },
     {
       path: '/drivers',
       name: 'Drivers',
+      moduleName: 'Drivers',
       icon: CarTaxiFront,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
     },
     {
       path: '/routing',
       name: 'Routing',
+      moduleName: 'Routing',
       icon: RouteIcon,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
     },
     {
       path: '/vendors',
       name: 'Vendors',
+      moduleName: 'Vendors',
       icon: Building2,
-      roles: [ROLES.SUPER_ADMIN]
+      roles: [ROLES.SUPER_ADMIN],
     },
   ];
-
+  
   const sidebarWidth = isOpen ? 'w-64' : 'w-16';
   const sidebarClass = `h-screen ${sidebarWidth} bg-gray-800 text-white flex flex-col fixed left-0 transition-all duration-300 ease-in-out z-50`;
   
@@ -154,67 +294,68 @@ const handleLogout = () => {
       </div>
       
       <nav className="flex-1 overflow-y-auto p-2 space-y-2">
-        {menuItems.map((item) => (
-          hasPermission(user.role, item.roles) && (
-            <div key={item.path || item.name} className="relative">
-              {item.subItems ? (
-                <div>
-                  <button
-                    onClick={() => toggleDropdown(item.name)}
-                    className={`flex items-center w-full px-4 py-2.5 rounded-lg transition-all duration-200 ${
-                      openDropdown[item.name] ? 'bg-blue-600 text-white' : 'hover:bg-gray-700'
+      {menuItems.map((item) => (
+  hasModuleAccess(user, item.moduleName) && (
+    <div key={item.path || item.name} className="relative">
+      {item.subItems ? (
+        <>
+          <button
+            onClick={() => toggleDropdown(item.name)}
+            className={`flex items-center w-full px-4 py-2.5 rounded-lg transition-all duration-200 ${
+              openDropdown[item.name] ? 'bg-blue-600 text-white' : 'hover:bg-gray-700'
+            }`}
+          >
+            <item.icon className="w-5 h-5 min-w-[1.25rem]" />
+            {isOpen && (
+              <>
+                <span className="ml-3 text-sm flex-1">{item.name}</span>
+                <ChevronDown
+                  className={`w-5 h-5 transition-transform duration-200 ${
+                    openDropdown[item.name] ? 'rotate-180' : ''
+                  }`}
+                />
+              </>
+            )}
+          </button>
+
+          {isOpen && openDropdown[item.name] && (
+            <div className="mt-1 space-y-1 px-2">
+              {item.subItems.map((subItem) =>
+                hasModuleAccess(user, subItem.module) && (
+                  <Link
+                    key={subItem.path}
+                    to={subItem.path}
+                    className={`flex items-center px-4 py-2 text-sm rounded-lg transition-colors ${
+                      location.pathname === subItem.path
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-300 hover:bg-gray-700'
                     }`}
                   >
-                    <item.icon className="w-5 h-5 min-w-[1.25rem]" />
-                    {isOpen && (
-                      <>
-                        <span className="ml-3 text-sm flex-1">{item.name}</span>
-                        <ChevronDown
-                          className={`w-5 h-5 transition-transform duration-200 ${
-                            openDropdown[item.name] ? 'rotate-180' : ''
-                          }`}
-                        />
-                      </>
-                    )}
-                  </button>
-                  
-                  {isOpen && openDropdown[item.name] && (
-                    <div className="mt-1 space-y-1 px-2">
-                      {item.subItems.map((subItem) =>
-                        hasPermission(user.role, subItem.roles) && (
-                          <Link
-                            key={subItem.path}
-                            to={subItem.path}
-                            className={`flex items-center px-4 py-2 text-sm rounded-lg transition-colors ${
-                              location.pathname === subItem.path
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-300 hover:bg-gray-700'
-                            }`}
-                          >
-                            <subItem.icon className="w-4 h-4" />
-                            <span className="ml-2">{subItem.name}</span>
-                          </Link>
-                        )
-                      )}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <Link
-                  to={item.path}
-                  className={`flex items-center px-4 py-2.5 rounded-lg transition-colors ${
-                    location.pathname === item.path
-                      ? 'bg-blue-600 text-white'
-                      : 'hover:bg-gray-700'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5 min-w-[1.25rem] " />
-                  {isOpen && <span className="ml-3 text-sm">{item.name}</span>}
-                </Link>
+                    <subItem.icon className="w-4 h-4" />
+                    <span className="ml-2">{subItem.name}</span>
+                  </Link>
+                )
               )}
             </div>
-          )
-        ))}
+          )}
+        </>
+      ) : (
+        <Link
+          to={item.path}
+          className={`flex items-center px-4 py-2.5 rounded-lg transition-colors ${
+            location.pathname === item.path
+              ? 'bg-blue-600 text-white'
+              : 'hover:bg-gray-700'
+          }`}
+        >
+          <item.icon className="w-5 h-5 min-w-[1.25rem]" />
+          {isOpen && <span className="ml-3 text-sm">{item.name}</span>}
+        </Link>
+      )}
+    </div>
+  )
+))}
+
       </nav>
 
       <div className="p-4 border-t border-gray-700">
