@@ -13,39 +13,70 @@ const Login = () => {
   const navigate = useNavigate();
   const [login, { isLoading }] = useLoginMutation();
 
-
   const dispatch = useDispatch();
+  
+const handleStaticLogin = async (dispatch, setError) => {
+  try {
+    // 🔒 Mock token and decoded payload for testing
+    const mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+    "eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IkFETUlOIiwiZXhwIjoxOTAwMDAwMDAwfQ." +
+    "QOTc8X9cSBdbp1D4J6KK6b7Vv62UcykOhBOtO39CQqM";
+  
+
+    const decoded = jwtDecode(mockToken);
+    const expirationTime = decoded.exp * 1000;
+
+    Cookies.set("auth_token", mockToken, {
+      expires: new Date(expirationTime), // 💡 Must be a Date object
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+    });
+
+    dispatch(setUser(decoded));
+    console.log("Static login decoded:", decoded);
+    console.log("Token from cookie:", Cookies.get("auth_token"));
+
+   
+    navigate("/dashboard");
+
+  } catch (err) {
+    console.error("❌ Static login failed:", err);
+    setError("Static login error");
+  }
+};
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    handleStaticLogin(dispatch, setError, navigate);
 
-
-    try {
-      const res = await login().unwrap(); // ✅ using real input
-      console.log("Login response", res);
-      const token = res.token;
-      if (!token) {
-        throw new Error("No token found in response");
-      }
-      const decoded = jwtDecode(token);
-      const expirationTime = decoded.exp * 1000;
-      console.log(" this is decoded exp ", expirationTime);
-      Cookies.set("auth_token", token, {
-        expires: expirationTime,
-        secure:  process.env.NODE_ENV === "production",// ❗ Set to false on localhost
-        sameSite: "Strict",
-      });
-      dispatch(setUser(decoded));
-      console.log("Token from cookie:", Cookies.get("auth_token")); // ✅ Must come after set
-      // console.log("✅ Token set in cookies");
-      navigate("/dashboard"); // or wherever you want to redirect
+    // try {
+    //   const res = await login().unwrap(); // ✅ using real input
+    //   console.log("Login response", res);
+    //   const token = res.token;
+    //   if (!token) {
+    //     throw new Error("No token found in response");
+    //   }
+    //   const decoded = jwtDecode(token);
+    //   const expirationTime = decoded.exp * 1000;
+    //   console.log(" this is decoded exp ", expirationTime);
+    //   Cookies.set("auth_token", token, {
+    //     expires: expirationTime,
+    //     secure:  process.env.NODE_ENV === "production",// ❗ Set to false on localhost
+    //     sameSite: "Strict",
+    //   });
+    //   dispatch(setUser(decoded));
+    //   console.log("Token from cookie:", Cookies.get("auth_token")); // ✅ Must come after set
+    //   // console.log("✅ Token set in cookies");
+    //   navigate("/dashboard"); // or wherever you want to redirect
   
-    } catch (err) {
-      if (err.data==="Network Error") {
-      return  setError("Server not Conected");
-      }
-      console.error("❌ Login failed:", err);
-      setError("Invalid username or password");
-    }
+    // } catch (err) {
+    //   if (err.data==="Network Error") {
+    //   return  setError("Server not Conected");
+    //   }
+    //   console.error("❌ Login failed:", err);
+    //   setError("Invalid username or password");
+    // }
   };
   
 

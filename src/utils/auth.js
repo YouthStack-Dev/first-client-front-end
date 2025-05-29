@@ -1,27 +1,3 @@
-// Static user data for demonstration
-export const users = [
-  {
-    id: 1,
-    username: 'superadmin',
-    password: 'super123',
-    role: 'SUPER_ADMIN',
-    name: 'Super Admin'
-  },
-  {
-    id: 2,
-    username: 'admin',
-    password: 'admin123',
-    role: 'ADMIN',
-    name: 'Admin User'
-  },
-  {
-    id: 3,
-    username: 'vendor',
-    password: 'vendor123',
-    role: 'VENDOR',
-    name: 'Vendor User'
-  }
-];
 
 export const ROLES = {
   SUPER_ADMIN: 'SUPER_ADMIN',
@@ -32,8 +8,9 @@ export const ROLES = {
 
 // Function to check if user has required role
 export const hasPermission = (userRole, requiredRoles) => {
+  return true
   // if (!requiredRoles) return true;
-  return requiredRoles.includes(userRole);
+  // return requiredRoles.includes(userRole);
 };
 
 const user = {
@@ -65,16 +42,49 @@ const user = {
       canRead: true,
       canWrite: false,
       canDelete: false,
+    },
+    {
+      module: 'UserManagement',
+      canRead: true,
+      canWrite: false,
+      canDelete: false,
+    },
+    {
+      module: 'SchedulingManagement',
+      canRead: true,
+      canWrite: false,
+      canDelete: false,
+    },
+    {
+      module: 'Clients',
+      canRead: true,
+      canWrite: false,
+      canDelete: false,
     }
   ]
 };
 
-export function hasModuleAccess(users, moduleName) {
-  if (!user?.permissions) return false;
 
-  return user.permissions.some(
-    (perm) => 
-      perm.module.toLowerCase() === moduleName?.toLowerCase() &&
-      (perm.canRead || perm.canWrite || perm.canDelete)
-  );
+export function hasModuleAccess(users, moduleName) {
+  return true
+  // if (!user?.permissions) return false;
+
+  // return user.permissions.some(
+  //   (perm) => 
+  //     perm.module.toLowerCase() === moduleName?.toLowerCase() &&
+  //     (perm.canRead || perm.canWrite || perm.canDelete)
+  // );
+}
+
+
+export function hasSubModuleAccess(users, subModuleName) {
+  return true
+
+  // if (!user?.permissions) return false;
+
+  // return user.permissions.some(
+  //   (perm) =>
+  //     perm.module?.toLowerCase() === subModuleName?.toLowerCase() &&
+  //     (perm.canRead || perm.canWrite || perm.canDelete)
+  // );
 }

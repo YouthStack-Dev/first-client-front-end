@@ -1,5 +1,5 @@
 
-import { hasModuleAccess, hasPermission } from '../utils/auth';
+import { hasModuleAccess, hasPermission, hasSubModuleAccess } from '../utils/auth';
 import { ROLES } from '../utils/auth';
 import { 
  Calendar, Building2, 
@@ -152,6 +152,7 @@ const handleLogout = () => {
     },
     {
       name: 'User Management',
+      moduleName: 'UserManagement',
       icon: UserIcon,
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
       subItems: [
@@ -180,6 +181,7 @@ const handleLogout = () => {
     },
     {
       name: 'Manage Vehicles',
+      moduleName: 'ManageVehicles',
       icon: Car,
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
       subItems: [
@@ -208,6 +210,7 @@ const handleLogout = () => {
     },
     {
       name: 'Scheduling Management',
+      moduleName: 'SchedulingManagement',
       icon: Car,
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
       subItems: [
@@ -234,6 +237,7 @@ const handleLogout = () => {
         },
       ],
     },
+
     {
       path: '/bookings',
       name: 'Bookings',
@@ -295,7 +299,7 @@ const handleLogout = () => {
       
       <nav className="flex-1 overflow-y-auto p-2 space-y-2">
       {menuItems.map((item) => (
-  hasModuleAccess(user, item.moduleName) && (
+     hasModuleAccess(user, item.moduleName) && (
     <div key={item.path || item.name} className="relative">
       {item.subItems ? (
         <>
@@ -321,7 +325,7 @@ const handleLogout = () => {
           {isOpen && openDropdown[item.name] && (
             <div className="mt-1 space-y-1 px-2">
               {item.subItems.map((subItem) =>
-                hasModuleAccess(user, subItem.module) && (
+                hasSubModuleAccess(user, subItem.moduleName) && (
                   <Link
                     key={subItem.path}
                     to={subItem.path}

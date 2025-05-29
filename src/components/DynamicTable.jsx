@@ -11,25 +11,36 @@ const DynamicTable = React.memo(
     currentPage, 
     totalPages, 
     onMenuToggle,
-    renderActions 
+    renderActions,
+    onSelectItem,
+    selectedItems = []
   }) => {
+    const isSelected = (item) => selectedItems.some((i) => i.id === item.id);
+
     return (
       <div className="rounded-lg overflow-hidden shadow mt-2 w-full mx-auto">
-        {/* Scrollable Table */}
-        <div className="overflow-auto max-h-[600px] max-w-[">
-
-        <table className="min-w-[900px] border-collapse table-fixed">
+        <div className="overflow-auto max-h-[600px]">
+          <table className="min-w-[900px] border-collapse table-fixed">
             {/* Table Headers */}
             <thead className="bg-gray-50 border-b sticky top-0 z-10">
               <tr className="text-left text-gray-600">
+                <th className="px-4 py-3 w-12">
+                  <input
+                    type="checkbox"
+                    onChange={(e) =>
+                      data.forEach((item) => onSelectItem(item, e.target.checked))
+                    }
+                    checked={data.length > 0 && selectedItems.length === data.length}
+                    className="accent-blue-600"
+                  />
+                </th>
                 {headers.map((header, index) => (
-                <th 
-                key={index} 
-                className={`px-4 py-3 text-sm font-medium text-gray-700 break-words whitespace-normal ${header.className || 'w-48 max-w-[12rem]'}`}
-              >
-                {header.label}
-              </th>
-              
+                  <th 
+                    key={index} 
+                    className={`px-4 py-3 text-sm font-medium text-gray-700 break-words whitespace-normal ${header.className || 'w-48 max-w-[12rem]'}`}
+                  >
+                    {header.label}
+                  </th>
                 ))}
                 <th className="px-4 py-3 w-24 text-center">Actions</th>
               </tr>
@@ -39,21 +50,28 @@ const DynamicTable = React.memo(
             <tbody>
               {data.length === 0 ? (
                 <tr>
-                  <td colSpan={headers.length + 1} className="p-4 text-center text-gray-500">
+                  <td colSpan={headers.length + 2} className="p-4 text-center text-gray-500">
                     No records found
                   </td>
                 </tr>
               ) : (
                 data.map((item, rowIndex) => (
                   <tr key={rowIndex} className="border-b hover:bg-gray-50 transition">
+                    <td className="px-4 py-3 w-12 text-center">
+                      <input
+                        type="checkbox"
+                        checked={isSelected(item)}
+                        onChange={(e) => onSelectItem(item, e.target.checked)}
+                        className="accent-blue-600"
+                      />
+                    </td>
                     {headers.map((header, colIndex) => (
                       <td 
-                      key={colIndex} 
-                      className="px-4 py-3 text-sm text-gray-700 break-words whitespace-normal w-48 max-w-[12rem]"
-                    >
-                      {header.render ? header.render(item) : item[header.key]}
-                    </td>
-                    
+                        key={colIndex} 
+                        className="px-4 py-3 text-sm text-gray-700 break-words whitespace-normal w-48 max-w-[12rem]"
+                      >
+                        {header.render ? header.render(item) : item[header.key]}
+                      </td>
                     ))}
                     <td className="px-4 py-3 text-center relative">
                       <button 
