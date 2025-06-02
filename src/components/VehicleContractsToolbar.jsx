@@ -60,6 +60,15 @@ const subTabComponents = {
   "FUEL TYPE": FuelType,
 };
 
+const BillingTemplate = () => <div>🧾 Billing Template UI</div>;
+const BillingHistory = () => <div>📚 Billing History UI</div>;
+
+const billCycleSubTabComponents = {
+  "BILLING TEMPLATE": BillingTemplate,
+  "BILLING HISTORY": BillingHistory,
+};
+
+
 export default function VehicleContractTabs() {
   const mainTabs = ["BILL CYCLE DATA ENTRY", "VEHICLE CONTRACT", "MASTER"];
   const vehicleSubTabs = Object.keys(subTabComponents); // give an array of the keys of objects 
@@ -69,28 +78,32 @@ export default function VehicleContractTabs() {
   const [subTab, setSubTab] = useState("SHIFT VEHICLE CONTRACTS");
 
   const renderSubTabs = () => {
+    let subTabs = [];
     if (mainTab === "VEHICLE CONTRACT") {
-      return (
-        <div className="flex space-x-6 border-b border-gray-200 px-4">
-          {vehicleSubTabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setSubTab(tab)}
-              className={`pb-2 text-sm font-semibold uppercase ${
-                subTab === tab
-                  ? "text-blue-600 border-b-2 border-blue-600"
-                  : "text-gray-800 hover:text-blue-600"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      );
+      subTabs = vehicleSubTabs;
+    } else if (mainTab === "BILL CYCLE DATA ENTRY") {
+      subTabs = Object.keys(billCycleSubTabComponents);
     }
-    return null;
+  
+    return (
+      <div className="flex space-x-6 border-b border-gray-200 px-4">
+        {subTabs.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setSubTab(tab)}
+            className={`pb-2 text-sm font-semibold uppercase ${
+              subTab === tab
+                ? "text-blue-600 border-b-2 border-blue-600"
+                : "text-gray-800 hover:text-blue-600"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+    );
   };
-
+  
   const ActiveComponent = subTabComponents[subTab];
 
   return (

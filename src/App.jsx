@@ -26,6 +26,7 @@ import DriverForm from './components/DriverForm';
 import ManageVehicleTypes from './pages/ManageVehicleType';
 import ShiftManagement from './pages/ShiftManagement';
 import VehicleContract from './pages/VehicleContract';
+import ManageVendor from './pages/ManageVendor';
 // Layout component for authenticated pages
 
 const Layout = () => {
@@ -147,7 +148,7 @@ function App() {
             </Route>
 
             <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN]} />}>
-              <Route path="/vendors" element={<Vendors />} />
+              <Route path="/vendors" element={<ManageVendor/>} />
               <Route path="/routing" element={<RouteManagement />} />
               <Route path="/company-admins" element={<h1> this is company-admins management by superadmin</h1>} />
               <Route path="/subadmins" element={<h1> this is subadmin management by superadmin</h1>} />

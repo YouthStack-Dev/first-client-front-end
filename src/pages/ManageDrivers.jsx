@@ -4,6 +4,7 @@ import { InputField, Modal } from '../components/SmallComponents';
 
 import { useGetDriversQuery } from '../redux/rtkquery/driverRtk';
 import HeaderWithAction from '../components/HeaderWithAction';
+import DriverToolbar from '../components/DriverToolbar';
 
 
 // Memoized Driver List Component
@@ -108,13 +109,7 @@ function ManageDrivers() {
 
 const totalPages = Math.ceil(10 /30);
   
-const onPrev = () => {
-  if (currentPage > 1) setCurrentPage(currentPage - 1);
-};
 
-const onNext = () => {
-  if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-};
 
 //  handle driver submit 
 const handleDriverSubmit = (e) => {
@@ -166,11 +161,38 @@ useEffect(() => {
   };
 }, []);
 
+const vendors = [
+  { id: 1, type: 'Vendor A' },
+  { id: 2, type: 'Vendor B' },
+  { id: 3, type: 'Vendor C' },
+];
+
+const handleFilterChange = ({ driverStatus, vendorType }) => {
+  console.log('Filters:', driverStatus, vendorType);
+  // Apply your filtering logic here
+};
+
+const handleBulkUpload = () => {
+  alert('Bulk Upload clicked');
+  // Show modal or navigate to upload page
+};
+
+const handleManageCompliance = () => {
+  alert('Manage Compliance clicked');
+  // Show compliance management UI
+};
+
   return (
     <>
+    
       <HeaderWithAction   title="Manage Drivers"  buttonLabel="Add Driver"    buttonRoute="driver-form"   />
      
-
+      <DriverToolbar
+        vendors={vendors}
+        onFilterChange={handleFilterChange}
+        onBulkUpload={handleBulkUpload}
+        onManageCompliance={handleManageCompliance}
+      />
       <DriverList drivers={drivers} menuOpen={null}  isLoading={isLoading}/>
     </>
   );

@@ -19,8 +19,9 @@ const DynamicTable = React.memo(
 
     return (
       <div className="rounded-lg overflow-hidden shadow mt-2 w-full mx-auto">
+
         <div className="overflow-auto max-h-[600px]">
-          <table className="min-w-[900px] border-collapse table-fixed">
+          <table className="min-w-[1100px] border-collapse table-fixed">
             {/* Table Headers */}
             <thead className="bg-gray-50 border-b sticky top-0 z-10">
               <tr className="text-left text-gray-600">
