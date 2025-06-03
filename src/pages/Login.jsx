@@ -6,6 +6,8 @@ import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { useDispatch } from "react-redux";
 import { setUser } from "../redux/features/userSlice";
+import { MOCK_TOKENS } from "../utils/auth";
+
 
 const Login = () => {
   const [credentials, setCredentials] = useState({ username: "", password: "" });
@@ -15,35 +17,43 @@ const Login = () => {
 
   const dispatch = useDispatch();
   
-const handleStaticLogin = async (dispatch, setError) => {
-  try {
-    // 🔒 Mock token and decoded payload for testing
-    const mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
-    "eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IkFETUlOIiwiZXhwIjoxOTAwMDAwMDAwfQ." +
-    "QOTc8X9cSBdbp1D4J6KK6b7Vv62UcykOhBOtO39CQqM";
+
+  const roleDashboardRoutes = {
+    SUPER_ADMIN: "/dashboard",
+    ADMIN: "/dashboard",
+    VENDOR: "/vehicles",         // or "/vendor-dashboard" if exists
+    CLIENT: "/client-dashboard" // or another client-specific route
+  };
   
+  const handleStaticLogin = async (dispatch, setError, role = 'ADMIN') => {
+    try {
+      const mockToken =  MOCK_TOKENS.VENDOR; // fallback to ADMIN token
 
-    const decoded = jwtDecode(mockToken);
-    const expirationTime = decoded.exp * 1000;
-
-    Cookies.set("auth_token", mockToken, {
-      expires: new Date(expirationTime), // 💡 Must be a Date object
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
-    });
-
-    dispatch(setUser(decoded));
-    console.log("Static login decoded:", decoded);
-    console.log("Token from cookie:", Cookies.get("auth_token"));
-
-   
-    navigate("/dashboard");
-
-  } catch (err) {
-    console.error("❌ Static login failed:", err);
-    setError("Static login error");
-  }
-};
+      if (!mockToken || typeof mockToken !== 'string') {
+        throw new Error('Invalid mock token');
+      }
+  
+      const decoded = jwtDecode(mockToken);
+      const expirationTime = decoded.exp * 1000;
+  
+      Cookies.set("auth_token", mockToken, {
+        expires: new Date(expirationTime),
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Strict",
+      });
+  
+      dispatch(setUser(decoded));
+      console.log("Static login decoded:", decoded);
+      console.log("Token from cookie:", Cookies.get("auth_token"));
+  
+      navigate("/dashboard");
+  
+    } catch (err) {
+      console.error("❌ Static login failed:", err);
+      setError("Static login error");
+    }
+  };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();

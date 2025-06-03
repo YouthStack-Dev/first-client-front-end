@@ -16,7 +16,6 @@ import Home from './pages/Home';
 import { jwtDecode } from 'jwt-decode';
 import Cookies from "js-cookie";
 import { setUser } from './redux/features/userSlice';
-import ManageClients from './pages/ManageClients';
 import ManageVehicles from './pages/ManageVehicles';
 import BookingManagement from './pages/BookingManagement';
 import ManageUser from './pages/ManageUser';
@@ -27,6 +26,13 @@ import ManageVehicleTypes from './pages/ManageVehicleType';
 import ShiftManagement from './pages/ShiftManagement';
 import VehicleContract from './pages/VehicleContract';
 import ManageVendor from './pages/ManageVendor';
+import RoleManagement from './components/RoleManagement/RoleManagement';
+import ManageStaffs from './pages/ManageStaffs';
+import SuperAdminDashboard from './components/dashboards/SuperAdminDashboard';
+import AdminDashboard from './components/dashboards/AdminDashboard';
+import VendorDashboard from './components/dashboards/VendorDashboard';
+import ClientDashboard from './components/dashboards/ClientDashboard';
+import DashboardRouter from './components/dashboards/DashboardRouter';
 // Layout component for authenticated pages
 
 const Layout = () => {
@@ -81,11 +87,11 @@ const Layout = () => {
 };
 
 
-const Vendors = () => <h1 className="text-2xl font-bold">Vendors</h1>;
+
 
 function App() {
   const dispatch = useDispatch();
-  const [loading, setLoading] = useState(true); // ⬅️ hold until token is checked
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = Cookies.get("auth_token");
@@ -98,7 +104,7 @@ function App() {
         Cookies.remove("auth_token");
       }
     }
-    setLoading(false); // ✅ done checking, now allow rendering
+    setLoading(false);
   }, [dispatch]);
 
   if (loading) {
@@ -110,54 +116,65 @@ function App() {
   }
 
   return (
-      <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/unauthorized" element={<Unauthorized />} />
-          <Route path="/" element={<Home />} />
+    <Router>
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/unauthorized" element={<Unauthorized />} />
+      <Route path="/" element={<Home />} />
 
-          {/* Protected Routes */}
-          <Route element={<Layout />}>
-          
-
-            <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]} />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/clients" element={<ManageClients/>} />
-              <Route path="/users/create-employee" element={<EmployeeForm/>} />
-              <Route path="/users" element={<ManageUser/>} />
-              <Route path="/bookings" element={<BookingManagement />} />
-              <Route path="/vehicles/add-vehicle" element={<VehicleForm />} />
-              <Route path="/drivers/driver-form" element={<DriverForm />} />
-
-              <Route path="/manage-shift" element={<ShiftManagement/>} />
-
-              <Route path="/shift-Categories" element={<h1> this isshift-Categories management </h1>} />
-
-              <Route path="/shedule-polysies" element={<h1> this is shedule-polysies management </h1>}/>
+      {/* Protected Routes */}
+      <Route element={<Layout />}>
 
 
-            </Route>
+<Route element={<ProtectedRoute roles={["SUPER_ADMIN", "ADMIN", "VENDOR", "CLIENT"]} />}>
+  <Route path="/dashboard" element={<DashboardRouter />} />
+</Route>
 
-            <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR]} />}>
-              <Route path="/vehicles" element={<ManageVehicles/>} />
-              <Route path="/routing" element={<RouteManagement />} />
-              <Route path="/vehicle-contract" element={<VehicleContract/>} />
-              <Route path="/vehicle-group" element={<ManageVehicleTypes/>} />
-              <Route path="/drivers" element={<ManageDrivers />} />
-            </Route>
+        {/* Admin & Super Admin */}
+        <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]} />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/roleManagement" element={<RoleManagement />} />
+          <Route path="/staffs" element={<ManageStaffs />} />
+          <Route path="/users/create-employee" element={<EmployeeForm />} />
+          <Route path="/users" element={<ManageUser />} />
+          <Route path="/bookings" element={<BookingManagement />} />
+          <Route path="/vehicles/add-vehicle" element={<VehicleForm />} />
+          <Route path="/drivers/driver-form" element={<DriverForm />} />
+          <Route path="/manage-shift" element={<ShiftManagement />} />
+          <Route path="/shift-Categories" element={<h1>Shift Categories management</h1>} />
+          <Route path="/shedule-polysies" element={<h1>Schedule Policies management</h1>} />
 
-            <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN]} />}>
-              <Route path="/vendors" element={<ManageVendor/>} />
-              <Route path="/routing" element={<RouteManagement />} />
-              <Route path="/company-admins" element={<h1> this is company-admins management by superadmin</h1>} />
-              <Route path="/subadmins" element={<h1> this is subadmin management by superadmin</h1>} />
-            </Route>
+          {/* Additional features only for Super Admin inside Admin+SuperAdmin route */}
+          {/* Use a nested ProtectedRoute for SUPER_ADMIN only */}
+          <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN]} />}>
+            <Route path="/vendors" element={<ManageVendor />} />
+            <Route path="/company-admins" element={<h1>Company Admins management</h1>} />
+            <Route path="/subadmins" element={<h1>Subadmin management</h1>} />
           </Route>
-        </Routes>
-      </Router>
+        </Route>
+
+        {/* Vendor */}
+        <Route element={<ProtectedRoute roles={[ROLES.VENDOR]} />}>
+         <Route path="/vendor-dashboard" element={<h1>This is client Dash board </h1>} />
+          <Route path="/vehicles" element={<ManageVehicles />} />
+          <Route path="/routing" element={<RouteManagement />} />
+          <Route path="/vehicle-contract" element={<VehicleContract />} />
+          <Route path="/vehicle-group" element={<ManageVehicleTypes />} />
+          <Route path="/drivers" element={<ManageDrivers />} />
+        </Route>
+
+        {/* Client */}
+        <Route element={<ProtectedRoute roles={[ROLES.CLIENT]} />}>
+          {/* Add client-specific routes */}
+          <Route path="/client-dashboard" element={<h1>This is client Dash board </h1>} />
+          <Route path="/client-profile" element={<h1>This is client Profile </h1>} />
+        </Route>
+
+      </Route>
+    </Routes>
+  </Router>
   );
 }
-
 
 export default App;

@@ -6,63 +6,31 @@ export const ROLES = {
   CLIENT: 'CLIENT'
 };
 
-// Function to check if user has required role
-export const hasPermission = (userRole, requiredRoles) => {
-  return true
-  // if (!requiredRoles) return true;
-  // return requiredRoles.includes(userRole);
+export const MOCK_TOKENS = {
+  SUPER_ADMIN: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+    "eyJ1c2VybmFtZSI6InN1cGVyYWRtaW4iLCJyb2xlIjoiU1VQRVJfQURNSU4iLCJleHAiOjE5MDAwMDAwMDB9." +
+    "dummy-signature",
+
+  ADMIN: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+    "eyJ1c2VybmFtZSI6ImFkbWluVXNlciIsInJvbGUiOiJBRE1JTiIsImV4cCI6MTkwMDAwMDAwMH0." +
+    "dummy-signature",
+
+  VENDOR: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+    "eyJ1c2VybmFtZSI6InZlbmRvclVzZXIiLCJyb2xlIjoiVkVORE9SIiwiZXhwIjoxOTAwMDAwMDAwfQ." +
+    "dummy-signature",
+
+  CLIENT: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+    "eyJ1c2VybmFtZSI6ImNsaWVudFVzZXIiLCJyb2xlIjoiQ0xJRU5UIiwiZXhwIjoxOTAwMDAwMDAwfQ." +
+    "dummy-signature",
 };
 
-const user = {
-  id: 1,
-  name: 'Admin User',
-  email: 'admin@example.com',
-  roleId: 1,
-  permissions: [
-    {
-      module: 'Dashboard',
-      canRead: true,
-      canWrite: false,
-      canDelete: false,
-    },
-    {
-      module: 'Users',
-      canRead: true,
-      canWrite: true,
-      canDelete: false,
-    },
-    {
-      module: 'Vehicles',
-      canRead: false,
-      canWrite: false,
-      canDelete: false,
-    },
-    {
-      module: 'Drivers',
-      canRead: true,
-      canWrite: false,
-      canDelete: false,
-    },
-    {
-      module: 'UserManagement',
-      canRead: true,
-      canWrite: false,
-      canDelete: false,
-    },
-    {
-      module: 'SchedulingManagement',
-      canRead: true,
-      canWrite: false,
-      canDelete: false,
-    },
-    {
-      module: 'Clients',
-      canRead: true,
-      canWrite: false,
-      canDelete: false,
-    }
-  ]
-};
+
+// Function to check if user has required role
+export const hasPermission = (userRole, requiredRoles) => {
+  // return true
+  if (!requiredRoles) return true;
+  return requiredRoles.includes(userRole);
+}; 
 
 
 export function hasModuleAccess(users, moduleName) {

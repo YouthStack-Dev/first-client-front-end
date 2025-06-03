@@ -1,49 +1,44 @@
 import React, { useEffect, useState } from 'react';
 import { Edit, MoreVertical, Plus, Search, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { InputField, Modal } from '../components/SmallComponents';
+// import { useGetStaffsQuery } from '../redux/rtkquery/staffRtk'; // hypothetical staff hook
 import { useGetClientsQuery } from '../redux/rtkquery/clientRtk';
-import { LocalClient } from '../Api/API_Client';
- // Hypothetical RTK Query hook for clients
-
-// Memoized Client List Component
-const ClientList = React.memo(({ clients, menuOpen, onNext, onPrev, currentPage, totalPages, isLoading }) => (
+// Memoized Staff List Component
+const StaffList = React.memo(({ staffs, menuOpen, onNext, onPrev, currentPage, totalPages, isLoading }) => (
   <div className="rounded-lg overflow-hidden shadow-sm mt-2">
-    {/* Table Container with Scroll */}
     <div className="overflow-auto h-[620px]">
       <table className="min-w-full border-collapse">
-        {/* Table Header */}
         <thead className="bg-gray-50 border-b sticky top-0">
           <tr className="text-left text-gray-600">
-            <th className="px-4 py-3 w-1/3">Client Name</th>
+            <th className="px-4 py-3 w-1/3">Staff Name</th>
             <th className="px-4 py-3 w-1/3">Created At</th>
             <th className="px-4 py-3 w-1/3 text-center">Actions</th>
           </tr>
         </thead>
 
-        {/* Table Body */}
         <tbody>
           {isLoading ? (
             <tr>
               <td colSpan="3" className="p-4 text-center text-gray-500">
-                Loading clients...
+                Loading staff...
               </td>
             </tr>
-          ) : clients?.length === 0 ? (
+          ) : staffs?.length === 0 ? (
             <tr>
               <td colSpan="3" className="p-4 text-center text-gray-500">
-                No clients found
+                No staff found
               </td>
             </tr>
           ) : (
-            clients.map((client) => (
-              <tr key={client.id} className="border-b hover:bg-gray-50 transition">
-                <td className="px-4 py-3">{client.name}</td>
-                <td className="px-4 py-3">{new Date(client.createdAt).toLocaleDateString()}</td>
+            staffs.map((staff) => (
+              <tr key={staff.id} className="border-b hover:bg-gray-50 transition">
+                <td className="px-4 py-3">{staff.name}</td>
+                <td className="px-4 py-3">{new Date(staff.createdAt).toLocaleDateString()}</td>
                 <td className="px-4 py-3 text-center relative">
                   <button className="p-2 hover:bg-gray-100 rounded-full">
                     <MoreVertical size={20} className="text-gray-600" />
                   </button>
-                  {menuOpen === client.id && (
+                  {menuOpen === staff.id && (
                     <div className="absolute right-0 mt-2 bg-white rounded-lg shadow-lg border p-2 z-10">
                       <button className="flex flex-col items-center px-3 py-2 text-gray-700 hover:bg-gray-50">
                         <Edit size={18} color="blue" />
@@ -92,21 +87,32 @@ const ClientList = React.memo(({ clients, menuOpen, onNext, onPrev, currentPage,
   </div>
 ));
 
-function ManageClients() {
+function ManageStaffs() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [clientModal, setClientModal] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(null); // For dropdown menu
+  const [staffModal, setStaffModal] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(null);
+  // const { data :staffs=[], isLoading } = useGetClientsQuery(); 
 
-  const { data :clients=[], isLoading } = useGetClientsQuery(); // Hypothetical RTK Query hook
+  const staffs = [
+    { id: 1, name: "John Doe", createdAt: "2025-05-01T10:30:00Z" },
+    { id: 2, name: "Jane Smith", createdAt: "2025-05-03T14:15:00Z" },
+    { id: 3, name: "Robert Johnson", createdAt: "2025-05-05T09:45:00Z" },
+    { id: 4, name: "Emily Davis", createdAt: "2025-05-06T12:00:00Z" },
+    { id: 5, name: "Michael Brown", createdAt: "2025-05-07T11:20:00Z" },
+    { id: 6, name: "Linda Wilson", createdAt: "2025-05-08T15:10:00Z" },
+    { id: 7, name: "William Jones", createdAt: "2025-05-09T08:50:00Z" },
+    { id: 8, name: "Patricia Garcia", createdAt: "2025-05-10T13:30:00Z" },
+    { id: 9, name: "David Martinez", createdAt: "2025-05-11T10:40:00Z" },
+    { id: 10, name: "Jennifer Rodriguez", createdAt: "2025-05-12T16:00:00Z" },
+    { id: 11, name: "Daniel Lee", createdAt: "2025-05-13T09:00:00Z" },
+    { id: 12, name: "Susan Clark", createdAt: "2025-05-14T17:30:00Z" },
+  ];
+  
+  const isLoading = false;
+  
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil((staffs?.length || 0) / itemsPerPage);
 
-console.log(" this are the clienst ", clients);
-
-
-
-  const itemsPerPage = 10; // Adjust as needed
-  const totalPages = Math.ceil((clients?.length || 0) / itemsPerPage);
-
-  // Pagination logic
   const onPrev = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
@@ -115,22 +121,16 @@ console.log(" this are the clienst ", clients);
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
 
-  // Handle client submit
-  const handleClientSubmit = (e) => {
+  const handleStaffSubmit = (e) => {
     e.preventDefault();
-    console.log("Form submitted");
-
     const formData = new FormData(e.target);
-    const clientName = formData.get("clientName");
-
-    console.log({ clientName });
-
-    // Add your API call here to save the client
-    setClientModal(false);
+    const staffName = formData.get("staffName");
+    console.log({ staffName });
+    // Add API call here
+    setStaffModal(false);
   };
 
-  // Paginated clients
-  const paginatedClients = clients.slice(
+  const paginatedStaffs = staffs.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -139,35 +139,35 @@ console.log(" this are the clienst ", clients);
     <>
       <div className="bg-white rounded-lg shadow-md p-2">
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-2xl font-bold text-gray-800">Manage Clients</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Manage Staffs</h1>
           <button
-            onClick={() => setClientModal(true)}
+            onClick={() => setStaffModal(true)}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            aria-label="Add client"
+            aria-label="Add staff"
           >
             <Plus size={20} />
-            Add Client
+            Add Staff
           </button>
         </div>
 
-        {/* Add Client Modal */}
+        {/* Add Staff Modal */}
         <Modal
-          isOpen={clientModal}
-          onClose={() => setClientModal(false)}
-          title="Add New Client"
-          onSubmit={handleClientSubmit}
+          isOpen={staffModal}
+          onClose={() => setStaffModal(false)}
+          title="Add New Staff"
+          onSubmit={handleStaffSubmit}
         >
           <InputField
-            label="Client Name"
-            name="clientName"
-            placeholder="Enter client name"
+            label="Staff Name"
+            name="staffName"
+            placeholder="Enter staff name"
             required
           />
         </Modal>
 
-        {/* Client List */}
-        <ClientList
-          clients={paginatedClients}
+        {/* Staff List */}
+        <StaffList
+          staffs={paginatedStaffs}
           menuOpen={menuOpen}
           onNext={onNext}
           onPrev={onPrev}
@@ -180,4 +180,4 @@ console.log(" this are the clienst ", clients);
   );
 }
 
-export default React.memo(ManageClients);
+export default React.memo(ManageStaffs);

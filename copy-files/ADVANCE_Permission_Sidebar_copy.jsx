@@ -1,6 +1,6 @@
 
-import { hasModuleAccess, hasPermission, hasSubModuleAccess } from '../utils/auth';
-import { ROLES } from '../utils/auth';
+import { hasModuleAccess, hasPermission, hasSubModuleAccess } from '../src/utils/auth';
+import { ROLES } from '../src/utils/auth';
 import { 
  Calendar, Building2, 
   LayoutDashboard, LogOut, User as UserIcon, 
@@ -10,7 +10,7 @@ import {
 import { Link, useLocation } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { logoutUser } from '../redux/features/userSlice';
+import { logoutUser } from '../src/redux/features/userSlice';
 
 const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
 
@@ -72,74 +72,145 @@ const handleLogout = () => {
     }
   };
 
-  // Add commentMore actions
+
+
   const menuItems = [
     {
       path: '/dashboard',
       name: 'Dashboard',
+      moduleName: 'Dashboard',
       icon: LayoutDashboard,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR]
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR],
     },
     {
       name: 'User Management',
+      moduleName: 'UserManagement',
       icon: UserIcon,
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
       subItems: [
-        { path: '/clients', name: 'Clients', icon: Users2, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
-        { path: '/company-admins', name:'Company Admins', icon: UserCog, roles: [ROLES.SUPER_ADMIN] },
-        { path: '/subadmins', name: 'Subadmins', icon: UserPlus, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] }
-      ]
+        {
+          path: '/staffs',
+          name: 'Staff',
+          moduleName: 'Clients',
+          icon: Users2,
+          roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+        },
+        {
+          path: '/company-admins',
+          name: 'Company Admins',
+          moduleName: 'CompanyAdmins',
+          icon: UserCog,
+          roles: [ROLES.SUPER_ADMIN],
+        },
+        {
+          path: '/subadmins',
+          name: 'Subadmins',
+          moduleName: 'Subadmins',
+          icon: UserPlus,
+          roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+        },
+      ],
     },
     {
       name: 'Manage Vehicles',
+      moduleName: 'ManageVehicles',
       icon: Car,
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
       subItems: [
-        { path: '/vehicles', name: 'Vehicles', icon: Users2, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
-        { path: '/vehicle-contract', name: 'Vehicle Contract', icon: UserCog, roles: [ROLES.SUPER_ADMIN] },
-        { path: '/vehicle-group', name: 'Vehicle Type', icon: UserPlus, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] }
-      ]
+        {
+          path: '/vehicles',
+          name: 'Vehicles',
+          moduleName: 'Vehicles',
+          icon: Users2,
+          roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+        },
+        {
+          path: '/vehicle-contract',
+          name: 'Vehicle Contract',
+          moduleName: 'VehicleContract',
+          icon: UserCog,
+          roles: [ROLES.SUPER_ADMIN],
+        },
+        {
+          path: '/vehicle-group',
+          name: 'Vehicle Type',
+          moduleName: 'VehicleType',
+          icon: UserPlus,
+          roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+        },
+      ],
     },
     {
-      name: ' Scheduling Management',
+      name: 'Scheduling Management',
+      moduleName: 'SchedulingManagement',
       icon: Car,
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
       subItems: [
-        { path: '/manage-shift', name: 'Manage Shift', icon: Users2, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
-        { path: '/shift-Categories', name: 'Manage Shift Categories', icon: UserCog, roles: [ROLES.SUPER_ADMIN ,ROLES.ADMIN] },
-        { path: '/shedule-polysies', name: 'Manage Shedule Polysies', icon: UserPlus, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] }
-      ]
+        {
+          path: '/manage-shift',
+          name: 'Manage Shift',
+          moduleName: 'ManageShift',
+          icon: Users2,
+          roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+        },
+        {
+          path: '/shift-Categories',
+          name: 'Manage Shift Categories',
+          moduleName: 'ShiftCategories',
+          icon: UserCog,
+          roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+        },
+        {
+          path: '/shedule-polysies',
+          name: 'Manage Schedule Policies',
+          moduleName: 'SchedulePolicies',
+          icon: UserPlus,
+          roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+        },
+      ],
     },
-   
+    {
+      path: '/roleManagement',
+      name: 'RoleManagement',
+      moduleName: 'RoleManagement',
+      icon: UserIcon,
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+    },
+
     {
       path: '/bookings',
       name: 'Bookings',
+      moduleName: 'Bookings',
       icon: Calendar,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
     },
     {
       path: '/users',
-      name: 'Users',
+      name: 'Employes',
+      moduleName: 'Users',
       icon: UserIcon,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
     },
     {
       path: '/drivers',
       name: 'Drivers',
+      moduleName: 'Drivers',
       icon: CarTaxiFront,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
     },
     {
       path: '/routing',
       name: 'Routing',
+      moduleName: 'Routing',
       icon: RouteIcon,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
     },
     {
       path: '/vendors',
       name: 'Vendors',
+      moduleName: 'Vendors',
       icon: Building2,
-      roles: [ROLES.SUPER_ADMIN]
+      roles: [ROLES.SUPER_ADMIN],
     },
   ];
   
@@ -167,7 +238,7 @@ const handleLogout = () => {
       
       <nav className="flex-1 overflow-y-auto p-2 space-y-2">
       {menuItems.map((item) => (
-      hasPermission(user.role, item.roles)  && (
+     hasModuleAccess(user, item.moduleName) && (
     <div key={item.path || item.name} className="relative">
       {item.subItems ? (
         <>
@@ -187,13 +258,13 @@ const handleLogout = () => {
                   }`}
                 />
               </>
-            )}  
+            )}
           </button>
 
           {isOpen && openDropdown[item.name] && (
             <div className="mt-1 space-y-1 px-2">
               {item.subItems.map((subItem) =>
-                 hasPermission(user.role, subItem.roles)  && (
+                hasSubModuleAccess(user, subItem.moduleName) && (
                   <Link
                     key={subItem.path}
                     to={subItem.path}
