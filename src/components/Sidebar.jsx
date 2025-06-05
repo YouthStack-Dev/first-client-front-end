@@ -93,11 +93,11 @@ const handleLogout = () => {
     {
       name: 'Manage Vehicles',
       icon: Car,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+      roles: [ROLES.SUPER_ADMIN,ROLES.VENDOR],
       subItems: [
-        { path: '/vehicles', name: 'Vehicles', icon: Users2, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
-        { path: '/vehicle-contract', name: 'Vehicle Contract', icon: UserCog, roles: [ROLES.SUPER_ADMIN] },
-        { path: '/vehicle-group', name: 'Vehicle Type', icon: UserPlus, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] }
+        { path: '/vehicles', name: 'Vehicles', icon: Users2, roles: [ROLES.SUPER_ADMIN, ROLES.VENDOR] },
+        { path: '/vehicle-contract', name: 'Vehicle Contract', icon: UserCog, roles: [ROLES.SUPER_ADMIN ,ROLES.VENDOR] },
+        { path: '/vehicle-group', name: 'Vehicle Type', icon: UserPlus, roles: [ROLES.SUPER_ADMIN, ROLES.VENDOR] }
       ]
     },
     {
@@ -127,13 +127,13 @@ const handleLogout = () => {
       path: '/drivers',
       name: 'Drivers',
       icon: CarTaxiFront,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN,ROLES.VENDOR]
     },
     {
       path: '/routing',
       name: 'Routing',
       icon: RouteIcon,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+      roles: [ROLES.SUPER_ADMIN, ROLES.VENDOR]
     },
     {
       path: '/vendors',

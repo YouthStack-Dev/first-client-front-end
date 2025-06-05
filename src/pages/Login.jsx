@@ -18,13 +18,6 @@ const Login = () => {
   const dispatch = useDispatch();
   
 
-  const roleDashboardRoutes = {
-    SUPER_ADMIN: "/dashboard",
-    ADMIN: "/dashboard",
-    VENDOR: "/vehicles",         // or "/vendor-dashboard" if exists
-    CLIENT: "/client-dashboard" // or another client-specific route
-  };
-  
   const handleStaticLogin = async (dispatch, setError, role = 'ADMIN') => {
     try {
       const mockToken =  MOCK_TOKENS.VENDOR; // fallback to ADMIN token
