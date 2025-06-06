@@ -28,10 +28,7 @@ import VehicleContract from './pages/VehicleContract';
 import ManageVendor from './pages/ManageVendor';
 import RoleManagement from './components/RoleManagement/RoleManagement';
 import ManageStaffs from './pages/ManageStaffs';
-import SuperAdminDashboard from './components/dashboards/SuperAdminDashboard';
-import AdminDashboard from './components/dashboards/AdminDashboard';
-import VendorDashboard from './components/dashboards/VendorDashboard';
-import ClientDashboard from './components/dashboards/ClientDashboard';
+
 import DashboardRouter from './components/dashboards/DashboardRouter';
 // Layout component for authenticated pages
 
@@ -144,13 +141,21 @@ function App() {
           <Route path="/manage-shift" element={<ShiftManagement />} />
           <Route path="/shift-Categories" element={<h1>Shift Categories management</h1>} />
           <Route path="/shedule-polysies" element={<h1>Schedule Policies management</h1>} />
-
+          <Route path="/drivers" element={<ManageDrivers />} />
+          <Route path="/audit-report" element={<h1> This is the audit report implimemntation </h1>} />
+          <Route path="/manage-team" element={<h1> Manage team Implimentation</h1>} />
+          <Route path="/manage-marshal" element={<h1>IMPIMENTATION OF  marshal management</h1>} />
+          <Route path="/schedule-policies" element={<h1> IMPIMENTATION Schedule Policies</h1>} />
+          <Route path="/routing" element={<RouteManagement />} />
           {/* Additional features only for Super Admin inside Admin+SuperAdmin route */}
           {/* Use a nested ProtectedRoute for SUPER_ADMIN only */}
           <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN]} />}>
             <Route path="/vendors" element={<ManageVendor />} />
             <Route path="/company-admins" element={<h1>Company Admins management</h1>} />
             <Route path="/subadmins" element={<h1>Subadmin management</h1>} />
+            <Route path="/sms-config" element={<h1>SMS Configuration</h1>} />
+            
+            <Route path="/drivers" element={<ManageDrivers />} />
           </Route>
         </Route>
 
@@ -158,7 +163,7 @@ function App() {
         <Route element={<ProtectedRoute roles={[ROLES.VENDOR]} />}>
          <Route path="/vendor-dashboard" element={<h1>This is client Dash board </h1>} />
           <Route path="/vehicles" element={<ManageVehicles />} />
-          <Route path="/routing" element={<RouteManagement />} />
+         
           <Route path="/vehicle-contract" element={<VehicleContract />} />
           <Route path="/vehicle-group" element={<ManageVehicleTypes />} />
           <Route path="/drivers" element={<ManageDrivers />} />

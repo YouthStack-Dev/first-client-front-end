@@ -1,12 +1,25 @@
 
 import { hasModuleAccess, hasPermission, hasSubModuleAccess } from '../utils/auth';
 import { ROLES } from '../utils/auth';
-import { 
- Calendar, Building2, 
-  LayoutDashboard, LogOut, User as UserIcon, 
-  ChevronDown, UserCog, UserPlus, Users2,
-  Pin, PinOff, CarTaxiFront,Car,RouteIcon
+import {
+  LayoutDashboard,
+  LogOut,
+  User ,
+  Users2,
+  UserCog,
+  UserPlus,
+  Car,
+  CarTaxiFront,
+  Calendar,
+  ClipboardList,
+  Route ,
+  Building2,
+  ChevronDown,
+  Pin,
+  PinOff,
+  MessageCircleCode
 } from 'lucide-react';
+
 import { Link, useLocation } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -72,7 +85,6 @@ const handleLogout = () => {
     }
   };
 
-  // Add commentMore actions
   const menuItems = [
     {
       path: '/dashboard',
@@ -82,35 +94,54 @@ const handleLogout = () => {
     },
     {
       name: 'User Management',
-      icon: UserIcon,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+      icon: User,
+      roles: [ROLES.SUPER_ADMIN],
       subItems: [
         { path: '/clients', name: 'Clients', icon: Users2, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
-        { path: '/company-admins', name:'Company Admins', icon: UserCog, roles: [ROLES.SUPER_ADMIN] },
+        { path: '/company-admins', name: 'Company Admins', icon: UserCog, roles: [ROLES.SUPER_ADMIN] },
         { path: '/subadmins', name: 'Subadmins', icon: UserPlus, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] }
+      ]
+    },
+    {
+      name: 'Manage Contracts',
+      icon: ClipboardList,
+      roles: [ROLES.SUPER_ADMIN],
+      subItems: [
+        { path: '/vehicle-contract', name: 'Vehicle Contract', icon: Car, roles: [ROLES.SUPER_ADMIN, ROLES.VENDOR] },
+        { path: '/vendor-contract', name: 'Vendor Contract', icon: Building2, roles: [ROLES.SUPER_ADMIN, ROLES.VENDOR] }
       ]
     },
     {
       name: 'Manage Vehicles',
       icon: Car,
-      roles: [ROLES.SUPER_ADMIN,ROLES.VENDOR],
+      roles: [ROLES.SUPER_ADMIN, ROLES.VENDOR],
       subItems: [
-        { path: '/vehicles', name: 'Vehicles', icon: Users2, roles: [ROLES.SUPER_ADMIN, ROLES.VENDOR] },
-        { path: '/vehicle-contract', name: 'Vehicle Contract', icon: UserCog, roles: [ROLES.SUPER_ADMIN ,ROLES.VENDOR] },
-        { path: '/vehicle-group', name: 'Vehicle Type', icon: UserPlus, roles: [ROLES.SUPER_ADMIN, ROLES.VENDOR] }
+        { path: '/vehicles', name: 'Vehicles', icon: CarTaxiFront, roles: [ROLES.SUPER_ADMIN, ROLES.VENDOR] },
+        { path: '/vehicle-group', name: 'Vehicle Type', icon: ClipboardList, roles: [ROLES.SUPER_ADMIN, ROLES.VENDOR] }
       ]
     },
     {
-      name: ' Scheduling Management',
-      icon: Car,
+      name: 'Scheduling Management',
+      icon: Calendar,
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
       subItems: [
-        { path: '/manage-shift', name: 'Manage Shift', icon: Users2, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
-        { path: '/shift-Categories', name: 'Manage Shift Categories', icon: UserCog, roles: [ROLES.SUPER_ADMIN ,ROLES.ADMIN] },
-        { path: '/shedule-polysies', name: 'Manage Shedule Polysies', icon: UserPlus, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] }
+        { path: '/manage-shift', name: 'Manage Shift', icon: Calendar, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
+        { path: '/shift-categories', name: 'Manage Shift Categories', icon: ClipboardList, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
+        { path: '/schedule-policies', name: 'Manage Schedule Policies', icon: ClipboardList, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] }
       ]
     },
-   
+    {
+      path: '/manage-team',
+      name: 'Manage Team',
+      icon: Users2,
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+    },
+    {
+      path: '/manage-marshal',
+      name: 'Manage Marshal',
+      icon: UserCog,
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+    },
     {
       path: '/bookings',
       name: 'Bookings',
@@ -120,20 +151,26 @@ const handleLogout = () => {
     {
       path: '/users',
       name: 'Users',
-      icon: UserIcon,
+      icon: Users2,
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+    },
+    {
+      path: '/audit-report',
+      name: 'Audit Report',
+      icon: ClipboardList,
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
     },
     {
       path: '/drivers',
       name: 'Drivers',
       icon: CarTaxiFront,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN,ROLES.VENDOR]
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR]
     },
     {
       path: '/routing',
       name: 'Routing',
-      icon: RouteIcon,
-      roles: [ROLES.SUPER_ADMIN, ROLES.VENDOR]
+      icon: Route,
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
     },
     {
       path: '/vendors',
@@ -141,7 +178,14 @@ const handleLogout = () => {
       icon: Building2,
       roles: [ROLES.SUPER_ADMIN]
     },
+    {
+      path: '/sms-config',
+      name: 'SMS Config',
+      icon: MessageCircleCode,
+      roles: [ROLES.SUPER_ADMIN]
+    }
   ];
+  
   
   const sidebarWidth = isOpen ? 'w-64' : 'w-16';
   const sidebarClass = `h-screen ${sidebarWidth} bg-gray-800 text-white flex flex-col fixed left-0 transition-all duration-300 ease-in-out z-50`;
