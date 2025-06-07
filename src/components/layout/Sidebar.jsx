@@ -1,6 +1,6 @@
 
-import { hasModuleAccess, hasPermission, hasSubModuleAccess } from '../utils/auth';
-import { ROLES } from '../utils/auth';
+// import { hasModuleAccess, hasPermission, hasSubModuleAccess } from '../utils/auth';
+// import { ROLES } from '../utils/auth';
 import {
   LayoutDashboard,
   LogOut,
@@ -23,7 +23,9 @@ import {
 import { Link, useLocation } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { logoutUser } from '../redux/features/userSlice';
+import { logoutUser } from '../../redux/features/userSlice';
+import { hasPermission, ROLES } from '../../utils/auth';
+// import { logoutUser } from '../redux/features/userSlice';
 
 const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
 
@@ -97,7 +99,7 @@ const handleLogout = () => {
       icon: User,
       roles: [ROLES.SUPER_ADMIN],
       subItems: [
-        { path: '/clients', name: 'Clients', icon: Users2, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
+       
         { path: '/company-admins', name: 'Company Admins', icon: UserCog, roles: [ROLES.SUPER_ADMIN] },
         { path: '/subadmins', name: 'Subadmins', icon: UserPlus, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] }
       ]
@@ -105,10 +107,10 @@ const handleLogout = () => {
     {
       name: 'Manage Contracts',
       icon: ClipboardList,
-      roles: [ROLES.SUPER_ADMIN],
+      roles: [ROLES.SUPER_ADMIN,ROLES.VENDOR,ROLES.ADMIN],
       subItems: [
-        { path: '/vehicle-contract', name: 'Vehicle Contract', icon: Car, roles: [ROLES.SUPER_ADMIN, ROLES.VENDOR] },
-        { path: '/vendor-contract', name: 'Vendor Contract', icon: Building2, roles: [ROLES.SUPER_ADMIN, ROLES.VENDOR] }
+        { path: '/vehicle-contract', name: 'Vehicle Contract', icon: Car, roles: [, ROLES.VENDOR] },
+        { path: '/vendor-contract', name: 'Vendor Contract', icon: Building2, roles: [ ROLES.VENDOR] }
       ]
     },
     {
@@ -155,6 +157,12 @@ const handleLogout = () => {
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
     },
     {
+      path: '/role-management',
+      name: 'Role Managemet',
+      icon: Users2,
+      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+    },
+    {
       path: '/audit-report',
       name: 'Audit Report',
       icon: ClipboardList,
@@ -178,6 +186,26 @@ const handleLogout = () => {
       icon: Building2,
       roles: [ROLES.SUPER_ADMIN]
     },
+    {
+      path: '/bussiness-unit',
+      name: 'Bussiness-unit',
+      icon: Building2,
+      roles: [ROLES.SUPER_ADMIN ,ROLES.ADMIN]
+    },
+    {
+      path: '/staf-administration',
+      name: 'Staf',
+      icon: Building2,
+      roles: [ROLES.SUPER_ADMIN ,ROLES.ADMIN]
+    },
+    {
+      path: '/security-dashboard',
+      name: 'Security Dashboard',
+      icon: Building2,
+      roles: [ROLES.SUPER_ADMIN ,ROLES.ADMIN]
+    },
+    
+    
     {
       path: '/sms-config',
       name: 'SMS Config',

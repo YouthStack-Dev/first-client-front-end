@@ -1,19 +1,29 @@
 // src/utils/logger.js
 
-const isDev = import.meta.env.DEV; // true in dev, false in prod
+const LOG_LEVEL = import.meta.env.VITE_APP_LOG_LEVEL || 'debug';
 
-export const log = (...args) => {
-  if (isDev) console.log(...args);
+const levels = {
+  silent: 0,
+  error: 1,
+  warn: 2,
+  info: 3,
+  debug: 4,
+};
+
+const currentLevel = levels[LOG_LEVEL.toLowerCase()] ?? 4; // default debug
+
+export const error = (...args) => {
+  if (currentLevel >= levels.error) console.error(...args);
 };
 
 export const warn = (...args) => {
-  if (isDev) console.warn(...args);
-};
-
-export const error = (...args) => {
-  if (isDev) console.error(...args);
+  if (currentLevel >= levels.warn) console.warn(...args);
 };
 
 export const info = (...args) => {
-  if (isDev) console.info(...args);
+  if (currentLevel >= levels.info) console.info(...args);
+};
+
+export const log = (...args) => {
+  if (currentLevel >= levels.debug) console.log(...args);
 };
