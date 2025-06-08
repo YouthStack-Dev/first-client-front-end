@@ -132,30 +132,37 @@ const handleLogout = () => {
         { path: '/schedule-policies', name: 'Manage Schedule Policies', icon: ClipboardList, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] }
       ]
     },
+    
     {
       path: '/manage-team',
       name: 'Manage Team',
       icon: Users2,
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
-    },
+    },  
     {
-      path: '/manage-marshal',
-      name: 'Manage Marshal',
-      icon: UserCog,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
-    },
-    {
-      path: '/bookings',
-      name: 'Bookings',
-      icon: Calendar,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
-    },
-    {
-      path: '/users',
-      name: 'Users',
+      path: '/billings-dashbord',
+      name: ' Manage Billing',
       icon: Users2,
       roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
     },
+    // {
+    //   path: '/manage-marshal',
+    //   name: 'Manage Marshal',
+    //   icon: UserCog,
+    //   roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+    // },
+    // {
+    //   path: '/bookings',
+    //   name: 'Bookings',
+    //   icon: Calendar,
+    //   roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+    // },
+    // {
+    //   path: '/users',
+    //   name: 'Users',
+    //   icon: Users2,
+    //   roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN]
+    // },
     {
       path: '/role-management',
       name: 'Role Managemet',

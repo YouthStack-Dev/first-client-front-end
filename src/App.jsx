@@ -32,6 +32,9 @@ import DashboardRouter from './components/dashboards/DashboardRouter';
 import Layout from './components/layout/layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { log } from './utils/logger';
+import ManageTeams from './pages/ManageTeams';
+import CalendarPopupExample from './components/ui/CalendarPopupExample';
+import EmployeeList from './components/Employee/EmployeeList';
 
 // Layout component for authenticated pages
 
@@ -84,23 +87,33 @@ function App() {
 <Route element={<ProtectedRoute roles={["SUPER_ADMIN", "ADMIN", "VENDOR", "CLIENT"]} />}>
   <Route path="/dashboard" element={<DashboardRouter />} />
 </Route>
+<Route path="/calender" element={<CalendarPopupExample />} />
 
+<Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]} />}>
+
+<Route path="/billings-dashbord" element={<h1>This is thee billing Dashboard </h1>} />
+
+</Route>
         {/* Admin & Super Admin */}
         <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]} />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/role-management" element={<RoleManagement />} />
           <Route path="/staffs" element={<ManageStaffs />} />
-          <Route path="/users/create-employee" element={<EmployeeForm />} />
+          <Route path="/employee/create-employee" element={<EmployeeForm />} />
           <Route path="/users" element={<ManageUser />} />
           <Route path="/bookings" element={<BookingManagement />} />
           <Route path="/vehicles/add-vehicle" element={<VehicleForm />} />
           <Route path="/drivers/driver-form" element={<DriverForm />} />
           <Route path="/manage-shift" element={<ShiftManagement />} />
+          <Route path="/drivers" element={<ManageDrivers />} />
+
           <Route path="/shift-Categories" element={<h1>Shift Categories management</h1>} />
           <Route path="/shedule-polysies" element={<h1>Schedule Policies management</h1>} />
       
           <Route path="/audit-report" element={<h1> This is the audit report implimemntation </h1>} />
-          <Route path="/manage-team" element={<h1> Manage team Implimentation</h1>} />
+          <Route path="/manage-team" element={<ManageTeams/>} />
+          {/* <Route path="/teams" element={<ManageTeams />} /> */}
+          <Route path="/teams/:teamId/employees" element={<EmployeeList />} />
           <Route path="/manage-marshal" element={<h1>IMPIMENTATION OF  marshal management</h1>} />
           <Route path="/schedule-policies" element={<h1> IMPIMENTATION Schedule Policies</h1>} />
           <Route path="/staf-administration" element={<h1> IMPIMENTATION Schedule Policies</h1>} />
