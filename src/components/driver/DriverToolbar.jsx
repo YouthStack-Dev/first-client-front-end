@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const DriverToolbar = ({ vendors = [], onFilterChange, onBulkUpload, onManageCompliance }) => {
   const [driverStatus, setDriverStatus] = useState('All');
   const [vendorType, setVendorType] = useState('All');
-
+  const navigate = useNavigate();
   const handleStatusChange = (e) => {
     const value = e.target.value;
     setDriverStatus(value);
@@ -52,6 +53,12 @@ const DriverToolbar = ({ vendors = [], onFilterChange, onBulkUpload, onManageCom
 
       {/* Buttons */}
       <div className="flex space-x-4 mt-4 md:mt-0">
+        <button
+          onClick={()=>navigate("/driver-form")}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 focus:outline-none"
+        >
+         Add Driver
+        </button>
         <button
           onClick={onBulkUpload}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 focus:outline-none"

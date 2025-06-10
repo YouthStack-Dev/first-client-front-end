@@ -20,7 +20,7 @@ const Login = () => {
 
   const handleStaticLogin = async (dispatch, setError, role = 'ADMIN') => {
     try {
-      const mockToken =  MOCK_TOKENS.ADMIN; // fallback to ADMIN token
+      const mockToken =  MOCK_TOKENS.VENDOR; // fallback to ADMIN token
 
       if (!mockToken || typeof mockToken !== 'string') {
         throw new Error('Invalid mock token');

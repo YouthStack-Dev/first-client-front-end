@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import TabNavigation from './TabNavigation';
 import BasicInfoTab from './BasicInfoTab';
 import ContractsTab from './ContractsTab';
-import DriverTab from './DriverTab';
-import { Car } from 'lucide-react';
+import DriverTab from './driver/DriverTab';
 import HeaderWithActionNoRoute from './HeaderWithActionNoRoute';
 
 const initialFormData = {

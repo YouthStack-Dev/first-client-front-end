@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import DriverTabNavigation from './DriverTabNavigation';
-import PersonalDetailsTab from './PersonalDetailsTab';
+import PersonalDetailsTab from '../PersonalDetailsTab';
 import DocumentsTab from './DocumentsTab';
-import { UserCircle } from 'lucide-react';
-import HeaderWithActionNoRoute from './HeaderWithActionNoRoute';
+import HeaderWithActionNoRoute from '../HeaderWithActionNoRoute';
+// import HeaderWithActionNoRoute from '';
 
 const initialFormData = {
   // Personal Details

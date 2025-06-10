@@ -35,7 +35,7 @@ export const driversData = [
       licenseNo: 'KA5320180028671',
       driverId: '2996',
       vendor: 'MLT',
-      driverPhone: '9916676007 , 9916676007',
+      driverPhone: '9916676007',
       vehicleId: '2996',
       documentsUploaded: 'LICENSE,PV,GOVT-ID',
     },

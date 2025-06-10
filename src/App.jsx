@@ -20,7 +20,7 @@ import BookingManagement from './pages/BookingManagement';
 import ManageUser from './pages/ManageUser';
 import EmployeeForm from './components/EmployeeForm';
 import VehicleForm from './components/VehicleForm';
-import DriverForm from './components/DriverForm';
+import DriverForm from './components/driver/DriverForm';
 import ManageVehicleTypes from './pages/ManageVehicleType';
 import ShiftManagement from './pages/ShiftManagement';
 import VehicleContract from './pages/VehicleContract';
@@ -92,6 +92,7 @@ function App() {
 <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]} />}>
 
 <Route path="/billings-dashbord" element={<h1>This is thee billing Dashboard </h1>} />
+<Route path="/drivers" element={<ManageDrivers />} />
 
 </Route>
         {/* Admin & Super Admin */}
@@ -103,9 +104,8 @@ function App() {
           <Route path="/users" element={<ManageUser />} />
           <Route path="/bookings" element={<BookingManagement />} />
           <Route path="/vehicles/add-vehicle" element={<VehicleForm />} />
-          <Route path="/drivers/driver-form" element={<DriverForm />} />
+          <Route path="/driver-form" element={<DriverForm />} />
           <Route path="/manage-shift" element={<ShiftManagement />} />
-          <Route path="/drivers" element={<ManageDrivers />} />
 
           <Route path="/shift-Categories" element={<h1>Shift Categories management</h1>} />
           <Route path="/shedule-polysies" element={<h1>Schedule Policies management</h1>} />
