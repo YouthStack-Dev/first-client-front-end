@@ -1,45 +1,40 @@
-import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
-
-
-
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Unauthorized from './pages/Unauthorized';
-import { ROLES } from './utils/auth';
-import { useEffect, useState } from 'react';
-import ManageDrivers from './pages/ManageDrivers';
-import {  useDispatch } from 'react-redux';
-
-import RouteManagement from './pages/RouteManagement';
-import Home from './pages/Home';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Suspense, lazy, useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { jwtDecode } from 'jwt-decode';
 import Cookies from "js-cookie";
 import { setUser } from './redux/features/userSlice';
-import ManageVehicles from './pages/ManageVehicles';
-import BookingManagement from './pages/BookingManagement';
-import ManageUser from './pages/ManageUser';
-import EmployeeForm from './components/EmployeeForm';
-import VehicleForm from './components/VehicleForm';
-import DriverForm from './components/driver/DriverForm';
-import ManageVehicleTypes from './pages/ManageVehicleType';
-import ShiftManagement from './pages/ShiftManagement';
-import VehicleContract from './pages/VehicleContract';
-import ManageVendor from './pages/ManageVendor';
-import RoleManagement from './components/RoleManagement/RoleManagement';
-import ManageStaffs from './pages/ManageStaffs';
-
-import DashboardRouter from './components/dashboards/DashboardRouter';
-import Layout from './components/layout/layout';
-import ProtectedRoute from './components/ProtectedRoute';
+import { ROLES } from './utils/auth';
 import { log } from './utils/logger';
-import ManageTeams from './pages/ManageTeams';
-import CalendarPopupExample from './components/ui/CalendarPopupExample';
-import EmployeeList from './components/Employee/EmployeeList';
+import ProtectedRoute from './components/ProtectedRoute';
+import Layout from './components/layout/layout';
+import Loading from './components/ui/Loading'; // fallback loader
 
-// Layout component for authenticated pages
+// Lazy-loaded components
+const Login = lazy(() => import('./pages/Login'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Unauthorized = lazy(() => import('./pages/Unauthorized'));
+const Home = lazy(() => import('./pages/Home'));
+const ManageDrivers = lazy(() => import('./pages/ManageDrivers'));
+const RouteManagement = lazy(() => import('./pages/RouteManagement'));
+const ManageVehicles = lazy(() => import('./pages/ManageVehicles'));
+const BookingManagement = lazy(() => import('./pages/BookingManagement'));
+const ManageUser = lazy(() => import('./pages/ManageUser'));
+const EmployeeForm = lazy(() => import('./components/EmployeeForm'));
+const VehicleForm = lazy(() => import('./components/VehicleForm'));
+const DriverForm = lazy(() => import('./components/driver/DriverForm'));
+const ManageVehicleTypes = lazy(() => import('./pages/ManageVehicleType'));
+const ShiftManagement = lazy(() => import('./pages/ShiftManagement'));
+const VehicleContract = lazy(() => import('./pages/VehicleContract'));
+const ManageVendor = lazy(() => import('./pages/ManageVendor'));
+const RoleManagement = lazy(() => import('./components/RoleManagement/RoleManagement'));
+const ManageStaffs = lazy(() => import('./pages/ManageStaffs'));
+const DashboardRouter = lazy(() => import('./components/dashboards/DashboardRouter'));
+const ManageTeams = lazy(() => import('./pages/ManageTeams'));
+const CalendarPopupExample = lazy(() => import('./components/ui/CalendarPopupExample'));
+const EmployeeList = lazy(() => import('./components/Employee/EmployeeList'));
 
-
-
+// 404 fallback
 const NotFound = () => (
   <div className="flex justify-center items-center h-screen">
     <h1 className="text-3xl font-bold text-red-600">404 - Page Not Found</h1>
@@ -49,7 +44,9 @@ const NotFound = () => (
 function App() {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
+
   log('This is a debug message');
+
   useEffect(() => {
     const token = Cookies.get("auth_token");
     if (token) {
@@ -65,95 +62,78 @@ function App() {
   }, [dispatch]);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-xl font-semibold">Loading ...</p>
-      </div>
-    );
+    return <Loading />;
   }
 
   return (
     <Router>
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/unauthorized" element={<Unauthorized />} />
-      <Route path="/" element={<Home />} />
+      <Suspense fallback={<Loading />}>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/" element={<Home />} />
 
-      {/* Protected Routes */}
-      <Route element={<Layout />}>
+          {/* Protected Routes */}
+          <Route element={<Layout />}>
+            <Route element={<ProtectedRoute roles={["SUPER_ADMIN", "ADMIN", "VENDOR", "CLIENT"]} />}>
+            <Route path="/drivers" element={<ManageDrivers />} />
+            <Route path="/driver-form" element={<DriverForm />} />
 
+              <Route path="/dashboard" element={<DashboardRouter />} />
+            </Route>
 
-<Route element={<ProtectedRoute roles={["SUPER_ADMIN", "ADMIN", "VENDOR", "CLIENT"]} />}>
-  <Route path="/dashboard" element={<DashboardRouter />} />
-</Route>
-<Route path="/calender" element={<CalendarPopupExample />} />
+            <Route path="/calender" element={<CalendarPopupExample />} />
 
-<Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]} />}>
+            {/* Admin & Super Admin */}
+            <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]} />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/role-management" element={<RoleManagement />} />
+              <Route path="/staffs" element={<ManageStaffs />} />
+              <Route path="/employee/create-employee" element={<EmployeeForm />} />
+              <Route path="/users" element={<ManageUser />} />
+              <Route path="/bookings" element={<BookingManagement />} />
+              <Route path="/vehicles/add-vehicle" element={<VehicleForm />} />
+              <Route path="/manage-shift" element={<ShiftManagement />} />
+              <Route path="/shift-Categories" element={<h1>Shift Categories management</h1>} />
+              <Route path="/shedule-polysies" element={<h1>Schedule Policies management</h1>} />
+              <Route path="/audit-report" element={<h1>This is the audit report implementation</h1>} />
+              <Route path="/manage-team" element={<ManageTeams />} />
+              <Route path="/teams/:teamId/employees" element={<EmployeeList />} />
+              <Route path="/manage-marshal" element={<h1>Marshal management</h1>} />
+              <Route path="/schedule-policies" element={<h1>Schedule Policies</h1>} />
+              <Route path="/staf-administration" element={<h1>Staff Administration</h1>} />
+              <Route path="/security-dashboard" element={<h1>Security Dashboard</h1>} />
+              <Route path="/bussiness-unit" element={<h1>Business Unit</h1>} />
+              <Route path="/routing" element={<RouteManagement />} />
 
-<Route path="/billings-dashbord" element={<h1>This is thee billing Dashboard </h1>} />
-<Route path="/drivers" element={<ManageDrivers />} />
+              <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN]} />}>
+                <Route path="/vendors" element={<ManageVendor />} />
+                <Route path="/company-admins" element={<h1>Company Admins management</h1>} />
+                <Route path="/subadmins" element={<h1>Subadmin management</h1>} />
+                <Route path="/sms-config" element={<h1>SMS Configuration</h1>} />
+              </Route>
+            </Route>
 
-</Route>
-        {/* Admin & Super Admin */}
-        <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]} />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/role-management" element={<RoleManagement />} />
-          <Route path="/staffs" element={<ManageStaffs />} />
-          <Route path="/employee/create-employee" element={<EmployeeForm />} />
-          <Route path="/users" element={<ManageUser />} />
-          <Route path="/bookings" element={<BookingManagement />} />
-          <Route path="/vehicles/add-vehicle" element={<VehicleForm />} />
-          <Route path="/driver-form" element={<DriverForm />} />
-          <Route path="/manage-shift" element={<ShiftManagement />} />
+            {/* Vendor */}
+            <Route element={<ProtectedRoute roles={[ROLES.VENDOR]} />}>
+              <Route path="/vendor-dashboard" element={<h1>Vendor Dashboard</h1>} />
+              <Route path="/vehicles" element={<ManageVehicles />} />
+              <Route path="/vehicle-contract" element={<VehicleContract />} />
+              <Route path="/vehicle-group" element={<ManageVehicleTypes />} />
+            </Route>
 
-          <Route path="/shift-Categories" element={<h1>Shift Categories management</h1>} />
-          <Route path="/shedule-polysies" element={<h1>Schedule Policies management</h1>} />
-      
-          <Route path="/audit-report" element={<h1> This is the audit report implimemntation </h1>} />
-          <Route path="/manage-team" element={<ManageTeams/>} />
-          {/* <Route path="/teams" element={<ManageTeams />} /> */}
-          <Route path="/teams/:teamId/employees" element={<EmployeeList />} />
-          <Route path="/manage-marshal" element={<h1>IMPIMENTATION OF  marshal management</h1>} />
-          <Route path="/schedule-policies" element={<h1> IMPIMENTATION Schedule Policies</h1>} />
-          <Route path="/staf-administration" element={<h1> IMPIMENTATION Schedule Policies</h1>} />
-          <Route path="/security-dashboard" element={<h1> IMPIMENTATION Security-dashboards</h1>} />
-          <Route path="/bussiness-unit" element={<h1> IMPIMENTATION bussiness-unit</h1>} />
-          <Route path="/routing" element={<RouteManagement />} />
-          {/* Additional features only for Super Admin inside Admin+SuperAdmin route */}
-          {/* Use a nested ProtectedRoute for SUPER_ADMIN only */}
-          <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN]} />}>
-            <Route path="/vendors" element={<ManageVendor />} />
-            <Route path="/company-admins" element={<h1>Company Admins management</h1>} />
-            <Route path="/subadmins" element={<h1>Subadmin management</h1>} />
-            <Route path="/sms-config" element={<h1>SMS Configuration</h1>} />
-            
-        
+            {/* Client */}
+            <Route element={<ProtectedRoute roles={[ROLES.CLIENT]} />}>
+              <Route path="/client-dashboard" element={<h1>Client Dashboard</h1>} />
+              <Route path="/client-profile" element={<h1>Client Profile</h1>} />
+            </Route>
           </Route>
-        </Route>
 
-        {/* Vendor */}
-        <Route element={<ProtectedRoute roles={[ROLES.VENDOR]} />}>
-         <Route path="/vendor-dashboard" element={<h1>This is Vendor Dash board </h1>} />
-          <Route path="/vehicles" element={<ManageVehicles />} />
-         
-          <Route path="/vehicle-contract" element={<VehicleContract />} />
-          <Route path="/vehicle-group" element={<ManageVehicleTypes />} />
-          <Route path="/drivers" element={<ManageDrivers />} />
-        </Route>
-
-        {/* Client */}
-        <Route element={<ProtectedRoute roles={[ROLES.CLIENT]} />}>
-          {/* Add client-specific routes */}
-          <Route path="/client-dashboard" element={<h1>This is client Dash board </h1>} />
-          <Route path="/client-profile" element={<h1>This is client Profile </h1>} />
-        </Route>
-
-      </Route>
-
-        <Route path="*" element={<NotFound />} />
-    </Routes>
-  </Router>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </Router>
   );
 }
 
