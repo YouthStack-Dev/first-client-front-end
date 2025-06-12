@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useContext, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { jwtDecode } from 'jwt-decode';
 import Cookies from "js-cookie";
@@ -9,6 +9,8 @@ import { log } from './utils/logger';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/layout/layout';
 import Loading from './components/ui/Loading'; // fallback loader
+import { ModulePermissionContext} from './context/ModulePermissionContext';
+
 
 // Lazy-loaded components
 const Login = lazy(() => import('./pages/Login'));
@@ -43,9 +45,9 @@ const NotFound = () => (
 
 function App() {
   const dispatch = useDispatch();
-  const [loading, setLoading] = useState(true);
+  const [userLoading, setUserLoading] = useState(true);
 
-  log('This is a debug message');
+  const { loading: permissionLoading } = useContext(ModulePermissionContext); // 👈 Context loading
 
   useEffect(() => {
     const token = Cookies.get("auth_token");
@@ -58,14 +60,19 @@ function App() {
         Cookies.remove("auth_token");
       }
     }
-    setLoading(false);
+    setUserLoading(false);
   }, [dispatch]);
 
-  if (loading) {
+  if (userLoading || permissionLoading) {
+    return <Loading />; // 👈 Show loading screen until both are ready
+  }
+
+  if (userLoading || permissionLoading) {
     return <Loading />;
   }
 
   return (
+   
     <Router>
       <Suspense fallback={<Loading />}>
         <Routes>
