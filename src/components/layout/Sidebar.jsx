@@ -97,7 +97,7 @@ const handleLogout = () => {
       <div className="p-4 border-b border-gray-700 flex items-center justify-between">
         {isOpen && (
           <>
-            <h2 className="text-xl font-bold">Fleet Management</h2>
+            <h2 className="text-xl font-bold">MLT ETS Management</h2>
             {!isMobile && (
               <button onClick={togglePin} className="text-gray-400 hover:text-white">
                 {isPinned ? <Pin className="w-4 h-4" /> : <PinOff className="w-4 h-4" />}

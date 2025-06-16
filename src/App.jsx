@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/layout/layout';
 import Loading from './components/ui/Loading'; // fallback loader
 import { ModulePermissionContext} from './context/ModulePermissionContext';
+import ManageClients from './pages/ManageClients';
 
 
 // Lazy-loaded components
@@ -86,6 +87,9 @@ function App() {
             <Route element={<ProtectedRoute roles={["SUPER_ADMIN", "ADMIN", "VENDOR", "CLIENT"]} />}>
             <Route path="/drivers" element={<ManageDrivers />} />
             <Route path="/driver-form" element={<DriverForm />} />
+            <Route path="/billings-dashboard" element={<h1>This  will  be my billing dash board</h1>} />
+            <Route path="/business-unit" element={<h1>This  will  business-unit</h1>} />
+            <Route path="/staff-administration" element={<h1>This  will  staff-administration</h1>} />
 
               <Route path="/dashboard" element={<DashboardRouter />} />
             </Route>
@@ -130,12 +134,17 @@ function App() {
               <Route path="/vehicle-group" element={<ManageVehicleTypes />} />
             </Route>
 
+
             {/* Client */}
             <Route element={<ProtectedRoute roles={[ROLES.CLIENT]} />}>
               <Route path="/client-dashboard" element={<h1>Client Dashboard</h1>} />
               <Route path="/client-profile" element={<h1>Client Profile</h1>} />
             </Route>
+            <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN]} />}>
+              <Route path="/manage-client" element={<ManageClients/>} />
+            </Route>
           </Route>
+
 
           <Route path="*" element={<NotFound />} />
         </Routes>
