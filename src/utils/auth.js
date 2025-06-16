@@ -7,21 +7,20 @@ export const ROLES = {
 };
 
 export const MOCK_TOKENS = {
-  SUPER_ADMIN: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
-    "eyJ1c2VybmFtZSI6InN1cGVyYWRtaW4iLCJyb2xlIjoiU1VQRVJfQURNSU4iLCJleHAiOjE5MDAwMDAwMDB9." +
-    "dummy-signature",
+  SUPER_ADMIN:
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InN1cGVyYWRtaW4iLCJlbWFpbCI6InN1cGVyQGVtYWlsLmNvbSIsInJvbGUiOiJTVVBFUl9BRE1JTiIsImV4cCI6MTkwMDAwMDAwMH0.dummy-signature"
+,
 
-  ADMIN: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
-    "eyJ1c2VybmFtZSI6ImFkbWluVXNlciIsInJvbGUiOiJBRE1JTiIsImV4cCI6MTkwMDAwMDAwMH0." +
-    "dummy-signature",
+  ADMIN:
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluVXNlciIsImVtYWlsIjoiYWRtaW5AZW1haWwuY29tIiwicm9sZSI6IkFETUlOIiwiZXhwIjoxOTAwMDAwMDAwfQ.dummy-signature"
+,
 
-  VENDOR: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
-    "eyJ1c2VybmFtZSI6InZlbmRvclVzZXIiLCJyb2xlIjoiVkVORE9SIiwiZXhwIjoxOTAwMDAwMDAwfQ." +
-    "dummy-signature",
+  VENDOR:
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InZlbmRvclVzZXIiLCJlbWFpbCI6InZlbmRvckBlbWFpbC5jb20iLCJyb2xlIjoiVkVORE9SIiwiZXhwIjoxOTAwMDAwMDAwfQ.dummy-signature"
+,
 
-  CLIENT: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
-    "eyJ1c2VybmFtZSI6ImNsaWVudFVzZXIiLCJyb2xlIjoiQ0xJRU5UIiwiZXhwIjoxOTAwMDAwMDAwfQ." +
-    "dummy-signature",
+  CLIENT:
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImNsaWVudFVzZXIiLCJlbWFpbCI6ImNsaWVudEBlbWFpbC5jb20iLCJyb2xlIjoiQ0xJRU5UIiwiZXhwIjoxOTAwMDAwMDAwfQ.dummy-signatur",
 };
 
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Lock, User } from "lucide-react";
 import { useLoginMutation } from "../redux/rtkquery/authApi";
@@ -7,6 +7,9 @@ import { jwtDecode } from "jwt-decode";
 import { useDispatch } from "react-redux";
 import { setUser } from "../redux/features/userSlice";
 import { MOCK_TOKENS } from "../utils/auth";
+import { ModulePermissionContext } from "../context/ModulePermissionContext";
+import { log } from "../utils/logger";
+import { staticPermissions } from "../staticData/ModulePermissions";
 
 
 const Login = () => {
@@ -17,16 +20,17 @@ const Login = () => {
 
   const dispatch = useDispatch();
   
-
+  const { setModulePermissions} = useContext(ModulePermissionContext);
   const handleStaticLogin = async (dispatch, setError, role = 'ADMIN') => {
     try {
-      const mockToken =  MOCK_TOKENS.ADMIN; // fallback to ADMIN token
+      const mockToken =  MOCK_TOKENS.SUPER_ADMIN; // fallback to ADMIN token
 
       if (!mockToken || typeof mockToken !== 'string') {
         throw new Error('Invalid mock token');
       }
   
       const decoded = jwtDecode(mockToken);
+      
       const expirationTime = decoded.exp * 1000;
   
       Cookies.set("auth_token", mockToken, {
@@ -38,7 +42,9 @@ const Login = () => {
       dispatch(setUser(decoded));
       console.log("Static login decoded:", decoded);
       console.log("Token from cookie:", Cookies.get("auth_token"));
-  
+      const email = decoded?.email?.toLowerCase();
+      const permissions = staticPermissions[email] || [];
+      setModulePermissions(permissions);
       navigate("/dashboard");
   
     } catch (err) {
@@ -89,7 +95,7 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h1 className="text-2xl font-bold text-center mb-6">Fleet Management Login</h1>
+        <h1 className="text-2xl font-bold text-center mb-6"> MLT ETS Login</h1>
 
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">{error}</div>
