@@ -8,7 +8,6 @@ import { useDispatch } from "react-redux";
 import { setUser } from "../redux/features/userSlice";
 import { MOCK_TOKENS } from "../utils/auth";
 import { ModulePermissionContext } from "../context/ModulePermissionContext";
-import { log } from "../utils/logger";
 import { staticPermissions } from "../staticData/ModulePermissions";
 
 
@@ -23,7 +22,7 @@ const Login = () => {
   const { setModulePermissions} = useContext(ModulePermissionContext);
   const handleStaticLogin = async (dispatch, setError, role = 'ADMIN') => {
     try {
-      const mockToken =  MOCK_TOKENS.SUPER_ADMIN; // fallback to ADMIN token
+      const mockToken =  MOCK_TOKENS.ADMIN; // fallback to ADMIN token
 
       if (!mockToken || typeof mockToken !== 'string') {
         throw new Error('Invalid mock token');

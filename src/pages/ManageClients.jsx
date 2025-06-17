@@ -43,28 +43,10 @@ const ManageClients = (second) => {
     }).filter(Boolean);
   };
     return(
-        <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <div className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center space-x-4">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-semibold text-gray-900">Fleet Management System</h1>
-                  <p className="text-sm text-gray-500">Super Admin Dashboard</p>
-                </div>
-              </div>
-              <div className="text-sm text-gray-500">
-                Welcome, <span className="font-medium text-gray-900">Super Admin</span>
-              </div>
-            </div>
-          </div>
-        </div>
+     
+      <>
   
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className=" mx-auto px-4 sm:px-6 lg:px-2 py-3">
 
   
           {/* Client Management */}
@@ -212,7 +194,7 @@ const ManageClients = (second) => {
           onClose={() => setShowCreateClient(false)}
           onSubmit={handleCreateClient}
         />
-      </div>
+</>
     )
  }
 

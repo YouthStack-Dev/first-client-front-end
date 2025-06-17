@@ -1,6 +1,5 @@
 import {
   LayoutDashboard,
-  LogOut,
   User,
   Users2,
   UserCog,
@@ -11,9 +10,7 @@ import {
   ClipboardList,
   Route,
   Building2,
-  ChevronDown,
-  Pin,
-  PinOff,
+
   MessageCircleCode
 } from 'lucide-react';
 
@@ -111,6 +108,12 @@ export const menuItems = [
     name: 'Manage Clients',
     icon: Users2,
     permissionModule: 'manageClients'
+  },
+  {
+    path: '/manage-company',
+    name: 'Manage Clients',
+    icon: Users2,
+    permissionModule: 'manageCompany'
   },
   {
     path: '/manage-team',
