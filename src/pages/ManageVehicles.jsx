@@ -10,6 +10,8 @@ import {
 import { Modal, InputField } from "../components/SmallComponents";
 import { useGetVehiclesQuery } from "../redux/rtkquery/clientRtk";
 import HeaderWithAction from "../components/HeaderWithAction";
+import { useModulePermission } from "../hooks/userModulePermission";
+import PermissionDenied from "../components/PermissionDenied";
 
 const VehicleList = React.memo(
   ({
@@ -135,7 +137,12 @@ function ManageVehicles() {
   const [currentPage, setCurrentPage] = useState(1);
   const [vehicleModal, setVehicleModal] = useState(false);
   const [menuOpen, setMenuOpen] = useState(null);
+  const { canRead, canWrite, notFound } = useModulePermission("vehicles");
 
+  if (notFound) {
+    return <PermissionDenied/>;
+  }
+  
   const { data, isLoading } = useGetVehiclesQuery();
   const vehicles = data?.vehicles || [];
 

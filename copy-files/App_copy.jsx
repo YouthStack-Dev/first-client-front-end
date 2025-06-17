@@ -11,7 +11,6 @@ import Loading from './components/ui/Loading'; // fallback loader
 import { ModulePermissionContext} from './context/ModulePermissionContext';
 import ManageClients from './pages/ManageClients';
 import ManageRoles from './pages/ManageRoles';
-import ProtectedRouteAuth from './middleware/ProtectedRouteAuth';
 
 
 // Lazy-loaded components
@@ -85,20 +84,20 @@ function App() {
 
           {/* Protected Routes */}
           <Route element={<Layout />}>
-            <Route element={<ProtectedRouteAuth />}>
+            <Route element={<ProtectedRoute roles={["SUPER_ADMIN", "ADMIN", "VENDOR", "CLIENT"]} />}>
             <Route path="/drivers" element={<ManageDrivers />} />
             <Route path="/driver-form" element={<DriverForm />} />
             <Route path="/billings-dashboard" element={<h1>This  will  be my billing dash board</h1>} />
             <Route path="/business-unit" element={<h1>This  will  business-unit</h1>} />
             <Route path="/staff-administration" element={<h1>This  will  staff-administration</h1>} />
-            <Route path="/vehicles" element={<ManageVehicles />} />
+
               <Route path="/dashboard" element={<DashboardRouter />} />
             </Route>
 
             <Route path="/calender" element={<CalendarPopupExample />} />
 
             {/* Admin & Super Admin */}
-            <Route element={<ProtectedRouteAuth  />}>
+            <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]} />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/role-management" element={<ManageRoles />} />
               <Route path="/staffs" element={<ManageStaffs />} />
@@ -119,7 +118,7 @@ function App() {
               <Route path="/bussiness-unit" element={<h1>Business Unit</h1>} />
               <Route path="/routing" element={<RouteManagement />} />
 
-              <Route element={<ProtectedRouteAuth  />}>
+              <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN]} />}>
                 <Route path="/vendors" element={<ManageVendor />} />
                 <Route path="/company-admins" element={<h1>Company Admins management</h1>} />
                 <Route path="/subadmins" element={<h1>Subadmin management</h1>} />
@@ -128,7 +127,7 @@ function App() {
             </Route>
 
             {/* Vendor */}
-            <Route element={<ProtectedRouteAuth  />}>
+            <Route element={<ProtectedRoute roles={[ROLES.VENDOR]} />}>
               <Route path="/vendor-dashboard" element={<h1>Vendor Dashboard</h1>} />
               <Route path="/vehicles" element={<ManageVehicles />} />
               <Route path="/vehicle-contract" element={<VehicleContract />} />
@@ -137,11 +136,11 @@ function App() {
 
 
             {/* Client */}
-            <Route element={<ProtectedRouteAuth />}>
+            <Route element={<ProtectedRoute roles={[ROLES.CLIENT]} />}>
               <Route path="/client-dashboard" element={<h1>Client Dashboard</h1>} />
               <Route path="/client-profile" element={<h1>Client Profile</h1>} />
             </Route>
-            <Route element={<ProtectedRouteAuth />}>
+            <Route element={<ProtectedRoute roles={[ROLES.SUPER_ADMIN]} />}>
               <Route path="/manage-client" element={<ManageClients/>} />
             </Route>
           </Route>

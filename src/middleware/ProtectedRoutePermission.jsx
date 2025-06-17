@@ -1,20 +1,18 @@
-import { useSelector } from "react-redux";
-import { Navigate, Outlet } from "react-router-dom";
+// middleware/ProtectedRoutePermission.jsx
+import { useContext } from "react";
+import { Navigate } from "react-router-dom";
+import { ModulePermissionContext } from "../context/ModulePermissionContext";
 
-const ProtectedRoutePermission = ({ module, action = "canRead", fallback = "/unauthorized" }) => {
-  const { role } = useSelector((state) => state.userslice);
-  const { modules } = useSelector((state) => state.permissions); // permissions slice
+const ProtectedRoutePermission = ({ module, children }) => {
+  const { modulePermissions, loading } = useContext(ModulePermissionContext);
 
-  // Super admin bypass
-  if (role === "SUPER_ADMIN") return <Outlet />;
+  if (loading) return <div>Loading...</div>;
 
-  const modulePerm = modules?.[module];
+  const hasAccess = modulePermissions.some(
+    (perm) => perm.module === module && perm.canRead
+  );
 
-  if (!modulePerm || !modulePerm[action]) {
-    return <Navigate to={fallback} />;
-  }
-
-  return <Outlet />;
+  return hasAccess ? children : <Navigate to="/unauthorized" />;
 };
 
 export default ProtectedRoutePermission;
