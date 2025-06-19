@@ -70,7 +70,7 @@ export const FLEET_MODULES = [
     category: 'fleet'
   },
   {
-    id: 'schedulingManagement',
+    id: 'SchedulingManagement',
     name: 'Scheduling Management',
     description: 'Manage shifts and scheduling policies',
     icon: 'Calendar',

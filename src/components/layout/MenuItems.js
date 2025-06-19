@@ -81,7 +81,7 @@ export const menuItems = [
   {
     name: 'Scheduling Management',
     icon: Calendar,
-    permissionModule: 'schedulingManagement',
+    permissionModule: 'SchedulingManagement',
     subItems: [
       {
         path: '/manage-shift',

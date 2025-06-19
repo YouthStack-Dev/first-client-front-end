@@ -7,6 +7,9 @@ import { useSelector } from "react-redux";
 
 const DashboardRouter = () => {
   const user = useSelector((state) => state.user.user);
+
+
+
   const role = user?.role;
   
   console.log("User role:", role);

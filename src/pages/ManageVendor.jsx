@@ -55,8 +55,7 @@ const onPrev = () => setCurrentPage((p) => p - 1)
     selectedItems={selectedItems}
   />
         </div>
-    ) 
-     } 
+    )
+     }
 
 export default ManageVendor
-  
