@@ -42,13 +42,14 @@ export const staticPermissions = {
     { module: 'subadmins', canRead: true, canWrite: true, canDelete: false },
 
     // Contracts
-    // { module: 'vehicleContract', canRead: true, canWrite: true, canDelete: false },
+    { module: 'vehicleContract', canRead: true, canWrite: true, canDelete: false },
 
     // Vehicles
     { module: 'vehicles', canRead: true, canWrite: false, canDelete: false },
     { module: 'vehicleType', canRead: true, canWrite: false, canDelete: false },
 
     // Scheduling
+    { module: 'SchedulingManagement', canRead: true, canWrite: false, canDelete:false},
     { module: 'manageShift', canRead: true, canWrite: true, canDelete: false },
     { module: 'manageShiftCategories', canRead: true, canWrite: true, canDelete: false },
     { module: 'manageSchedulePolicies', canRead: true, canWrite: true, canDelete: false },
