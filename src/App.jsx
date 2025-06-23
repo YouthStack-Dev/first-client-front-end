@@ -4,14 +4,14 @@ import { useDispatch } from 'react-redux';
 import { jwtDecode } from 'jwt-decode';
 import Cookies from "js-cookie";
 import { setUser } from './redux/features/userSlice';
-import { ROLES } from './utils/auth';
-import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/layout/layout';
 import Loading from './components/ui/Loading'; // fallback loader
 import { ModulePermissionContext} from './context/ModulePermissionContext';
 import ManageClients from './pages/ManageClients';
 import ManageRoles from './pages/ManageRoles';
 import ProtectedRouteAuth from './middleware/ProtectedRouteAuth';
+import ManageCompanies from './pages/ManageCompanies';
+import { log } from './utils/logger';
 
 
 // Lazy-loaded components
@@ -54,6 +54,7 @@ function App() {
   useEffect(() => {
     const token = Cookies.get("auth_token");
     if (token) {
+      log(" this is the token in app .jsx file",token)
       try {
         const decoded = jwtDecode(token);
         dispatch(setUser(decoded));
@@ -102,6 +103,7 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/role-management" element={<ManageRoles />} />
               <Route path="/staffs" element={<ManageStaffs />} />
+              <Route path="/manage-company" element={<ManageCompanies />} />
               <Route path="/employee/create-employee" element={<EmployeeForm />} />
               <Route path="/users" element={<ManageUser />} />
               <Route path="/bookings" element={<BookingManagement />} />

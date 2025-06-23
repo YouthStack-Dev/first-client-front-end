@@ -3,7 +3,8 @@ import ShiftForm from '../components/shiftForm';
 import PopupModal from '../components/PopupModal';
 import DynamicTable from '../components/DynamicTable';
 import { History } from 'lucide-react';
-
+import { useModulePermission } from "../hooks/userModulePermission";
+import PermissionDenied from '../components/PermissionDenied';
 const DUMMY_HISTORY = [
   {
     id: 1,
@@ -81,7 +82,11 @@ const ShiftManagement = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [selectedShiftType, setSelectedShiftType] = useState('login');
   const [openMenuId, setOpenMenuId] = useState(null);
+  const { canRead, canWrite, notFound } = useModulePermission("vehicles");
 
+  if (notFound) {
+    return <PermissionDenied/>;
+  }
   const [formData, setFormData] = useState({
     shiftType: '',
     hours: '',

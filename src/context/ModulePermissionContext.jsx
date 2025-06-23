@@ -15,19 +15,22 @@ export const ModulePermissionProvider = ({ children }) => {
       try {
         const token = Cookies.get('auth_token');
         if (!token) {
-          setLoading(false);
+          setModulePermissions([]);
           return;
         }
-
+  
         const decoded = jwtDecode(token);
         const email = decoded?.email?.toLowerCase();
+  
         if (!email) {
-          setLoading(false);
+          setModulePermissions([]);
           return;
         }
-
-        const permissions = staticPermissions[email] || [];
-        setModulePermissions(permissions);
+  
+        const userPermissions = staticPermissions[email];
+        const allowedModules = userPermissions?.allowedModules ?? [];
+  
+        setModulePermissions(Array.isArray(allowedModules) ? allowedModules : []);
       } catch (err) {
         console.error('Error decoding token or loading permissions:', err);
         setModulePermissions([]);
@@ -35,7 +38,7 @@ export const ModulePermissionProvider = ({ children }) => {
         setLoading(false);
       }
     };
-
+  
     checkAuthAndSetPermissions();
   }, []);
 

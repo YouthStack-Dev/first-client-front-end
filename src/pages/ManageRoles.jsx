@@ -192,7 +192,7 @@ import { FLEET_MODULES } from "../staticData/Modules";
         isOpen={showCreateRole}
         onClose={() => setShowCreateRole(false)}
         onSubmit={handleCreateRole}
-        currentUser={currentClient}
+        allowedModules={currentClient.allowedModules}
       />
       </div>
     )

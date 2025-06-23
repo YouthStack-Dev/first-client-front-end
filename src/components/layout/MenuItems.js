@@ -95,12 +95,12 @@ export const menuItems = [
         icon: ClipboardList,
         permissionModule: 'manageShiftCategories'
       },
-      {
-        path: '/schedule-policies',
-        name: 'Manage Schedule Policies',
-        icon: ClipboardList,
-        permissionModule: 'manageSchedulePolicies'
-      }
+      // {
+      //   path: '/schedule-policies',
+      //   name: 'Manage Schedule Policies',
+      //   icon: ClipboardList,
+      //   permissionModule: 'manageSchedulePolicies'
+      // }
     ]
   },
   {
@@ -111,7 +111,7 @@ export const menuItems = [
   },
   {
     path: '/manage-company',
-    name: 'Manage Clients',
+    name: 'Manage Companies',
     icon: Users2,
     permissionModule: 'manageCompany'
   },

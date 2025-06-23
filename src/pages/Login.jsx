@@ -8,16 +8,22 @@ import { useDispatch } from "react-redux";
 import { setUser } from "../redux/features/userSlice";
 import { MOCK_TOKENS } from "../utils/auth";
 import { ModulePermissionContext } from "../context/ModulePermissionContext";
-import { staticPermissions } from "../staticData/ModulePermissions";
+import { mockAuthPayload } from "../staticData/mockAuthPayload";
+import { log } from "../utils/logger";
 
 
 const Login = () => {
   const [credentials, setCredentials] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const [login, { isLoading }] = useLoginMutation();
+  const [ { isLoading }] = useLoginMutation();
 
   const dispatch = useDispatch();
+
+
+  const currentUser = mockAuthPayload.users.find(
+    (u) => u.user.username === "superadmin"
+  );
   
   const { setModulePermissions} = useContext(ModulePermissionContext);
   const handleStaticLogin = async (dispatch, setError, role = 'ADMIN') => {
@@ -27,12 +33,14 @@ const Login = () => {
       if (!mockToken || typeof mockToken !== 'string') {
         throw new Error('Invalid mock token');
       }
+      log("This is the  token from mock auth  "+currentUser.token)
   
-      const decoded = jwtDecode(mockToken);
+      const decoded = jwtDecode(currentUser.token);
+      console.log(" this is the   decoded token " ,decoded);
       
-      const expirationTime = decoded.exp * 1000;
+      const expirationTime = decoded.exp * 1000;  
   
-      Cookies.set("auth_token", mockToken, {
+      Cookies.set("auth_token", currentUser.token, {
         expires: new Date(expirationTime),
         secure: process.env.NODE_ENV === "production",
         sameSite: "Strict",
@@ -42,7 +50,8 @@ const Login = () => {
       console.log("Static login decoded:", decoded);
       console.log("Token from cookie:", Cookies.get("auth_token"));
       const email = decoded?.email?.toLowerCase();
-      const permissions = staticPermissions[email] || [];
+      const permissions = currentUser?.allowedModules || [];
+      
       setModulePermissions(permissions);
       navigate("/dashboard");
   

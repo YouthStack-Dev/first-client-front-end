@@ -4,7 +4,7 @@ export const FLEET_MODULES = [
     name: 'Dashboard',
     description: 'Overview and key metrics',
     icon: 'LayoutDashboard',
-    category: 'core'
+    category: 'core',
   },
   {
     id: 'manageUsers',
@@ -20,13 +20,7 @@ export const FLEET_MODULES = [
     icon: 'UserCog',
     category: 'users'
   },
-  {
-    id: 'subadmins',
-    name: 'Subadmins',
-    description: 'Secondary admin users',
-    icon: 'UserPlus',
-    category: 'users'
-  },
+
   {
     id: 'manageContracts',
     name: 'Manage Contracts',
@@ -181,4 +175,181 @@ export const FLEET_MODULES = [
     icon: 'MessageCircleCode',
     category: 'settings'
   }
+];
+
+
+
+
+export const MODULES = [
+  {
+    id: 'dashboard',
+    name: 'Dashboard',
+    description: 'Overview and key metrics',
+    icon: 'LayoutDashboard',
+    category: 'core',
+    submodules: [],
+  },
+  {
+    id: 'user-management',
+    name: 'User Management',
+    description: 'Manage users and roles',
+    icon: 'User',
+    category: 'users',
+    submodules: [
+      {
+        id: 'role-management',
+        name: 'Role Management',
+        description: 'Manage roles and permissions',
+        icon: 'ShieldCheck',
+      },
+      {
+        id: 'user-administrator',
+        name: 'User Administrator',
+        description: 'Manage user accounts and access',
+        icon: 'UserCog',
+      },
+    ],
+  },
+  {
+    id: 'manage-team',
+    name: 'Manage Team',
+    description: 'Create and manage internal teams',
+    icon: 'Users',
+    category: 'organization',
+    submodules: [
+      {
+        id: 'employee-under-team',
+        name: 'Employee under Team',
+        description: 'Assign employees to teams',
+        icon: 'UserPlus',
+      },
+      {
+        id: 'business-unit',
+        name: 'Business Unit',
+        description: 'Define departments or business units',
+        icon: 'Building2',
+      },
+      {
+        id: 'staff-administration',
+        name: 'Staff Administration',
+        description: 'Manage support and operational staff',
+        icon: 'Building2',
+      },
+    ],
+  },
+  {
+    id: 'manage-clients',
+    name: 'Manage Clients',
+    description: 'Handle client organizations',
+    icon: 'Briefcase',
+    category: 'organization',
+    submodules: [],
+  },
+  {
+    id: 'scheduling-management',
+    name: 'Scheduling Management',
+    description: 'Manage trip schedules and bookings',
+    icon: 'CalendarCheck',
+    category: 'scheduling',
+    submodules: [
+      {
+        id: 'manage-shift',
+        name: 'Manage Shift',
+        icon: 'Clock',
+      },
+      {
+        id: 'manage-shift-categories',
+        name: 'Shift Categories',
+        icon: 'ListOrdered',
+      },
+      {
+        id: 'schedule-policies',
+        name: 'Schedule Policies',
+        icon: 'ClipboardList',
+      },
+    ],
+  },
+  {
+    id: 'manage-drivers',
+    name: 'Manage Drivers',
+    description: 'Maintain and assign drivers',
+    icon: 'UserTie',
+    category: 'fleet',
+    submodules: [
+      {
+        id: 'drivers',
+        name: 'Drivers',
+        icon: 'CarTaxiFront',
+      },
+      {
+        id: 'vehicle-type',
+        name: 'Vehicle Type',
+        icon: 'Car',
+      },
+    ],
+  },
+  {
+    id: 'vendors',
+    name: 'Vendors',
+    description: 'Manage third-party vendors',
+    icon: 'Handshake',
+    category: 'vendor',
+    submodules: [
+      {
+        id: 'vendor-contract',
+        name: 'Vendor Contract',
+        icon: 'FileSignature',
+      },
+    ],
+  },
+  {
+    id: 'manage-contracts',
+    name: 'Manage Contracts',
+    description: 'View and handle all contracts',
+    icon: 'ScrollText',
+    category: 'contracts',
+    submodules: [
+      {
+        id: 'vehicle-contract',
+        name: 'Vehicle Contract',
+        icon: 'FileText',
+      },
+    ],
+  },
+  {
+    id: 'real-time-tracking',
+    name: 'Real-time Tracking',
+    description: 'Live map-based tracking of vehicles',
+    icon: 'MapPin',
+    category: 'tracking',
+    submodules: [
+      {
+        id: 'routing',
+        name: 'Routing',
+        icon: 'Route',
+      },
+    ],
+  },
+  {
+    id: 'audit-report',
+    name: 'Audit Report',
+    description: 'System activity and compliance logs',
+    icon: 'FileSearch',
+    category: 'reports',
+    submodules: [],
+  },
+  {
+    id: 'security-dashboard',
+    name: 'Security Dashboard',
+    description: 'View security logs and issues',
+    icon: 'Building2',
+    category: 'security',
+    submodules: [
+      {
+        id: 'sms-config',
+        name: 'SMS Config',
+        icon: 'MessageCircleCode',
+      },
+    ],
+  },
 ];
