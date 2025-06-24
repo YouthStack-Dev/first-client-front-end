@@ -1,88 +1,88 @@
+export const superAdminModules = [
+  { id: 'dashboard', permissions: { canRead: true, canWrite: true, canDelete: true } },
+  { id: 'manage-clients', permissions: { canRead: true, canWrite: true } },
+  { id: 'manage-company', permissions: { canRead: true, canWrite: true } }
+];
+
+export const clientadmin1Modules = [
+  { id: 'dashboard', permissions: { canRead: true } },
+  { id: 'manage-company', permissions: { canRead: true, canWrite: true } },
+  
+];
+
+export const clientadmin2Modules = [
+  { id: 'dashboard', permissions: { canRead: true } },
+  { id: 'manage-company', permissions: { canRead: true, canWrite: true } },
+];
+
+export const admin1Modules = [
+  { id: 'dashboard', permissions: { canRead: true } },
+  { id: 'role-management', permissions: { canRead: true } },
+  { id: 'scheduling-management', permissions: { canRead: true }, submodules: [
+    { id: 'manage-shift', permissions: { canRead: true } },
+    { id: 'manage-shift-categories', permissions: { canRead: true } },
+   
+  ]},
+  { id: 'manage-contracts', permissions: { canRead: true }, submodules: [
+    { id: 'vehicle-contract', permissions: { canRead: true } },
+    { id: 'vendor-contract', permissions: { canRead: true } },
+   
+  ]},
+  {  id: 'manage-vehicles', permissions: { canRead: true }, submodules: [
+    { id: 'vehicles', permissions: { canRead: true } },
+    { id: 'vehicle-type', permissions: { canRead: true } }
+  ]},
+  { id: 'drivers', permissions: { canRead: true, canWrite: true } },
+  { id: 'routing', permissions: { canRead: true, canWrite: true } },
+  { id: 'tracking', permissions: { canRead: true, canWrite: true } },
+  { id: 'bussiness-unit', permissions: { canRead: true, canWrite: true } },
+  
+];
+
+export const admi2Modules = [
+  { id: 'dashboard', permissions: { canRead: true } },
+  { id: 'manage-vehicles', permissions: { canRead: true, canWrite: true } },
+  { id: 'manage-contracts', permissions: { canRead: true }, submodules: [
+    { id: 'vehicle-contract', permissions: { canRead: true } },
+    { id: 'vendor-contract', permissions: { canRead: true } },
+   
+  ]},
+  { id: 'manage-team', permissions: { canRead: true }, submodules: [
+    { id: 'business-unit', permissions: { canRead: true } }
+  ]}
+];
+
+export const vendo1Module = [
+  { id: 'dashboard', permissions: { canRead: true } },
+  { id: 'manage-contracts', permissions: { canRead: true }, submodules: [
+    { id: 'vehicle-contract', permissions: { canRead: true } },
+    { id: 'vendor-contract', permissions: { canRead: true } },
+  ]},
+  { id: 'routing', permissions: { canRead: true, canWrite: true } },
+  { id: 'tracking', permissions: { canRead: true, canWrite: true } },
+  { id: 'vendor-contract', permissions: { canRead: true, canWrite: true } },
+  { id: 'vehicles', permissions: { canRead: true } },
+];
+
+export const vendor2Module = [
+  { id: 'dashboard', permissions: { canRead: true } },
+  { id: 'manage-contracts', permissions: { canRead: true }, submodules: [
+    { id: 'vehicle-contract', permissions: { canRead: true } },
+    { id: 'vendor-contract', permissions: { canRead: true } },
+  ]},
+  { id: 'routing', permissions: { canRead: true, canWrite: true } },
+  { id: 'tracking', permissions: { canRead: true, canWrite: true } },
+  { id: 'vendor-contract', permissions: { canRead: true, canWrite: true } },
+  { id: 'vehicles', permissions: { canRead: true } },
+];
+
 export const staticPermissions = {
-  'super@email.com': [
-    { module: 'dashboard', canRead: true, canWrite: false, canDelete: false },
-    { module: 'manageClients', canRead: true, canWrite: true, canDelete: true },
-    { module: 'manageCompany', canRead: true, canWrite: true, canDelete: true },
-    
-    // // User Management
-    // { module: 'companyAdmins', canRead: true, canWrite: true, canDelete: true },
-    // { module: 'subadmins', canRead: true, canWrite: true, canDelete: true },
-
-    // // Contracts
-    // { module: 'vehicleContract', canRead: true, canWrite: true, canDelete: true },
-    // { module: 'vendorContract', canRead: true, canWrite: true, canDelete: true },
-    
-    // // Vehicles
-    // { module: 'vehicles', canRead: true, canWrite: true, canDelete: true },
-    // { module: 'vehicleType', canRead: true, canWrite: true, canDelete: true },
-
-    // Scheduling
-    // { module: 'manageShift', canRead: true, canWrite: true, canDelete: true },
-    // { module: 'manageShiftCategories', canRead: true, canWrite: true, canDelete: true },
-    // { module: 'manageSchedulePolicies', canRead: true, canWrite: true, canDelete: true },
-
-    // Flat modules
-    // { module: 'manageTeam', canRead: true, canWrite: true, canDelete: true },
-    // { module: 'manageBilling', canRead: true, canWrite: true, canDelete: true },
-    // { module: 'roleManagement', canRead: true, canWrite: true, canDelete: true },
-    // { module: 'auditReport', canRead: true, canWrite: true, canDelete: true },
-    // { module: 'drivers', canRead: true, canWrite: true, canDelete: true },
-    // { module: 'routing', canRead: true, canWrite: true, canDelete: true },
-    // { module: 'vendors', canRead: true, canWrite: true, canDelete: true },
-    // { module: 'businessUnit', canRead: true, canWrite: true, canDelete: true },
-    // { module: 'staff', canRead: true, canWrite: true, canDelete: true },
-    // { module: 'securityDashboard', canRead: true, canWrite: true, canDelete: true },
-    // { module: 'smsConfig', canRead: true, canWrite: true, canDelete: true }
-  ],
-
-  'admin@email.com': [
-    { module: 'dashboard', canRead: true, canWrite: false, canDelete: false },
-    { module: 'manageContracts', canRead: true, canWrite: true, canDelete: false },
-    // User Management
-    { module: 'subadmins', canRead: true, canWrite: true, canDelete: false },
-
-    // Contracts
-    // { module: 'vehicleContract', canRead: true, canWrite: true, canDelete: false },
-
-    // Vehicles
-    { module: 'vehicles', canRead: true, canWrite: false, canDelete: false },
-    { module: 'vehicleType', canRead: true, canWrite: false, canDelete: false },
-
-    // Scheduling
-    { module: 'manageShift', canRead: true, canWrite: true, canDelete: false },
-    { module: 'manageShiftCategories', canRead: true, canWrite: true, canDelete: false },
-    { module: 'manageSchedulePolicies', canRead: true, canWrite: true, canDelete: false },
-
-    // Flat modules
-    { module: 'manageTeam', canRead: true, canWrite: true, canDelete: false },
-    { module: 'manageBilling', canRead: true, canWrite: true, canDelete: false },
-    { module: 'roleManagement', canRead: true, canWrite: false, canDelete: false },
-    { module: 'auditReport', canRead: true, canWrite: false, canDelete: false },
-    { module: 'drivers', canRead: true, canWrite: false, canDelete: false },
-    { module: 'routing', canRead: true, canWrite: false, canDelete: false },
-    { module: 'businessUnit', canRead: true, canWrite: false, canDelete: false },
-    { module: 'staff', canRead: true, canWrite: false, canDelete: false },
-    { module: 'securityDashboard', canRead: true, canWrite: false, canDelete: false }
-  ],
-
-  'vendor@email.com': [
-    { module: 'dashboard', canRead: true, canWrite: false, canDelete: false },
-    
-    // Contracts
-    { module: 'vehicleContract', canRead: true, canWrite: true, canDelete: false },
-    { module: 'vendorContract', canRead: true, canWrite: true, canDelete: false },
-
-    // Vehicles
-    { module: 'vehicles', canRead: true, canWrite: true, canDelete: false },
-    { module: 'vehicleType', canRead: true, canWrite: true, canDelete: false },
-
-    { module: 'drivers', canRead: true, canWrite: false, canDelete: false }
-  ],
-
-  'client@email.com': [
-    { module: 'dashboard', canRead: true, canWrite: false, canDelete: false },
-    { module: 'manageBookings', canRead: true, canWrite: false, canDelete: false },
-    { module: 'manageShift', canRead: true, canWrite: false, canDelete: false },
-    { module: 'vehicleContract', canRead: true, canWrite: false, canDelete: false }
-  ]
+  'super@email.com': { allowedModules: superAdminModules },
+  'client1@email.com': { allowedModules: clientadmin1Modules },
+  'client2@email.com': { allowedModules: clientadmin2Modules },
+  'admin1@company.com': { allowedModules: admin1Modules },
+  'admin2@company.com': { allowedModules: admi2Modules },
+  'vendor1@email.com': { allowedModules: vendo1Module },
+  'vendor2@email.com': { allowedModules: vendor2Module }
 };
+

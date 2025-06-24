@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { X, Shield, Check, Eye, Plus, Edit, Trash2 } from 'lucide-react';
-import { FLEET_MODULES } from '../../staticData/Modules';
-// import { FLEET_MODULES } from '../data/modules';
+import { MODULES } from '../../staticData/Modules';
+
+
+
 
 const ACTION_ICONS = {
   view: Eye,
@@ -21,48 +23,49 @@ export const CreateRoleForm = ({
   isOpen,
   onClose,
   onSubmit,
-  currentUser
+  allowedModules
 }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    permissions: []
+    permissions: [] 
   });
 
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  const allowedModules = FLEET_MODULES.filter(module =>
-    currentUser.allowedModules.includes(module.id)
+  // Filter modules based on allowed modules
+  const availableModules = MODULES.filter(module => 
+    allowedModules.includes(module.id)
   );
 
   const categories = [
-    { id: 'all', name: 'All Modules', count: allowedModules.length },
-    { id: 'fleet', name: 'Fleet Management', count: allowedModules.filter(m => m.category === 'fleet').length },
-    { id: 'tracking', name: 'Tracking & GPS', count: allowedModules.filter(m => m.category === 'tracking').length },
-    { id: 'maintenance', name: 'Maintenance', count: allowedModules.filter(m => m.category === 'maintenance').length },
-    { id: 'reports', name: 'Reports & Analytics', count: allowedModules.filter(m => m.category === 'reports').length },
-    { id: 'settings', name: 'Settings', count: allowedModules.filter(m => m.category === 'settings').length }
+    { id: 'all', name: 'All Modules', count: availableModules.length },
+    { id: 'employee', name: 'Employee Management', count: availableModules.filter(m => m.category === 'employee').length },
+    { id: 'transport', name: 'Transport', count: availableModules.filter(m => m.category === 'transport').length },
+    { id: 'routes', name: 'Routes', count: availableModules.filter(m => m.category === 'routes').length },
+    { id: 'analytics', name: 'Analytics', count: availableModules.filter(m => m.category === 'analytics').length },
+    { id: 'settings', name: 'Settings', count: availableModules.filter(m => m.category === 'settings').length }
   ].filter(cat => cat.count > 0);
 
-  const filteredModules = selectedCategory === 'all'
-    ? allowedModules
-    : allowedModules.filter(module => module.category === selectedCategory);
+  const filteredModules = selectedCategory === 'all' 
+    ? availableModules 
+    : availableModules.filter(module => module.category === selectedCategory);
 
   const handlePermissionChange = (moduleId, action, checked) => {
     setFormData(prev => {
       const existingPermission = prev.permissions.find(p => p.moduleId === moduleId);
-
+      
       if (existingPermission) {
         const updatedPermissions = prev.permissions.map(p => {
           if (p.moduleId === moduleId) {
-            const actions = checked
+            const actions = checked 
               ? [...p.actions, action]
               : p.actions.filter(a => a !== action);
             return { ...p, actions };
           }
           return p;
         }).filter(p => p.actions.length > 0);
-
+        
         return { ...prev, permissions: updatedPermissions };
       } else if (checked) {
         return {
@@ -70,12 +73,12 @@ export const CreateRoleForm = ({
           permissions: [...prev.permissions, { moduleId, actions: [action] }]
         };
       }
-
+      
       return prev;
     });
   };
 
-  const getModulePermission = moduleId => {
+  const getModulePermission = (moduleId) => {
     return formData.permissions.find(p => p.moduleId === moduleId);
   };
 
@@ -84,7 +87,7 @@ export const CreateRoleForm = ({
     return permission?.actions.includes(action) || false;
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit({
       ...formData,
@@ -160,7 +163,7 @@ export const CreateRoleForm = ({
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium text-gray-900">Module Permissions</h3>
                 <div className="text-sm text-gray-500">
-                  {formData.permissions.length} of {allowedModules.length} modules configured
+                  {formData.permissions.length} of {availableModules.length} modules configured
                 </div>
               </div>
 
@@ -187,7 +190,7 @@ export const CreateRoleForm = ({
                 <div className="text-sm font-medium text-gray-700">Actions:</div>
                 {Object.entries(ACTION_ICONS).map(([action, Icon]) => (
                   <div key={action} className="flex items-center space-x-2">
-                    <div className={`w-6 h-6 rounded flex items-center justify-center ${ACTION_COLORS[action]}`}>
+                    <div className={`w-6 h-6 rounded flex items-center justify-center ${ACTION_COLORS[action ]}`}>
                       <Icon className="w-3 h-3" />
                     </div>
                     <span className="text-sm text-gray-600 capitalize">{action}</span>
@@ -198,6 +201,7 @@ export const CreateRoleForm = ({
               {/* Modules Permissions Grid */}
               <div className="space-y-4 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-4">
                 {filteredModules.map(module => {
+                  const permission = getModulePermission(module.id);
                   return (
                     <div key={module.id} className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
                       <div className="flex items-start justify-between mb-3">
@@ -213,10 +217,10 @@ export const CreateRoleForm = ({
                           {module.category}
                         </div>
                       </div>
-
+                      
                       <div className="flex flex-wrap gap-2">
                         {Object.entries(ACTION_ICONS).map(([action, Icon]) => {
-                          const isChecked = hasAction(module.id, action);
+                          const isChecked = hasAction(module.id, action );
                           return (
                             <label
                               key={action}
@@ -233,7 +237,7 @@ export const CreateRoleForm = ({
                               }`}>
                                 {isChecked && <Check className="w-2.5 h-2.5 text-white" />}
                               </div>
-                              <div className={`w-5 h-5 rounded flex items-center justify-center ${ACTION_COLORS[action]}`}>
+                              <div className={`w-5 h-5 rounded flex items-center justify-center ${ACTION_COLORS[action ]}`}>
                                 <Icon className="w-3 h-3" />
                               </div>
                               <span className="text-sm font-medium text-gray-700 capitalize">
@@ -242,7 +246,7 @@ export const CreateRoleForm = ({
                               <input
                                 type="checkbox"
                                 checked={isChecked}
-                                onChange={(e) => handlePermissionChange(module.id, action, e.target.checked)}
+                                onChange={(e) => handlePermissionChange(module.id, action)}
                                 className="sr-only"
                               />
                             </label>

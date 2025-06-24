@@ -23,8 +23,8 @@ import {
 import { Link, useLocation } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { logoutUser } from '../../redux/features/userSlice';
-import { hasPermission, ROLES } from '../../utils/auth';
+import { logoutUser } from '../src/redux/features/userSlice';
+import { hasPermission, ROLES } from '../src/utils/auth';
 // import { logoutUser } from '../redux/features/userSlice';
 
 const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
@@ -125,9 +125,9 @@ const handleLogout = () => {
     {
       name: 'Scheduling Management',
       icon: Calendar,
-      roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+      roles: [ROLES.SUPER_ADMIN,ROLES.VENDOR, ROLES.ADMIN],
       subItems: [
-        { path: '/manage-shift', name: 'Manage Shift', icon: Calendar, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
+        { path: '/manage-shift', name: 'Manage Shift', icon: Calendar, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN,] },
         { path: '/shift-categories', name: 'Manage Shift Categories', icon: ClipboardList, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
         { path: '/schedule-policies', name: 'Manage Schedule Policies', icon: ClipboardList, roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] }
       ]

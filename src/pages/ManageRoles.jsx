@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { CreateRoleForm } from "../components/modals/CreateRoleForm"
 import { Plus, Users, Shield, Search, MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
-import { FLEET_MODULES } from "../staticData/Modules";
+import { MODULES } from "../staticData/Modules";
 
  const ManageRoles = () => { 
     const [showCreateRole, setShowCreateRole] = useState(false);
@@ -49,11 +49,11 @@ import { FLEET_MODULES } from "../staticData/Modules";
   );
 
   const getModuleName = (moduleId) => {
-    return FLEET_MODULES.find(m => m.id === moduleId)?.name || moduleId;
+    return MODULES.find(m => m.id === moduleId)?.name || moduleId;
   };
 
   const getAllowedModules = () => {
-    return FLEET_MODULES.filter(module => currentClient.allowedModules.includes(module.id));
+    return MODULES.filter(module => currentClient.allowedModules.includes(module.id));
   };
 
     return(
@@ -192,7 +192,7 @@ import { FLEET_MODULES } from "../staticData/Modules";
         isOpen={showCreateRole}
         onClose={() => setShowCreateRole(false)}
         onSubmit={handleCreateRole}
-        currentUser={currentClient}
+        allowedModules={currentClient.allowedModules}
       />
       </div>
     )

@@ -2,29 +2,29 @@ import React from 'react';
 import { ChevronLeft, ChevronRight, MoreVertical, Edit, Trash2 } from 'lucide-react';
 
 const DynamicTable = React.memo(
-  ({ 
-    headers = [], 
-    data = [], 
-    menuOpen, 
-    onNext, 
-    onPrev, 
-    currentPage, 
-    totalPages, 
+  ({
+    headers = [],
+    data = [],
+    menuOpen,
+    onNext,
+    onPrev,
+    currentPage = 1,
+    totalPages = 1,
     onMenuToggle,
     renderActions,
     onSelectItem,
-    selectedItems = []
+    selectedItems = [],
   }) => {
     const isSelected = (item) => selectedItems.some((i) => i.id === item.id);
 
     return (
       <div className="rounded-lg overflow-hidden shadow mt-2 w-full mx-auto">
-
+        {/* Scrollable Table Container */}
         <div className="overflow-auto max-h-[600px]">
-          <table className="min-w-[1100px] border-collapse table-fixed">
-            {/* Table Headers */}
+          <table className="min-w-full table-fixed border-collapse">
+            {/* Table Head */}
             <thead className="bg-gray-50 border-b sticky top-0 z-10">
-              <tr className="text-left text-gray-600">
+              <tr className="text-left text-gray-600 text-sm">
                 <th className="px-4 py-3 w-12">
                   <input
                     type="checkbox"
@@ -36,9 +36,11 @@ const DynamicTable = React.memo(
                   />
                 </th>
                 {headers.map((header, index) => (
-                  <th 
-                    key={index} 
-                    className={`px-4 py-3 text-sm font-medium text-gray-700 break-words whitespace-normal ${header.className || 'w-48 max-w-[12rem]'}`}
+                  <th
+                    key={index}
+                    className={`px-4 py-3 font-medium text-gray-700 whitespace-normal ${
+                      header.className || 'w-[16.66%]'
+                    }`}
                   >
                     {header.label}
                   </th>
@@ -67,15 +69,17 @@ const DynamicTable = React.memo(
                       />
                     </td>
                     {headers.map((header, colIndex) => (
-                      <td 
-                        key={colIndex} 
-                        className="px-4 py-3 text-sm text-gray-700 break-words whitespace-normal w-48 max-w-[12rem]"
+                      <td
+                        key={colIndex}
+                        className={`px-4 py-3 text-sm text-gray-700 break-words whitespace-normal ${
+                          header.className || 'w-[16.66%]'
+                        }`}
                       >
-                        {header.render ? header.render(item) : item[header.key]}
+                        {header.render ? header.render(item) : item[header.key] ?? '-'}
                       </td>
                     ))}
-                    <td className="px-4 py-3 text-center relative">
-                      <button 
+                    <td className="px-4 py-3 text-center relative w-24">
+                      <button
                         className="p-2 hover:bg-gray-100 rounded-full"
                         onClick={() => onMenuToggle(item.id)}
                       >
@@ -86,11 +90,11 @@ const DynamicTable = React.memo(
                           {renderActions?.(item) || (
                             <>
                               <button className="flex flex-col items-center px-3 py-2 text-gray-700 hover:bg-gray-50">
-                                <Edit size={18} color="blue" />
+                                <Edit size={18} className="text-blue-600" />
                                 <span className="text-xs">Edit</span>
                               </button>
                               <button className="flex flex-col items-center px-3 py-2 text-gray-700 hover:bg-gray-50">
-                                <Trash2 size={18} color="red" />
+                                <Trash2 size={18} className="text-red-600" />
                                 <span className="text-xs">Delete</span>
                               </button>
                             </>
@@ -105,7 +109,7 @@ const DynamicTable = React.memo(
           </table>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination Controls - Page Info Removed */}
         <div className="flex justify-center items-center gap-4 mt-4 p-2">
           <button
             onClick={onPrev}
@@ -117,9 +121,7 @@ const DynamicTable = React.memo(
             Prev
           </button>
 
-          <span className="text-sm text-gray-700 font-medium">
-            Page {currentPage} of {totalPages}
-          </span>
+          {/* Removed page info */}
 
           <button
             onClick={onNext}

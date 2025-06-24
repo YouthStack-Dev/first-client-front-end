@@ -2,98 +2,115 @@ import React, { useState } from 'react';
 import { X, Building2, User, Shield, Check, ChevronDown, ChevronUp, Search } from 'lucide-react';
 import { MODULES } from '../../staticData/Modules';
 
-export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
+export const CreateCompanyForm = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  parentAllowedModules = MODULES.reduce((ids, m) => [...ids, m.id, ...m.submodules.map(sub => sub.id)], []),
+  isDirectCreation = false
+}) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     companyName: '',
     contactPerson: '',
     phone: '',
-    allowedModules: [],
+    address: '',
+    allowedModules: []
   });
 
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedModules, setExpandedModules] = useState(new Set());
 
+  // Filter available modules based on parent permissions
+  const availableModules = MODULES.filter(module => {
+    const moduleAllowed = parentAllowedModules.includes(module.id);
+    const hasAllowedSubmodules = module.submodules.some(sub => parentAllowedModules.includes(sub.id));
+    return moduleAllowed || hasAllowedSubmodules;
+  }).map(module => ({
+    ...module,
+    submodules: module.submodules.filter(sub => parentAllowedModules.includes(sub.id))
+  }));
+
   // Calculate category counts including submodules
   const categories = [
     { 
       id: 'all', 
       name: 'All Modules', 
-      count: MODULES.reduce((sum, m) => sum + 1 + m.submodules.length, 0),
+      count: availableModules.reduce((sum, m) => sum + 1 + m.submodules.length, 0),
       color: 'bg-gray-100 text-gray-700 border-gray-200'
     },
     {
       id: 'fleet',
       name: 'Fleet Management',
-      count: MODULES.filter(m => m.category === 'fleet').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
-      color: 'bg-blue-50 text-blue-700 border-blue-200'
+      count: availableModules.filter(m => m.category === 'fleet').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
+      color: 'bg-green-50 text-green-700 border-green-200'
     },
     {
       id: 'tracking',
       name: 'Tracking & GPS',
-      count: MODULES.filter(m => m.category === 'tracking').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
-      color: 'bg-green-50 text-green-700 border-green-200'
+      count: availableModules.filter(m => m.category === 'tracking').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
+      color: 'bg-blue-50 text-blue-700 border-blue-200'
     },
     {
       id: 'maintenance',
       name: 'Maintenance',
-      count: MODULES.filter(m => m.category === 'maintenance').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
+      count: availableModules.filter(m => m.category === 'maintenance').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
       color: 'bg-orange-50 text-orange-700 border-orange-200'
     },
     {
       id: 'reports',
       name: 'Reports & Analytics',
-      count: MODULES.filter(m => m.category === 'reports').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
+      count: availableModules.filter(m => m.category === 'reports').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
       color: 'bg-purple-50 text-purple-700 border-purple-200'
     },
     {
       id: 'settings',
       name: 'Settings',
-      count: MODULES.filter(m => m.category === 'settings').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
+      count: availableModules.filter(m => m.category === 'settings').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
       color: 'bg-gray-50 text-gray-700 border-gray-200'
     },
     {
       id: 'users',
       name: 'Users',
-      count: MODULES.filter(m => m.category === 'users').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
+      count: availableModules.filter(m => m.category === 'users').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
       color: 'bg-indigo-50 text-indigo-700 border-indigo-200'
     },
     {
       id: 'organization',
       name: 'Organization',
-      count: MODULES.filter(m => m.category === 'organization').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
+      count: availableModules.filter(m => m.category === 'organization').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
       color: 'bg-pink-50 text-pink-700 border-pink-200'
     },
     {
       id: 'scheduling',
       name: 'Scheduling',
-      count: MODULES.filter(m => m.category === 'scheduling').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
+      count: availableModules.filter(m => m.category === 'scheduling').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
       color: 'bg-teal-50 text-teal-700 border-teal-200'
     },
     {
       id: 'vendor',
       name: 'Vendors',
-      count: MODULES.filter(m => m.category === 'vendor').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
+      count: availableModules.filter(m => m.category === 'vendor').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
       color: 'bg-yellow-50 text-yellow-700 border-yellow-200'
     },
     {
       id: 'contracts',
       name: 'Contracts',
-      count: MODULES.filter(m => m.category === 'contracts').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
+      count: availableModules.filter(m => m.category === 'contracts').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
       color: 'bg-red-50 text-red-700 border-red-200'
     },
     {
       id: 'security',
       name: 'Security',
-      count: MODULES.filter(m => m.category === 'security').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
+      count: availableModules.filter(m => m.category === 'security').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
       color: 'bg-emerald-50 text-emerald-700 border-emerald-200'
     },
-  ];
+  ].filter(cat => cat.count > 0);
 
   // Filter modules by category and search term
-  const filteredModules = MODULES.filter(module => {
+  const filteredModules = availableModules.filter(module => {
     const matchesCategory = selectedCategory === 'all' || module.category === selectedCategory;
     const matchesSearch = searchTerm === '' || 
       module.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -115,20 +132,20 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
 
   // Check if a module has any selected submodules
   const hasSelectedSubmodules = (moduleId) => {
-    const module = MODULES.find(m => m.id === moduleId);
+    const module = availableModules.find(m => m.id === moduleId);
     if (!module) return false;
     return module.submodules.some(sub => formData.allowedModules.includes(sub.id));
   };
 
   // Check if all submodules of a module are selected
   const allSubmodulesSelected = (moduleId) => {
-    const module = MODULES.find(m => m.id === moduleId);
+    const module = availableModules.find(m => m.id === moduleId);
     if (!module || module.submodules.length === 0) return false;
     return module.submodules.every(sub => formData.allowedModules.includes(sub.id));
   };
 
   const handleModuleToggle = (id, isMainModule = false) => {
-    const module = MODULES.find(m => m.id === id);
+    const module = availableModules.find(m => m.id === id);
     
     if (isMainModule && module) {
       // If it's a main module being toggled
@@ -162,7 +179,7 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
         }));
       } else {
         // Selecting a submodule - add it and ensure parent module is selected
-        const parentModule = MODULES.find(m => m.submodules.some(sub => sub.id === id));
+        const parentModule = availableModules.find(m => m.submodules.some(sub => sub.id === id));
         
         if (parentModule) {
           // It's a submodule - ensure parent is selected
@@ -214,9 +231,9 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
     e.preventDefault();
     onSubmit({
       ...formData,
-      type: 'client',
-      roleId: 'client-role',
+      type: 'company',
       status: 'active',
+      clientId: isDirectCreation ? 'direct-super-admin' : 'parent-client-id'
     });
     setFormData({
       name: '',
@@ -224,7 +241,8 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
       companyName: '',
       contactPerson: '',
       phone: '',
-      allowedModules: [],
+      address: '',
+      allowedModules: []
     });
     onClose();
   };
@@ -235,14 +253,18 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <Building2 className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+              <Building2 className="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Create New Client</h2>
-              <p className="text-sm text-gray-600">Set up a new client with custom module permissions</p>
+              <h2 className="text-2xl font-bold text-gray-900">Create New Company</h2>
+              <p className="text-sm text-gray-600">
+                {isDirectCreation
+                  ? 'Set up a new company directly under super admin'
+                  : 'Set up a new company with custom module permissions'}
+              </p>
             </div>
           </div>
           <button
@@ -256,25 +278,25 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
         <form onSubmit={handleSubmit} className="flex flex-col h-full max-h-[calc(90vh-100px)]">
           <div className="flex-1 overflow-y-auto">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-              {/* Client Information */}
+              {/* Company Information */}
               <div className="lg:col-span-1">
                 <div className="bg-gray-50 rounded-xl p-6 h-full">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <User className="w-5 h-5 mr-2 text-gray-600" />
-                    Client Information
+                    Company Information
                   </h3>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Client Name *
+                        Contact Person Name *
                       </label>
                       <input
                         type="text"
                         required
                         value={formData.name}
                         onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        placeholder="Enter client name"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                        placeholder="Enter contact person name"
                       />
                     </div>
                     <div>
@@ -286,8 +308,8 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
                         required
                         value={formData.email}
                         onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        placeholder="client@company.com"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                        placeholder="company@domain.com"
                       />
                     </div>
                     <div>
@@ -299,7 +321,7 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
                         required
                         value={formData.companyName}
                         onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                         placeholder="Company name"
                       />
                     </div>
@@ -311,8 +333,8 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
                         type="text"
                         value={formData.contactPerson}
                         onChange={(e) => setFormData(prev => ({ ...prev, contactPerson: e.target.value }))}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        placeholder="Contact person name"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                        placeholder="Additional contact person"
                       />
                     </div>
                     <div>
@@ -323,8 +345,20 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
                         type="tel"
                         value={formData.phone}
                         onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                         placeholder="+1 (555) 123-4567"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Address
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.address}
+                        onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                        placeholder="Company address"
                       />
                     </div>
                   </div>
@@ -340,10 +374,19 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
                         <Shield className="w-5 h-5 mr-2 text-gray-600" />
                         Module Permissions
                       </h3>
-                      <div className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium">
+                      <div className="text-sm bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
                         {formData.allowedModules.length} selected
                       </div>
                     </div>
+
+                    {!isDirectCreation && (
+                      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          <Shield className="w-4 h-4 inline mr-1" />
+                          You can only assign modules that are available to the parent client.
+                        </p>
+                      </div>
+                    )}
 
                     {/* Search Bar */}
                     <div className="relative mb-4">
@@ -353,7 +396,7 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
                         placeholder="Search modules..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                       />
                     </div>
 
@@ -380,7 +423,7 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
                       <button
                         type="button"
                         onClick={handleSelectAll}
-                        className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline"
+                        className="text-sm text-green-600 hover:text-green-700 font-medium hover:underline"
                       >
                         {getAllModuleIds().every(id => formData.allowedModules.includes(id))
                           ? 'Deselect All'
@@ -413,7 +456,7 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
                           <div key={module.id} className="border border-gray-200 rounded-lg overflow-hidden">
                             {/* Main Module */}
                             <div className={`p-4 transition-all ${
-                              isSelected || hasSubSelected ? 'bg-blue-50 border-blue-200' : 'bg-white hover:bg-gray-50'
+                              isSelected || hasSubSelected ? 'bg-green-50 border-green-200' : 'bg-white hover:bg-gray-50'
                             }`}>
                               <div className="flex items-center justify-between">
                                 <div
@@ -423,9 +466,9 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
                                   <div
                                     className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
                                       checkboxState === 'checked' 
-                                        ? 'border-blue-500 bg-blue-500' 
+                                        ? 'border-green-500 bg-green-500' 
                                         : checkboxState === 'indeterminate'
-                                        ? 'border-blue-500 bg-blue-500'
+                                        ? 'border-green-500 bg-green-500'
                                         : 'border-gray-300 hover:border-gray-400'
                                     }`}
                                   >
@@ -471,14 +514,14 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
                                       onClick={() => handleModuleToggle(submodule.id)}
                                       className={`p-4 pl-12 cursor-pointer transition-all border-b last:border-b-0 border-gray-200 ${
                                         isSubSelected
-                                          ? 'bg-blue-50'
+                                          ? 'bg-green-50'
                                           : 'hover:bg-white'
                                       }`}
                                     >
                                       <div className="flex items-center space-x-3">
                                         <div
                                           className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${
-                                            isSubSelected ? 'border-blue-500 bg-blue-500' : 'border-gray-300 hover:border-gray-400'
+                                            isSubSelected ? 'border-green-500 bg-green-500' : 'border-gray-300 hover:border-gray-400'
                                           }`}
                                         >
                                           {isSubSelected && <Check className="w-2.5 h-2.5 text-white" />}
@@ -526,9 +569,9 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
                 <button
                   type="submit"
                   disabled={!formData.name || !formData.email || !formData.companyName || formData.allowedModules.length === 0}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 disabled:hover:scale-100 font-medium shadow-lg"
+                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 disabled:hover:scale-100 font-medium shadow-lg"
                 >
-                  Create Client
+                  Create Company
                 </button>
               </div>
             </div>
