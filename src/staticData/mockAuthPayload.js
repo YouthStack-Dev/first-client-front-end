@@ -1,3 +1,5 @@
+import { admi2Modules, admin1Modules, clientadmin1Modules, clientadmin2Modules, superAdminModules, vendo1Module, vendor2Module } from "./ModulePermissions";
+
 export const mockAuthPayload = {
   users: [
     // 🔹 Super Admin
@@ -7,34 +9,11 @@ export const mockAuthPayload = {
        user: {
         id: "u1",
         username: "superadmin",
-        email: "superadmin@email.com",
+        email: "super@email.com",
         role: "SUPER_ADMIN",
         type: "superadmin",
       },
-      allowedModules: [
-        {
-          id: "dashboard",
-          permissions: { canRead: true, canWrite: true, canDelete: true },
-        },
-        {
-          id: "manageVehicles",
-          permissions: { canRead: true, canWrite: true },
-          submodules: [
-            {
-              id: "vehicleType",
-              permissions: { canRead: true, canWrite: true },
-            },
-            {
-              id: "subadmins",
-              permissions: { canRead: true, canWrite: true },
-            },
-          ],
-        },
-        {
-          id: "manage-clients",
-          permissions: { canRead: true, canWrite: true },
-        },
-      ],
+      allowedModules: superAdminModules
 
     },
 
@@ -50,22 +29,7 @@ export const mockAuthPayload = {
         type: "client",
         clientId: "client1",
       },
-      allowedModules: [
-        {
-          id: "manage-team",
-          permissions: { canRead: true, canWrite: true },
-          submodules: [
-            {
-              id: "business-unit",
-              permissions: { canRead: false },
-            },
-          ],
-        },
-        {
-          id: "manage-clients",
-          permissions: { canRead: true, canWrite: true, canDelete: true },
-        },
-      ],
+      allowedModules: clientadmin1Modules
     },
 
     // 🔹 Client Admin #2
@@ -80,22 +44,7 @@ export const mockAuthPayload = {
         type: "client",
         clientId: "client2",
       },
-      allowedModules: [
-        {
-          id: "manage-team",
-          permissions: { canRead: true, canWrite: true },
-          submodules: [
-            {
-              id: "employee-under-team",
-              permissions: { canRead: true },
-            },
-            {
-              id: "business-unit",
-              permissions: { canRead: false },
-            },
-          ],
-        },
-      ],
+      allowedModules:clientadmin2Modules
     },
 
     // 🔹 Company Admin #1
@@ -111,26 +60,7 @@ export const mockAuthPayload = {
         clientId: "client1",
         companyId: "company1",
       },
-      allowedModules: [
-        {
-          id: "manage-drivers",
-          permissions: { canRead: true, canWrite: true, canDelete: true },
-        },
-        {
-          id: "manage-vehicles",
-          permissions: { canRead: true, canWrite: true },
-          submodules: [
-            {
-              id: "vehicles",
-              permissions: { canRead: true },
-            },
-            {
-              id: "vehicle-type",
-              permissions: { canRead: true },
-            },
-          ],
-        },
-      ],
+      allowedModules: admin1Modules
     },
 
     // 🔹 Company Admin #2
@@ -146,22 +76,7 @@ export const mockAuthPayload = {
         clientId: "client1",
         companyId: "company2",
       },
-      allowedModules: [
-        {
-          id: "scheduling-management",
-          permissions: { canRead: true, canWrite: true },
-          submodules: [
-            {
-              id: "manage-shift",
-              permissions: { canRead: true },
-            },
-            {
-              id: "manage-shift-categories",
-              permissions: { canRead: false },
-            },
-          ],
-        },
-      ],
+      allowedModules: admi2Modules
     },
 
     // 🔹 Vendor User #1
@@ -175,15 +90,7 @@ export const mockAuthPayload = {
         role: "VENDOR",
         type: "vendor",
       },
-      allowedModules: [
-        {
-          id: "vendor-contract",
-          name: "Vendor Contract",
-          icon: "FileSignature",
-          category: "contracts",
-          permissions: { canRead: true, canWrite: false, canDelete: false },
-        },
-      ],
+      allowedModules: vendo1Module
     },
 
     // 🔹 Vendor User #2
@@ -197,16 +104,7 @@ export const mockAuthPayload = {
         role: "VENDOR",
         type: "vendor",
       },
-      allowedModules: [
-        {
-          id: "vendor-contract",
-          permissions: { canRead: true },
-        },
-        {
-          id: "vehicles",
-          permissions: { canRead: true },
-        },
-      ],
+      allowedModules: vendor2Module
     },
   ],
 };

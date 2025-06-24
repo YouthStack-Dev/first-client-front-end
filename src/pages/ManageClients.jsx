@@ -1,6 +1,6 @@
 import { Plus, Users, Shield, Building2, Search, Filter, MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
 
-import { FLEET_MODULES } from "../staticData/Modules";
+import { MODULES } from "../staticData/Modules";
 import { useState } from "react";
 import { CreateClientForm } from '../components/modals/CreateClientForm';
 
@@ -10,7 +10,7 @@ const TableHeader = ({ title }) => (
     </th>
   );
   
-const ManageClients = (second) => {
+const ManageClients = () => {
     const [showCreateClient, setShowCreateClient] = useState(false);
     const [clients, setClients] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -38,7 +38,7 @@ const ManageClients = (second) => {
 
   const getModuleNames = (moduleIds) => {
     return moduleIds.map(id => {
-      const module = FLEET_MODULES.find(m => m.id === id);
+      const module = MODULES.find(m => m.id === id);
       return module ? module.name : null;
     }).filter(Boolean);
   };

@@ -120,6 +120,7 @@ function App() {
               <Route path="/security-dashboard" element={<h1>Security Dashboard</h1>} />
               <Route path="/bussiness-unit" element={<h1>Business Unit</h1>} />
               <Route path="/routing" element={<RouteManagement />} />
+              <Route path="/tracking" element={<h1> This is the Tracking Screen</h1>} />
 
               <Route element={<ProtectedRouteAuth  />}>
                 <Route path="/vendors" element={<ManageVendor />} />
