@@ -35,55 +35,55 @@ export const staticPermissions = {
     // { module: 'smsConfig', canRead: true, canWrite: true, canDelete: true }
   ],
 
-  'admin@email.com': [
-    { module: 'dashboard', canRead: true, canWrite: false, canDelete: false },
-    { module: 'manageContracts', canRead: true, canWrite: true, canDelete: false },
-    // User Management
-    { module: 'subadmins', canRead: true, canWrite: true, canDelete: false },
+    'admin@email.com': [
+      { module: 'dashboard', canRead: true, canWrite: false, canDelete: false },
+      { module: 'manageContracts', canRead: true, canWrite: true, canDelete: false },
+      // User Management
+      { module: 'subadmins', canRead: true, canWrite: true, canDelete: false },
 
-    // Contracts
-    { module: 'vehicleContract', canRead: true, canWrite: true, canDelete: false },
+      // Contracts
+      { module: 'vehicleContract', canRead: true, canWrite: true, canDelete: false },
 
-    // Vehicles
-    { module: 'vehicles', canRead: true, canWrite: false, canDelete: false },
-    { module: 'vehicleType', canRead: true, canWrite: false, canDelete: false },
+      // Vehicles
+      { module: 'vehicles', canRead: true, canWrite: false, canDelete: false },
+      { module: 'vehicleType', canRead: true, canWrite: false, canDelete: false },
 
-    // Scheduling
-    { module: 'SchedulingManagement', canRead: true, canWrite: false, canDelete:false},
-    { module: 'manageShift', canRead: true, canWrite: true, canDelete: false },
-    { module: 'manageShiftCategories', canRead: true, canWrite: true, canDelete: false },
-    { module: 'manageSchedulePolicies', canRead: true, canWrite: true, canDelete: false },
+      // Scheduling
+      { module: 'SchedulingManagement', canRead: true, canWrite: false, canDelete:false},
+      { module: 'manageShift', canRead: true, canWrite: true, canDelete: false },
+      { module: 'manageShiftCategories', canRead: true, canWrite: true, canDelete: false },
+      { module: 'manageSchedulePolicies', canRead: true, canWrite: true, canDelete: false },
 
-    // Flat modules
-    { module: 'manageTeam', canRead: true, canWrite: true, canDelete: false },
-    { module: 'manageBilling', canRead: true, canWrite: true, canDelete: false },
-    { module: 'roleManagement', canRead: true, canWrite: false, canDelete: false },
-    { module: 'auditReport', canRead: true, canWrite: false, canDelete: false },
-    { module: 'drivers', canRead: true, canWrite: false, canDelete: false },
-    { module: 'routing', canRead: true, canWrite: false, canDelete: false },
-    { module: 'businessUnit', canRead: true, canWrite: false, canDelete: false },
-    { module: 'staff', canRead: true, canWrite: false, canDelete: false },
-    { module: 'securityDashboard', canRead: true, canWrite: false, canDelete: false }
-  ],
+      // Flat modules
+      { module: 'manageTeam', canRead: true, canWrite: true, canDelete: false },
+      { module: 'manageBilling', canRead: true, canWrite: true, canDelete: false },
+      { module: 'roleManagement', canRead: true, canWrite: false, canDelete: false },
+      { module: 'auditReport', canRead: true, canWrite: false, canDelete: false },
+      { module: 'drivers', canRead: true, canWrite: false, canDelete: false },
+      { module: 'routing', canRead: true, canWrite: false, canDelete: false },
+      { module: 'businessUnit', canRead: true, canWrite: false, canDelete: false },
+      { module: 'staff', canRead: true, canWrite: false, canDelete: false },
+      { module: 'securityDashboard', canRead: true, canWrite: false, canDelete: false }
+    ],
 
-  'vendor@email.com': [
-    { module: 'dashboard', canRead: true, canWrite: false, canDelete: false },
-    
-    // Contracts
-    { module: 'vehicleContract', canRead: true, canWrite: true, canDelete: false },
-    { module: 'vendorContract', canRead: true, canWrite: true, canDelete: false },
+    'vendor@email.com': [
+      { module: 'dashboard', canRead: true, canWrite: false, canDelete: false },
+      
+      // Contracts
+      { module: 'vehicleContract', canRead: true, canWrite: true, canDelete: false },
+      { module: 'vendorContract', canRead: true, canWrite: true, canDelete: false },
 
-    // Vehicles
-    { module: 'vehicles', canRead: true, canWrite: true, canDelete: false },
-    { module: 'vehicleType', canRead: true, canWrite: true, canDelete: false },
+      // Vehicles
+      { module: 'vehicles', canRead: true, canWrite: true, canDelete: false },
+      { module: 'vehicleType', canRead: true, canWrite: true, canDelete: false },
 
-    { module: 'drivers', canRead: true, canWrite: false, canDelete: false }
-  ],
+      { module: 'drivers', canRead: true, canWrite: false, canDelete: false }
+    ],
 
-  'client@email.com': [
-    { module: 'dashboard', canRead: true, canWrite: false, canDelete: false },
-    { module: 'manageBookings', canRead: true, canWrite: false, canDelete: false },
-    { module: 'manageShift', canRead: true, canWrite: false, canDelete: false },
-    { module: 'vehicleContract', canRead: true, canWrite: false, canDelete: false }
-  ]
-};
+    'client@email.com': [
+      { module: 'dashboard', canRead: true, canWrite: false, canDelete: false },
+      { module: 'manageBookings', canRead: true, canWrite: false, canDelete: false },
+      { module: 'manageShift', canRead: true, canWrite: false, canDelete: false },
+      { module: 'vehicleContract', canRead: true, canWrite: false, canDelete: false }
+    ]
+  };

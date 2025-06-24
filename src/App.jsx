@@ -12,6 +12,9 @@ import { ModulePermissionContext} from './context/ModulePermissionContext';
 import ManageClients from './pages/ManageClients';
 import ManageRoles from './pages/ManageRoles';
 import ProtectedRouteAuth from './middleware/ProtectedRouteAuth';
+import ShiftCategoryManagement from "./pages/ShiftCategoryManagement";
+import AllContracts from "./pages/AllContracts";
+
 
 
 // Lazy-loaded components
@@ -37,6 +40,8 @@ const DashboardRouter = lazy(() => import('./components/dashboards/DashboardRout
 const ManageTeams = lazy(() => import('./pages/ManageTeams'));
 const CalendarPopupExample = lazy(() => import('./components/ui/CalendarPopupExample'));
 const EmployeeList = lazy(() => import('./components/Employee/EmployeeList'));
+const AddContractForm = lazy(() => import('./components/ContractForm'));
+
 
 // 404 fallback
 const NotFound = () => (
@@ -107,7 +112,7 @@ function App() {
               <Route path="/bookings" element={<BookingManagement />} />
               <Route path="/vehicles/add-vehicle" element={<VehicleForm />} />
               <Route path="/manage-shift" element={<ShiftManagement />} />
-              <Route path="/shift-Categories" element={<h1>Shift Categories management</h1>} />
+              <Route path="/shift-Categories" element={<ShiftCategoryManagement />} />
               <Route path="/shedule-polysies" element={<h1>Schedule Policies management</h1>} />
               <Route path="/audit-report" element={<h1>This is the audit report implementation</h1>} />
               <Route path="/manage-team" element={<ManageTeams />} />
@@ -133,6 +138,9 @@ function App() {
               <Route path="/vehicles" element={<ManageVehicles />} />
               <Route path="/vehicle-contract" element={<VehicleContract />} />
               <Route path="/vehicle-group" element={<ManageVehicleTypes />} />
+              <Route path="/New-contracts" element={<AllContracts />} />
+              <Route path="/contract/create-contract" element={<AddContractForm />} />
+
             </Route>
 
 

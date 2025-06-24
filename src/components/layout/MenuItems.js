@@ -51,6 +51,12 @@ export const menuItems = [
         icon: Car,
         permissionModule: 'vehicleContract'
       },
+       {
+        path: '/New-contracts',
+        name: 'AllContracts',
+        icon: Car,
+        permissionModule: 'allContracts'
+      },
       {
         path: '/vendor-contract',
         name: 'Vendor Contract',

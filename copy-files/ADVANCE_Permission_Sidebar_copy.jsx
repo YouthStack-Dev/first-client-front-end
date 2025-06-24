@@ -131,6 +131,14 @@ const handleLogout = () => {
           icon: UserCog,
           roles: [ROLES.SUPER_ADMIN],
         },
+          {
+        path: '/contracts',
+        name: 'All Contracts',
+        name: 'allContracts',
+        icon: FileText,
+        roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+       
+      },
         {
           path: '/vehicle-group',
           name: 'Vehicle Type',
