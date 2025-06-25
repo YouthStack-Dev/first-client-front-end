@@ -12,6 +12,9 @@ const DynamicTable = React.memo(
     renderActions,
     onSelectItem,
     selectedItems = [],
+    onEdit,
+    onDelete,
+    onHistory,
   }) => {
     const isSelected = (item) => selectedItems.some((i) => i.id === item.id);
 
@@ -36,9 +39,7 @@ const DynamicTable = React.memo(
                 {headers.map((header, index) => (
                   <th
                     key={index}
-                    className={`px-4 py-3 font-medium text-gray-700 whitespace-normal ${
-                      header.className || 'w-[16.66%]'
-                    }`}
+                    className={`px-4 py-3 font-medium text-gray-700 whitespace-normal ${header.className || 'w-[16.66%]'}`}
                   >
                     {header.label}
                   </th>
@@ -72,9 +73,7 @@ const DynamicTable = React.memo(
                     {headers.map((header, colIndex) => (
                       <td
                         key={colIndex}
-                        className={`px-4 py-3 text-sm text-gray-700 break-words whitespace-normal ${
-                          header.className || 'w-[16.66%]'
-                        }`}
+                        className={`px-4 py-3 text-sm text-gray-700 break-words whitespace-normal ${header.className || 'w-[16.66%]'}`}
                       >
                         {header.render ? header.render(item) : item[header.key] ?? '-'}
                       </td>
@@ -85,27 +84,33 @@ const DynamicTable = React.memo(
                           renderActions(item)
                         ) : (
                           <>
-                            <button
-                              title="Edit"
-                              className="text-blue-600 hover:bg-gray-100 p-1.5 rounded"
-                              onClick={() => console.log('Edit clicked', item)}
-                            >
-                              <Edit size={18} />
-                            </button>
-                            <button
-                              title="Delete"
-                              className="text-red-600 hover:bg-gray-100 p-1.5 rounded"
-                              onClick={() => console.log('Delete clicked', item.id)}
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                            <button
-                              title="History"
-                              className="text-purple-600 hover:bg-gray-100 p-1.5 rounded"
-                              onClick={() => console.log('History clicked', item)}
-                            >
-                              <Clock size={18} />
-                            </button>
+                            {onEdit && (
+                              <button
+                                title="Edit"
+                                className="text-blue-600 hover:bg-gray-100 p-1.5 rounded"
+                                onClick={() => onEdit(item)}
+                              >
+                                <Edit size={18} />
+                              </button>
+                            )}
+                            {onDelete && (
+                              <button
+                                title="Delete"
+                                className="text-red-600 hover:bg-gray-100 p-1.5 rounded"
+                                onClick={() => onDelete(item)}
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            )}
+                            {onHistory && (
+                              <button
+                                title="History"
+                                className="text-purple-600 hover:bg-gray-100 p-1.5 rounded"
+                                onClick={() => onHistory(item)}
+                              >
+                                <Clock size={18} />
+                              </button>
+                            )}
                           </>
                         )}
                       </div>

@@ -43,6 +43,7 @@ export const staticPermissions = {
 
       // Contracts
       { module: 'vehicleContract', canRead: true, canWrite: true, canDelete: false },
+      { module:'allcontract', canRead:true, canWrite:true, canDelete: false},
 
       // Vehicles
       { module: 'vehicles', canRead: true, canWrite: false, canDelete: false },
@@ -71,6 +72,7 @@ export const staticPermissions = {
       
       // Contracts
       { module: 'vehicleContract', canRead: true, canWrite: true, canDelete: false },
+      { module:'allcontract', canRead:true, canWrite:true, canDelete: false},
       { module: 'vendorContract', canRead: true, canWrite: true, canDelete: false },
 
       // Vehicles

@@ -17,6 +17,7 @@ import AllContracts from "./pages/AllContracts";
 
 
 
+
 // Lazy-loaded components
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
