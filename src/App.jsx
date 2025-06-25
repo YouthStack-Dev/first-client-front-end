@@ -14,6 +14,7 @@ import ManageCompanies from './pages/ManageCompanies';
 import { log } from './utils/logger';
 import ShiftCategoryManagement from "./pages/ShiftCategoryManagement";
 import AllContracts from "./pages/AllContracts";
+import TrackingScreen from './pages/TrackingScreen';
 
 // Lazy-loaded components
 const Login = lazy(() => import('./pages/Login'));
@@ -123,7 +124,8 @@ function App() {
               <Route path="/security-dashboard" element={<h1>Security Dashboard</h1>} />
               <Route path="/bussiness-unit" element={<h1>Business Unit</h1>} />
               <Route path="/routing" element={<RouteManagement />} />
-              <Route path="/tracking" element={<h1> This is the Tracking Screen</h1>} />
+              <Route path="/tracking" element={<TrackingScreen/>} />
+              <Route path="/vendor-contract" element={<h1> This is the vendor-contract Screen</h1>} />
 
               <Route element={<ProtectedRouteAuth  />}>
                 <Route path="/vendors" element={<ManageVendor />} />
