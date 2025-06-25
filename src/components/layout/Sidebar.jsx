@@ -1,11 +1,9 @@
-
-
-  import {
-    LogOut,
-    ChevronDown,
-    Pin,
-    PinOff,
-  } from 'lucide-react';
+import {
+  LogOut,
+  ChevronDown,
+  Pin,
+  PinOff,
+} from 'lucide-react';
 
   import { Link, useLocation } from 'react-router-dom';
   import React, { useState, useEffect, useContext } from 'react';

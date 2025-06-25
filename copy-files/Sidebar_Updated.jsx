@@ -17,7 +17,8 @@ import {
   ChevronDown,
   Pin,
   PinOff,
-  MessageCircleCode
+  MessageCircleCode,
+  FileText
 } from 'lucide-react';
 
 import { Link, useLocation } from 'react-router-dom';
@@ -110,6 +111,7 @@ const handleLogout = () => {
       roles: [ROLES.SUPER_ADMIN,ROLES.VENDOR,ROLES.ADMIN],
       subItems: [
         { path: '/vehicle-contract', name: 'Vehicle Contract', icon: Car, roles: [, ROLES.VENDOR] },
+        {path :'/New-contracts', name: 'all contracts', icon:FileText,roles: [,ROLES.ADMIN,ROLES.VENDOR] },
         { path: '/vendor-contract', name: 'Vendor Contract', icon: Building2, roles: [ ROLES.VENDOR] }
       ]
     },
