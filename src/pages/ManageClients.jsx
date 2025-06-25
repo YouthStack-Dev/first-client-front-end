@@ -3,6 +3,7 @@ import { Plus, Users, Shield, Building2, Search, Filter, MoreVertical, Edit, Tra
 import { MODULES } from "../staticData/Modules";
 import { useState } from "react";
 import { CreateClientForm } from '../components/modals/CreateClientForm';
+import { log } from '../utils/logger';
 
 const TableHeader = ({ title }) => (
     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -17,15 +18,16 @@ const ManageClients = () => {
     const [filterStatus, setFilterStatus] = useState('all');
   
 
-    const handleCreateClient = (clientData) => {
-        const newClient = {
-          ...clientData,
-          id: `client-${Date.now()}`,
-          createdBy: 'super-admin',
-          createdAt: new Date().toISOString()
+      const handleCreateClient = (clientData) => {
+          const newClient = {
+            ...clientData,
+            id: `client-${Date.now()}`,
+            createdBy: 'super-admin',
+            createdAt: new Date().toISOString()
+          };
+          setClients(prev => [...prev, newClient]);
+          log('🚀 New Client Created:', newClient)
         };
-        setClients(prev => [...prev, newClient]);
-      };
   const filteredClients = clients.filter(client => {
     const matchesSearch =
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

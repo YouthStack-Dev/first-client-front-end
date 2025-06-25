@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Building2, User, Shield, Check, ChevronDown, ChevronUp, Search } from 'lucide-react';
+import { X, Building2, User, Shield, Check, ChevronDown, ChevronUp, Search, Eye, EyeOff, Lock } from 'lucide-react';
 import { MODULES } from '../../staticData/Modules';
 
 export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
@@ -10,8 +10,13 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
     contactPerson: '',
     phone: '',
     allowedModules: [],
+    password: '',
+    confirmPassword: '',
   });
 
+  const [passwordError, setPasswordError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedModules, setExpandedModules] = useState(new Set());
@@ -210,8 +215,26 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
     });
   };
 
+  const validatePassword = () => {
+    if (formData.password.length < 8) {
+      setPasswordError('Password must be at least 8 characters long');
+      return false;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return false;
+    }
+    setPasswordError('');
+    return true;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    if (!validatePassword()) {
+      return;
+    }
+
     onSubmit({
       ...formData,
       type: 'client',
@@ -225,6 +248,8 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
       contactPerson: '',
       phone: '',
       allowedModules: [],
+      password: '',
+      confirmPassword: '',
     });
     onClose();
   };
@@ -326,6 +351,68 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         placeholder="+1 (555) 123-4567"
                       />
+                    </div>
+
+                    {/* Password Fields */}
+                    <div className="pt-4 border-t border-gray-200">
+                      <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                        <Lock className="w-4 h-4 mr-2 text-gray-600" />
+                        Set Password
+                      </h4>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Password *
+                          </label>
+                          <div className="relative">
+                            <input
+                              type={showPassword ? "text" : "password"}
+                              required
+                              value={formData.password}
+                              onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                              onBlur={validatePassword}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all pr-10"
+                              placeholder="Enter password"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                            >
+                              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                            </button>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Confirm Password *
+                          </label>
+                          <div className="relative">
+                            <input
+                              type={showConfirmPassword ? "text" : "password"}
+                              required
+                              value={formData.confirmPassword}
+                              onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                              onBlur={validatePassword}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all pr-10"
+                              placeholder="Confirm password"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                            >
+                              {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                            </button>
+                          </div>
+                        </div>
+                        {passwordError && (
+                          <div className="text-sm text-red-600 mt-2">
+                            {passwordError}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -525,7 +612,15 @@ export const CreateClientForm = ({ isOpen, onClose, onSubmit }) => {
                 </button>
                 <button
                   type="submit"
-                  disabled={!formData.name || !formData.email || !formData.companyName || formData.allowedModules.length === 0}
+                  disabled={
+                    !formData.name || 
+                    !formData.email || 
+                    !formData.companyName || 
+                    formData.allowedModules.length === 0 ||
+                    !formData.password ||
+                    !formData.confirmPassword ||
+                    passwordError
+                  }
                   className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 disabled:hover:scale-100 font-medium shadow-lg"
                 >
                   Create Client
