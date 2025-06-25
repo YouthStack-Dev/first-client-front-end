@@ -9,7 +9,7 @@ const initialContracts = [
   { id: 4, name: 'OldContract', vehicleType: 'SUV', status: 'inactive' },
 ];
 
-const ContractTable = ({ contracts }) => {
+const ContractTable = ({ contracts, onActionClick }) => {
   return (
     <div className="mt-4 rounded border bg-white shadow">
       <table className="w-full text-sm table-auto">
@@ -36,12 +36,12 @@ const ContractTable = ({ contracts }) => {
                 <td className="px-4 py-2">{contract.vehicleType}</td>
                 <td className="px-4 py-2 text-center space-x-3 text-blue-600">
                   {contract.status === 'inactive' ? (
-                    <button className="hover:underline">View</button>
+                    <button onClick={() => onActionClick('view', contract)} className="hover:underline">View</button>
                   ) : (
                     <>
-                      <button className="hover:underline">Edit</button>
-                      <button className="hover:underline">Disable</button>
-                      <button className="hover:underline">Edit Issues</button>
+                      <button onClick={() => onActionClick('edit', contract)} className="hover:underline">Edit</button>
+                      <button onClick={() => onActionClick('disable', contract)} className="hover:underline">Disable</button>
+                      <button onClick={() => onActionClick('issues', contract)} className="hover:underline">Edit Issues</button>
                     </>
                   )}
                 </td>
@@ -54,12 +54,21 @@ const ContractTable = ({ contracts }) => {
   );
 };
 
-const ManageContracts = () => {
+const AllContracts = () => {
   const [activeTab, setActiveTab] = useState('active');
   const [contracts] = useState(initialContracts);
+  const [selectedContract, setSelectedContract] = useState(null);
+  const [actionType, setActionType] = useState(null);
+  const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
 
   const filteredContracts = contracts.filter((c) => c.status === activeTab);
+
+  const handleActionClick = (type, contract) => {
+    setSelectedContract(contract);
+    setActionType(type);
+    setShowModal(true);
+  };
 
   return (
     <div className="p-4 min-h-screen bg-gray-50">
@@ -96,9 +105,35 @@ const ManageContracts = () => {
       </div>
 
       {/* Table */}
-      <ContractTable contracts={filteredContracts} />
+      <ContractTable contracts={filteredContracts} onActionClick={handleActionClick} />
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-md w-[400px] shadow-xl">
+            <h3 className="text-lg font-semibold mb-4 capitalize">{actionType} Contract</h3>
+            <p className="mb-4 text-sm text-gray-700">Contract: <strong>{selectedContract?.name}</strong></p>
+
+            {/* Custom logic or forms can be inserted here */}
+            <div className="flex justify-end gap-2 pt-4">
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-700 border rounded hover:bg-gray-100">
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  console.log(`${actionType} confirmed for`, selectedContract);
+                  setShowModal(false);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default ManageContracts;
+export default AllContracts;

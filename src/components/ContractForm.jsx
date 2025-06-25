@@ -27,6 +27,10 @@ const AddContractForm = ({ onSubmit = (data) => console.log("Submitted:", data),
     dieselPriceWindow: '',
   });
 
+  const [dieselWindows, setDieselWindows] = useState([
+    { startDate: '', endDate: '', price: '' },
+  ]);
+  const [comment, setComment] = useState('');
   const [activeTab, setActiveTab] = useState('General Info');
 
   const handleChange = (e) => {
@@ -39,12 +43,27 @@ const AddContractForm = ({ onSubmit = (data) => console.log("Submitted:", data),
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit({ ...formData, dieselWindows, comment });
   };
 
   const handleCancel = (e) => {
     e.preventDefault();
     onCancel();
+  };
+
+  const addDieselWindow = () => {
+    setDieselWindows([...dieselWindows, { startDate: '', endDate: '', price: '' }]);
+  };
+
+  const removeDieselWindow = (index) => {
+    setDieselWindows(dieselWindows.filter((_, i) => i !== index));
+  };
+
+  const handleDieselWindowChange = (index, field, value) => {
+    const updated = dieselWindows.map((window, i) =>
+      i === index ? { ...window, [field]: value } : window
+    );
+    setDieselWindows(updated);
   };
 
   const renderTabContent = () => {
@@ -83,6 +102,29 @@ const AddContractForm = ({ onSubmit = (data) => console.log("Submitted:", data),
             <Input label="AC Price Adjustment Per KM *" name="acPriceAdjustmentPerKm" value={formData.acPriceAdjustmentPerKm} onChange={handleChange} />
             <Input label="Minimum Trips Per Month *" name="minTripsPerMonth" value={formData.minTripsPerMonth} onChange={handleChange} />
             <Input label="Diesel Price Window" name="dieselPriceWindow" value={formData.dieselPriceWindow} onChange={handleChange} />
+
+            <div className="mt-6 col-span-2">
+              <label className="block mb-2 font-semibold text-sm text-gray-700">Diesel Price Window</label>
+              {dieselWindows.map((window, index) => (
+                <div key={index} className="flex items-center gap-2 mb-2">
+                  <input type="date" value={window.startDate} onChange={(e) => handleDieselWindowChange(index, 'startDate', e.target.value)} className="border px-2 py-1 rounded" />
+                  <input type="date" value={window.endDate} onChange={(e) => handleDieselWindowChange(index, 'endDate', e.target.value)} className="border px-2 py-1 rounded" />
+                  <input type="number" placeholder="Price" value={window.price} onChange={(e) => handleDieselWindowChange(index, 'price', e.target.value)} className="border px-2 py-1 rounded w-24" />
+                  <button type="button" onClick={() => removeDieselWindow(index)} className="text-red-600 text-xl">❌</button>
+                </div>
+              ))}
+              <button type="button" onClick={addDieselWindow} className="text-blue-600 text-sm underline mt-1">Add More Window</button>
+            </div>
+
+            <div className="col-span-2 flex justify-between mt-4">
+              <div className="flex-1">
+                <label className="block mb-1 font-medium text-sm text-gray-700">Comment</label>
+                <textarea value={comment} onChange={(e) => setComment(e.target.value)} className="w-full border border-gray-300 px-3 py-2 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" rows={3} />
+              </div>
+              <div className="pl-4 pt-6">
+                <button type="button" onClick={() => console.log('Show history')} className="text-blue-600 underline text-sm">History</button>
+              </div>
+            </div>
           </>
         );
       default:
@@ -96,12 +138,7 @@ const AddContractForm = ({ onSubmit = (data) => console.log("Submitted:", data),
 
       <div className="flex space-x-4 mb-6">
         {tabs.map(tab => (
-          <button
-            key={tab}
-            type="button"
-            className={`px-4 py-2 rounded-t ${activeTab === tab ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-            onClick={() => setActiveTab(tab)}
-          >
+          <button key={tab} type="button" className={`px-4 py-2 rounded-t ${activeTab === tab ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`} onClick={() => setActiveTab(tab)}>
             {tab}
           </button>
         ))}
@@ -123,29 +160,16 @@ const AddContractForm = ({ onSubmit = (data) => console.log("Submitted:", data),
   );
 };
 
-// Utility components
 const Input = ({ label, name, value, onChange }) => (
   <div>
     <label className="block mb-1 font-medium text-sm text-gray-700">{label}</label>
-    <input
-      type="text"
-      name={name}
-      value={value}
-      onChange={onChange}
-      className="w-full border border-gray-300 px-3 py-2 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"
-    />
+    <input type="text" name={name} value={value} onChange={onChange} className="w-full border border-gray-300 px-3 py-2 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" />
   </div>
 );
 
 const Checkbox = ({ label, name, checked, onChange }) => (
   <div className="flex items-center space-x-2 pt-2">
-    <input
-      type="checkbox"
-      name={name}
-      checked={checked}
-      onChange={onChange}
-      className="accent-blue-600"
-    />
+    <input type="checkbox" name={name} checked={checked} onChange={onChange} className="accent-blue-600" />
     <label className="text-sm text-gray-700">{label}</label>
   </div>
 );
@@ -153,12 +177,7 @@ const Checkbox = ({ label, name, checked, onChange }) => (
 const Select = ({ label, name, value, onChange, options }) => (
   <div>
     <label className="block mb-1 font-medium text-sm text-gray-700">{label}</label>
-    <select
-      name={name}
-      value={value}
-      onChange={onChange}
-      className="w-full border border-gray-300 px-3 py-2 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"
-    >
+    <select name={name} value={value} onChange={onChange} className="w-full border border-gray-300 px-3 py-2 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
       {options.map((opt) => (
         <option key={opt} value={opt}>{opt}</option>
       ))}
