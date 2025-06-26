@@ -5,7 +5,7 @@ import {
   PinOff,
 } from 'lucide-react';
 
-  import { Link, useLocation } from 'react-router-dom';
+  import { Link, useLocation, useNavigate } from 'react-router-dom';
   import React, { useState, useEffect, useContext } from 'react';
   import { useDispatch, useSelector } from 'react-redux';
   import { logoutUser } from '../../redux/features/userSlice';
@@ -38,7 +38,8 @@ import {
     return false;
   };
   
-  
+  const navigate = useNavigate();
+
   
   log("this is the module permission of  the user ",modulePermissions)
     // console.log(" this is the user in the side bar " ,user);
@@ -182,15 +183,26 @@ const handleLogout = () => {
   </nav>
 
 
-        <div className="p-4 border-t border-gray-700">
-          <button
-            onClick={handleLogout}
-            className="flex items-center justify-center w-full p-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-          >
-            <LogOut size={16} />
-            {isOpen && <span className="ml-2">Logout</span>}
-          </button>
-        </div>
+  <div className="p-4 border-t border-gray-700">
+  <div className="mb-3">
+    <button
+      onClick={() => navigate('/switch-office')}
+      className="flex items-center justify-center w-full p-1 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+    >
+      <Pin className="w-4 h-4" />
+      {isOpen && <span className="ml-2">Switch Office</span>}
+    </button>
+  </div>
+
+  <button
+    onClick={handleLogout}
+    className="flex items-center justify-center w-full p-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+  >
+    <LogOut size={16} />
+    {isOpen && <span className="ml-2">Logout</span>}
+  </button>
+</div>
+
       </aside>
     );
   };

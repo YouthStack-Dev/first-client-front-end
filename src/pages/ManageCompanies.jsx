@@ -28,12 +28,12 @@ const ManageCompanies = () => {
 
   const allowedModules = [
     "routing",
-    "employee-transfer",
-    "shift-management",
-    "vehicle-management",
-    "driver-management",
-    "real-time-tracking",
-    "route-planning",
+    "manage-team",
+    "scheduling-management",
+    "manage-shift",
+    "manage-shift-categories",
+    "manage-drivers",
+    "tracking",
     "transport-analytics",
     "user-management",
   ];

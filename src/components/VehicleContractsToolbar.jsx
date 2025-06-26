@@ -5,6 +5,9 @@ import {
 } from "../staticData/VehicleTableData";
 import DynamicTable from "./DynamicTable";
 import CostCenter from "../pages/CostCenter";
+import ShowContractsInMaster from "../pages/ShowContractsInMaster";
+import AdjustmentPenalty from "../pages/AdjustmentPenalty";
+import TollManagement from "../pages/TollManagement";
 import VehicleContractModal from "../components/modals/VehicleContractModal";
 import { Upload, Download, Edit, Trash2, Clock } from "lucide-react";
 
@@ -203,9 +206,6 @@ const ShiftVehicleContracts = () => {
   );
 };
 
-// Dummy Components
-const Contract = () => <div className="text-gray-700">📄 Contract UI</div>;
-const AdjustmentPenalty = () => <div className="text-gray-700">⚖️ Adjustment & Penalty UI</div>;
 const Tool = () => <div className="text-gray-700">🛠️ Tool UI</div>;
 
 const vehicleContractSubTabs = {
@@ -213,13 +213,13 @@ const vehicleContractSubTabs = {
 };
 
 const masterSubTabs = {
-  "CONTRACT": Contract,
+  "CONTRACT": ShowContractsInMaster,
   "COST CENTER": CostCenter,
 };
 
 const billCycleSubTabComponents = {
   "ADJUSTMENT & PENALTY": AdjustmentPenalty,
-  "TOOL": Tool,
+  "TOLLMANAGEMENT": TollManagement,
 };
 
 export default function VehicleContract() {

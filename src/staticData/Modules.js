@@ -3,7 +3,6 @@ export const MODULES = [
   { id: 'role-management', name: 'Role Management', description: 'Manage roles and permissions', icon: 'ShieldCheck' ,submodules: [] },
   { id: 'user-administrator', name: 'User Administrator', description: 'Manage user accounts and access', icon: 'UserCog' ,submodules: [] },
 
-
   { id: 'manage-team', name: 'Manage Team', description: 'Create and manage internal teams', icon: 'Users', category: 'organization', submodules: [] },
   { id: 'manage-clients', name: 'Manage Clients', description: 'Handle client organizations', icon: 'Briefcase', category: 'organization', submodules: [] },
   { id: 'scheduling-management', name: 'Scheduling Management', description: 'Manage trip schedules and bookings', icon: 'CalendarCheck', category: 'scheduling', submodules: [
@@ -17,6 +16,7 @@ export const MODULES = [
     { id: 'vehicle-contract', name: 'Vehicle Contract', icon: 'FileText' }
   ]},
   { id: 'routing', name: ' Manage Routing', description: 'Manage routing', icon: 'Handshake', category: 'routing', submodules: []},
+  { id: 'tracking', name: ' Manage Tracking', description: 'Manage Tracking', icon: 'Han  dshake', category: 'routing', submodules: []},
 
   { id: 'audit-report', name: 'Audit Report', description: 'System activity and compliance logs', icon: 'FileSearch', category: 'reports', submodules: [] },
   { id: 'security-dashboard', name: 'Security Dashboard', description: 'View security logs and issues', icon: 'Building2', category: 'security', submodules: [
