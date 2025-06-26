@@ -16,6 +16,7 @@ import ShiftCategoryManagement from "./pages/ShiftCategoryManagement";
 import AllContracts from "./pages/AllContracts";
 import TrackingScreen from './pages/TrackingScreen';
 
+
 // Lazy-loaded components
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -126,7 +127,7 @@ function App() {
               <Route path="/routing" element={<RouteManagement />} />
               <Route path="/tracking" element={<TrackingScreen/>} />
               <Route path="/vendor-contract" element={<h1> This is the vendor-contract Screen</h1>} />
-
+              <Route path="/switch-office" element={<h1> This is the screen where u can switch to those company  under u </h1>} />
               <Route element={<ProtectedRouteAuth  />}>
                 <Route path="/vendors" element={<ManageVendor />} />
                 <Route path="/company-admins" element={<h1>Company Admins management</h1>} />
@@ -145,7 +146,6 @@ function App() {
               <Route path="/contract/create-contract" element={<AddContractForm />} />
 
             </Route>
-
 
             {/* Client */}
             <Route element={<ProtectedRouteAuth />}>

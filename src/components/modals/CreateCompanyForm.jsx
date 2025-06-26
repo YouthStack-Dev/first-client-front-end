@@ -32,8 +32,22 @@ export const CreateCompanyForm = ({
     ...module,
     submodules: module.submodules.filter(sub => parentAllowedModules.includes(sub.id))
   }));
+  const getCategoryColor = (categoryId) => {
+    const colorMap = {
+      core: 'bg-blue-50 text-blue-700 border-blue-200',
+      organization: 'bg-pink-50 text-pink-700 border-pink-200',
+      scheduling: 'bg-teal-50 text-teal-700 border-teal-200',
+      fleet: 'bg-green-50 text-green-700 border-green-200',
+      vendor: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+      contracts: 'bg-red-50 text-red-700 border-red-200',
+      routing: 'bg-blue-50 text-blue-700 border-blue-200',
+      security: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      uncategorized: 'bg-gray-50 text-gray-700 border-gray-200',
+    };
+    return colorMap[categoryId] || 'bg-gray-50 text-gray-700 border-gray-200';
+  };
 
-  // Calculate category counts including submodules
+  // Dynamically generate categories from availableModules
   const categories = [
     { 
       id: 'all', 
@@ -41,73 +55,28 @@ export const CreateCompanyForm = ({
       count: availableModules.reduce((sum, m) => sum + 1 + m.submodules.length, 0),
       color: 'bg-gray-100 text-gray-700 border-gray-200'
     },
-    {
-      id: 'fleet',
-      name: 'Fleet Management',
-      count: availableModules.filter(m => m.category === 'fleet').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
-      color: 'bg-green-50 text-green-700 border-green-200'
-    },
-    {
-      id: 'tracking',
-      name: 'Tracking & GPS',
-      count: availableModules.filter(m => m.category === 'tracking').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
-      color: 'bg-blue-50 text-blue-700 border-blue-200'
-    },
-    {
-      id: 'maintenance',
-      name: 'Maintenance',
-      count: availableModules.filter(m => m.category === 'maintenance').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
-      color: 'bg-orange-50 text-orange-700 border-orange-200'
-    },
-    {
-      id: 'reports',
-      name: 'Reports & Analytics',
-      count: availableModules.filter(m => m.category === 'reports').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
-      color: 'bg-purple-50 text-purple-700 border-purple-200'
-    },
-    {
-      id: 'settings',
-      name: 'Settings',
-      count: availableModules.filter(m => m.category === 'settings').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
-      color: 'bg-gray-50 text-gray-700 border-gray-200'
-    },
-    {
-      id: 'users',
-      name: 'Users',
-      count: availableModules.filter(m => m.category === 'users').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
-      color: 'bg-indigo-50 text-indigo-700 border-indigo-200'
-    },
-    {
-      id: 'organization',
-      name: 'Organization',
-      count: availableModules.filter(m => m.category === 'organization').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
-      color: 'bg-pink-50 text-pink-700 border-pink-200'
-    },
-    {
-      id: 'scheduling',
-      name: 'Scheduling',
-      count: availableModules.filter(m => m.category === 'scheduling').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
-      color: 'bg-teal-50 text-teal-700 border-teal-200'
-    },
-    {
-      id: 'vendor',
-      name: 'Vendors',
-      count: availableModules.filter(m => m.category === 'vendor').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
-      color: 'bg-yellow-50 text-yellow-700 border-yellow-200'
-    },
-    {
-      id: 'contracts',
-      name: 'Contracts',
-      count: availableModules.filter(m => m.category === 'contracts').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
-      color: 'bg-red-50 text-red-700 border-red-200'
-    },
-    {
-      id: 'security',
-      name: 'Security',
-      count: availableModules.filter(m => m.category === 'security').reduce((sum, m) => sum + 1 + m.submodules.length, 0),
-      color: 'bg-emerald-50 text-emerald-700 border-emerald-200'
-    },
-  ].filter(cat => cat.count > 0);
+    ...Object.values(
+      availableModules.reduce((acc, module) => {
+        const categoryId = module.category || 'uncategorized'; // Fallback for modules without a category
+        const categoryName = module.category 
+          ? module.category.charAt(0).toUpperCase() + module.category.slice(1) // Capitalize
+          : 'Uncategorized';
+        if (!acc[categoryId]) {
+          acc[categoryId] = {
+            id: categoryId,
+            name: categoryName,
+            count: 0,
+            color: getCategoryColor(categoryId), // Function to assign colors
+          };
+        }
+        acc[categoryId].count += 1 + module.submodules.length;
+        return acc;
+      }, {})
+    ).sort((a, b) => a.name.localeCompare(b.name)), // Sort categories alphabetically
+  ].filter(cat => cat.count > 0); // Only include categories with modules
+
+  // Function to assign colors to categories
+
 
   // Filter modules by category and search term
   const filteredModules = availableModules.filter(module => {
