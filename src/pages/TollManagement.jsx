@@ -1,5 +1,6 @@
 import React, { useState, memo } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
 import ManualToll from "../components/Toll/ManualToll";
 import AutomatedToll from "../components/Toll/AutomatedToll";
 
@@ -31,7 +32,11 @@ const TollManagement = () => {
   };
 
   return (
-    <main className="p-4 w-full min-h-screen bg-gray-50">
+    <main className="p-4 w-full min-h-screen bg-gray-50 space-y-4">
+      {/* Page Header */}
+      <HeaderWithActionNoRoute title="Manage Toll" />
+
+      {/* Manual Toll Section */}
       <CollapsibleSection
         title="Manual Toll"
         isOpen={sectionState.manual}
@@ -40,6 +45,7 @@ const TollManagement = () => {
         <ManualToll />
       </CollapsibleSection>
 
+      {/* Automated Toll Section */}
       <CollapsibleSection
         title="Automated Toll"
         isOpen={sectionState.automated}
