@@ -6,7 +6,7 @@ import "react-date-range/dist/theme/default.css";
 import { CalendarDays, Download } from "lucide-react";
 import DynamicTable from "../DynamicTable";
 import PopupModal from "../PopupModal";
-import ManualTollForm from "../Toll/ManualTollForm";
+// import ManualTollForm from "../Toll/ManualTollForm";
 
 const AutomatedToll = () => {
   const [tripId, setTripId] = useState("");

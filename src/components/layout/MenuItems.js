@@ -51,18 +51,45 @@ export const menuItems = [
         icon: Car,
         permissionModule: 'vehicleContract'
       },
-       {
-        path: '/New-contracts',
-        name: 'AllContracts',
+      {
+        path: '/contracts',
+        name: 'All Contracts',
         icon: Car,
-        permissionModule: 'allContracts'
+        permissionModule: 'AllContracts' // ✅ Correct
+
+      },
+
+      // {
+      //   path: '/vendor-contract',
+      //   name: 'Vendor Contract',
+      //   icon: Building2,
+      //   permissionModule: 'vendorContract'
+      // },
+      {
+        path: '/vehicle-contracts/adjustment-penalty',
+        name: 'Adjustment & Penalty',
+        icon: ClipboardList,
+        permissionModule: 'adjustmentPenalty'
       },
       {
-        path: '/vendor-contract',
-        name: 'Vendor Contract',
+        path: '/vehicle-contracts/toll-management',
+        name: 'Toll Management',
+        icon: Route,
+        permissionModule: 'tollManagement'
+      },
+      {
+        path: '/vehicle-contracts/cost-center',
+        name: 'Cost Center',
         icon: Building2,
-        permissionModule: 'vendorContract'
+        permissionModule: 'costCenter'
+      },
+      {
+        path: '/vehicle-contracts/master-contracts',
+        name: 'Master Contracts',
+        icon: ClipboardList,
+        permissionModule: 'showContractsInMaster'
       }
+      
     ]
   },
   {

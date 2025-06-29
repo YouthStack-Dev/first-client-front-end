@@ -2,7 +2,6 @@ import { useState } from "react";
 import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
 import { Modal, InputField } from "../components/SmallComponents";
 import DynamicTable from "../components/DynamicTable";
-import ContractSwitchMapping from "./ContractSwitchMapping"; // adjust path if it's in a different folder
 
 
 const ManageVehicleTypes = () => {

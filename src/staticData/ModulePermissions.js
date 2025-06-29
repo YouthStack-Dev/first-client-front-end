@@ -43,7 +43,11 @@ export const staticPermissions = {
 
       // Contracts
       { module: 'vehicleContract', canRead: true, canWrite: true, canDelete: false },
-      { module:'allcontract', canRead:true, canWrite:true, canDelete: false},
+      { module: 'AllContracts', canRead: true, canWrite: true, canDelete: false },
+      { module: 'adjustmentPenalty', canRead: true, canWrite: true, canDelete: false },
+      { module: 'tollManagement', canRead: true, canWrite: true, canDelete: false },
+      { module: 'costCenter', canRead: true, canWrite: true, canDelete: false },
+      { module: 'showContractsInMaster', canRead: true, canWrite: true, canDelete: false },
 
       // Vehicles
       { module: 'vehicles', canRead: true, canWrite: false, canDelete: false },
@@ -53,7 +57,7 @@ export const staticPermissions = {
       { module: 'SchedulingManagement', canRead: true, canWrite: false, canDelete:false},
       { module: 'manageShift', canRead: true, canWrite: true, canDelete: false },
       { module: 'manageShiftCategories', canRead: true, canWrite: true, canDelete: false },
-      { module: 'manageSchedulePolicies', canRead: true, canWrite: true, canDelete: false },
+      
 
       // Flat modules
       { module: 'manageTeam', canRead: true, canWrite: true, canDelete: false },
