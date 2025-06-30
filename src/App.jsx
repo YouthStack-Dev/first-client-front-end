@@ -4,19 +4,26 @@ import { useDispatch } from 'react-redux';
 import { jwtDecode } from 'jwt-decode';
 import Cookies from "js-cookie";
 import { setUser } from './redux/features/userSlice';
+
 import Layout from './components/layout/layout';
-import Loading from './components/ui/Loading'; // fallback loader
-import { ModulePermissionContext} from './context/ModulePermissionContext';
+import Loading from './components/ui/Loading';
+import { ModulePermissionContext } from './context/ModulePermissionContext';
+
 import ManageClients from './pages/ManageClients';
 import ManageRoles from './pages/ManageRoles';
 import ProtectedRouteAuth from './middleware/ProtectedRouteAuth';
-import ManageCompanies from './pages/ManageCompanies';
-import { log } from './utils/logger';
 import ShiftCategoryManagement from "./pages/ShiftCategoryManagement";
 import AllContracts from "./pages/AllContracts";
+
+// ✅ Vehicle Contract Related Pages
+import AdjustmentPenalty from './pages/AdjustmentPenalty';
+import TollManagement from './pages/TollManagement';
+import CostCenter from './pages/CostCenter';
+import ShowContractsInMaster from './pages/ShowContractsInMaster';
+import VehicleContract from './pages/VehicleContract';
+import ManageCompanies from './pages/ManageCompanies';
 import TrackingScreen from './pages/TrackingScreen';
-
-
+import BusinessUnitScreen from './pages/BusinessUnitScreen';
 // Lazy-loaded components
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -32,7 +39,6 @@ const VehicleForm = lazy(() => import('./components/VehicleForm'));
 const DriverForm = lazy(() => import('./components/driver/DriverForm'));
 const ManageVehicleTypes = lazy(() => import('./pages/ManageVehicleType'));
 const ShiftManagement = lazy(() => import('./pages/ShiftManagement'));
-const VehicleContract = lazy(() => import('./pages/VehicleContract'));
 const ManageVendor = lazy(() => import('./pages/ManageVendor'));
 const RoleManagement = lazy(() => import('./components/RoleManagement/RoleManagement'));
 const ManageStaffs = lazy(() => import('./pages/ManageStaffs'));
@@ -42,8 +48,6 @@ const CalendarPopupExample = lazy(() => import('./components/ui/CalendarPopupExa
 const EmployeeList = lazy(() => import('./components/Employee/EmployeeList'));
 const AddContractForm = lazy(() => import('./components/ContractForm'));
 
-
-// 404 fallback
 const NotFound = () => (
   <div className="flex justify-center items-center h-screen">
     <h1 className="text-3xl font-bold text-red-600">404 - Page Not Found</h1>
@@ -53,13 +57,11 @@ const NotFound = () => (
 function App() {
   const dispatch = useDispatch();
   const [userLoading, setUserLoading] = useState(true);
-
-  const { loading: permissionLoading } = useContext(ModulePermissionContext); // 👈 Context loading
+  const { loading: permissionLoading } = useContext(ModulePermissionContext);
 
   useEffect(() => {
     const token = Cookies.get("auth_token");
     if (token) {
-      log(" this is the token in app .jsx file",token)
       try {
         const decoded = jwtDecode(token);
         dispatch(setUser(decoded));
@@ -72,15 +74,10 @@ function App() {
   }, [dispatch]);
 
   if (userLoading || permissionLoading) {
-    return <Loading />; // 👈 Show loading screen until both are ready
-  }
-
-  if (userLoading || permissionLoading) {
     return <Loading />;
   }
 
   return (
-   
     <Router>
       <Suspense fallback={<Loading />}>
         <Routes>
@@ -92,23 +89,21 @@ function App() {
           {/* Protected Routes */}
           <Route element={<Layout />}>
             <Route element={<ProtectedRouteAuth />}>
-            <Route path="/drivers" element={<ManageDrivers />} />
-            <Route path="/driver-form" element={<DriverForm />} />
-            <Route path="/billings-dashboard" element={<h1>This  will  be my billing dash board</h1>} />
-            <Route path="/business-unit" element={<h1>This  will  business-unit</h1>} />
-            <Route path="/staff-administration" element={<h1>This  will  staff-administration</h1>} />
-            <Route path="/vehicles" element={<ManageVehicles />} />
+
+              {/* General */}
+              <Route path="/drivers" element={<ManageDrivers />} />
+              <Route path="/driver-form" element={<DriverForm />} />
+              <Route path="/billings-dashboard" element={<h1>This will be my billing dashboard</h1>} />
+              <Route path="/business-unit" element={<h1>This will business-unit</h1>} />
+              <Route path="/staff-administration" element={<h1>This will staff-administration</h1>} />
+              <Route path="/vehicles" element={<ManageVehicles />} />
               <Route path="/dashboard" element={<DashboardRouter />} />
-            </Route>
-
-            <Route path="/calender" element={<CalendarPopupExample />} />
-
-            {/* Admin & Super Admin */}
-            <Route element={<ProtectedRouteAuth  />}>
+              <Route path="/calender" element={<CalendarPopupExample />} />
+              <Route path="/manage-company" element={<ManageCompanies />} />
+              {/* Admin & Super Admin */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/role-management" element={<ManageRoles />} />
               <Route path="/staffs" element={<ManageStaffs />} />
-              <Route path="/manage-company" element={<ManageCompanies />} />
               <Route path="/employee/create-employee" element={<EmployeeForm />} />
               <Route path="/users" element={<ManageUser />} />
               <Route path="/bookings" element={<BookingManagement />} />
@@ -123,40 +118,33 @@ function App() {
               <Route path="/schedule-policies" element={<h1>Schedule Policies</h1>} />
               <Route path="/staf-administration" element={<h1>Staff Administration</h1>} />
               <Route path="/security-dashboard" element={<h1>Security Dashboard</h1>} />
-              <Route path="/bussiness-unit" element={<h1>Business Unit</h1>} />
+              <Route path="/bussiness-unit" element={<BusinessUnitScreen />} />
               <Route path="/routing" element={<RouteManagement />} />
+              <Route path="/vendors" element={<ManageVendor />} />
+              <Route path="/company-admins" element={<h1>Company Admins management</h1>} />
+              <Route path="/subadmins" element={<h1>Subadmin management</h1>} />
+              <Route path="/sms-config" element={<h1>SMS Configuration</h1>} />
+              <Route path="/manage-client" element={<ManageClients />} />
               <Route path="/tracking" element={<TrackingScreen/>} />
-              <Route path="/vendor-contract" element={<h1> This is the vendor-contract Screen</h1>} />
               <Route path="/switch-office" element={<h1> This is the screen where u can switch to those company  under u </h1>} />
-              <Route element={<ProtectedRouteAuth  />}>
-                <Route path="/vendors" element={<ManageVendor />} />
-                <Route path="/company-admins" element={<h1>Company Admins management</h1>} />
-                <Route path="/subadmins" element={<h1>Subadmin management</h1>} />
-                <Route path="/sms-config" element={<h1>SMS Configuration</h1>} />
-              </Route>
-            </Route>
+              {/* ✅ VEHICLE CONTRACT EXTENSIONS */}
 
-            {/* Vendor */}
-            <Route element={<ProtectedRouteAuth  />}>
-              <Route path="/vendor-dashboard" element={<h1>Vendor Dashboard</h1>} />
-              <Route path="/vehicles" element={<ManageVehicles />} />
+              <Route path="/contracts" element={<AllContracts />} />
+              <Route path="/vehicle-contracts/adjustment-penalty" element={<AdjustmentPenalty />} />
+              <Route path="/vehicle-contracts/toll-management" element={<TollManagement />} />
+              <Route path="/vehicle-contracts/cost-center" element={<CostCenter />} />
+              <Route path="/vehicle-contracts/master-contracts" element={<ShowContractsInMaster />} />
+
+              {/* Legacy Route if needed */}
               <Route path="/vehicle-contract" element={<VehicleContract />} />
               <Route path="/vehicle-group" element={<ManageVehicleTypes />} />
-              <Route path="/New-contracts" element={<AllContracts />} />
               <Route path="/contract/create-contract" element={<AddContractForm />} />
 
-            </Route>
-
-            {/* Client */}
-            <Route element={<ProtectedRouteAuth />}>
+              {/* Client Specific */}
               <Route path="/client-dashboard" element={<h1>Client Dashboard</h1>} />
               <Route path="/client-profile" element={<h1>Client Profile</h1>} />
             </Route>
-            <Route element={<ProtectedRouteAuth />}>
-              <Route path="/manage-client" element={<ManageClients/>} />
-            </Route>
           </Route>
-
 
           <Route path="*" element={<NotFound />} />
         </Routes>

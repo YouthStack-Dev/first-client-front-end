@@ -4,14 +4,10 @@ import {
   VehicleTableheaders,
 } from "../staticData/VehicleTableData";
 import DynamicTable from "./DynamicTable";
-import CostCenter from "../pages/CostCenter";
-import ShowContractsInMaster from "../pages/ShowContractsInMaster";
-import AdjustmentPenalty from "../pages/AdjustmentPenalty";
-import TollManagement from "../pages/TollManagement";
 import VehicleContractModal from "../components/modals/VehicleContractModal";
 import { Upload, Download, Edit, Trash2, Clock } from "lucide-react";
 
-// Sub-component for SHIFT VEHICLE CONTRACTS
+// SHIFT VEHICLE CONTRACTS Component
 const ShiftVehicleContracts = () => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -53,7 +49,6 @@ const ShiftVehicleContracts = () => {
 
   const handleViewHistory = (item) => {
     console.log("Viewing history for:", item);
-    // You can implement a modal or side panel here
   };
 
   const handleSave = (formData) => {
@@ -206,36 +201,12 @@ const ShiftVehicleContracts = () => {
   );
 };
 
-const Tool = () => <div className="text-gray-700">🛠️ Tool UI</div>;
-
-const vehicleContractSubTabs = {
-  "SHIFT VEHICLE CONTRACTS": ShiftVehicleContracts,
-};
-
-const masterSubTabs = {
-  "CONTRACT": ShowContractsInMaster,
-  "COST CENTER": CostCenter,
-};
-
-const billCycleSubTabComponents = {
-  "ADJUSTMENT & PENALTY": AdjustmentPenalty,
-  "TOLLMANAGEMENT": TollManagement,
-};
-
+// Main Component - VEHICLE CONTRACT ONLY
 export default function VehicleContract() {
-  const mainTabs = ["BILL CYCLE DATA ENTRY", "VEHICLE CONTRACT", "MASTER"];
-  const [mainTab, setMainTab] = useState("VEHICLE CONTRACT");
   const [subTab, setSubTab] = useState("SHIFT VEHICLE CONTRACTS");
 
   const renderSubTabs = () => {
-    let subTabs = [];
-    if (mainTab === "VEHICLE CONTRACT") {
-      subTabs = Object.keys(vehicleContractSubTabs);
-    } else if (mainTab === "BILL CYCLE DATA ENTRY") {
-      subTabs = Object.keys(billCycleSubTabComponents);
-    } else if (mainTab === "MASTER") {
-      subTabs = Object.keys(masterSubTabs);
-    }
+    const subTabs = ["SHIFT VEHICLE CONTRACTS"];
 
     return (
       <div className="flex justify-between items-center px-6 py-3 bg-white rounded-b-md border-b shadow-sm">
@@ -254,61 +225,24 @@ export default function VehicleContract() {
             </button>
           ))}
         </div>
-        {mainTab === "VEHICLE CONTRACT" && subTab === "SHIFT VEHICLE CONTRACTS" && (
-          <button
-            onClick={() => {
-              const event = new CustomEvent("openAddContractModal");
-              window.dispatchEvent(event);
-            }}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
-          >
-            + Add Contract
-          </button>
-        )}
+        <button
+          onClick={() => {
+            const event = new CustomEvent("openAddContractModal");
+            window.dispatchEvent(event);
+          }}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+        >
+          + Add Contract
+        </button>
       </div>
     );
   };
 
-  let ActiveComponent;
-  if (mainTab === "VEHICLE CONTRACT") {
-    ActiveComponent = vehicleContractSubTabs[subTab];
-  } else if (mainTab === "BILL CYCLE DATA ENTRY") {
-    ActiveComponent = billCycleSubTabComponents[subTab];
-  } else if (mainTab === "MASTER") {
-    ActiveComponent = masterSubTabs[subTab];
-  }
-
   return (
     <div className="w-full max-w-[100%] mx-auto mt-6 px-4">
-      <div className="flex flex-wrap gap-4 bg-white rounded-md shadow-md px-6 py-4 mb-2">
-        {mainTabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => {
-              setMainTab(tab);
-              if (tab === "VEHICLE CONTRACT") setSubTab("SHIFT VEHICLE CONTRACTS");
-              else if (tab === "BILL CYCLE DATA ENTRY") setSubTab("ADJUSTMENT & PENALTY");
-              else if (tab === "MASTER") setSubTab("CONTRACT");
-            }}
-            className={`px-5 py-2 rounded-lg text-sm uppercase tracking-wide font-bold transition ${
-              mainTab === tab
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
       {renderSubTabs()}
-
       <div className="mt-6 bg-white p-6 rounded-lg shadow-md">
-        {ActiveComponent ? (
-          <ActiveComponent />
-        ) : (
-          <div className="text-gray-500 italic">UI for "{mainTab}" coming soon...</div>
-        )}
+        <ShiftVehicleContracts />
       </div>
     </div>
   );

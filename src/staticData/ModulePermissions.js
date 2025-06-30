@@ -25,7 +25,11 @@ export const admin1Modules = [
   ]},
   { id: 'manage-contracts', permissions: { canRead: true }, submodules: [
     { id: 'vehicle-contract', permissions: { canRead: true } },
-    { id: 'vendor-contract', permissions: { canRead: true } },
+    { id: 'vadjustment-penalty', permissions: { canRead: true } },
+    { id: 'cost-center', permissions: { canRead: true } },
+    { id: 'show-contractsInMaster', permissions: { canRead: true } },
+    { id: 'toll-management', permissions: { canRead: true } },
+    
    
   ]},
   {  id: 'manage-vehicles', permissions: { canRead: true }, submodules: [
@@ -44,7 +48,11 @@ export const admi2Modules = [
   { id: 'manage-vehicles', permissions: { canRead: true, canWrite: true } },
   { id: 'manage-contracts', permissions: { canRead: true }, submodules: [
     { id: 'vehicle-contract', permissions: { canRead: true } },
-    { id: 'vendor-contract', permissions: { canRead: true } },
+    { id: 'vadjustment-penalty', permissions: { canRead: true } },
+    { id: 'cost-center', permissions: { canRead: true } },
+    { id: 'show-contractsInMaster', permissions: { canRead: true } },
+
+   
    
   ]},
   { id: 'manage-team', permissions: { canRead: true }, submodules: [
@@ -56,11 +64,11 @@ export const vendo1Module = [
   { id: 'dashboard', permissions: { canRead: true } },
   { id: 'manage-contracts', permissions: { canRead: true }, submodules: [
     { id: 'vehicle-contract', permissions: { canRead: true } },
-    { id: 'vendor-contract', permissions: { canRead: true } },
+    
   ]},
   { id: 'routing', permissions: { canRead: true, canWrite: true } },
   { id: 'tracking', permissions: { canRead: true, canWrite: true } },
-  { id: 'vendor-contract', permissions: { canRead: true, canWrite: true } },
+
   { id: 'vehicles', permissions: { canRead: true } },
 ];
 
@@ -68,11 +76,11 @@ export const vendor2Module = [
   { id: 'dashboard', permissions: { canRead: true } },
   { id: 'manage-contracts', permissions: { canRead: true }, submodules: [
     { id: 'vehicle-contract', permissions: { canRead: true } },
-    { id: 'vendor-contract', permissions: { canRead: true } },
+   
   ]},
   { id: 'routing', permissions: { canRead: true, canWrite: true } },
   { id: 'tracking', permissions: { canRead: true, canWrite: true } },
-  { id: 'vendor-contract', permissions: { canRead: true, canWrite: true } },
+  
   { id: 'vehicles', permissions: { canRead: true } },
 ];
 

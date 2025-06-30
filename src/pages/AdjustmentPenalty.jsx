@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import PopupModal from "../components/PopupModal";
 import AdjustmentPenaltyForm from "../components/AdjustmentPenaltyForm";
 import DynamicTable from "../components/DynamicTable";
+import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
 
 const AdjustmentPenalty = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -66,7 +67,10 @@ const AdjustmentPenalty = () => {
 
   return (
     <div className="space-y-4">
-      {/* Header Bar */}
+      {/* Page Title Header */}
+      <HeaderWithActionNoRoute title="Adjustment / Penalty" />
+
+      {/* Add Button */}
       <div className="flex justify-end">
         <button
           onClick={() => {
