@@ -74,14 +74,14 @@ const MapView = ({ vehicle }) => {
         </div>
 
         {/* Map Controls */}
-        <div className="absolute top-4 right-4 flex flex-col space-y-2">
+        {/* <div className="absolute top-4 right-4 flex flex-col space-y-2">
           <button className="bg-white hover:bg-gray-50 text-gray-700 p-2 rounded-lg shadow-md border border-gray-200 transition-colors">
             <Zap className="w-4 h-4" />
           </button>
           <button className="bg-white hover:bg-gray-50 text-gray-700 p-2 rounded-lg shadow-md border border-gray-200 transition-colors">
             <Navigation className="w-4 h-4" />
           </button>
-        </div>
+        </div> */}
 
         {/* Location Info Card */}
         <div className="absolute bottom-4 left-4 right-4 bg-white rounded-lg shadow-lg border border-gray-200 p-4">

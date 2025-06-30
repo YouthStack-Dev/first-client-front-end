@@ -8,7 +8,31 @@ export const menuItems = [
   ]},
   { name: 'Manage Contracts', icon: ClipboardList, permissionModule: 'manage-contracts', subItems: [
     { path: '/vehicle-contract', name: 'Vehicle Contract', icon: Car, permissionModule: 'vehicle-contract' },
-    { path: '/vendor-contract', name: 'Vendor Contract', icon: Building2, permissionModule: 'vendor-contract' }
+    { path: '/vendor-contract', name: 'Vendor Contract', icon: Building2, permissionModule: 'vendor-contract' },
+    {
+      path: '/vehicle-contracts/adjustment-penalty',
+      name: 'Adjustment & Penalty',
+      icon: ClipboardList,
+      permissionModule: 'adjustment-penalty'
+    },
+    {
+      path: '/vehicle-contracts/toll-management',
+      name: 'Toll Management',
+      icon: Route,
+      permissionModule: 'toll-management'
+    },
+    {
+      path: '/vehicle-contracts/cost-center',
+      name: 'Cost Center',
+      icon: Building2,
+      permissionModule: 'cost-center'
+    },
+    {
+      path: '/vehicle-contracts/master-contracts',
+      name: 'Master Contracts',
+      icon: ClipboardList,
+      permissionModule: 'show-contractsInMaster'
+    }
   ]},
   { name: 'Manage Vehicles', icon: Car, permissionModule: 'manage-vehicles', subItems: [
     { path: '/vehicles', name: 'Vehicles', icon: CarTaxiFront, permissionModule: 'vehicles' },
@@ -27,10 +51,11 @@ export const menuItems = [
   { path: '/audit-report', name: 'Audit Report', icon: ClipboardList, permissionModule: 'audit-report' },
   { path: '/drivers', name: 'Drivers', icon: CarTaxiFront, permissionModule: 'drivers' },
   { path: '/routing', name: 'Routing', icon: Route, permissionModule: 'routing' },
-  { path: '/tracking', name: 'Traking', icon: Route, permissionModule: 'tracking' },
+  { path: '/tracking', name: 'Tracking', icon: Route, permissionModule: 'tracking' },
   { path: '/vendors', name: 'Vendors', icon: Building2, permissionModule: 'vendors' },
   { path: '/business-unit', name: 'Business Unit', icon: Building2, permissionModule: 'business-unit' },
   { path: '/staff-administration', name: 'Staff Administration', icon: Building2, permissionModule: 'staff' },
   { path: '/security-dashboard', name: 'Security Dashboard', icon: Building2, permissionModule: 'security-dashboard' },
-  { path: '/sms-config', name: 'SMS Config', icon: MessageCircleCode, permissionModule: 'sms-config' }
+  { path: '/sms-config', name: 'SMS Config', icon: MessageCircleCode, permissionModule: 'sms-config' },
+
 ];

@@ -83,13 +83,13 @@ const TrackingVehicleDetails = ({ vehicle }) => {
 
         {/* Vehicle Stats */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          {/* <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <Gauge className="w-5 h-5 mr-2 text-blue-500" />
             Vehicle Stats
-          </h3>
+          </h3> */}
           <div className="grid grid-cols-2 gap-4">
             {/* Fuel */}
-            <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+            {/* <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-green-600 font-medium">Fuel Level</p>
@@ -103,10 +103,10 @@ const TrackingVehicleDetails = ({ vehicle }) => {
                   style={{ width: `${vehicle.fuel}%` }}
                 />
               </div>
-            </div>
+            </div> */}
 
             {/* Speed */}
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+            {/* <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-blue-600 font-medium">Speed</p>
@@ -114,16 +114,16 @@ const TrackingVehicleDetails = ({ vehicle }) => {
                 </div>
                 <Gauge className="w-8 h-8 text-blue-500" />
               </div>
-            </div>
+            </div> */}
           </div>
 
-          <div className="mt-4 bg-gray-50 p-4 rounded-lg">
+          {/* <div className="mt-4 bg-gray-50 p-4 rounded-lg">
             <div className="flex items-center">
               <Settings className="w-4 h-4 text-gray-400 mr-3" />
               <span className="text-sm text-gray-600">Total Mileage: </span>
               <span className="font-semibold text-gray-900 ml-1">{vehicle.mileage.toLocaleString()} miles</span>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Location */}
