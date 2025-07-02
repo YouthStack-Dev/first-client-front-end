@@ -1,30 +1,31 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, MoreVertical, Edit, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Clock } from 'lucide-react';
 
 const DynamicTable = React.memo(
-  ({ 
-    headers = [], 
-    data = [], 
-    menuOpen, 
-    onNext, 
-    onPrev, 
-    currentPage, 
-    totalPages, 
-    onMenuToggle,
+  ({
+    headers = [],
+    data = [],
+    onNext,
+    onPrev,
+    currentPage = 1,
+    totalPages = 1,
     renderActions,
     onSelectItem,
-    selectedItems = []
+    selectedItems = [],
+    onEdit,
+    onDelete,
+    onHistory,
   }) => {
     const isSelected = (item) => selectedItems.some((i) => i.id === item.id);
 
     return (
       <div className="rounded-lg overflow-hidden shadow mt-2 w-full mx-auto">
-
+        {/* Scrollable Table Container */}
         <div className="overflow-auto max-h-[600px]">
-          <table className="min-w-[1100px] border-collapse table-fixed">
-            {/* Table Headers */}
+          <table className="min-w-full table-fixed border-collapse">
+            {/* Table Head */}
             <thead className="bg-gray-50 border-b sticky top-0 z-10">
-              <tr className="text-left text-gray-600">
+              <tr className="text-left text-gray-600 text-sm">
                 <th className="px-4 py-3 w-12">
                   <input
                     type="checkbox"
@@ -36,14 +37,14 @@ const DynamicTable = React.memo(
                   />
                 </th>
                 {headers.map((header, index) => (
-                  <th 
-                    key={index} 
-                    className={`px-4 py-3 text-sm font-medium text-gray-700 break-words whitespace-normal ${header.className || 'w-48 max-w-[12rem]'}`}
+                  <th
+                    key={index}
+                    className={`px-4 py-3 font-medium text-gray-700 whitespace-normal ${header.className || 'w-[16.66%]'}`}
                   >
                     {header.label}
                   </th>
                 ))}
-                <th className="px-4 py-3 w-24 text-center">Actions</th>
+                <th className="px-4 py-3 w-36 text-center">Actions</th>
               </tr>
             </thead>
 
@@ -57,7 +58,10 @@ const DynamicTable = React.memo(
                 </tr>
               ) : (
                 data.map((item, rowIndex) => (
-                  <tr key={rowIndex} className="border-b hover:bg-gray-50 transition">
+                  <tr
+                    key={rowIndex}
+                    className="border-b hover:bg-gray-50 transition min-h-[52px] align-middle"
+                  >
                     <td className="px-4 py-3 w-12 text-center">
                       <input
                         type="checkbox"
@@ -67,36 +71,49 @@ const DynamicTable = React.memo(
                       />
                     </td>
                     {headers.map((header, colIndex) => (
-                      <td 
-                        key={colIndex} 
-                        className="px-4 py-3 text-sm text-gray-700 break-words whitespace-normal w-48 max-w-[12rem]"
+                      <td
+                        key={colIndex}
+                        className={`px-4 py-3 text-sm text-gray-700 break-words whitespace-normal ${header.className || 'w-[16.66%]'}`}
                       >
-                        {header.render ? header.render(item) : item[header.key]}
+                        {header.render ? header.render(item) : item[header.key] ?? '-'}
                       </td>
                     ))}
-                    <td className="px-4 py-3 text-center relative">
-                      <button 
-                        className="p-2 hover:bg-gray-100 rounded-full"
-                        onClick={() => onMenuToggle(item.id)}
-                      >
-                        <MoreVertical size={20} className="text-gray-600" />
-                      </button>
-                      {menuOpen === item.id && (
-                        <div className="absolute right-0 mt-2 bg-white rounded-lg shadow-lg border p-2 z-20">
-                          {renderActions?.(item) || (
-                            <>
-                              <button className="flex flex-col items-center px-3 py-2 text-gray-700 hover:bg-gray-50">
-                                <Edit size={18} color="blue" />
-                                <span className="text-xs">Edit</span>
+                    <td className="px-4 py-2 w-36">
+                      <div className="flex justify-center items-center gap-3">
+                        {renderActions ? (
+                          renderActions(item)
+                        ) : (
+                          <>
+                            {onEdit && (
+                              <button
+                                title="Edit"
+                                className="text-blue-600 hover:bg-gray-100 p-1.5 rounded"
+                                onClick={() => onEdit(item)}
+                              >
+                                <Edit size={18} />
                               </button>
-                              <button className="flex flex-col items-center px-3 py-2 text-gray-700 hover:bg-gray-50">
-                                <Trash2 size={18} color="red" />
-                                <span className="text-xs">Delete</span>
+                            )}
+                            {onDelete && (
+                              <button
+                                title="Delete"
+                                className="text-red-600 hover:bg-gray-100 p-1.5 rounded"
+                                onClick={() => onDelete(item)}
+                              >
+                                <Trash2 size={18} />
                               </button>
-                            </>
-                          )}
-                        </div>
-                      )}
+                            )}
+                            {onHistory && (
+                              <button
+                                title="History"
+                                className="text-purple-600 hover:bg-gray-100 p-1.5 rounded"
+                                onClick={() => onHistory(item)}
+                              >
+                                <Clock size={18} />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -105,7 +122,7 @@ const DynamicTable = React.memo(
           </table>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination Controls */}
         <div className="flex justify-center items-center gap-4 mt-4 p-2">
           <button
             onClick={onPrev}
@@ -116,10 +133,6 @@ const DynamicTable = React.memo(
             <ChevronLeft size={18} />
             Prev
           </button>
-
-          <span className="text-sm text-gray-700 font-medium">
-            Page {currentPage} of {totalPages}
-          </span>
 
           <button
             onClick={onNext}
