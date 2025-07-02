@@ -184,15 +184,6 @@ const handleLogout = () => {
 
 
   <div className="p-4 border-t border-gray-700">
-  <div className="mb-3">
-    <button
-      onClick={() => navigate('/switch-office')}
-      className="flex items-center justify-center w-full p-1 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
-    >
-      <Pin className="w-4 h-4" />
-      {isOpen && <span className="ml-2">Switch Office</span>}
-    </button>
-  </div>
 
   <button
     onClick={handleLogout}

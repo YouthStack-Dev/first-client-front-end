@@ -1,4 +1,4 @@
-name: Deploy the build
+name: deployment
 
 on:
   pull_request:
@@ -28,7 +28,7 @@ jobs:
       - name: Copy build to VPS
         uses: appleboy/scp-action@v0.1.4
         with:
-          host: ${{ secrets.VPS_HOST }}
+          host: ${{ secrets.VPS_HOST }} 
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
           port: ${{ secrets.VPS_PORT }}   
