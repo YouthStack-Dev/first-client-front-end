@@ -17,7 +17,6 @@ export const MODULES = [
     { id: 'vadjustment-penalty', name: 'Adjustment & Penalty', icon: 'FileText' },
     { id: 'cost-center', name: 'Cost Center', icon: 'FileText' },
     { id: 'show-contractsInMaster', name: 'Master Contracts', icon: 'FileText' },
-    { id: 'toll-management', name: 'Toll Management', icon: 'FileText' }
 
   ]},
   { id: 'routing', name: ' Manage Routing', description: 'Manage routing', icon: 'Handshake', category: 'routing', submodules: []},

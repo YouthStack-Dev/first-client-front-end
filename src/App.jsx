@@ -17,7 +17,6 @@ import AllContracts from "./pages/AllContracts";
 
 // ✅ Vehicle Contract Related Pages
 import AdjustmentPenalty from './pages/AdjustmentPenalty';
-import TollManagement from './pages/TollManagement';
 import CostCenter from './pages/CostCenter';
 import ShowContractsInMaster from './pages/ShowContractsInMaster';
 import VehicleContract from './pages/VehicleContract';
@@ -131,7 +130,6 @@ function App() {
 
               <Route path="/contracts" element={<AllContracts />} />
               <Route path="/vehicle-contracts/adjustment-penalty" element={<AdjustmentPenalty />} />
-              <Route path="/vehicle-contracts/toll-management" element={<TollManagement />} />
               <Route path="/vehicle-contracts/cost-center" element={<CostCenter />} />
               <Route path="/vehicle-contracts/master-contracts" element={<ShowContractsInMaster />} />
 
