@@ -33,7 +33,7 @@ jobs:
           password: ${{ secrets.VPS_PASS }}
           port: ${{ secrets.VPS_PORT }}   
           source: "dist/*"
-          target: "/var/www/euronext-client-front-end/dist"
+          target: "/var/www/euronext-client-front-end/"
 
       - name: Reload nginx on VPS
         uses: appleboy/ssh-action@master
