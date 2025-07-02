@@ -149,12 +149,8 @@ const Login = () => {
           <p className="text-center font-medium">Demo Accounts</p>
           <ul className="mt-2 space-y-1 text-xs">
             <li>Super Admin: <b>superadmin</b> / 123456</li>
-            <li>Client Admin 1: <b>clientadmin1</b> / 123456</li>
-            <li>Client Admin 2: <b>clientadmin2</b> / 123456</li>
             <li>Company Admin 1: <b>admin1</b> / 123456</li>
             <li>Company Admin 2: <b>admin2</b> / 123456</li>
-            <li>Vendor 1: <b>vendor1</b> / 123456</li>
-            <li>Vendor 2: <b>vendor2</b> / 123456</li>
           </ul>
         </div>
       </div>
