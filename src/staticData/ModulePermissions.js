@@ -29,7 +29,6 @@ export const admin1Modules = [
     { id: 'vadjustment-penalty', permissions: { canRead: true } },
     { id: 'cost-center', permissions: { canRead: true } },
     { id: 'show-contractsInMaster', permissions: { canRead: true } },
-    { id: 'toll-management', permissions: { canRead: true } },
     
    
   ]},

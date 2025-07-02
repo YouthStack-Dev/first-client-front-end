@@ -15,12 +15,7 @@ export const menuItems = [
       icon: ClipboardList,
       permissionModule: 'adjustment-penalty'
     },
-    {
-      path: '/vehicle-contracts/toll-management',
-      name: 'Toll Management',
-      icon: Route,
-      permissionModule: 'toll-management'
-    },
+    
     {
       path: '/vehicle-contracts/cost-center',
       name: 'Cost Center',
