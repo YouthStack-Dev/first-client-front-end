@@ -1,46 +1,43 @@
- name: Deploy the build
+name: Deploy the build
 
- on:
+on:
   pull_request:
     types: [closed]
-    branches :
-       - main 
+    branches:
+      - main
 
- jobs:
-   build-and-deploy:
+jobs:
+  build-and-deploy:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check code 
-        uses: action/checkout@3
-      
-      - name: Node set up 
-        uses: action/setup-node@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: 18
-          
-      - name: Install Dependencies and Build 
+
+      - name: Install dependencies and build
         run: |
-          npm  install 
-          npm run build 
-      
-      - name: Copy Build to VPS 
+          npm install
+          npm run build
+
+      - name: Copy Build to VPS
         uses: appleboy/scp-action@v0.1.4
         with:
-          host: ${{secreat.VPS_host}}
+          host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_KEY }}
-          source: "build/*"
-          target: "/var/www/euronext-client-front-end/build"
-      
-      - name: Copy Build to VPS 
+          source: "dist/*"
+          target: "/var/www/euronext-client-front-end/dist"
+
+      - name: Reload nginx on VPS
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_KEY }}
           script: sudo systemctl reload nginx
-
-  
-          
