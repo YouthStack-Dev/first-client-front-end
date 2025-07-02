@@ -41,5 +41,5 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
-          port: ${{ secrets.VPS_PORT }}   # optional
+          port: ${{ secrets.VPS_PORT }}   
           script: sudo systemctl reload nginx
