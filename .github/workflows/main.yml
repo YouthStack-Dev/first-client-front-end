@@ -1,45 +1,46 @@
-name: Deploy React App to Hostinger
+ name: Deploy the build
 
-on:
+ on:
   pull_request:
-    branches:
-      - main
-    types:
-      - closed  # Trigger only when a PR is closed
+    types: [closed]
+    branches :
+       - main 
 
-
-jobs:
-  deploy:
+ jobs:
+   build-and-deploy:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Install Dependencies & Build
+      - name: Check code 
+        uses: action/checkout@3
+      
+      - name: Node set up 
+        uses: action/setup-node@v3
+        with:
+          node-version: 18
+          
+      - name: Install Dependencies and Build 
         run: |
-          npm install
-          npm run build
-          ls -la dist  # Debugging: Check if dist/ folder exists
+          npm  install 
+          npm run build 
+      
+      - name: Copy Build to VPS 
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{secreat.VPS_host}}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_KEY }}
+          source: "build/*"
+          target: "/var/www/euronext-client-front-end/build"
+      
+      - name: Copy Build to VPS 
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_KEY }}
+          script: sudo systemctl reload nginx
 
-      - name: Setup SSH Key and Known Hosts
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/hostinger_deploy_key
-          chmod 600 ~/.ssh/hostinger_deploy_key
-          ssh-keyscan -p 65002 -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Ensure Deployment Folder Exists on Hostinger
-        run: |
-          ssh -i ~/.ssh/hostinger_deploy_key -o StrictHostKeyChecking=no -p 65002 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "mkdir -p /home/u734900206/domains/leantechlabs.in/public_html/fleetquest"
-
-      - name: Upload React Build Files to Hostinger
-        run: |
-          if [ -d "dist" ]; then  # Check if dist/ exists before deploying
-            rsync -avz --exclude=node_modules --exclude=build --exclude=.git --exclude=.github \
-            -e "ssh -i ~/.ssh/hostinger_deploy_key -o StrictHostKeyChecking=no -p 65002" \
-            dist/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/u734900206/domains/leantechlabs.in/public_html/fleetquest
-          else
-            echo "❌ Error: dist/ folder does not exist. Check your build step!"
-            exit 1
-          fi
+  
+          
