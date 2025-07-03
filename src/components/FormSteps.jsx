@@ -13,11 +13,11 @@ const FormSteps = ({ currentStep, completedSteps }) => {
       label: 'ADDRESS',
       icon: <MapPin className="w-5 h-5" />,
     },
-    {
-      id: 'moreDetails',
-      label: 'MORE DETAILS',
-      icon: <ClipboardList className="w-5 h-5" />,
-    },
+    // {
+    //   id: 'moreDetails',
+    //   label: 'MORE DETAILS',
+    //   icon: <ClipboardList className="w-5 h-5" />,
+    // },
   ];
 
   return (
