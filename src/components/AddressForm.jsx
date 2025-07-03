@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { MapPin } from 'lucide-react';
 
-const AddressForm = ({ formData, onChange, onCheckboxChange, errors }) => {
+const AddressForm = ({ formData, onChange, onCheckboxChange, errors, onSubmit, isSubmitting }) => {
   return (
     <div className="animate-fadeIn grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Map Left */}
@@ -74,7 +74,7 @@ const AddressForm = ({ formData, onChange, onCheckboxChange, errors }) => {
           />
         </div>
 
-        <div>
+        {/* <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Nodal Point</label>
           <select
             name="nodalPoint"
@@ -87,7 +87,7 @@ const AddressForm = ({ formData, onChange, onCheckboxChange, errors }) => {
             <option value="Office">Office</option>
             <option value="Other">Other</option>
           </select>
-        </div>
+        </div> */}
 
         <div className="flex items-center mt-2">
           <input
@@ -98,6 +98,18 @@ const AddressForm = ({ formData, onChange, onCheckboxChange, errors }) => {
             className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 transition-colors"
           />
           <label htmlFor="showAll" className="ml-2 text-sm text-gray-700">Show all</label>
+        </div>
+
+        {/* Save Button */}
+        <div className="pt-4 text-right">
+          <button
+            type="button"
+            onClick={onSubmit}
+            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Saving...' : 'Save'}
+          </button>
         </div>
       </div>
     </div>
@@ -115,6 +127,8 @@ AddressForm.propTypes = {
   onChange: PropTypes.func.isRequired,
   onCheckboxChange: PropTypes.func.isRequired,
   errors: PropTypes.object.isRequired,
+  onSubmit: PropTypes.func.isRequired,
+  isSubmitting: PropTypes.bool.isRequired,
 };
 
 export default AddressForm;

@@ -25,10 +25,8 @@ const AdminDashboard = () => {
     { title: 'Ongoing Planned Trips', value: '4', roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR] },
     { title: 'Ongoing Adhoc Trips', value: '0', roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR] },
     { title: 'In Premises Vehicles', value: '2', roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR] },
-    { title: 'Tripsheets Pending Device Push', value: '0/2', roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR] },
-    { title: 'Tripsheets with Unassigned Vendor', value: '0', roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR] },
-    { title: 'Driver Report On/Off Issues', value: '-', roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR] },
-    { title: 'New Employee Drop Verification', value: '-', roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR] },
+    { title: 'Scheduled Trips', value: '-', key: 'scheduled', roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
+    { title: ' Future Bookings', value: '-', key: 'future', roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
   ];
 
   const dummyVehicles = [
@@ -59,37 +57,37 @@ const AdminDashboard = () => {
     setFocusedInput(null); // Close suggestions when modal opens
   };
 
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.altKey && e.key.toLowerCase() === 'q') {
-        vehicleInputRef.current?.focus();
-        setFocusedInput('vehicle');
-      } else if (e.ctrlKey && e.key.toLowerCase() === 'e') {
-        employeeInputRef.current?.focus();
-        setFocusedInput('employee');
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+    useEffect(() => {
+      const handleKeyDown = (e) => {
+        if (e.altKey && e.key.toLowerCase() === 'q') {
+          vehicleInputRef.current?.focus();
+          setFocusedInput('vehicle');
+        } else if (e.ctrlKey && e.key.toLowerCase() === 'e') {
+          employeeInputRef.current?.focus();
+          setFocusedInput('employee');
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
-  const filteredVehicles = dummyVehicles.filter(
-    (v) =>
-      v.id.toLowerCase().includes(vehicleSearch.toLowerCase()) ||
-      v.licensePlate.toLowerCase().includes(vehicleSearch.toLowerCase())
-  );
+    const filteredVehicles = dummyVehicles.filter(
+      (v) =>
+        v.id.toLowerCase().includes(vehicleSearch.toLowerCase()) ||
+        v.licensePlate.toLowerCase().includes(vehicleSearch.toLowerCase())
+    );
 
-  const filteredEmployees = dummyEmployees.filter(
-    (e) =>
-      e.id.toLowerCase().includes(employeeSearch.toLowerCase()) ||
-      e.name.toLowerCase().includes(employeeSearch.toLowerCase()) ||
-      e.phone.includes(employeeSearch) ||
-      e.email.toLowerCase().includes(employeeSearch.toLowerCase())
-  );
+    const filteredEmployees = dummyEmployees.filter(
+      (e) =>
+        e.id.toLowerCase().includes(employeeSearch.toLowerCase()) ||
+        e.name.toLowerCase().includes(employeeSearch.toLowerCase()) ||
+        e.phone.includes(employeeSearch) ||
+        e.email.toLowerCase().includes(employeeSearch.toLowerCase())
+    );
 
-  const filteredTrips = dummyTrips.filter((t) =>
-    t.id.toLowerCase().includes(tripSearch.toLowerCase())
-  );
+    const filteredTrips = dummyTrips.filter((t) =>
+      t.id.toLowerCase().includes(tripSearch.toLowerCase())
+    );
 
   const handleSuggestionClick = (type, value) => {
     if (type === 'vehicle') {

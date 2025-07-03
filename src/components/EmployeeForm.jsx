@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import FormSteps from './FormSteps';
 import PersonalInfoForm from './PersonalInfoForm';
 import AddressForm from './AddressForm';
-import MoreDetailsForm from './MoreDetailsForm';
 import NavigationButtons from './NavigationButtons';
 import HeaderWithAction from './HeaderWithAction';
 
 const initialFormData = {
-  // Personal Info
   employeeName: '',
   employeeId: '',
   emailId: '',
@@ -21,21 +19,11 @@ const initialFormData = {
   subscribeEmail: false,
   subscribeSms: false,
   mobileApp: false,
-
-  // Address
   address: '',
   geoCoordinates: '',
   landmark: '',
   nodalPoint: '',
   showAll: false,
-
-  // More Details
-  project: '',
-  costCentre: '',
-  costCentreDate: '',
-  businessUnit: '',
-  businessUnitDate: '',
-  otherOptions: '',
 };
 
 const EmployeeForm = () => {
@@ -64,88 +52,35 @@ const EmployeeForm = () => {
 
   const validatePersonalInfo = () => {
     const newErrors = {};
-
-    if (!formData.employeeName.trim()) {
-      newErrors.employeeName = 'Employee name is required';
-    }
-
-    if (!formData.employeeId.trim()) {
-      newErrors.employeeId = 'Employee ID is required';
-    }
-
+    if (!formData.employeeName.trim()) newErrors.employeeName = 'Employee name is required';
+    if (!formData.employeeId.trim()) newErrors.employeeId = 'Employee ID is required';
     if (!formData.emailId.trim()) {
       newErrors.emailId = 'Email ID is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.emailId)) {
-      newErrors.emailId = 'Please enter a valid email address';
+      newErrors.emailId = 'Enter a valid email';
     }
-
-    if (!formData.gender) {
-      newErrors.gender = 'Gender is required';
-    }
-
-    if (!formData.office) {
-      newErrors.office = 'Office is required';
-    }
-
+    if (!formData.gender) newErrors.gender = 'Gender is required';
+    if (!formData.office) newErrors.office = 'Office is required';
     if (formData.alternateMobileNumber && formData.mobileNumber === formData.alternateMobileNumber) {
-      newErrors.alternateMobileNumber = 'Alternate mobile number should be different from primary mobile number';
+      newErrors.alternateMobileNumber = 'Alternate mobile number must be different';
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const validateAddress = () => {
+    // Add any address validation here if needed
     return true;
   };
 
-  const validateMoreDetails = () => {
-    const newErrors = {};
-
-    if (!formData.project) {
-      newErrors.project = 'Project is required';
-    }
-
-    if (!formData.costCentre) {
-      newErrors.costCentre = 'Cost Centre is required';
-    }
-
-    if (!formData.businessUnit) {
-      newErrors.businessUnit = 'Business Unit is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleNext = () => {
-
-    let isValid = true; // change to false  after  development 
-
     if (currentStep === 'personalInfo') {
-      // isValid = validatePersonalInfo();
-
+      const isValid = validatePersonalInfo();
       if (isValid) {
         setCurrentStep('address');
         if (!completedSteps.includes('personalInfo')) {
           setCompletedSteps((prev) => [...prev, 'personalInfo']);
         }
-      }
-    } else if (currentStep === 'address') {
-      isValid = validateAddress();  
-      if (isValid) {
-        setCurrentStep('moreDetails');
-        if (!completedSteps.includes('address')) {
-          setCompletedSteps((prev) => [...prev, 'address']);
-        }
-      }
-    } else if (currentStep === 'moreDetails') {
-      isValid = validateMoreDetails();
-      if (isValid) {
-        if (!completedSteps.includes('moreDetails')) {
-          setCompletedSteps((prev) => [...prev, 'moreDetails']);
-        }
-        handleSubmit();
       }
     }
   };
@@ -153,14 +88,14 @@ const EmployeeForm = () => {
   const handleBack = () => {
     if (currentStep === 'address') {
       setCurrentStep('personalInfo');
-    } else if (currentStep === 'moreDetails') {
-      setCurrentStep('address');
     }
   };
 
   const handleSubmit = () => {
-    setIsSubmitting(true);
+    const isValid = validateAddress();
+    if (!isValid) return;
 
+    setIsSubmitting(true);
     setTimeout(() => {
       console.log('Form submitted:', formData);
       setIsSubmitting(false);
@@ -168,58 +103,51 @@ const EmployeeForm = () => {
       setFormData(initialFormData);
       setCurrentStep('personalInfo');
       setCompletedSteps([]);
-     
     }, 1500);
   };
 
   const isFirstStep = currentStep === 'personalInfo';
-  const isLastStep = currentStep === 'moreDetails';
+  const isLastStep = currentStep === 'address';
 
-  return (<>
-      <HeaderWithAction  title="NEW EMPLOYEE" showBackButton={true}  />
+  return (
+    <>
+      <HeaderWithAction title="NEW EMPLOYEE" showBackButton={true} />
+      <div className='p-2 m-3 bg-white rounded-xl max-h-[700px] overflow-auto'>
+        <FormSteps currentStep={currentStep} completedSteps={completedSteps} />
+        <div className="mt-6 m-3">
+          {currentStep === 'personalInfo' && (
+            <PersonalInfoForm
+              formData={formData}
+              onChange={handleInputChange}
+              onCheckboxChange={handleCheckboxChange}
+              errors={errors}
+            />
+          )}
 
-    <div className='p-2 m-3 bg-white rounded-xl max-h-[700px] overflow-auto'>
-      <FormSteps currentStep={currentStep} completedSteps={completedSteps} />
+          {currentStep === 'address' && (
+            <AddressForm
+              formData={formData}
+              onChange={handleInputChange}
+              onCheckboxChange={handleCheckboxChange}
+              errors={errors}
+              isSubmitting={isSubmitting}
+              onSubmit={handleSubmit}
+            />
+          )}
+        </div>
 
-      <div className="mt-6 m-3">
-        {currentStep === 'personalInfo' && (
-          <PersonalInfoForm
-            formData={formData}
-            onChange={handleInputChange}
-            onCheckboxChange={handleCheckboxChange}
-            errors={errors}
-          />
-        )}
-
-        {currentStep === 'address' && (
-          <AddressForm
-            formData={formData}
-            onChange={handleInputChange}
-            onCheckboxChange={handleCheckboxChange}
-            errors={errors}
-          />
-        )}
-
-        {currentStep === 'moreDetails' && (
-          <MoreDetailsForm
-            formData={formData}
-            onChange={handleInputChange}
-            errors={errors}
+        {currentStep !== 'address' && (
+          <NavigationButtons
+            currentStep={currentStep}
+            onBack={handleBack}
+            onNext={handleNext}
+            isLastStep={isLastStep}
+            isFirstStep={isFirstStep}
+            isSubmitting={isSubmitting}
           />
         )}
       </div>
-
-      <NavigationButtons
-        currentStep={currentStep}
-        onBack={handleBack}
-        onNext={handleNext}
-        isLastStep={isLastStep}
-        isFirstStep={isFirstStep}
-        isSubmitting={isSubmitting}
-      />
-    </div>
-  </>
-
+    </>
   );
 };
 
