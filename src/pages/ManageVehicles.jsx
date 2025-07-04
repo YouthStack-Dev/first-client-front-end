@@ -1,92 +1,100 @@
 import React, { useState } from "react";
 import {
   Edit,
-  MoreVertical,
-  Plus,
   Trash2,
   ChevronLeft,
   ChevronRight,
+  Search,
 } from "lucide-react";
-import { Modal, InputField } from "../components/SmallComponents";
+import { Modal } from "../components/SmallComponents";
 import { useGetVehiclesQuery } from "../redux/rtkquery/clientRtk";
-import HeaderWithAction from "../components/HeaderWithAction";
+import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
 import { useModulePermission } from "../hooks/userModulePermission";
 import PermissionDenied from "../components/PermissionDenied";
+import VehicleForm from "../components/VehicleForm";
 
-
-// ⬇️ Separated for readability
-const VehicleList = React.memo(
-  ({
-    vehicles,
-    menuOpen,
-    setMenuOpen,
-    onNext,
-    onPrev,
-    currentPage,
-    totalPages,
-    isLoading,
-    handleEdit,
-    handleDelete,
-  }) => (
+const VehicleList = ({
+  vehicles,
+  menuOpen,
+  setMenuOpen,
+  onNext,
+  onPrev,
+  currentPage,
+  totalPages,
+  isLoading,
+  handleEdit,
+  handleToggleStatus,
+}) => {
+  return (
     <div className="rounded-lg border bg-white shadow-sm mt-4">
-      <div className="overflow-auto max-h-[600px]">
-        <table className="min-w-full border-collapse">
+      <div className="overflow-auto max-h-[500px]">
+        <table className="min-w-full border-collapse text-sm">
           <thead className="bg-gray-100 sticky top-0 z-10">
-            <tr className="text-left text-gray-700 text-sm">
-              <th className="px-4 py-3">Vehicle Name</th>
-              <th className="px-4 py-3">Vendor ID</th>
-              <th className="px-4 py-3">Created At</th>
-              <th className="px-4 py-3 text-center">Actions</th>
+            <tr className="text-left text-gray-700">
+              <th className="px-4 py-2">S. No.</th>
+              <th className="px-4 py-2">Vehicle Id</th>
+              <th className="px-4 py-2">Vehicle No.</th>
+              <th className="px-4 py-2">Model</th>
+              <th className="px-4 py-2">Contract Type</th>
+              <th className="px-4 py-2">Vendor</th>
+              <th className="px-4 py-2">Driver</th>
+              <th className="px-4 py-2">Garage Name</th>
+              <th className="px-4 py-2">Device IMEI</th>
+              <th className="px-4 py-2">Device SIM</th>
+              <th className="px-4 py-2 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan="4" className="text-center p-4 text-gray-500">
+                <td colSpan="11" className="text-center p-4 text-gray-500">
                   Loading...
                 </td>
               </tr>
             ) : vehicles.length === 0 ? (
               <tr>
-                <td colSpan="4" className="text-center p-4 text-gray-500">
+                <td colSpan="11" className="text-center p-4 text-gray-500">
                   No vehicles found
                 </td>
               </tr>
             ) : (
-              vehicles.map((vehicle) => (
+              vehicles.map((vehicle, index) => (
                 <tr key={vehicle.id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-3">{vehicle.name}</td>
-                  <td className="px-4 py-3">{vehicle.vendorId}</td>
-                  <td className="px-4 py-3">
-                    {new Date(vehicle.createdAt).toLocaleDateString()}
+                  <td className="px-4 py-2">
+                    {index + 1 + (currentPage - 1) * 10}
                   </td>
-                  <td className="px-4 py-3 text-center relative">
-                    <button
-                      onClick={() =>
-                        setMenuOpen(menuOpen === vehicle.id ? null : vehicle.id)
-                      }
-                      className="hover:bg-gray-100 p-2 rounded-full"
-                    >
-                      <MoreVertical size={18} />
-                    </button>
-                    {menuOpen === vehicle.id && (
-                      <div className="absolute right-0 mt-2 bg-white rounded shadow border z-10">
-                        <button
-                          onClick={() => handleEdit(vehicle)}
-                          className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 w-full"
-                        >
-                          <Edit size={16} className="text-blue-600" />
-                          Manage
-                        </button>
-                        <button
-                          onClick={() => handleDelete(vehicle.id)}
-                          className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 w-full"
-                        >
-                          <Trash2 size={16} className="text-red-500" />
-                          Delete
-                        </button>
-                      </div>
-                    )}
+                  <td className="px-4 py-2">{vehicle.vehicleId}</td>
+                  <td className="px-4 py-2">{vehicle.registrationNo}</td>
+                  <td className="px-4 py-2">{vehicle.model}</td>
+                  <td className="px-4 py-2">{vehicle.contractType}</td>
+                  <td className="px-4 py-2">{vehicle.vendor}</td>
+                  <td className="px-4 py-2">
+                    {vehicle.driverName} ({vehicle.driverMobile})
+                  </td>
+                  <td className="px-4 py-2">{vehicle.garageName}</td>
+                  <td className="px-4 py-2">{vehicle.deviceImei}</td>
+                  <td className="px-4 py-2">{vehicle.simNumber}</td>
+                  <td className="px-4 py-2 text-center">
+                    <div className="flex justify-center items-center gap-2">
+                      <button
+                        onClick={() => handleEdit(vehicle)}
+                        className="flex items-center gap-1 px-3 py-1 text-sm border rounded hover:bg-blue-50 text-blue-600 border-blue-600"
+                      >
+                        <Edit size={14} />
+                        Manage
+                      </button>
+                      <button
+                        onClick={() => handleToggleStatus(vehicle)}
+                        className={`flex items-center gap-1 px-3 py-1 text-sm border rounded ${
+                          vehicle.isActive
+                            ? "text-yellow-600 border-yellow-600 hover:bg-yellow-50"
+                            : "text-green-600 border-green-600 hover:bg-green-50"
+                        }`}
+                      >
+                        <Trash2 size={14} />
+                        {vehicle.isActive ? "Deactivate" : "Activate"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -95,7 +103,7 @@ const VehicleList = React.memo(
         </table>
       </div>
 
-      {/* Pagination Controls */}
+      {/* Pagination */}
       <div className="flex justify-center items-center gap-4 py-4">
         <button
           onClick={onPrev}
@@ -126,23 +134,48 @@ const VehicleList = React.memo(
         </button>
       </div>
     </div>
-  )
-);
+  );
+};
 
 function ManageVehicles() {
   const [currentPage, setCurrentPage] = useState(1);
   const [vehicleModal, setVehicleModal] = useState(false);
   const [menuOpen, setMenuOpen] = useState(null);
+  const [viewActive, setViewActive] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [editVehicle, setEditVehicle] = useState(null);
   const { canRead, canWrite, notFound } = useModulePermission("vehicles");
 
   if (notFound) return <PermissionDenied />;
 
   const { data, isLoading } = useGetVehiclesQuery();
-  const vehicles = data?.vehicles || [];
+
+  const dummyVehicle = {
+    id: "dummy-1",
+    vehicleId: "V12345",
+    registrationNo: "KA01AB1234",
+    model: "Hyundai i20",
+    contractType: "Lease",
+    vendor: "ABC Motors",
+    driverName: "John Doe",
+    driverMobile: "9876543210",
+    garageName: "AutoFix Garage",
+    deviceImei: "123456789012345",
+    simNumber: "9876543210",
+    isActive: true,
+  };
+
+  const vehicles = data?.vehicles?.length > 0 ? data.vehicles : [dummyVehicle];
+
+  const filteredVehicles = vehicles
+    .filter((v) => v.isActive === viewActive)
+    .filter((v) =>
+      v.registrationNo?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   const itemsPerPage = 10;
-  const totalPages = Math.ceil(vehicles.length / itemsPerPage);
-  const paginatedVehicles = vehicles.slice(
+  const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage);
+  const paginatedVehicles = filteredVehicles.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -150,24 +183,57 @@ function ManageVehicles() {
   const onPrev = () => currentPage > 1 && setCurrentPage(currentPage - 1);
   const onNext = () => currentPage < totalPages && setCurrentPage(currentPage + 1);
 
-  const handleVehicleSubmit = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const vehicleName = formData.get("vehicleName");
-    console.log("Add vehicle:", { vehicleName });
-    setVehicleModal(false);
+  const handleEdit = (vehicle) => {
+    setEditVehicle(vehicle);
+    setVehicleModal(true);
   };
 
-  const handleEdit = (vehicle) => console.log("Edit vehicle:", vehicle);
-  const handleDelete = (id) => console.log("Delete vehicle ID:", id);
+  const handleToggleStatus = (vehicle) => {
+    const updatedStatus = !vehicle.isActive;
+    console.log(
+      `Toggling status for ${vehicle.vehicleId} to ${updatedStatus ? "Active" : "Inactive"}`
+    );
+    // TODO: Add mutation API call to update status
+  };
 
   return (
     <div className="p-4 space-y-4">
-      <HeaderWithAction
+      <HeaderWithActionNoRoute
         title="Manage Vehicles"
         buttonLabel="Add Vehicle"
-        onButtonClick={() => setVehicleModal(true)}
+        onButtonClick={() => {
+          setEditVehicle(null);
+          setVehicleModal(true);
+        }}
       />
+
+      {/* Filter Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-2 w-full md:w-1/2">
+          <Search className="text-gray-500" size={18} />
+          <input
+            type="text"
+            placeholder="Search by Registration Number"
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="border border-gray-300 rounded-md px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-700 font-medium">Inactive</span>
+          <input
+            type="checkbox"
+            className="toggle toggle-primary"
+            checked={viewActive}
+            onChange={() => setViewActive(!viewActive)}
+          />
+          <span className="text-sm text-gray-700 font-medium">Active</span>
+        </div>
+      </div>
 
       <VehicleList
         vehicles={paginatedVehicles}
@@ -179,21 +245,18 @@ function ManageVehicles() {
         totalPages={totalPages}
         isLoading={isLoading}
         handleEdit={handleEdit}
-        handleDelete={handleDelete}
+        handleToggleStatus={handleToggleStatus}
       />
 
-      {/* Add Modal */}
       <Modal
         isOpen={vehicleModal}
         onClose={() => setVehicleModal(false)}
-        title="Add New Vehicle"
-        onSubmit={handleVehicleSubmit}
+        title=""
+        hideDefaultButtons
       >
-        <InputField
-          label="Vehicle Name"
-          name="vehicleName"
-          placeholder="Enter vehicle name"
-          required
+        <VehicleForm
+          vehicle={editVehicle}
+          onSuccess={() => setVehicleModal(false)}
         />
       </Modal>
     </div>

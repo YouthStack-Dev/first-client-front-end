@@ -7,9 +7,18 @@ const HeaderWithActionNoRoute = ({
   buttonLabel,
   onButtonClick,
   showBackButton = false,
+  onBack, // ✅ allow parent to override back behavior
   extraButtons = [],
 }) => {
   const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack(); // ✅ call modal close function if provided
+    } else {
+      navigate(-1); // fallback to default browser back
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-md p-4 mb-1">
@@ -17,7 +26,7 @@ const HeaderWithActionNoRoute = ({
         <div className="flex items-center gap-4">
           {showBackButton && (
             <button
-              onClick={() => navigate(-1)}
+              onClick={handleBack}
               className="flex items-center gap-2 px-3 py-2 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
             >
               <ArrowLeft size={18} />

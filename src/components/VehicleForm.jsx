@@ -1,231 +1,201 @@
-import React, { useState } from 'react';
-import TabNavigation from './TabNavigation';
-import BasicInfoTab from './BasicInfoTab';
-import ContractsTab from './ContractsTab';
-import DriverTab from './driver/DriverTab';
-import HeaderWithActionNoRoute from './HeaderWithActionNoRoute';
+import React, { useState } from "react";
 
-const initialFormData = {
+const TABS = ["BASIC INFO", "CONTRACTS", "DRIVER"];
+
+const initialState = {
   // Basic Info
-  vendor: '',
-  vehicleId: '',
-  registrationNo: '',
-  status: 'Inactive from 07 May 2025',
-  statusDate: '2025-05-07',
-  simNumber: '',
-  deviceImei: '',
-  
+  vendor: "",
+  vehicleId: "",
+  registrationNo: "",
+  simNumber: "",
+  deviceImei: "",
   // Contracts
-  vehicleType: '',
-  changeContractFrom: '',
-  contract: 'NA',
-  startTimeHour: '00',
-  startTimeMinute: '00',
-  workingTime: '1440',
-  sendAuditSms: 'driver',
-  
+  vehicleType: "",
+  contract: "",
+  changeContractFrom: "",
+  startHour: "00",
+  startMinute: "00",
+  workingTime: "1440",
+  auditSmsTo: "Driver",
   // Driver
-  driver: '',
-  garageName: '',
-  mobileNo: '',
-  garageGeocode: '',
-  alternateMobileNo: '',
-  details: '',
-  comments: '',
+  driver: "",
+  driverMobile: "",
+  alternateMobile: "",
+  garageName: "",
+  garageGeocode: "",
+  details: "",
 };
 
-const VehicleForm = () => {
-  const [activeTab, setActiveTab] = useState('basicInfo');
-  const [formData, setFormData] = useState(initialFormData);
-  const [errors, setErrors] = useState({});
-  const [tabErrors, setTabErrors] = useState({});
+const VehicleForm = ({ onSuccess, defaultValues = {} }) => {
+  const [activeTab, setActiveTab] = useState(TABS[0]);
+  const [formData, setFormData] = useState({ ...initialState, ...defaultValues });
 
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    if (errors[name]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  };
-
-  const handleDateChange = (date) => {
-    setFormData((prev) => ({
-      ...prev,
-      statusDate: date,
-    }));
-  };
-
-  const handleRadioChange = (value) => {
-    setFormData((prev) => ({
-      ...prev,
-      sendAuditSms: value,
-    }));
-  };
-
-  const validateBasicInfoTab = () => {
-    const newErrors = {};
-    if (!formData.vendor) newErrors.vendor = 'Please enter select Vendor';
-    if (!formData.vehicleId) newErrors.vehicleId = 'Vehicle ID is required';
-    if (!formData.registrationNo) newErrors.registrationNo = 'Registration number is required';
-
-    setErrors(newErrors);
-    setTabErrors(prev => ({ ...prev, basicInfo: Object.keys(newErrors).length > 0 }));
-
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const validateContractsTab = () => {
-    const newErrors = {};
-    if (!formData.vehicleType) newErrors.vehicleType = 'Please select Vehicle Type';
-    if (!formData.changeContractFrom) newErrors.changeContractFrom = 'Please select Change Contract From';
-    if (!formData.contract || formData.contract === 'NA') newErrors.contract = 'Please enter select Contract';
-    if (!formData.workingTime) newErrors.workingTime = 'Working Time is required';
-
-    setErrors(newErrors);
-    setTabErrors(prev => ({ ...prev, contracts: Object.keys(newErrors).length > 0 }));
-
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const validateDriverTab = () => {
-    const newErrors = {};
-    if (!formData.driver) newErrors.driver = 'Please select a driver';
-    if (!formData.garageName) newErrors.garageName = 'Please enter valid Garage name';
-    if (!formData.garageGeocode) {
-      newErrors.garageGeocode = 'Garage geocode is required';
-    } else if (formData.garageGeocode.length < 9 || !/^\d+\.\d+,\d+\.\d+$/.test(formData.garageGeocode)) {
-      newErrors.garageGeocode = 'Garage GeoCords must be at least 9 characters long and in the format "num,num"';
-    }
-
-    setErrors(newErrors);
-    setTabErrors(prev => ({ ...prev, driver: Object.keys(newErrors).length > 0 }));
-
-    return Object.keys(newErrors).length === 0;
+  const handleChange = (field) => (e) => {
+    const value = e.target.value;
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleNext = () => {
-    let isValid = false;
-
-    if (activeTab === 'basicInfo') {
-      isValid = validateBasicInfoTab();
-      if (isValid) setActiveTab('contracts');
-    } else if (activeTab === 'contracts') {
-      isValid = validateContractsTab();
-      if (isValid) setActiveTab('driver');
-    }
+    const index = TABS.indexOf(activeTab);
+    if (index < TABS.length - 1) setActiveTab(TABS[index + 1]);
   };
 
   const handleBack = () => {
-    if (activeTab === 'contracts') {
-      setActiveTab('basicInfo');
-    } else if (activeTab === 'driver') {
-      setActiveTab('contracts');
-    }
+    const index = TABS.indexOf(activeTab);
+    if (index > 0) setActiveTab(TABS[index - 1]);
   };
 
-  const handleSubmit = () => {
-    if (activeTab === 'driver') {
-      const isValid = validateDriverTab();
-      if (isValid) {
-        const isBasicInfoValid = validateBasicInfoTab();
-        const isContractsValid = validateContractsTab();
-
-        if (isBasicInfoValid && isContractsValid && isValid) {
-          alert('Form submitted successfully!');
-          console.log('Form data:', formData);
-        } else {
-          if (!isBasicInfoValid) {
-            setActiveTab('basicInfo');
-          } else if (!isContractsValid) {
-            setActiveTab('contracts');
-          }
-        }
-      }
-    }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Submitting form:", formData);
+    onSuccess?.();
   };
+
+  const renderField = (label, field, type = "text", placeholder = "", isRequired = false) => (
+    <div>
+      <label className="block font-medium mb-1">
+        {label} {isRequired && "*"}
+      </label>
+      <input
+        type={type}
+        value={formData[field]}
+        onChange={handleChange(field)}
+        placeholder={placeholder}
+        className="w-full border px-3 py-2 rounded"
+      />
+    </div>
+  );
+
+  const renderSelect = (label, field, options, isRequired = false) => (
+    <div>
+      <label className="block font-medium mb-1">
+        {label} {isRequired && "*"}
+      </label>
+      <select
+        value={formData[field]}
+        onChange={handleChange(field)}
+        className="w-full border px-3 py-2 rounded"
+      >
+        <option value="">Select {label}</option>
+        {options.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
 
   return (
-    <div className="max-w-5xl mx-auto p-4">
-       <HeaderWithActionNoRoute
-            title="Add New Vehicle"
-           
-            showBackButton={true}
-            // or any custom handler
-          />
-
-      <div className="bg-white max-h-[600px] rounded-lg  overflow-y-auto">
-        <TabNavigation
-          activeTab={activeTab}
-          errors={tabErrors}
-          onTabChange={handleTabChange}
-        />
-
-        <div className="p-4">
-          {activeTab === 'basicInfo' && (
-            <BasicInfoTab
-              formData={formData}
-              errors={errors}
-              onChange={handleInputChange}
-              onDateChange={handleDateChange}
-            />
-          )}
-
-          {activeTab === 'contracts' && (
-            <ContractsTab
-              formData={formData}
-              errors={errors}
-              onChange={handleInputChange}
-              onRadioChange={handleRadioChange}
-            />
-          )}
-
-          {activeTab === 'driver' && (
-            <DriverTab
-              formData={formData}
-              errors={errors}
-              onChange={handleInputChange}
-            />
-          )}
-
-          <div className="flex justify-between mt-6">
-            {activeTab !== 'basicInfo' && (
-              <button
-                onClick={handleBack}
-                className="px-6 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors duration-200"
-              >
-                Back
-              </button>
-            )}
-            {activeTab !== 'driver' ? (
-              <button
-                onClick={handleNext}
-                className="ml-auto px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
-              >
-                Next
-              </button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                className="ml-auto px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
-              >
-                Next
-              </button>
-            )}
-          </div>
-        </div>
+    <div className="space-y-6">
+      {/* Tabs */}
+      <div className="flex space-x-6 border-b">
+        {TABS.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`pb-2 font-medium ${
+              activeTab === tab ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-500"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
       </div>
+
+      {/* Tab Contents */}
+      {activeTab === "BASIC INFO" && (
+        <form className="grid grid-cols-2 gap-4">
+          {renderSelect("Vendor", "vendor", ["Vendor 1", "Vendor 2"], true)}
+          {renderField("Vehicle ID", "vehicleId", "text", "Enter Vehicle ID", true)}
+          {renderField("Registration no.", "registrationNo", "text", "KA-01-AB-0123", true)}
+          {renderField("Status", "status", "text", "", false)}
+          {renderField("SIM number", "simNumber")}
+          {renderSelect("Device IMEI number", "deviceImei", ["IMEI123", "IMEI456"])}
+          <div className="col-span-2 flex justify-end">
+            <button onClick={handleNext} type="button" className="bg-blue-600 text-white px-6 py-2 rounded">
+              Next
+            </button>
+          </div>
+        </form>
+      )}
+
+      {activeTab === "CONTRACTS" && (
+        <form className="grid grid-cols-2 gap-4">
+          {renderSelect("Vehicle Type", "vehicleType", ["SUV", "Sedan"], true)}
+          {renderSelect("Change Contract From", "changeContractFrom", ["Start of day"], true)}
+          {renderField("Contract", "contract", "text", "NA", true)}
+          <div>
+            <label className="block font-medium mb-1">Start Time</label>
+            <div className="flex space-x-2">
+              <select
+                value={formData.startHour}
+                onChange={handleChange("startHour")}
+                className="w-1/2 border px-3 py-2 rounded"
+              >
+                {Array.from({ length: 24 }, (_, i) => (
+                  <option key={i}>{String(i).padStart(2, "0")}</option>
+                ))}
+              </select>
+              <select
+                value={formData.startMinute}
+                onChange={handleChange("startMinute")}
+                className="w-1/2 border px-3 py-2 rounded"
+              >
+                {["00", "15", "30", "45"].map((m) => (
+                  <option key={m}>{m}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {renderField("Working Time (min)", "workingTime", "number")}
+          <div>
+            <label className="block font-medium mb-1">Send Audit SMS</label>
+            <div className="flex space-x-4">
+              {['Driver', 'Other'].map((opt) => (
+                <label key={opt} className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    name="auditSmsTo"
+                    value={opt}
+                    checked={formData.auditSmsTo === opt}
+                    onChange={handleChange("auditSmsTo")}
+                    className="mr-2"
+                  />
+                  {opt}
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="col-span-2 flex justify-between">
+            <button onClick={handleBack} type="button" className="border px-6 py-2 rounded">
+              Back
+            </button>
+            <button onClick={handleNext} type="button" className="bg-blue-600 text-white px-6 py-2 rounded">
+              Next
+            </button>
+          </div>
+        </form>
+      )}
+
+      {activeTab === "DRIVER" && (
+        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+          {renderSelect("Driver", "driver", ["Driver 1", "Driver 2"], true)}
+          {renderField("Garage name", "garageName", "text", "Enter Garage name", true)}
+          {renderField("Mobile no.", "driverMobile", "text", "Enter Mobile no.")}
+          {renderField("Garage geocode", "garageGeocode", "text", "17.328026,78.274069", true)}
+          {renderField("Alternate Mobile no.", "alternateMobile", "text", "Enter Alternate Mobile no.")}
+          {renderField("Details", "details", "text", "Enter Details")}
+          <div className="col-span-2 flex justify-between">
+            <button onClick={handleBack} type="button" className="border px-6 py-2 rounded">
+              Back
+            </button>
+            <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded">
+              Add
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   );
 };
