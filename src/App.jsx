@@ -13,16 +13,13 @@ import ManageClients from './pages/ManageClients';
 import ManageRoles from './pages/ManageRoles';
 import ProtectedRouteAuth from './middleware/ProtectedRouteAuth';
 import ShiftCategoryManagement from "./pages/ShiftCategoryManagement";
-import AllContracts from "./pages/AllContracts";
+
 
 // ✅ Vehicle Contract Related Pages
-import AdjustmentPenalty from './pages/AdjustmentPenalty';
-import CostCenter from './pages/CostCenter';
-import ShowContractsInMaster from './pages/ShowContractsInMaster';
 import VehicleContract from './pages/VehicleContract';
 import ManageCompanies from './pages/ManageCompanies';
 import TrackingScreen from './pages/TrackingScreen';
-import BusinessUnitScreen from './pages/BusinessUnitScreen';
+
 // Lazy-loaded components
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -93,7 +90,6 @@ function App() {
               <Route path="/drivers" element={<ManageDrivers />} />
               <Route path="/driver-form" element={<DriverForm />} />
               <Route path="/billings-dashboard" element={<h1>This will be my billing dashboard</h1>} />
-              <Route path="/business-unit" element={<h1>This will business-unit</h1>} />
               <Route path="/staff-administration" element={<h1>This will staff-administration</h1>} />
               <Route path="/vehicles" element={<ManageVehicles />} />
               <Route path="/dashboard" element={<DashboardRouter />} />
@@ -117,7 +113,6 @@ function App() {
               <Route path="/schedule-policies" element={<h1>Schedule Policies</h1>} />
               <Route path="/staf-administration" element={<h1>Staff Administration</h1>} />
               <Route path="/security-dashboard" element={<h1>Security Dashboard</h1>} />
-              <Route path="/bussiness-unit" element={<BusinessUnitScreen />} />
               <Route path="/routing" element={<RouteManagement />} />
               <Route path="/vendors" element={<ManageVendor />} />
               <Route path="/company-admins" element={<h1>Company Admins management</h1>} />
@@ -128,10 +123,7 @@ function App() {
               <Route path="/switch-office" element={<h1> This is the screen where u can switch to those company  under u </h1>} />
               {/* ✅ VEHICLE CONTRACT EXTENSIONS */}
 
-              <Route path="/contracts" element={<AllContracts />} />
-              <Route path="/vehicle-contracts/adjustment-penalty" element={<AdjustmentPenalty />} />
-              <Route path="/vehicle-contracts/cost-center" element={<CostCenter />} />
-              <Route path="/vehicle-contracts/master-contracts" element={<ShowContractsInMaster />} />
+              
 
               {/* Legacy Route if needed */}
               <Route path="/vehicle-contract" element={<VehicleContract />} />

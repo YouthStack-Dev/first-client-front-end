@@ -8,7 +8,9 @@ const SIZE_CLASSES = {
   full: "w-full max-w-none",
 };
 
-const PopupModal = ({ title, children, onClose, size = "md" }) => {
+const PopupModal = ({ title, children, onClose, isOpen, size = "md" }) => {
+  if (!isOpen) return null; // 👉 Prevent modal from showing when not needed
+
   const modalSize = SIZE_CLASSES[size] || SIZE_CLASSES.md;
 
   return (
