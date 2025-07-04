@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Create instance
 export const LocalClient = axios.create({
-  baseURL: "http://fleetbackend.local/api/",
+  // baseURL: "http://fleetbackend.local/api/",
 });
 
 // Add a request interceptor
