@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Edit,
   Trash2,
@@ -7,6 +7,7 @@ import {
   Search,
 } from "lucide-react";
 import { Modal } from "../components/SmallComponents";
+ // Updated import (your Modal uses default export)
 import { useGetVehiclesQuery } from "../redux/rtkquery/clientRtk";
 import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
 import { useModulePermission } from "../hooks/userModulePermission";
@@ -146,9 +147,9 @@ function ManageVehicles() {
   const [editVehicle, setEditVehicle] = useState(null);
   const { canRead, canWrite, notFound } = useModulePermission("vehicles");
 
-  if (notFound) return <PermissionDenied />;
-
   const { data, isLoading } = useGetVehiclesQuery();
+
+  if (notFound) return <PermissionDenied />;
 
   const dummyVehicle = {
     id: "dummy-1",
@@ -180,6 +181,12 @@ function ManageVehicles() {
     currentPage * itemsPerPage
   );
 
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [filteredVehicles.length, totalPages]);
+
   const onPrev = () => currentPage > 1 && setCurrentPage(currentPage - 1);
   const onNext = () => currentPage < totalPages && setCurrentPage(currentPage + 1);
 
@@ -193,7 +200,7 @@ function ManageVehicles() {
     console.log(
       `Toggling status for ${vehicle.vehicleId} to ${updatedStatus ? "Active" : "Inactive"}`
     );
-    // TODO: Add mutation API call to update status
+    // TODO: Call API to update vehicle status
   };
 
   return (
@@ -207,7 +214,7 @@ function ManageVehicles() {
         }}
       />
 
-      {/* Filter Toolbar */}
+      {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2 w-full md:w-1/2">
           <Search className="text-gray-500" size={18} />
@@ -235,6 +242,7 @@ function ManageVehicles() {
         </div>
       </div>
 
+      {/* Table */}
       <VehicleList
         vehicles={paginatedVehicles}
         menuOpen={menuOpen}
@@ -248,14 +256,15 @@ function ManageVehicles() {
         handleToggleStatus={handleToggleStatus}
       />
 
+      {/* Modal */}
       <Modal
         isOpen={vehicleModal}
         onClose={() => setVehicleModal(false)}
-        title=""
-        hideDefaultButtons
+        title={editVehicle ? "Edit Vehicle" : "Add Vehicle"}
+        size="xl"
       >
         <VehicleForm
-          vehicle={editVehicle}
+          defaultValues={editVehicle}
           onSuccess={() => setVehicleModal(false)}
         />
       </Modal>
