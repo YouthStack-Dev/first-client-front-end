@@ -3,7 +3,7 @@ name: BUID AND PUSH TO DOCKER HUB
 on:
  push:
   branches:
-    - main
+    - chethanr
 
 jobs:
   build-and-push-to-docker:
