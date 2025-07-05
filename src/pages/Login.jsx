@@ -1,7 +1,6 @@
 import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, User } from "lucide-react";
-import { useLoginMutation } from "../redux/rtkquery/authApi";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { useDispatch } from "react-redux";
@@ -14,10 +13,9 @@ const Login = () => {
   const [credentials, setCredentials] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const [{ isLoading }] = useLoginMutation();
   const dispatch = useDispatch();
   const { setModulePermissions } = useContext(ModulePermissionContext);
-
+const isLoading = false;
   const currentUser = mockAuthPayload.users.find(
     (u) => u.user.username === "admin1"
   );

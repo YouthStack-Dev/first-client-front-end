@@ -1,45 +1,30 @@
-name: deployment
+name: BUID AND PUSH TO DOCKER HUB
 
 on:
-  pull_request:
-    types: [closed]
-    branches:
-      - main
+ push:
+  branches:
+    - main
 
 jobs:
-  build-and-deploy:
-    if: github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
+  build-and-push-to-docker:
+    runs-on: unbuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: chetck the code 
+        uses: actions/checkcode@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: setup the DOCKER build 
+        uses: docker/setup-buildx-actions@v3
+
+      - name: login to  docker
+        uses: docker/login-action@v3  
         with:
-          node-version: 18
+          username:  chethan2527
+          password: ${{secrets.DOCKER_PASSWORD}}
 
-      - name: Install dependencies and build
-        run: |
-          npm install
-          npm run build
-
-      - name: Copy build to VPS
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.VPS_HOST }} 
-          username: ${{ secrets.VPS_USER }}
-          password: ${{ secrets.VPS_PASS }}
-          port: ${{ secrets.VPS_PORT }}   
-          source: "dist/*"
-          target: "/var/www/euronext-client-front-end/"
-
-      - name: Reload nginx on VPS
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          password: ${{ secrets.VPS_PASS }}
-          port: ${{ secrets.VPS_PORT }}   
-          script: sudo systemctl reload nginx
+      -  name : builf and bush for docker repo 
+         uses: docker/build-push-action@v5
+         with:
+           context: .
+           push: true
+           tags: chethan2527/ets:latest
