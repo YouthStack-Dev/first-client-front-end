@@ -4,7 +4,7 @@ import axios from "axios";
 const baseURL = import.meta.env.VITE_API_URL;
 
 // Create instance
-export const LocalClient = axios.create({
+export const API_CLIENT = axios.create({
   baseURL,
 });
 
