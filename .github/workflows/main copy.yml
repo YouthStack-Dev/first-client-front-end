@@ -1,0 +1,30 @@
+# name: BUID AND PUSH TO DOCKER HUB
+
+# on:
+#  push:
+#   branches:
+#     - chethanr
+
+# jobs:
+#   build-and-push-to-docker:
+#     runs-on: unbuntu-latest
+
+#     steps:
+#       - name: chetck the code 
+#         uses: actions/checkcode@v4
+
+#       - name: setup the DOCKER build 
+#         uses: docker/setup-buildx-actions@v3
+
+#       - name: login to  docker
+#         uses: docker/login-action@v3  
+#         with:
+#           username:  chethan2527
+#           password: ${{secrets.DOCKER_PASSWORD}}
+
+#       -  name : builf and bush for docker repo 
+#          uses: docker/build-push-action@v5
+#          with:
+#            context: .
+#            push: true
+#            tags: chethan2527/ets:latest
