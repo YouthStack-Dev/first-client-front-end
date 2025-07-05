@@ -7,8 +7,6 @@ import {
   Search,
 } from "lucide-react";
 import { Modal } from "../components/SmallComponents";
- // Updated import (your Modal uses default export)
-import { useGetVehiclesQuery } from "../redux/rtkquery/clientRtk";
 import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
 import { useModulePermission } from "../hooks/userModulePermission";
 import PermissionDenied from "../components/PermissionDenied";
@@ -147,10 +145,8 @@ function ManageVehicles() {
   const [editVehicle, setEditVehicle] = useState(null);
   const { canRead, canWrite, notFound } = useModulePermission("vehicles");
 
-  const { data, isLoading } = useGetVehiclesQuery();
-
-  if (notFound) return <PermissionDenied />;
-
+var data ;
+var  isLoading ;
   const dummyVehicle = {
     id: "dummy-1",
     vehicleId: "V12345",

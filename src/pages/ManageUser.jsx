@@ -1,8 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Edit, MoreVertical, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { InputField, Modal } from '../components/SmallComponents';
-import { useSearchClientsQuery } from '../redux/rtkquery/clientRtk'; // Assuming you're using RTK query
-import EmployeeForm from '../components/EmployeeForm';
 import { useNavigate } from 'react-router-dom';
 import HeaderWithAction from '../components/HeaderWithAction';
 
@@ -88,7 +85,7 @@ function ManageUsers() {
   const [userModal, setUserModal] = useState(false);
   const [menuOpen, setMenuOpen] = useState(null);
 
-  const { data: users = [], isLoading } = useSearchClientsQuery(); // Assuming the hook fetches users
+  const { data: users = [], isLoading } = useState(); // Assuming the hook fetches users
 
   const itemsPerPage = 10;
   const totalPages = Math.ceil((users?.length || 0) / itemsPerPage);
@@ -121,11 +118,8 @@ function ManageUsers() {
   const [searchResults, setSearchResults] = useState([]);
 
   const [debouncedQuery, setDebouncedQuery] = useState('');
-// Trigger query only on debounced input
-const { data: clients, isFetching } = useSearchClientsQuery(debouncedQuery, {
-  skip: !debouncedQuery.trim(),
-});
 
+ var clients ;
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedQuery(query);
