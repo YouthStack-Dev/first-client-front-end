@@ -1,15 +1,14 @@
 // src/features/auth/authSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { API_CLIENT } from "../../Api/API_Client";
-
+import axios from "axios";
 
 // Async thunk for login
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async ({ username, password }, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.post(
-        `/auth/login`,
+      const response = await axios.post(
+        `/login`,
         { username, password }
       );
       return response.data; // user data or token
@@ -49,4 +48,5 @@ const authSlice = createSlice({
 });
 
 export const { logout } = authSlice.actions;
+
 export default authSlice.reducer;
