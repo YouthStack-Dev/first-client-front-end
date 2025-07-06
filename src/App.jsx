@@ -19,6 +19,8 @@ import ShiftCategoryManagement from "./pages/ShiftCategoryManagement";
 import VehicleContract from './pages/VehicleContract';
 import ManageCompanies from './pages/ManageCompanies';
 import TrackingScreen from './pages/TrackingScreen';
+import { API_CLIENT } from './Api/API_Client';
+import { log } from './utils/logger';
 
 // Lazy-loaded components
 const Login = lazy(() => import('./pages/Login'));
@@ -55,7 +57,12 @@ function App() {
   const [userLoading, setUserLoading] = useState(true);
   const { loading: permissionLoading } = useContext(ModulePermissionContext);
 
+  const check = async ()=>{
+ const res= await API_CLIENT.get('/message')
+ log(" this is the responce data " , res.data)
+  }
   useEffect(() => {
+    check()
     const token = Cookies.get("auth_token");
     if (token) {
       try {
