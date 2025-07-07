@@ -22,77 +22,61 @@ const Login = () => {
 
 
   // 🔐 Static Login Function (with mock username/password check)
-  const handleStaticLogin = async (username, password, dispatch, setError) => {
-    try {
-      const userMatch = mockAuthPayload.users.find(
-        (u) => u.user.username === username
-      );
-
-      // Simple password check (hardcoded for all)
-      if (!userMatch || password !== "123456") {
-        throw new Error("Invalid username or password");
-      }
-
-      const token = userMatch.token;
-      const decoded = jwtDecode(token);
-      console.log("🔓 Decoded Token:", decoded);
-
-      const expirationTime = decoded.exp * 1000;
-
-      Cookies.set("auth_token", token, {
-        expires: new Date(expirationTime),
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "Strict",
-      });
-
-      dispatch(setUser(decoded));
-      const email = decoded?.email?.toLowerCase();
-      const permissions = userMatch?.allowedModules || [];
-
-      setModulePermissions(permissions);
-      navigate("/dashboard");
-    } catch (err) {
-      error("❌ Static login failed:", err);
-      // setError("Invalid credentials");
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
   
     try {
+      // Call loginUser thunk
       const res = await dispatch(
-        loginUser({ username: credentials?.username, password: credentials?.password })
-      ).unwrap(); // ✅ properly wrapped in an object
-      log(" this is the login request data ", res.data);
-     
-      // const token = res.token;
-      // if (!token) {
-      //   throw new Error("No token found in response");
-      // }
+        loginUser({ 
+          username: credentials?.username, 
+          password: credentials?.password 
+        })
+      ).unwrap();
   
-      // const decoded = jwtDecode(token);
-      // const expirationTime = decoded.exp * 1000;
+     log("Login response data:", res);
   
-      // console.log("Decoded exp:", expirationTime);
-      // Cookies.set("auth_token", token, {
-      //   expires: new Date(expirationTime),
-      //   secure: process.env.NODE_ENV === "production",
-      //   sameSite: "Strict",
-      // });
-  
-      // dispatch(setUser(decoded));
-      // console.log("Token from cookie:", Cookies.get("auth_token"));
-      // navigate("/dashboard");
-    } catch (err) {
-      if (err.message === "Network Error") {
-        log("Network error:", err);
-        return;
+      const token = res?.access_token;
+      if (!token) {
+        throw new Error("No token found in response");
       }
+  
+      // Store permissions (optional)
+      const permissions = res?.permissions || [];
+      setModulePermissions(permissions);
+  
+      // Decode token to get user info
+      const decoded = jwtDecode(token);
+      log("This is the decoded code ", decoded);
+      // Calculate expiration time if needed
+      // Example: if your token has exp in seconds
+      const expirationTime = decoded?.exp 
+        ? new Date(decoded.exp * 1000)
+        : new Date(Date.now() + 60 * 60 * 1000); // fallback 1h
+        
+        log("This is  expire time ", expirationTime);
+      // Set token in cookies
+      Cookies.set("auth_token", token, {
+        expires: expirationTime,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Strict",
+      });
+  
+      dispatch(setUser(decoded));
+     log("Token from cookie:", Cookies.get("auth_token"));
+  
+      navigate("/dashboard");
+    } catch (err) {
+      if (err?.message === "Network Error") {
+        error("🌐 Network error:", err);
+      } else {
       error("❌ Login failed:", err);
-      // Optionally set some error state here
+      }
+      // Optionally set error state here for UI feedback
     }
   };
+  
   
 
   return (
