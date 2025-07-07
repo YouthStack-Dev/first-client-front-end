@@ -61,31 +61,31 @@ const ManageVehicleTypes = () => {
   ];
 
   const headers = [
-    { label: 'Vehicle Type Name', key: 'vehicleType', className: 'w-1/4' },
-    { label: 'Description', key: 'description', className: 'w-1/3' },
-    { label: 'Total Capacity', key: 'totalCap', className: 'w-1/6' },
-    { label: 'Fuel Type', key: 'fuleType', className: 'w-1/6' },
+    { label: "Vehicle Type Name", key: "vehicleType", className: "w-1/4" },
+    { label: "Description", key: "description", className: "w-1/3" },
+    { label: "Total Capacity", key: "totalCap", className: "w-1/6" },
+    { label: "Fuel Type", key: "fuleType", className: "w-1/6" },
   ];
 
   const sampleData = [
-    { id: 1, vehicleType: 'Sedan', description: 'Comfortable 4-seater vehicle suitable for city travel.', totalCap: 4, fuleType: 'Petrol' },
-    { id: 2, vehicleType: 'SUV', description: 'Spacious vehicle with high ground clearance.', totalCap: 7, fuleType: 'Diesel' },
-    { id: 3, vehicleType: 'Hatchback', description: 'Compact vehicle ideal for small families.', totalCap: 4, fuleType: 'Petrol' },
-    { id: 4, vehicleType: 'Mini Bus', description: 'Can carry up to 16 passengers, best for group travel.', totalCap: 16, fuleType: 'Diesel' },
-    { id: 5, vehicleType: 'Electric Car', description: 'Eco-friendly vehicle with zero emissions.', totalCap: 5, fuleType: 'Electric' },
-    { id: 6, vehicleType: 'Convertible', description: 'Stylish vehicle, great for scenic drives.', totalCap: 2, fuleType: 'Petrol' },
-    { id: 7, vehicleType: 'Pickup Truck', description: 'Suitable for transporting goods and materials.', totalCap: 2, fuleType: 'Diesel' },
-    { id: 8, vehicleType: 'Van', description: 'Used for logistics and commercial delivery.', totalCap: 8, fuleType: 'Diesel' },
-    { id: 9, vehicleType: 'Luxury Sedan', description: 'Premium interior and smooth driving experience.', totalCap: 4, fuleType: 'Petrol' },
-    { id: 10, vehicleType: 'Auto Rickshaw', description: 'Common three-wheeled transport in urban areas.', totalCap: 3, fuleType: 'CNG' }
+    { id: 1, vehicleType: "Sedan", description: "Comfortable 4-seater vehicle suitable for city travel.", totalCap: 4, fuleType: "Petrol" },
+    { id: 2, vehicleType: "SUV", description: "Spacious vehicle with high ground clearance.", totalCap: 7, fuleType: "Diesel" },
+    { id: 3, vehicleType: "Hatchback", description: "Compact vehicle ideal for small families.", totalCap: 4, fuleType: "Petrol" },
+    { id: 4, vehicleType: "Mini Bus", description: "Can carry up to 16 passengers, best for group travel.", totalCap: 16, fuleType: "Diesel" },
+    { id: 5, vehicleType: "Electric Car", description: "Eco-friendly vehicle with zero emissions.", totalCap: 5, fuleType: "Electric" },
+    { id: 6, vehicleType: "Convertible", description: "Stylish vehicle, great for scenic drives.", totalCap: 2, fuleType: "Petrol" },
+    { id: 7, vehicleType: "Pickup Truck", description: "Suitable for transporting goods and materials.", totalCap: 2, fuleType: "Diesel" },
+    { id: 8, vehicleType: "Van", description: "Used for logistics and commercial delivery.", totalCap: 8, fuleType: "Diesel" },
+    { id: 9, vehicleType: "Luxury Sedan", description: "Premium interior and smooth driving experience.", totalCap: 4, fuleType: "Petrol" },
+    { id: 10, vehicleType: "Auto Rickshaw", description: "Common three-wheeled transport in urban areas.", totalCap: 3, fuleType: "CNG" },
   ];
 
   const itemsPerPage = 5;
   const totalPages = Math.ceil(sampleData.length / itemsPerPage);
   const paginatedData = sampleData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const onNext = () => currentPage < totalPages && setCurrentPage(p => p + 1);
-  const onPrev = () => currentPage > 1 && setCurrentPage(p => p - 1);
+  const onNext = () => currentPage < totalPages && setCurrentPage((p) => p + 1);
+  const onPrev = () => currentPage > 1 && setCurrentPage((p) => p - 1);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -114,7 +114,6 @@ const ManageVehicleTypes = () => {
 
   const handleDelete = (row) => {
     console.log("Delete clicked for:", row);
-    // TODO: Add delete logic here
   };
 
   return (
@@ -161,14 +160,13 @@ const ManageVehicleTypes = () => {
         />
       </div>
 
-      {/* Modal */}
+      {/* Modal with form and visible buttons */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSubmit={handleSubmit}
         title={editData ? "Edit Vehicle Type" : "Add Vehicle Type"}
       >
-        <div className="space-y-4">
+        <form id="vehicleTypeForm" onSubmit={handleSubmit} className="space-y-4">
           {formFields.map((field) => {
             if (field.type === "textarea") {
               return (
@@ -203,7 +201,24 @@ const ManageVehicleTypes = () => {
               />
             );
           })}
-        </div>
+
+          {/* Button Group */}
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+            >
+              Save
+            </button>
+          </div>
+        </form>
       </Modal>
     </>
   );
