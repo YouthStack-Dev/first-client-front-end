@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
 import { BookingHistory } from '../components/BookingHistory';
 import BookingForm from '../components/BookingForm';
-import { useGetBookingsQuery } from '../redux/rtkquery/clientRtk';
 import HeaderWithActionNoRoute from '../components/HeaderWithActionNoRoute';
 
 // Mock data - Replace with actual API calls
@@ -38,12 +36,9 @@ const BookingManagement = () => {
   const [bookings, setBookings] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [shiftBookings, setShiftBookings] = useState([]);
-  const { data: response, isLoading, isError, refetch } = useGetBookingsQuery(selectedDate, {
-    skip: !selectedDate,
-    refetchOnMountOrArgChange: true, 
-  });
 
 
+   var response ;
 
   useEffect(() => {
     if (selectedDate) {

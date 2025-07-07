@@ -13,27 +13,27 @@ export const axiosBaseQuery = ({ baseUrl } = { baseUrl: '' }) =>
         params,
       });
 
-      const result = await axios({
-        url: baseUrl + url,
-        method,
-        data,
-        params,
-        withCredentials: true, // needed if your backend checks cookies/sessions too
-        headers: {
-          Authorization: token ? `Bearer ${token}` : undefined,
-          'Content-Type': 'application/json',
-        },
-      });
+      // const result = await axios({
+      //   url: baseUrl + url,
+      //   method,
+      //   data,
+      //   params,
+      //   withCredentials: true, // needed if your backend checks cookies/sessions too
+      //   headers: {
+      //     Authorization: token ? `Bearer ${token}` : undefined,
+      //     'Content-Type': 'application/json',
+      //   },
+      // });
 
       console.log("✅ Axios Response →", result.data);
 
       return { data: result.data };
     } catch (error) {
-      console.error("❌ Axios Error →", {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
-      });
+      // console.error("❌ Axios Error →", {
+      //   status: error.response?.status,
+      //   data: error.response?.data,
+      //   message: error.message,
+      // });
 
       return {
         error: {

@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import ShiftForm from '../components/shiftForm';
 import PopupModal from '../components/PopupModal';
 import DynamicTable from '../components/DynamicTable';
-import { History } from 'lucide-react';
+import { History, Trash2, Edit } from 'lucide-react';
 import { useModulePermission } from "../hooks/userModulePermission";
 import PermissionDenied from '../components/PermissionDenied';
+
 const DUMMY_HISTORY = [
   {
     id: 1,
@@ -84,9 +85,8 @@ const ShiftManagement = () => {
   const [openMenuId, setOpenMenuId] = useState(null);
   const { canRead, canWrite, notFound } = useModulePermission("vehicles");
 
-  if (notFound) {
-    return <PermissionDenied/>;
-  }
+  if (notFound) return <PermissionDenied />;
+
   const [formData, setFormData] = useState({
     shiftType: '',
     hours: '',
@@ -148,6 +148,11 @@ const ShiftManagement = () => {
     setOpenMenuId(null);
   };
 
+  const handleDelete = (row) => {
+    console.log('Delete Shift:', row);
+    // TODO: Implement actual delete logic (confirmation + API)
+  };
+
   const handleMenuToggle = (id) => {
     setOpenMenuId((prevId) => (prevId === id ? null : id));
   };
@@ -157,7 +162,7 @@ const ShiftManagement = () => {
 
   return (
     <div className="w-full min-h-screen bg-gray-50 px-8 py-6">
-      {/* Custom Button Row */}
+      {/* Buttons Row */}
       <div className="flex justify-between items-center mb-4">
         <button
           onClick={handleAddShift}
@@ -174,7 +179,7 @@ const ShiftManagement = () => {
         </button>
       </div>
 
-      {/* Popup Modal */}
+      {/* Add/Edit Shift Modal */}
       {showPopup && (
         <PopupModal title="Add-on Shifts" onClose={handleCancel}>
           <ShiftForm
@@ -212,7 +217,7 @@ const ShiftManagement = () => {
         </PopupModal>
       )}
 
-      {/* Shift Tabs */}
+      {/* Tabs */}
       <div className="mt-6 border-b border-gray-300 flex gap-4">
         {['login', 'logout'].map((type) => (
           <button
@@ -229,7 +234,7 @@ const ShiftManagement = () => {
         ))}
       </div>
 
-      {/* Dynamic Table */}
+      {/* Table */}
       <div className="mt-4 bg-white rounded-lg shadow p-4 overflow-auto">
         <DynamicTable
           headers={shiftHeaders}
@@ -237,12 +242,20 @@ const ShiftManagement = () => {
           menuOpen={openMenuId}
           onMenuToggle={handleMenuToggle}
           renderActions={(row) => (
-            <button
-              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
-              onClick={() => handleEdit(row)}
-            >
-              Edit
-            </button>
+            <div className="flex gap-2 justify-center">
+              <button
+                className="flex items-center gap-1 text-blue-600 hover:underline text-sm"
+                onClick={() => handleEdit(row)}
+              >
+                <Edit size={14} /> Edit
+              </button>
+              <button
+                className="flex items-center gap-1 text-red-600 hover:underline text-sm"
+                onClick={() => handleDelete(row)}
+              >
+                <Trash2 size={14} /> Delete
+              </button>
+            </div>
           )}
         />
       </div>
@@ -251,7 +264,3 @@ const ShiftManagement = () => {
 };
 
 export default ShiftManagement;
-
-
-
-

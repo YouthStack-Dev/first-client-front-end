@@ -2,12 +2,13 @@ import { useState } from "react";
 import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
 import { Modal, InputField } from "../components/SmallComponents";
 import DynamicTable from "../components/DynamicTable";
-
+import { Edit, Trash2 } from "lucide-react";
 
 const ManageVehicleTypes = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [menuOpen, setMenuOpen] = useState(null);
+  const [editData, setEditData] = useState(null);
 
   const initialFormData = {
     vehicleTypeName: "",
@@ -19,6 +20,7 @@ const ManageVehicleTypes = () => {
 
   const [formData, setFormData] = useState(initialFormData);
   const fuelTypeOptions = ["Petrol", "Diesel", "Electric", "Hybrid", "CNG"];
+
   const formFields = [
     {
       label: "Vehicle Type Name *",
@@ -95,6 +97,24 @@ const ManageVehicleTypes = () => {
     console.log("Form Submitted:", formData);
     setIsModalOpen(false);
     setFormData(initialFormData);
+    setEditData(null);
+  };
+
+  const handleEdit = (row) => {
+    setEditData(row);
+    setFormData({
+      vehicleTypeName: row.vehicleType,
+      description: row.description,
+      capacity: row.totalCap,
+      fuelType: row.fuleType,
+      comment: row.comment || "",
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (row) => {
+    console.log("Delete clicked for:", row);
+    // TODO: Add delete logic here
   };
 
   return (
@@ -102,7 +122,11 @@ const ManageVehicleTypes = () => {
       <HeaderWithActionNoRoute
         title="Manage Vehicle Types"
         buttonLabel="Add"
-        onButtonClick={() => setIsModalOpen(true)}
+        onButtonClick={() => {
+          setEditData(null);
+          setFormData(initialFormData);
+          setIsModalOpen(true);
+        }}
       />
 
       {/* Table Section */}
@@ -116,15 +140,33 @@ const ManageVehicleTypes = () => {
           onPrev={onPrev}
           currentPage={currentPage}
           totalPages={totalPages}
+          renderActions={(row) => (
+            <div className="flex justify-center gap-2">
+              <button
+                onClick={() => handleEdit(row)}
+                className="text-blue-600 hover:underline text-sm flex items-center gap-1"
+              >
+                <Edit size={16} />
+                Edit
+              </button>
+              <button
+                onClick={() => handleDelete(row)}
+                className="text-red-600 hover:underline text-sm flex items-center gap-1"
+              >
+                <Trash2 size={16} />
+                Delete
+              </button>
+            </div>
+          )}
         />
       </div>
 
-      {/* Modal for Add Vehicle Type */}
+      {/* Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleSubmit}
-        title="Add Vehicle Type"
+        title={editData ? "Edit Vehicle Type" : "Add Vehicle Type"}
       >
         <div className="space-y-4">
           {formFields.map((field) => {

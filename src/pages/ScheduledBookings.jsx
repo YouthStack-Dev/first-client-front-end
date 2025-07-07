@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowUpRight, ArrowDownRight, AlertTriangle, X } from 'lucide-react';
-import { useGetBookingsQuery } from '../redux/rtkquery/clientRtk';
 
 const ScheduledBookings = ({ toogleRouting, isVisible, setRoutingData }) => {
   const [selectedDate, setSelectedDate] = useState("");
@@ -18,11 +17,8 @@ const ScheduledBookings = ({ toogleRouting, isVisible, setRoutingData }) => {
     setShowBookingModal(true);
   };
 
-  const { data: response, isLoading, isError, refetch } = useGetBookingsQuery(selectedDate, {
-    skip: !selectedDate,
-    refetchOnMountOrArgChange: true,
-  });
 
+var response 
   useEffect(() => {
     if (selectedDate) {
       setShiftBookings(response?.TimeShifts || []);

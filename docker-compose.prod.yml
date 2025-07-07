@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  db_servicemgr:
+    image: postgres:15
+    container_name: db_servicemgr
+    environment:
+      POSTGRES_DB: servicemgr_db
+      POSTGRES_USER: servicemgr_user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - servicemgr_data:/var/lib/postgresql/data
+    restart: always
+
+  service_manager:
+    image: dheerajkumarp/fleet_service_manager:latest
+    container_name: service_manager
+    environment:
+      - DATABASE_URL=postgresql://servicemgr_user:password@db_servicemgr:5432/servicemgr_db
+    depends_on:
+      - db_servicemgr
+    ports:
+      - "8100:8100"
+    restart: always
+
+volumes:
+  servicemgr_data:

@@ -14,9 +14,10 @@ export const MODULES = [
   { id: 'manage-vendors', name: ' Manage Vendors', description: 'Manage third-party vendors', icon: 'Handshake', category: 'vendor', submodules: []},
   { id: 'manage-contracts', name: 'Manage Contracts', description: 'View and handle all contracts', icon: 'ScrollText', category: 'contracts', submodules: [
     { id: 'vehicle-contract', name: 'Vehicle Contract', icon: 'FileText' },
-    { id: 'vadjustment-penalty', name: 'Adjustment & Penalty', icon: 'FileText' },
+    { id: 'adjustment-penalty', name: 'Adjustment & Penalty', icon: 'FileText' },
     { id: 'cost-center', name: 'Cost Center', icon: 'FileText' },
     { id: 'show-contractsInMaster', name: 'Master Contracts', icon: 'FileText' },
+     { id: 'AllContracts', name: 'New Contracts', icon: 'FileText' },
 
   ]},
   { id: 'routing', name: ' Manage Routing', description: 'Manage routing', icon: 'Handshake', category: 'routing', submodules: []},
