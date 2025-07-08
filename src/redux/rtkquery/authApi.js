@@ -1,18 +1,17 @@
-import { API } from "../../Api/Endpoints";
-import GlobalApi  from "../../utils/GlobalApi";
+import apiClient from '../../Api/API_Client';
 
-const authApi = GlobalApi({
-  reducerPath: "authApi",
+const authApi = apiClient.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation({
-      query: (credentials={ username: "admin1", password: "admin@123" }) => ({
-        url: API.LOGIN,
-        method: "POST",
-        data: credentials,
+      query: (credentials) => ({
+        url: '/auth/login_user', // ✅ Correct path for FastAPI
+        method: 'POST',
+        body: credentials,
       }),
     }),
   }),
+  overrideExisting: false,
 });
 
 export const { useLoginMutation } = authApi;
-export default authApi;
+export default authApi; // ✅ REQUIRED for store.js to import properly
