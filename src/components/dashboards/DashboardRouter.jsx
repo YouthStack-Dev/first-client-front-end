@@ -6,7 +6,8 @@ import SuperAdminDashboard from "./SuperAdminDashboard";
 import { useSelector } from "react-redux";
 
 const DashboardRouter = () => {
-  const user = useSelector((state) => state.user.user);
+  const user = useSelector((state) => state.auth.user); 
+
 
 
 

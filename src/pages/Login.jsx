@@ -1,15 +1,17 @@
+// src/pages/Login.jsx
+
 import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Lock } from "lucide-react";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { useDispatch } from "react-redux";
-import { setUser } from "../redux/features/userSlice";
+import { setCredentials } from "../redux/slices/authSlice"; // ✅ Corrected
 import { ModulePermissionContext } from "../context/ModulePermissionContext";
 import { API_CLIENT } from "../Api/API_Client";
 
 const Login = () => {
-  const [credentials, setCredentials] = useState({ username: "", password: "" });
+  const [credentials, setCredentialsState] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -39,31 +41,32 @@ const Login = () => {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
       });
 
-      console.log("API response:", response.data); // Debug response
+      console.log("API response:", response.data);
 
       const token = response.data.access_token;
       if (!token) throw new Error("No token found");
 
       const decoded = jwtDecode(token);
-      console.log("Decoded JWT:", decoded); // Debug JWT
+      console.log("Decoded JWT:", decoded);
 
       const expirationTime = decoded.exp * 1000;
-
       Cookies.set("auth_token", token, {
         expires: new Date(expirationTime),
         secure: process.env.NODE_ENV === "production",
         sameSite: "Strict",
       });
 
-      console.log("Dispatching setUser with:", decoded); // Debug dispatch
-      dispatch(setUser(decoded));
-      console.log("Setting permissions:", decoded?.permissions || []); // Debug permissions
+      // ✅ Dispatch to authSlice with both user and token
+      dispatch(setCredentials({ user: decoded, token }));
+
+      // ✅ Update context
       setModulePermissions(decoded?.permissions || []);
 
-      console.log("Navigating to /dashboard"); // Debug navigation
+      console.log("Navigating to /dashboard");
       navigate("/dashboard", { replace: true });
+
     } catch (err) {
-      console.error("❌ Login error:", err.response?.data, err);
+      console.error("❌ Login error:", err.response?.data || err.message);
       if (err?.response?.status === 401) {
         setError("Invalid username or password");
       } else if (err?.response?.status === 422) {
@@ -98,7 +101,7 @@ const Login = () => {
                 type="text"
                 value={credentials.username}
                 onChange={(e) =>
-                  setCredentials({ ...credentials, username: e.target.value })
+                  setCredentialsState({ ...credentials, username: e.target.value })
                 }
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 placeholder="Enter username"
@@ -115,7 +118,7 @@ const Login = () => {
                 type="password"
                 value={credentials.password}
                 onChange={(e) =>
-                  setCredentials({ ...credentials, password: e.target.value })
+                  setCredentialsState({ ...credentials, password: e.target.value })
                 }
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 placeholder="Enter password"
