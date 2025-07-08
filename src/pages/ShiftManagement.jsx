@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import ShiftForm from '../components/shiftForm';
+import ShiftForm from '../components/ShiftForm';
 import PopupModal from '../components/PopupModal';
 import DynamicTable from '../components/DynamicTable';
 import { History, Trash2, Edit } from 'lucide-react';
-import { useModulePermission } from "../hooks/userModulePermission";
+import { useModulePermission } from '../hooks/userModulePermission';
 import PermissionDenied from '../components/PermissionDenied';
 
 const DUMMY_HISTORY = [
@@ -36,67 +36,31 @@ const shiftHeaders = [
   { key: 'pickOrDrop', label: 'Pick/Drop' },
   { key: 'femaleConstraint', label: 'Female Constraint' },
   { key: 'genderVisibility', label: 'Gender Visibility' },
-  { key: 'officeVisibility', label: 'Office Visibility' },
+  { key: 'days', label: 'Days' },
 ];
 
-const shiftData = [
-  {
-    id: 1,
-    shiftType: 'login',
-    time: '00:00',
-    pickOrDrop: 'Home',
-    femaleConstraint: 'FIRST',
-    genderVisibility: 'MALE,FEMALE',
-    officeVisibility: 'STONEX',
-  },
-  {
-    id: 2,
-    shiftType: 'login',
-    time: '09:30',
-    pickOrDrop: 'Home',
-    femaleConstraint: 'FIRST',
-    genderVisibility: 'Not Available',
-    officeVisibility: 'Not Available',
-  },
-  {
-    id: 3,
-    shiftType: 'logout',
-    time: '00:30',
-    pickOrDrop: 'Home',
-    femaleConstraint: 'FIRST',
-    genderVisibility: 'MALE,FEMALE',
-    officeVisibility: 'STONEX',
-  },
-  {
-    id: 4,
-    shiftType: 'logout',
-    time: '07:00',
-    pickOrDrop: 'Home',
-    femaleConstraint: 'DISABLED',
-    genderVisibility: 'MALE,FEMALE',
-    officeVisibility: 'Not Available',
-  },
-];
+const initialShiftData = [];
 
 const ShiftManagement = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedShiftType, setSelectedShiftType] = useState('login');
   const [openMenuId, setOpenMenuId] = useState(null);
-  const { canRead, canWrite, notFound } = useModulePermission("vehicles");
+  const [shiftList, setShiftList] = useState(initialShiftData);
+  const [editId, setEditId] = useState(null);
 
+  const { notFound } = useModulePermission('vehicles');
   if (notFound) return <PermissionDenied />;
 
   const [formData, setFormData] = useState({
     shiftType: '',
     hours: '',
     minutes: '',
-    avgSpeed: '',
     waitingTime: '',
-    pickOn: '',
+    pickOn: 'pickdrop', // default
     gender: '',
     femaleConstraint: '',
-    office: '',
+    days: [],
   });
 
   const resetForm = () => {
@@ -104,13 +68,13 @@ const ShiftManagement = () => {
       shiftType: '',
       hours: '',
       minutes: '',
-      avgSpeed: '',
       waitingTime: '',
-      pickOn: '',
+      pickOn: 'pickdrop',
       gender: '',
       femaleConstraint: '',
-      office: '',
+      days: [],
     });
+    setEditId(null);
   };
 
   const handleAddShift = () => {
@@ -126,7 +90,24 @@ const ShiftManagement = () => {
   };
 
   const handleSave = () => {
-    console.log('Shift Data:', formData);
+    const newShift = {
+      id: editId || Date.now(),
+      shiftType: formData.shiftType,
+      time: `${formData.hours.padStart(2, '0')}:${formData.minutes.padStart(2, '0')}`,
+      pickOrDrop: formData.pickOn === 'pickdrop' ? 'Home' : 'Nodal',
+      femaleConstraint: formData.femaleConstraint || 'DISABLED',
+      genderVisibility: formData.gender || 'Not Available',
+      days: formData.days.join(', '),
+    };
+
+    if (editId) {
+      setShiftList((prev) =>
+        prev.map((shift) => (shift.id === editId ? newShift : shift))
+      );
+    } else {
+      setShiftList((prev) => [...prev, newShift]);
+    }
+
     setShowPopup(false);
     resetForm();
   };
@@ -137,32 +118,33 @@ const ShiftManagement = () => {
       shiftType: row.shiftType,
       hours,
       minutes,
-      avgSpeed: '40',
       waitingTime: '5',
-      pickOn: 'pickdrop',
-      gender: 'any',
+      pickOn: row.pickOrDrop.toLowerCase() === 'home' ? 'pickdrop' : 'nodal',
+      gender: row.genderVisibility.includes(',') ? 'any' : row.genderVisibility.toLowerCase(),
       femaleConstraint: row.femaleConstraint,
-      office: 'stonex',
+      days: row.days.split(',').map((d) => d.trim()),
     });
+    setEditId(row.id);
     setShowPopup(true);
     setOpenMenuId(null);
   };
 
   const handleDelete = (row) => {
-    console.log('Delete Shift:', row);
-    // TODO: Implement actual delete logic (confirmation + API)
+    if (window.confirm('Are you sure you want to delete this shift?')) {
+      setShiftList((prev) => prev.filter((item) => item.id !== row.id));
+    }
   };
 
   const handleMenuToggle = (id) => {
     setOpenMenuId((prevId) => (prevId === id ? null : id));
   };
 
-  const loginShifts = shiftData.filter((s) => s.shiftType === 'login');
-  const logoutShifts = shiftData.filter((s) => s.shiftType === 'logout');
+  const loginShifts = shiftList.filter((s) => s.shiftType === 'login');
+  const logoutShifts = shiftList.filter((s) => s.shiftType === 'logout');
 
   return (
     <div className="w-full min-h-screen bg-gray-50 px-8 py-6">
-      {/* Buttons Row */}
+      {/* Top Buttons */}
       <div className="flex justify-between items-center mb-4">
         <button
           onClick={handleAddShift}
@@ -179,29 +161,35 @@ const ShiftManagement = () => {
         </button>
       </div>
 
-      {/* Add/Edit Shift Modal */}
+      {/* Modal: Add/Edit Shift */}
       {showPopup && (
-        <PopupModal title="Add-on Shifts" onClose={handleCancel}>
+        <PopupModal title="Add-on Shifts" onClose={handleCancel} isOpen={true}>
           <ShiftForm
-            {...formData}
+            shiftType={formData.shiftType}
             setShiftType={(val) => setFormData((prev) => ({ ...prev, shiftType: val }))}
+            hours={formData.hours}
             setHours={(val) => setFormData((prev) => ({ ...prev, hours: val }))}
+            minutes={formData.minutes}
             setMinutes={(val) => setFormData((prev) => ({ ...prev, minutes: val }))}
-            setAvgSpeed={(val) => setFormData((prev) => ({ ...prev, avgSpeed: val }))}
+            waitingTime={formData.waitingTime}
             setWaitingTime={(val) => setFormData((prev) => ({ ...prev, waitingTime: val }))}
+            pickOn={formData.pickOn}
             setPickOn={(val) => setFormData((prev) => ({ ...prev, pickOn: val }))}
+            gender={formData.gender}
             setGender={(val) => setFormData((prev) => ({ ...prev, gender: val }))}
+            femaleConstraint={formData.femaleConstraint}
             setFemaleConstraint={(val) => setFormData((prev) => ({ ...prev, femaleConstraint: val }))}
-            setOffice={(val) => setFormData((prev) => ({ ...prev, office: val }))}
+            days={formData.days}
+            setDays={(val) => setFormData((prev) => ({ ...prev, days: val }))}
             onCancel={handleCancel}
             onSave={handleSave}
           />
         </PopupModal>
       )}
 
-      {/* History Modal */}
+      {/* Modal: History */}
       {showHistory && (
-        <PopupModal title="Shift History" onClose={handleCancel}>
+        <PopupModal title="Shift History" onClose={handleCancel} isOpen={true}>
           <div className="max-h-[400px] overflow-y-auto text-sm space-y-3">
             {DUMMY_HISTORY.map((item) => (
               <div key={item.id} className="bg-gray-100 p-2 rounded border text-gray-800">

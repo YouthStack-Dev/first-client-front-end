@@ -1,19 +1,9 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import Cookies from "js-cookie";
-
-// 🔹 Thunk to handle logout
-export const logoutUser = createAsyncThunk("user/logout", async () => {
-  try {
-    Cookies.remove("auth_token");
-  } catch (err) {
-    console.error("Error clearing auth_token cookie:", err);
-  }
-});
+import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  user: null,
   isAuthenticated: false,
   loading: false,
+  userData: null,
 };
 
 const userSlice = createSlice({
@@ -21,22 +11,17 @@ const userSlice = createSlice({
   initialState,
   reducers: {
     setUser(state, action) {
-      state.user = action.payload;
-      state.isAuthenticated = true;
+      state.isAuthenticated = true; // Explicitly set to true
       state.loading = false;
+      state.userData = action.payload;
     },
-    setLoading(state, action) {
-      state.loading = action.payload;
-    },
-  },
-  extraReducers: (builder) => {
-    builder.addCase(logoutUser.fulfilled, (state) => {
-      state.user = null;
+    logoutUser(state) {
       state.isAuthenticated = false;
       state.loading = false;
-    });
+      state.userData = null;
+    },
   },
 });
 
-export const { setUser, setLoading } = userSlice.actions;
+export const { setUser, logoutUser } = userSlice.actions;
 export default userSlice.reducer;
