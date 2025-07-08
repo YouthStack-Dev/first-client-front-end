@@ -1,25 +1,15 @@
 // src/features/auth/authSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { API_CLIENT } from "../../Api/API_Client";
+import axios from "axios";
 
-// Async thunk for login with form data and default grant_type
+// Async thunk for login
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async ({ username, password }, { rejectWithValue }) => {
     try {
-      const formData = new FormData();
-      formData.append('username', username);
-      formData.append('password', password);
-      formData.append('grant_type', 'password'); // default key and value
-
-      const response = await API_CLIENT.post(
-        `/auth/login`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data', 
-          }
-        }
+      const response = await axios.post(
+        `/login`,
+        { username, password }
       );
       return response.data; // user data or token
     } catch (err) {
@@ -58,4 +48,5 @@ const authSlice = createSlice({
 });
 
 export const { logout } = authSlice.actions;
+
 export default authSlice.reducer;
