@@ -4,7 +4,7 @@ import PopupModal from '../components/PopupModal';
 import DynamicTable from '../components/DynamicTable';
 import { History, Trash2, Edit } from 'lucide-react';
 import { useModulePermission } from "../hooks/userModulePermission";
-import PermissionDenied from '../components/PermissionDenied';
+// import PermissionDenied from '../components/PermissionDenied';
 
 const DUMMY_HISTORY = [
   {
@@ -85,7 +85,7 @@ const ShiftManagement = () => {
   const [openMenuId, setOpenMenuId] = useState(null);
   const { canRead, canWrite, notFound } = useModulePermission("vehicles");
 
-  if (notFound) return <PermissionDenied />;
+  // if (notFound) return <PermissionDenied />;
 
   const [formData, setFormData] = useState({
     shiftType: '',

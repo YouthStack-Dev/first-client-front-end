@@ -7,6 +7,10 @@ const ProtectedRouteAuth = ({ redirectPath = "/login" }) => {
   if (loading) return <div>Loading...</div>;
   if (!isAuthenticated) return <Navigate to={redirectPath} />;
 
+  const user = useSelector((state) => state.user.user);
+console.log("🧠 Redux User Object:", user);
+
+
   return <Outlet />;
 };
 

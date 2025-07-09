@@ -1,0 +1,100 @@
+[33m0e01b08[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32msai[m[33m, [m[1;31morigin/sai[m[33m)[m changes
+[33m8da23b8[m checked
+[33m044e81d[m cuttoff done
+[33mb1a9d91[m new
+[33m272dd87[m[33m ([m[1;31morigin/clientupdate1[m[33m, [m[1;32mclientupdate1[m[33m)[m frontends
+[33m6b36b50[m[33m ([m[1;31morigin/production[m[33m)[m Merge pull request #13 from YouthStack-Dev/chethan
+[33mcb3d474[m frontend
+[33m6df92b5[m Merge pull request #12 from YouthStack-Dev/clientupdate1
+[33m2357fd1[m changes
+[33m306be9f[m any chnages let me know
+[33m9c169a2[m[33m ([m[1;32mmaster[m[33m)[m  upadted  some side bar element  for client
+[33m1004eef[m check last resolving the error
+[33m66caf1a[m check last resolving the error
+[33mecde395[m  update the build issue
+[33m5c50cbc[m  update the build issue
+[33mcd41398[m  update the build issue
+[33m166df63[m  update the build issue
+[33md7363b1[m  update the build issue
+[33m945f982[m  update the build issue
+[33mc6140c4[m  update the yamal file
+[33m922ab46[m  updated code
+[33m4663712[m Merge pull request #1 from YouthStack-Dev/chethan
+[33mc586c71[m Merge pull request #7 from YouthStack-Dev/chethan
+[33m2933863[m  demo updates
+[33m6211979[m chnges
+[33mb9483b6[m sidebar chnages
+[33ma37f27d[m Merge pull request #6 from YouthStack-Dev/chethan
+[33maeffb74[m  my updated  sleepy mood
+[33mbab775b[m Merge pull request #5 from YouthStack-Dev/chethan
+[33m924d661[m  updated  tracking ui
+[33m5cc5c56[m completed all subcompletes in vehcontracts
+[33m69af53e[m Merge pull request #4 from YouthStack-Dev/chethan
+[33ma88403b[m merged  sai and chethan updates and cleared the conflicts
+[33m6438521[m Merge pull request #3 from YouthStack-Dev/module-permission
+[33m47c7bcf[m  updaete the module and permission and  mockauthlogin user and  and the hoook has to be updated
+[33m5738d06[m contract changes
+[33mca0d92d[m  update the permission and modules and submodules   statically
+[33m0ef8951[m my update
+[33m01e6d4b[m shifts manage
+[33m090d8d4[m Merge pull request #2 from YouthStack-Dev/chethan
+[33m8df3b15[m   updated the code   implimented a custom hook  where it check for the module permission   in the main components page  u can use this   and pass the sub permission like read write  edit delete  to the children components  but need to use in the  parent compoent  and use the notfound state of the mook whch can return  no permission  provided
+[33m5c9be33[m Merge pull request #1 from YouthStack-Dev/chethan
+[33m36381b4[m  updated  code and structure
+[33m7a01495[m  updated the permissipn mpodule sidebar and other  and storing the permission under the module
+[33mc5567ed[m  updated  some code added a protected route  and a loder ui  and made a lazy lading
+[33m12d7723[m  updated the   structures and some   pages code like driver related
+[33m3b3b5da[m  added manage team and removed the booking and user side bar elements adn create a related models and created a custom calendder
+[33m210647d[m   check the folder structure    and added a package
+[33m85ad1a4[m  login as adminn and  udation of the side bar has been done
+[33m32ca7fb[m   soem minute updated  and permission alloance
+[33m5a1ef59[m  added  roles and perission and chansed the side bar and the  login  type  create a dash board and role based dashboard  changed the  user to staff
+[33ma047aeb[m  update some ui things  of manage vendor , dashboard , manage Driver , vehicle contract
+[33mffe0e19[m  made the logi  static and the permissions as satic
+[33m42bfbee[m   added many files and  edited many files
+[33mc492d5e[m added files for the  creation of empoye modal
+[33m4d5a940[m  have to fix the employe details show in the  schedule list of route manangement and  update many ui
+[33m7eab2c2[m  update the  ui  of shift based booking
+[33m072dd8a[m Merge pull request #17 from 2527DC/development
+[33maf3e2d4[m  added a  page if Booking management
+[33m76bbb5c[m  updated the ui and featching of the vehicles , clients and drivers   form rtk query
+[33m32523d9[m Merge pull request #16 from 2527DC/development
+[33mcaae519[m  used driversxlice and rtk for driver fetch
+[33m88ce747[m Merge pull request #15 from 2527DC/development
+[33mebe91d4[m  added the GlobalApi and axiosBaseQuery fro the CreateApi
+[33m02c7a85[m Merge pull request #14 from 2527DC/development
+[33m0b1e379[m  sunday commit
+[33mf68bdb8[m Merge pull request #13 from 2527DC/development
+[33mf6492b4[m  used redux-tool kit
+[33mb09df99[m Merge pull request #12 from 2527DC/development
+[33m743909d[m  added sided bar elements
+[33m348d82e[m  added some dropdown element into the sidebar
+[33m2b8a75c[m Merge pull request #11 from 2527DC/development
+[33m85e43fd[m made some changes in the front end and emplimented role access
+[33me89fb9c[m Merge pull request #10 from 2527DC/development
+[33m62575dd[m  nothing done
+[33mefb16ea[m Merge pull request #9 from 2527DC/development
+[33m97c9bb3[m  check 2
+[33m119af04[m Merge pull request #8 from 2527DC/development
+[33mb808d9b[m  check
+[33mb42a453[m Merge pull request #7 from 2527DC/development
+[33m3c4481d[m  updated
+[33mbd2569b[m Merge pull request #5 from 2527DC/development
+[33m62ec448[m  updated Start codding from starting
+[33ma6966b9[m Merge pull request #4 from 2527DC/development
+[33m800c186[m  cleared privious code
+[33m63a4cd9[m Merge pull request #3 from 2527DC/development
+[33mb051233[m  cleared privious code
+[33m46ee0c7[m Merge pull request #2 from 2527DC/development
+[33m01a1769[m  maade changes
+[33m89c4256[m Merge pull request #1 from 2527DC/development
+[33mc259dcc[m  second ettempt for cicd
+[33mcc1a633[m Update main.yml
+[33mc835a38[m  applying cicd fro my fleetquest
+[33m25f8b23[m Update main.yml
+[33m35bb1a7[m Create main.yml
+[33mda44b24[m  made the jwt token and implemented in the cookis
+[33mca2f01e[m  added the api client
+[33m6594404[m   added the login with authentication  in static
+[33m36e96cd[m   starting push
+[33mf7e06d6[m first commit

@@ -1,171 +1,121 @@
 import React, { useState } from "react";
 import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
-// Modal-related imports can be added when needed
 
 const ShiftCategoryManagement = () => {
-  const [category, setCategory] = useState("Default");
+  const [bookingCutOffEmployee, setBookingCutOffEmployee] = useState(0);
+  const [cancellationCutOffEmployee, setCancellationCutOffEmployee] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newCategory, setNewCategory] = useState("");
+  const [modalType, setModalType] = useState(null); // "booking" or "cancellation"
+  const [newCutoff, setNewCutoff] = useState("");
 
-  const shiftTypes = ["Morning", "Evening"];
-  const shifts = ["A", "B", "C"];
-  const cutoffTypes = ["ScheduleEdit", "ScheduleView"];
-
-  const handleAddCategory = (e) => {
-    e.preventDefault();
-    if (newCategory.trim()) {
-      console.log("New Category Added:", newCategory);
-      setCategory(newCategory);
-      setNewCategory("");
-      setIsModalOpen(false);
-    }
+  const handleOpenModal = (type) => {
+    setModalType(type);
+    setNewCutoff(type === "booking" ? bookingCutOffEmployee.toString() : cancellationCutOffEmployee.toString());
+    setIsModalOpen(true);
   };
 
-  return (
-    <div className="space-y-6 p-4">
-      {/* ✅ Page Header */}
-      <HeaderWithActionNoRoute
-        title=""
-        extraButtons={[
-          {
-            label: "History",
-            variant: "gray",
-            onClick: () => alert("Show history modal or page"),
-          },
-        ]}
-      />
+  const handleUpdateCutoff = (e) => {
+    e.preventDefault();
+    const cutoffValue = parseFloat(newCutoff);
+    if (isNaN(cutoffValue) || cutoffValue < 0) {
+      return;
+    }
+    if (modalType === "booking" && cutoffValue > cancellationCutOffEmployee) {
+      return;
+    }
+    if (modalType === "cancellation" && cutoffValue < bookingCutOffEmployee) {
+      return;
+    }
+    if (modalType === "booking") {
+      setBookingCutOffEmployee(cutoffValue);
+    } else {
+      setCancellationCutOffEmployee(cutoffValue);
+    }
+    setNewCutoff("");
+    setIsModalOpen(false);
+    setModalType(null);
+  };
 
-      {/* ✅ Side-by-Side Layout */}
-      <div className="flex flex-col lg:flex-row gap-4">
-        {/* ✅ Left Column: Shift Category */}
-        <div className="bg-white rounded-lg shadow p-4 flex-1">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Shift Category</h2>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-            >
-              + Add Category
-            </button>
-          </div>
-
-          <div>
+  const CutoffModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <h2 className="text-lg font-semibold mb-4">
+          Set {modalType === "booking" ? "Booking" : "Cancellation"} Cutoff
+        </h2>
+        <form onSubmit={handleUpdateCutoff}>
+          <div className="mb-4">
             <label className="text-sm font-medium text-gray-700 mb-1 block">
-              Select Category
+              {modalType === "booking" ? "Booking" : "Cancellation"} Cutoff (hours)
             </label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+            <input
+              type="number"
+              value={newCutoff}
+              onChange={(e) => setNewCutoff(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 w-full"
+              placeholder="e.g., 3"
+              min="0"
+              step="0.5"
+              aria-label={`${modalType === "booking" ? "Booking" : "Cancellation"} cutoff hours`}
+            />
+          </div>
+          <div className="flex justify-end gap-4">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="bg-gray-400 text-white px-2 py-1 text-sm rounded-lg hover:bg-gray-500"
             >
-              <option value="">Select</option>
-              <option value="Default">Default</option>
-              {/* Add dynamic categories if needed */}
-            </select>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-2 py-1 text-sm rounded-lg hover:bg-blue-700"
+            >
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6 p-4 w-full">
+      <HeaderWithActionNoRoute title="Cutoff Management" extraButtons={[]} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="bg-white rounded-lg shadow p-4">
+          <h3 className="text-blue-600 font-semibold mb-2">Booking Cutoff</h3>
+          <div className="space-y-2">
+            <p className="text-sm">
+              Booking Cutoff:{" "}
+              <span className="font-bold text-lg text-blue-600">{bookingCutOffEmployee}</span> hours
+            </p>
+            <button
+              onClick={() => handleOpenModal("booking")}
+              className="bg-blue-600 text-white px-2 py-1 text-sm rounded-lg hover:bg-blue-700"
+            >
+              Set Booking Cutoff
+            </button>
           </div>
         </div>
 
-        {/* ✅ Right Column: Set Cut-Off Filters */}
-        <div className="bg-white rounded-lg shadow p-4 flex-[2]">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Set Cut-Off Filters</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm block mb-1">Shift Type</label>
-              <select className="w-full px-3 py-2 border rounded-lg">
-                <option>Select</option>
-                {shiftTypes.map((type) => (
-                  <option key={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-sm block mb-1">Shift</label>
-              <select className="w-full px-3 py-2 border rounded-lg">
-                <option>Select</option>
-                {shifts.map((shift) => (
-                  <option key={shift}>{shift}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-sm block mb-1">Cutoff Type</label>
-              <select className="w-full px-3 py-2 border rounded-lg">
-                {cutoffTypes.map((type) => (
-                  <option key={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="mt-4">
+        <div className="bg-white rounded-lg shadow p-4">
+          <h3 className="text-blue-600 font-semibold mb-2">Cancellation Cutoff</h3>
+          <div className="space-y-2">
+            <p className="text-sm">
+              Cancellation Cutoff:{" "}
+              <span className="font-bold text-lg text-blue-600">{cancellationCutOffEmployee}</span> hours
+            </p>
             <button
-              className="text-sm text-blue-600 underline"
-              onClick={() => alert("Show cutoff history")}
+              onClick={() => handleOpenModal("cancellation")}
+              className="bg-blue-600 text-white px-2 py-1 text-sm rounded-lg hover:bg-blue-700"
             >
-              View Cut-Off History
+              Set Cancellation Cutoff
             </button>
           </div>
         </div>
       </div>
 
-      {/* ✅ Info Text */}
-      <div className="text-sm text-gray-600">
-        Schedule Edit cutoff defines the number of hours before you can edit the schedule.
-      </div>
-
-      {/* ✅ Action Buttons */}
-      <div className="flex flex-wrap gap-4">
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-          Bulk Download
-        </button>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-          Bulk Upload
-        </button>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-          Click here for field Description
-        </button>
-      </div>
-
-      {/* ✅ Table */}
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <h3 className="text-blue-600 font-semibold px-4 py-3 border-b">
-          {category || "Default"}
-        </h3>
-        <table className="min-w-full text-sm text-left">
-          <thead className="bg-gray-100 text-gray-700 uppercase text-xs">
-            <tr>
-              <th className="px-4 py-3">Day</th>
-              <th className="px-4 py-3">Shift Type</th>
-              <th className="px-4 py-3">Shift Time</th>
-              <th className="px-4 py-3">Available to Employee</th>
-              <th className="px-4 py-3">Cut Off for Employee (hrs)</th>
-              <th className="px-4 py-3">Available to SPOC</th>
-              <th className="px-4 py-3">Cut Off for SPOC (hrs)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border-t">
-              <td className="px-4 py-3">Monday</td>
-              <td className="px-4 py-3">Morning</td>
-              <td className="px-4 py-3">9 AM - 6 PM</td>
-              <td className="px-4 py-3">Yes</td>
-              <td className="px-4 py-3">4</td>
-              <td className="px-4 py-3">Yes</td>
-              <td className="px-4 py-3">3</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      {/* ✅ Save/Cancel */}
-      <div className="flex justify-center gap-4">
-        <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-          Save
-        </button>
-        <button className="bg-gray-400 text-white px-6 py-2 rounded-lg hover:bg-gray-500">
-          Cancel
-        </button>
-      </div>
+      {isModalOpen && <CutoffModal />}
     </div>
   );
 };
