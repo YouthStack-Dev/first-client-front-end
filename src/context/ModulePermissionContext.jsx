@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
-import { staticPermissions } from '../staticData/ModulePermissions';
+import { FirstClientpermissions, staticPermissions } from '../staticData/ModulePermissions';
 import { log } from '../utils/logger';
 
 export const ModulePermissionContext = createContext();
@@ -24,23 +24,23 @@ export const ModulePermissionProvider = ({ children }) => {
       const token = Cookies.get('auth_token');
       if (!token) {
         setModulePermissions([]);
+        log(" didnt find the token");
         return;
       }
 
-      const decoded = jwtDecode(token);
-      const email = decoded?.email?.toLowerCase();
+      // const decoded = jwtDecode(token);
+      // const email = decoded?.email?.toLowerCase();
 
-      if (!email) {
-        setModulePermissions([]);
-        return;
-      }
+      // if (!email) {
+      //   setModulePermissions([]);
+      //   return;
+      // }
 
-      log("This is the email in context:", email);
-      const userPermissions = staticPermissions[email];
-      log("User permissions from Context:", userPermissions);
+      // log("This is the email in context:", email);
+      // const userPermissions = staticPermissions[email];
+      // log("User permissions from Context:", userPermissions);
 
-      const allowedModules = userPermissions?.allowedModules ?? [];
-      setModulePermissions(Array.isArray(allowedModules) ? allowedModules : []);
+      setModulePermissions(FirstClientpermissions);
     } catch (err) {
       console.error('Error decoding token or loading permissions:', err);
       setModulePermissions([]);

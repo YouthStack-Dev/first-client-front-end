@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+ etsbackend:
+    image: etsbackend:latest
+    container_name: etsbackend
+    ports:
+     - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:root@host.docker.internal:5432/ets_node
+      
+    restart: always
+    command: sh -c "npx prisma generate && npm start "
+
+ etsfrontend:
+   image: etsfrontend:latest
+   container_name: etsfrontend
+   ports:
+     - "5174:5174"
+
+

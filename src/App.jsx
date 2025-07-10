@@ -38,7 +38,6 @@ const DriverForm = lazy(() => import('./components/driver/DriverForm'));
 const ManageVehicleTypes = lazy(() => import('./pages/ManageVehicleType'));
 const ShiftManagement = lazy(() => import('./pages/ShiftManagement'));
 const ManageVendor = lazy(() => import('./pages/ManageVendor'));
-const RoleManagement = lazy(() => import('./components/RoleManagement/RoleManagement'));
 const ManageStaffs = lazy(() => import('./pages/ManageStaffs'));
 const DashboardRouter = lazy(() => import('./components/dashboards/DashboardRouter'));
 const ManageTeams = lazy(() => import('./pages/ManageTeams'));
@@ -57,12 +56,8 @@ function App() {
   const [userLoading, setUserLoading] = useState(true);
   const { loading: permissionLoading } = useContext(ModulePermissionContext);
 
-  const check = async ()=>{
- const res= await API_CLIENT.get('/message')
- log(" this is the responce data " , res.data)
-  }
+
   useEffect(() => {
-    check()
     const token = Cookies.get("auth_token");
     if (token) {
       try {

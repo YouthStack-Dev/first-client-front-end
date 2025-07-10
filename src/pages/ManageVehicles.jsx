@@ -145,8 +145,10 @@ function ManageVehicles() {
   const [editVehicle, setEditVehicle] = useState(null);
   const { canRead, canWrite, notFound } = useModulePermission("vehicles");
 
-var data ;
-var  isLoading ;
+  if (notFound) return <PermissionDenied />;
+
+const isLoading = false;
+const data ={}
   const dummyVehicle = {
     id: "dummy-1",
     vehicleId: "V12345",

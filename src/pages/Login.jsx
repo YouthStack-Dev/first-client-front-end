@@ -6,7 +6,6 @@ import { jwtDecode } from "jwt-decode";
 import { useDispatch, useSelector } from "react-redux";
 import { setUser } from "../redux/features/userSlice";
 import { ModulePermissionContext } from "../context/ModulePermissionContext";
-import { mockAuthPayload } from "../staticData/mockAuthPayload";
 import { loginUser } from "../redux/slices/authSlice";
 import { log ,error} from "../utils/logger";
 
@@ -15,9 +14,7 @@ const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { setModulePermissions } = useContext(ModulePermissionContext);
-  const currentUser = mockAuthPayload.users.find(
-    (u) => u.user.username === "admin1"
-  );
+
   const { loading:isLoading,error:err, user } = useSelector((state) => state.auth);
 
 
@@ -74,16 +71,37 @@ const Login = () => {
       // const decoded = jwtDecode(token);
       // const expirationTime = decoded.exp * 1000;
   
-      // console.log("Decoded exp:", expirationTime);
-      // Cookies.set("auth_token", token, {
-      //   expires: new Date(expirationTime),
-      //   secure: process.env.NODE_ENV === "production",
-      //   sameSite: "Strict",
-      // });
+      const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJ0ZW5hbnRfaWQiOjEsInJvbGVzIjpbIlN1cGVyIEFkbWluIl0sInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJleHAiOjE3NTIyNDY0NTksImlhdCI6MTc1MjE2MDA1OX0.6-ICY1JHRYPtT8iDXBwTGi6Toagv1OTxJpNUfRP_GiY"
+      if (!token) {
+        throw new Error("No token found in response");
+      }
   
-      // dispatch(setUser(decoded));
-      // console.log("Token from cookie:", Cookies.get("auth_token"));
-      // navigate("/dashboard");
+      // Store permissions (optional)
+      const permissions = res?.permissions || [];
+      log(" this is the module in the login " , permissions)
+      setModulePermissions(permissions);
+  
+      // Decode token to get user info
+      const decoded = jwtDecode(token);
+      log("This is the decoded code ", decoded);
+      // Calculate expiration time if needed
+      // Example: if your token has exp in seconds
+      const expirationTime = decoded?.exp 
+        ? new Date(decoded.exp * 1000)
+        : new Date(Date.now() + 60 * 60 * 1000); // fallback 1h
+        
+        log("This is  expire time ", expirationTime);
+      // Set token in cookies
+      Cookies.set("auth_token", token, {
+        expires: expirationTime,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Strict",
+      });
+  
+      dispatch(setUser(decoded));
+     log("Token from cookie:", Cookies.get("auth_token"));
+  
+      navigate("/dashboard");
     } catch (err) {
       if (err.message === "Network Error") {
         log("Network error:", err);

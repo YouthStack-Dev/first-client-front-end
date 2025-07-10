@@ -23,20 +23,16 @@ import {
   const user = useSelector((state) => state.user?.user);
   const { modulePermissions, loading } = useContext(ModulePermissionContext);
   
-  const hasModulePermission = (modulePermissions, moduleName, permissionType = 'canRead') => {
-    if (!Array.isArray(modulePermissions)) return false;
-  
-    for (const mod of modulePermissions) {
-      if (mod?.id === moduleName && mod?.permissions?.[permissionType]) return true;
-  
-      if (Array.isArray(mod.submodules)) {
-        const submod = mod.submodules.find((s) => s?.id === moduleName);
-        if (submod?.permissions?.[permissionType]) return true;
-      }
-    }
-  
-    return false;
+  const hasModulePermission = (permissions, moduleName, permissionType = 'read') => {
+    if (!Array.isArray(permissions)) return false;
+    return permissions.some(
+      (perm) =>
+        perm?.module === moduleName &&
+        Array.isArray(perm.action) &&
+        perm.action.includes(permissionType)
+    );
   };
+  
   
   const navigate = useNavigate();
 
