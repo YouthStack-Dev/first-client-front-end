@@ -51,18 +51,19 @@ function App() {
   const { loading: permissionLoading } = useContext(ModulePermissionContext); // 👈 Context loading
 
   useEffect(() => {
-    const token = Cookies.get("auth_token");
+    const token = localStorage.getItem("access_token");
     if (token) {
       try {
         const decoded = jwtDecode(token);
         dispatch(setUser(decoded));
       } catch (err) {
         console.error("Invalid token");
-        Cookies.remove("auth_token");
+        localStorage.removeItem("access_token");
       }
     }
     setUserLoading(false);
   }, [dispatch]);
+  
 
   if (userLoading || permissionLoading) {
     return <Loading />; // 👈 Show loading screen until both are ready

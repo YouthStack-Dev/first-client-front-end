@@ -2,16 +2,27 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { API_CLIENT } from "../../Api/API_Client";
 
-
 // Async thunk for login
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async ({ username, password }, { rejectWithValue }) => {
     try {
+      // Create FormData and append fields
+      const formData = new FormData();
+      formData.append("username", username);
+      formData.append("password", password);
+      formData.append("grant_type", "password");
+
       const response = await API_CLIENT.post(
         `/auth/login`,
-        { username, password }
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        }
       );
+
       return response.data; // user data or token
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Login failed");

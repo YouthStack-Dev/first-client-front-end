@@ -83,7 +83,7 @@ const ShiftManagement = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [selectedShiftType, setSelectedShiftType] = useState('login');
   const [openMenuId, setOpenMenuId] = useState(null);
-  const { canRead, canWrite, notFound } = useModulePermission("vehicles");
+  const { canRead, canWrite, notFound } = useModulePermission("shift_management");
 
   if (notFound) return <PermissionDenied />;
 

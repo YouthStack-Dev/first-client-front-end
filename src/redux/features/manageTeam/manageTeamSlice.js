@@ -1,33 +1,32 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import {API_CLIENT} from '../../Api/API_Client.js';
+import { createSlice } from '@reduxjs/toolkit';
+import { fetchTeams, fetchEmployeesOfDepartment } from './manageTeamThunks';
 
-export const fetchTeams = createAsyncThunk(
-  'manageTeam/fetchTeams',
-  async ({ skip = 0, limit = 10 }) => {
-    const response = await API_CLIENT.get(`departments/?skip=${skip}&limit=${limit}`);
-    return response.data;  // adjust based on actual API response shape
+const initialState = {
+  teams: null,
+  status: 'idle',
+  error: null,
+
+  employeess: null,
+  employeesStatus: 'idle',
+  employeesError: null,
+
+  selectedTeams: [],
+  showModal: false,
+  editingTeamId: null,
+  formData: {
+    teamName: '',
+    teamManager1: '',
+    teamManager2: '',
+    teamManager3: '',
+    shiftCategory: 'Default',
+    description: '',
+    notification: '',
   }
-);
+};
 
 const manageTeamSlice = createSlice({
   name: 'manageTeam',
-  initialState: {
-    teams: null,
-    status: 'idle',
-    error: null,
-    selectedTeams: [],     // moved from local
-    showModal: false,      // moved from local
-    editingTeamId: null,   // moved from local
-    formData: {
-      teamName: '',
-      teamManager1: '',
-      teamManager2: '',
-      teamManager3: '',
-      shiftCategory: 'Default',
-      description: '',
-      notification: '',
-    }
-  },
+  initialState,
   reducers: {
     toggleModal(state) {
       state.showModal = !state.showModal;
@@ -56,9 +55,11 @@ const manageTeamSlice = createSlice({
     }
   },
   extraReducers: (builder) => {
+    // fetchTeams handlers
     builder
       .addCase(fetchTeams.pending, (state) => {
         state.status = 'loading';
+        state.error = null;
       })
       .addCase(fetchTeams.fulfilled, (state, action) => {
         state.status = 'succeeded';
@@ -66,7 +67,22 @@ const manageTeamSlice = createSlice({
       })
       .addCase(fetchTeams.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.error.message;
+        state.error = action.payload || action.error.message;
+      });
+
+    // fetchEmployeesOfDepartment handlers
+    builder
+      .addCase(fetchEmployeesOfDepartment.pending, (state) => {
+        state.employeesStatus = 'loading';
+        state.employeesError = null;
+      })
+      .addCase(fetchEmployeesOfDepartment.fulfilled, (state, action) => {
+        state.employeesStatus = 'succeeded';
+        state.employees = action.payload.employees;
+      })
+      .addCase(fetchEmployeesOfDepartment.rejected, (state, action) => {
+        state.employeesStatus = 'failed';
+        state.employeesError = action.payload || action.error.message;
       });
   }
 });

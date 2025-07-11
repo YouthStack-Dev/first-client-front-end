@@ -3,21 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { Download, History, Trash2, UserX } from 'lucide-react';
 import TeamForm from '../components/TeamForm';
-import {
-  fetchTeams,
-  toggleModal,
-  setEditingTeamId,
-  setFormData,
-  toggleSelect,
-  clearSelectedTeams,
-  removeTeams
-} from '../redux/slices/manageTeamSlice';
+import {  toggleModal, setEditingTeamId, setFormData, toggleSelect, clearSelectedTeams, removeTeams } from '../redux/features/manageTeam/manageTeamSlice';
+import Loading from "../components/ui/Loading";
+import { log } from '../utils/logger';
+import { fetchTeams } from '../redux/features/manageTeam/manageTeamThunks';
 
 const ManageTeams = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Get data from redux
   const {
     teams,
     status,
@@ -27,7 +21,7 @@ const ManageTeams = () => {
     formData
   } = useSelector((state) => state.manageTeam);
 
-  // Fetch teams on mount if not already loaded
+  // Fetch teams on mount if needed
   useEffect(() => {
     if (status === 'idle') {
       dispatch(fetchTeams({ skip: 0, limit: 10 }));
@@ -35,18 +29,19 @@ const ManageTeams = () => {
   }, [status, dispatch]);
 
   const handleActiveClick = (teamId) => {
+    log("Team ID:", teamId);
     navigate(`/teams/${teamId}/employees`);
   };
 
   const handleEdit = (team) => {
-    dispatch(setEditingTeamId(team.id));
+    dispatch(setEditingTeamId(team.department_id));
     dispatch(setFormData({
-      teamName: team.name,
-      teamManager1: team.manager,
+      teamName: team.department_name,
+      teamManager1: team.manager || '',
       teamManager2: '',
       teamManager3: '',
       shiftCategory: 'Default',
-      description: '',
+      description: team.description || '',
       notification: '',
     }));
     dispatch(toggleModal());
@@ -57,12 +52,12 @@ const ManageTeams = () => {
   };
 
   const handleHistory = (team) => {
-    console.log(`Showing history for ${team.name}`);
-    alert(`History for ${team.name} (placeholder)`);
+    console.log(`Showing history for ${team.department_name}`);
+    alert(`History for ${team.department_name} (placeholder)`);
   };
 
   const handleModalSubmit = (submittedData) => {
-    // TODO: dispatch add/edit action to backend
+    // TODO: send data to backend (add/edit team)
     dispatch(toggleModal());
     dispatch(setEditingTeamId(null));
     dispatch(setFormData({
@@ -76,7 +71,7 @@ const ManageTeams = () => {
     }));
   };
 
-  if (status === 'loading') return <p>Loading teams...</p>;
+  if (status === 'loading') return <Loading />;
   if (status === 'failed') return <p>Error loading teams</p>;
 
   return (
@@ -146,22 +141,22 @@ const ManageTeams = () => {
           </thead>
           <tbody>
             {teams && teams.map((team) => (
-              <tr key={team.id} className="border-b hover:bg-gray-50">
+              <tr key={team.department_id} className="border-b hover:bg-gray-50">
                 <td className="px-3 py-2">
                   <input
                     type="checkbox"
-                    checked={selectedTeams.includes(team.id)}
-                    onChange={() => dispatch(toggleSelect(team.id))}
+                    checked={selectedTeams.includes(team.department_id)}
+                    onChange={() => dispatch(toggleSelect(team.department_id))}
                   />
                 </td>
-                <td className="px-3 py-2">{team.name}</td>
-                <td className="px-3 py-2">{team.manager}</td>
+                <td className="px-3 py-2">{team.department_name}</td>
+                <td className="px-3 py-2">{team.description || '-'}</td>
                 <td className="px-3 py-2">
                   <button
                     className="bg-green-100 text-green-800 px-2 py-0.5 rounded"
-                    onClick={() => handleActiveClick(team.id)}
+                    onClick={() => handleActiveClick(team.department_id)}
                   >
-                    {team.active}
+                    {team.employee_count || 0}
                   </button>
                 </td>
                 <td className="px-3 py-2">
@@ -180,7 +175,7 @@ const ManageTeams = () => {
                     </button>
                     <button
                       className="text-red-500 hover:underline"
-                      onClick={() => handleDelete(team.id)}
+                      onClick={() => handleDelete(team.department_id)}
                     >
                       Delete
                     </button>

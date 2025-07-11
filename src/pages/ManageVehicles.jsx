@@ -143,7 +143,7 @@ function ManageVehicles() {
   const [viewActive, setViewActive] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [editVehicle, setEditVehicle] = useState(null);
-  const { canRead, canWrite, notFound } = useModulePermission("vehicles");
+  const { canRead, canWrite, notFound } = useModulePermission("vehicle_management");
 
   if (notFound) return <PermissionDenied />;
 

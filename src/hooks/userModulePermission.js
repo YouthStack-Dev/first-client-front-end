@@ -2,31 +2,23 @@ import { useContext } from "react";
 import { ModulePermissionContext } from "../context/ModulePermissionContext";
 import { log } from "../utils/logger";
 
-// Updated hook to support nested permissions structure
 export const useModulePermission = (moduleName) => {
   const { modulePermissions, loading } = useContext(ModulePermissionContext);
   log("Module permissions in hook:", modulePermissions);
 
-  // Recursive function to find module by id
-  const findModule = (modules, target) => {
-    for (const mod of modules) {
-      if (mod.id === target) return mod;
-      if (mod.submodules) {
-        const found = findModule(mod.submodules, target);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
+  // Find the module permission object where module matches
+  const module = (modulePermissions || []).find(
+    (perm) => perm.module === moduleName
+  );
 
-  const module = findModule(modulePermissions || [], moduleName);
-  const notFound = !module;
+  const actions = module?.action || [];
 
   return {
-    canRead: module?.permissions?.canRead || false,
-    canWrite: module?.permissions?.canWrite || false,
-    canDelete: module?.permissions?.canDelete || false,
+    canRead: actions.includes("read"),
+    canWrite: actions.includes("create") || actions.includes("update"),
+    canDelete: actions.includes("delete"),
     loading,
-    notFound,
+    notFound: !module,
+    raw: module, // optional: expose the raw module permission if you need constraints etc.
   };
 };

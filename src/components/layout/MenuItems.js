@@ -42,7 +42,7 @@ export const menuItems = [
   { path: '/drivers', name: 'Drivers', icon: CarTaxiFront, permissionModule: 'driver_management' },
   { path: '/routing', name: 'Routing', icon: Route, permissionModule: 'routing_management' },
   { path: '/tracking', name: 'Tracking', icon: Route, permissionModule: 'tracking_management' },
-  { path: '/vendors', name: 'Vendors', icon: Building2, permissionModule: 'vendors' },
+  { path: '/vendors', name: 'Vendors', icon: Building2, permissionModule: 'vendor_management' },
   { path: '/business-unit', name: 'Business Unit', icon: Building2, permissionModule: 'business-unit' },
   { path: '/staff-administration', name: 'Staff Administration', icon: Building2, permissionModule: 'staff' },
   { path: '/security-dashboard', name: 'Security Dashboard', icon: Building2, permissionModule: 'security-dashboard' },

@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Suspense, lazy, useContext, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { jwtDecode } from 'jwt-decode';
-import Cookies from "js-cookie";
 import { setUser } from './redux/features/userSlice';
 
 import Layout from './components/layout/layout';
@@ -19,8 +18,7 @@ import ShiftCategoryManagement from "./pages/ShiftCategoryManagement";
 import VehicleContract from './pages/VehicleContract';
 import ManageCompanies from './pages/ManageCompanies';
 import TrackingScreen from './pages/TrackingScreen';
-import { API_CLIENT } from './Api/API_Client';
-import { log } from './utils/logger';
+
 
 // Lazy-loaded components
 const Login = lazy(() => import('./pages/Login'));
@@ -58,18 +56,19 @@ function App() {
 
 
   useEffect(() => {
-    const token = Cookies.get("auth_token");
+    const token = localStorage.getItem("access_token");
     if (token) {
       try {
         const decoded = jwtDecode(token);
         dispatch(setUser(decoded));
       } catch (err) {
         console.error("Invalid token");
-        Cookies.remove("auth_token");
+        localStorage.removeItem("access_token");
       }
     }
     setUserLoading(false);
   }, [dispatch]);
+  
 
   if (userLoading || permissionLoading) {
     return <Loading />;
