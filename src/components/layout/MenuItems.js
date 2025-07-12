@@ -1,7 +1,8 @@
 import { LayoutDashboard, User, Users2, UserCog, UserPlus, Car, CarTaxiFront, Calendar, ClipboardList, Route, Building2, MessageCircleCode } from 'lucide-react';
 
 export const menuItems = [
-  { path: '/dashboard', name: 'Dashboard', icon: LayoutDashboard, permissionModule: 'dashboard' },
+  { path: '/admin_dashboard', name: 'Dashboard', icon: LayoutDashboard, permissionModule: 'admin_dashboard' },
+  { path: '/client_dashboard', name: 'Dashboard', icon: LayoutDashboard, permissionModule: 'client_dashboard' },
   { name: 'User Management', icon: User, permissionModule: 'manage-users', subItems: [
     { path: '/company-admins', name: 'Company Admins', icon: UserCog, permissionModule: 'company-admins' },
     { path: '/subadmins', name: 'Subadmins', icon: UserPlus, permissionModule: 'subadmins' }
@@ -51,4 +52,5 @@ export const menuItems = [
   { path: '/vehicle-group', name: 'Vehicle Type', icon: ClipboardList, permissionModule: 'vehicle_type_management' },
   { path: '/manage-shift', name: 'Manage Shift', icon: Calendar, permissionModule: 'shift_management' },
   { path: '/shift-categories', name: 'Manage Shift Categories', icon: ClipboardList, permissionModule: 'shift_category' }
+  
 ];

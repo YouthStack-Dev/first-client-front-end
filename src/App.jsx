@@ -18,6 +18,8 @@ import ShiftCategoryManagement from "./pages/ShiftCategoryManagement";
 import VehicleContract from './pages/VehicleContract';
 import ManageCompanies from './pages/ManageCompanies';
 import TrackingScreen from './pages/TrackingScreen';
+import AdminDashboard from './components/dashboards/AdminDashboard';
+import ClientDashboard from './components/dashboards/ClientDashboard';
 
 
 // Lazy-loaded components
@@ -93,7 +95,8 @@ function App() {
               <Route path="/billings-dashboard" element={<h1>This will be my billing dashboard</h1>} />
               <Route path="/staff-administration" element={<h1>This will staff-administration</h1>} />
               <Route path="/vehicles" element={<ManageVehicles />} />
-              <Route path="/dashboard" element={<DashboardRouter />} />
+              <Route path="/client_dashboard" element={<ClientDashboard />} />
+              <Route path="/admin_dashboard" element={<AdminDashboard />} />
               <Route path="/calender" element={<CalendarPopupExample />} />
               <Route path="/manage-company" element={<ManageCompanies />} />
               {/* Admin & Super Admin */}

@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { FirstClientpermissions, staticPermissions } from '../staticData/ModulePermissions';
+import { createContext,  useEffect, useState } from 'react';
+import { FirstClientpermissions } from '../staticData/ModulePermissions';
 import { log } from '../utils/logger';
 
 export const ModulePermissionContext = createContext();

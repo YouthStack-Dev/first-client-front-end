@@ -3,18 +3,19 @@ import AdminDashboard from "./AdminDashboard";
 import VendorDashboard from "./VendorDashboard";
 import ClientDashboard from "./ClientDashboard";
 import SuperAdminDashboard from "./SuperAdminDashboard";
-import { useSelector } from "react-redux";
+import { ModulePermissionContext } from "../../context/ModulePermissionContext";
+import { useContext } from "react";
 
 const DashboardRouter = () => {
-  const user = useSelector((state) => state.user.user);
+  const { modulePermissions, loading } = useContext(ModulePermissionContext);
 
 
 
-  const role = user?.role;
+  // const role = user?.role;
   
-  console.log("User role:", role);
+
   
-  
+  const role="SUPER_ADMIN"
   switch (role) {
     case "SUPER_ADMIN":
       return <SuperAdminDashboard />;

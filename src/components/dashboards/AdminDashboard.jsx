@@ -1,13 +1,9 @@
-// src/components/dashboards/AdminDashboard.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { Search, X, AlertCircle } from 'lucide-react';
 import { ROLES } from '../../utils/auth';
 
-
 const AdminDashboard = () => {
-  const user = useSelector((state) => state.user?.user) || { role: ROLES.SUPER_ADMIN };
-
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [vehicleSearch, setVehicleSearch] = useState('');
@@ -18,15 +14,14 @@ const AdminDashboard = () => {
   const vehicleInputRef = useRef(null);
   const employeeInputRef = useRef(null);
   const tripInputRef = useRef(null);
-
   const stats = [
-    { title: 'Women Traveling Alone', value: '1', roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR] },
-    { title: 'Delayed Vehicles', value: '3', roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR] },
-    { title: 'Ongoing Planned Trips', value: '4', roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR] },
-    { title: 'Ongoing Adhoc Trips', value: '0', roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR] },
-    { title: 'In Premises Vehicles', value: '2', roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.VENDOR] },
-    { title: 'Scheduled Trips', value: '-', key: 'scheduled', roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
-    { title: ' Future Bookings', value: '-', key: 'future', roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN] },
+    { title: 'Women Traveling Alone', value: '1' },
+    { title: 'Delayed Vehicles', value: '3' },
+    { title: 'Ongoing Planned Trips', value: '4' },
+    { title: 'Ongoing Adhoc Trips', value: '0' },
+    { title: 'In Premises Vehicles', value: '2' },
+    { title: 'Scheduled Trips', value: '-', key: 'scheduled' },
+    { title: 'Future Bookings', value: '-', key: 'future' },
   ];
 
   const dummyVehicles = [
@@ -57,37 +52,37 @@ const AdminDashboard = () => {
     setFocusedInput(null); // Close suggestions when modal opens
   };
 
-    useEffect(() => {
-      const handleKeyDown = (e) => {
-        if (e.altKey && e.key.toLowerCase() === 'q') {
-          vehicleInputRef.current?.focus();
-          setFocusedInput('vehicle');
-        } else if (e.ctrlKey && e.key.toLowerCase() === 'e') {
-          employeeInputRef.current?.focus();
-          setFocusedInput('employee');
-        }
-      };
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.altKey && e.key.toLowerCase() === 'q') {
+        vehicleInputRef.current?.focus();
+        setFocusedInput('vehicle');
+      } else if (e.ctrlKey && e.key.toLowerCase() === 'e') {
+        employeeInputRef.current?.focus();
+        setFocusedInput('employee');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
-    const filteredVehicles = dummyVehicles.filter(
-      (v) =>
-        v.id.toLowerCase().includes(vehicleSearch.toLowerCase()) ||
-        v.licensePlate.toLowerCase().includes(vehicleSearch.toLowerCase())
-    );
+  const filteredVehicles = dummyVehicles.filter(
+    (v) =>
+      v.id.toLowerCase().includes(vehicleSearch.toLowerCase()) ||
+      v.licensePlate.toLowerCase().includes(vehicleSearch.toLowerCase())
+  );
 
-    const filteredEmployees = dummyEmployees.filter(
-      (e) =>
-        e.id.toLowerCase().includes(employeeSearch.toLowerCase()) ||
-        e.name.toLowerCase().includes(employeeSearch.toLowerCase()) ||
-        e.phone.includes(employeeSearch) ||
-        e.email.toLowerCase().includes(employeeSearch.toLowerCase())
-    );
+  const filteredEmployees = dummyEmployees.filter(
+    (e) =>
+      e.id.toLowerCase().includes(employeeSearch.toLowerCase()) ||
+      e.name.toLowerCase().includes(employeeSearch.toLowerCase()) ||
+      e.phone.includes(employeeSearch) ||
+      e.email.toLowerCase().includes(employeeSearch.toLowerCase())
+  );
 
-    const filteredTrips = dummyTrips.filter((t) =>
-      t.id.toLowerCase().includes(tripSearch.toLowerCase())
-    );
+  const filteredTrips = dummyTrips.filter((t) =>
+    t.id.toLowerCase().includes(tripSearch.toLowerCase())
+  );
 
   const handleSuggestionClick = (type, value) => {
     if (type === 'vehicle') {
@@ -99,11 +94,10 @@ const AdminDashboard = () => {
     }
     setFocusedInput(null); // Close dropdown
   };
-    return (
-      <div className=" bg-gray-100 p-6">
-      <div className=" mx-auto">
-        
 
+  return (
+    <div className="bg-gray-100 p-6">
+      <div className="mx-auto">
         {/* Search Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {/* Vehicle Search */}
@@ -259,22 +253,20 @@ const AdminDashboard = () => {
 
         {/* Stats Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
-          {stats.map((stat, index) =>
-            stat.roles.includes(user?.role) ? (
-              <div
-                key={index}
-                className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200"
+          {stats.map((stat, index) => (
+            <div
+              key={index}
+              className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200"
+            >
+              <h3 className="text-sm font-medium text-gray-500 mb-3">{stat.title}</h3>
+              <button
+                onClick={() => openModal(stat.title)}
+                className="text-2xl font-bold text-blue-600 hover:text-blue-800 focus:outline-none transition"
               >
-                <h3 className="text-sm font-medium text-gray-500 mb-3">{stat.title}</h3>
-                <button
-                  onClick={() => openModal(stat.title)}
-                  className="text-2xl font-bold text-blue-600 hover:text-blue-800 focus:outline-none transition"
-                >
-                  {stat.value}
-                </button>
-              </div>
-            ) : null
-          )}
+                {stat.value}
+              </button>
+            </div>
+          ))}
         </div>
 
         {/* Modal */}
@@ -301,8 +293,7 @@ const AdminDashboard = () => {
         )}
       </div>
     </div>
-    );
-  };
-  
-  export default AdminDashboard;
-  
+  );
+};
+
+export default AdminDashboard;

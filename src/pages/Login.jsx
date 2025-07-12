@@ -6,55 +6,58 @@ import { useDispatch, useSelector } from "react-redux";
 import { setUser } from "../redux/features/userSlice";
 import { ModulePermissionContext } from "../context/ModulePermissionContext";
 import { loginUser } from "../redux/features/authSlice";
-import { log ,error} from "../utils/logger";
+import { log, error } from "../utils/logger";
 
 const Login = () => {
   const [credentials, setCredentials] = useState({ username: "", password: "" });
+  const [validationMsg, setValidationMsg] = useState(""); // 🟢 new state
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { setModulePermissions } = useContext(ModulePermissionContext);
 
-  const { loading:isLoading,error:err, user } = useSelector((state) => state.auth);
-
-
-  // 🔐 Static Login Function (with mock username/password check)
+  const { loading: isLoading, error: err, user } = useSelector((state) => state.auth);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
+    // 🛑 Check if fields are empty
+    if (!credentials.username.trim() || !credentials.password.trim()) {
+      setValidationMsg("⚠️ Please fill in all fields.");
+      return;
+    } else {
+      setValidationMsg(""); // clear message if filled
+    }
+
     try {
       const res = await dispatch(
-        loginUser({ username: credentials?.username, password: credentials?.password })
+        loginUser({ username: credentials.username, password: credentials.password })
       ).unwrap();
+
       log(" this is the login request data ", res.data);
-  
-   const token = res?.access_token
+
+      const token = res?.access_token;
       if (!token) {
         throw new Error("No token found in response");
       }
-  
-      // Store permissions (optional)
+
       const permissions = res?.permissions || [];
       log(" this is the module in the login ", permissions);
       setModulePermissions(permissions);
-  
-      // Decode token to get user info
+
       const decoded = jwtDecode(token);
       log("This is the decoded code ", decoded);
-  
-      // Calculate expiration time if needed
-      const expirationTime = decoded?.exp 
+
+      const expirationTime = decoded?.exp
         ? new Date(decoded.exp * 1000)
-        : new Date(Date.now() + 60 * 60 * 1000); // fallback 1h
+        : new Date(Date.now() + 60 * 60 * 1000);
       log("This is expire time ", expirationTime);
-  
-      // ✅ Store token in localStorage
+
       localStorage.setItem("access_token", token);
-  
-  
       dispatch(setUser(decoded));
+
       log("Token from localStorage:", localStorage.getItem("access_token"));
-  
+
       navigate("/dashboard");
     } catch (err) {
       if (err.message === "Network Error") {
@@ -62,16 +65,26 @@ const Login = () => {
         return;
       }
       error("❌ Login failed:", err);
-      // Optionally set some error state here
     }
   };
-  
 
   return (
     <div className="min-h-screen bg-gradient-to-tr from-blue-50 to-blue-200 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white/90 backdrop-blur-lg p-8 rounded-2xl shadow-lg">
-        <h2 className="text-3xl font-bold text-center text-blue-700 mb-6">MLT ETS Login</h2>
+      <img
+    src="/mltlogo.webp"
+    alt="Logo"
+    className="mx-auto mb-4 w-44 h-24 object-contain rounded-ls "
+  />
+        <h2 className="text-ls font-bold text-center text-blue-700 mb-6">MLT CORPORATE SOLUTIONS PVT.LTD</h2>
+        {/* 🔔 Show validation message if fields are empty */}
+        {validationMsg && (
+          <div className="mb-4 p-3 bg-yellow-100 text-yellow-800 rounded-lg text-sm text-center">
+            {validationMsg}
+          </div>
+        )}
 
+        {/* 🔴 Show error from backend */}
         {err && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm text-center">
             {err}
@@ -86,9 +99,7 @@ const Login = () => {
               <input
                 type="text"
                 value={credentials.username}
-                onChange={(e) =>
-                  setCredentials({ ...credentials, username: e.target.value })
-                }
+                onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 placeholder="Enter username"
               />
@@ -102,9 +113,7 @@ const Login = () => {
               <input
                 type="password"
                 value={credentials.password}
-                onChange={(e) =>
-                  setCredentials({ ...credentials, password: e.target.value })
-                }
+                onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 placeholder="Enter password"
               />

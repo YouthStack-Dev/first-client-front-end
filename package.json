@@ -12,8 +12,10 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.6.1",
+    "@vis.gl/react-google-maps": "^1.5.4",
     "axios": "^1.7.9",
     "date-fns": "^4.1.0",
+    "firebase": "^11.10.0",
     "js-cookie": "^3.0.5",
     "jwt-decode": "^4.0.0",
     "leaflet": "^1.9.4",
