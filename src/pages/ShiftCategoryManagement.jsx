@@ -1,171 +1,242 @@
-import React, { useState } from "react";
+// import React, { useState } from "react";
+// import axios from 'axios';
+// import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
+
+// const ShiftCategoryManagement = () => {
+//   const [bookingCutOffEmployee, setBookingCutOffEmployee] = useState(0);
+//   const [cancellationCutOffEmployee, setCancellationCutOffEmployee] = useState(0);
+
+//   const [formValues, setFormValues] = useState({
+//     booking: "0",
+//     cancellation: "0",
+//   });
+
+//   const [errors, setErrors] = useState({});
+
+//   const handleChange = (e) => {
+//     const { name, value } = e.target;
+//     setFormValues((prev) => ({ ...prev, [name]: value }));
+
+//     // Live validation
+//     if (name === "booking" && parseFloat(value) > parseFloat(formValues.cancellation)) {
+//       setErrors((prev) => ({
+//         ...prev,
+//         booking: "Booking cutoff must be <= cancellation cutoff",
+//       }));
+//     } else if (name === "cancellation" && parseFloat(value) < parseFloat(formValues.booking)) {
+//       setErrors((prev) => ({
+//         ...prev,
+//         cancellation: "Cancellation cutoff must be >= booking cutoff",
+//       }));
+//     } else {
+//       setErrors((prev) => ({ ...prev, [name]: "" }));
+//     }
+//   };
+
+//   const handleSave = () => {
+//     const b = parseFloat(formValues.booking);
+//     const c = parseFloat(formValues.cancellation);
+
+//     const newErrors = {};
+//     if (isNaN(b) || b < 0) newErrors.booking = "Enter a valid non-negative number";
+//     if (isNaN(c) || c < 0) newErrors.cancellation = "Enter a valid non-negative number";
+//     if (b > c) {
+//       newErrors.booking = "Booking cutoff must be <= cancellation cutoff";
+//       newErrors.cancellation = "Cancellation cutoff must be >= booking cutoff";
+//     }
+
+//     setErrors(newErrors);
+//     if (Object.keys(newErrors).length > 0) return;
+
+//     setBookingCutOffEmployee(b);
+//     setCancellationCutOffEmployee(c);
+//     alert("Cutoffs saved!");
+//   };
+
+//   return (
+//     <div className="space-y-6 p-4 w-full">
+//       <HeaderWithActionNoRoute title="Cutoff Management" extraButtons={[]} />
+
+//       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+//         <div className="bg-white rounded-lg shadow p-4 border">
+//           <h3 className="text-blue-600 font-semibold mb-2">Booking Cutoff</h3>
+//           <div className="space-y-2">
+//             <input
+//               type="number"
+//               name="booking"
+//               min="0"
+//               step="0.5"
+//               value={formValues.booking}
+//               onChange={handleChange}
+//               className="w-full border border-gray-300 rounded px-3 py-2"
+//               placeholder="Enter booking cutoff in hours"
+//             />
+//             {errors.booking && (
+//               <p className="text-sm text-red-600">{errors.booking}</p>
+//             )}
+//             <p className="text-sm text-gray-500">
+//               Current: <strong>{bookingCutOffEmployee}</strong> hours
+//             </p>
+//           </div>
+//         </div>
+
+//         <div className="bg-white rounded-lg shadow p-4 border">
+//           <h3 className="text-blue-600 font-semibold mb-2">Cancellation Cutoff</h3>
+//           <div className="space-y-2">
+//             <input
+//               type="number"
+//               name="cancellation"
+//               min="0"
+//               step="0.5"
+//               value={formValues.cancellation}
+//               onChange={handleChange}
+//               className="w-full border border-gray-300 rounded px-3 py-2"
+//               placeholder="Enter cancellation cutoff in hours"
+//             />
+//             {errors.cancellation && (
+//               <p className="text-sm text-red-600">{errors.cancellation}</p>
+//             )}
+//             <p className="text-sm text-gray-500">
+//               Current: <strong>{cancellationCutOffEmployee}</strong> hours
+//             </p>
+//           </div>
+//         </div>
+//       </div>
+
+//       <div className="flex justify-end mt-4">
+//         <button
+//           onClick={handleSave}
+//           className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+//         >
+//           Save Cutoffs
+//         </button>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default ShiftCategoryManagement;
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
-// Modal-related imports can be added when needed
+import {
+  fetchCutoffData,
+  saveCutoffData,
+} from "../redux/features/Category/shiftCategoryThunks";
+import {
+  updateFormField,
+  resetForm,
+} from "../redux/features/Category/shiftCategorySlice";
 
 const ShiftCategoryManagement = () => {
-  const [category, setCategory] = useState("Default");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newCategory, setNewCategory] = useState("");
+  const dispatch = useDispatch();
 
-  const shiftTypes = ["Morning", "Evening"];
-  const shifts = ["A", "B", "C"];
-  const cutoffTypes = ["ScheduleEdit", "ScheduleView"];
+  const {
+    formData,
+    editingId,
+    status,
+    error,
+    data,
+  } = useSelector((state) => state.shiftCategory);
 
-  const handleAddCategory = (e) => {
-    e.preventDefault();
-    if (newCategory.trim()) {
-      console.log("New Category Added:", newCategory);
-      setCategory(newCategory);
-      setNewCategory("");
-      setIsModalOpen(false);
+  const { booking, cancellation } = formData;
+
+  useEffect(() => {
+    dispatch(fetchCutoffData());
+  }, [dispatch]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    dispatch(updateFormField({ name, value }));
+  };
+
+  const handleSave = () => {
+    const bookingVal = parseFloat(booking);
+    const cancellationVal = parseFloat(cancellation);
+
+    if (isNaN(bookingVal) || isNaN(cancellationVal)) {
+      alert("Please enter valid numeric values.");
+      return;
     }
+
+    if (bookingVal > cancellationVal) {
+      alert("Booking cutoff must be less than or equal to cancellation cutoff.");
+      return;
+    }
+
+    dispatch(
+      saveCutoffData({
+        id: editingId,
+        booking_cutoff: bookingVal,
+        cancellation_cutoff: cancellationVal,
+      })
+    );
   };
 
   return (
-    <div className="space-y-6 p-4">
-      {/* ✅ Page Header */}
-      <HeaderWithActionNoRoute
-        title=""
-        extraButtons={[
-          {
-            label: "History",
-            variant: "gray",
-            onClick: () => alert("Show history modal or page"),
-          },
-        ]}
-      />
+    <div className="space-y-6 p-4 w-full">
+      <HeaderWithActionNoRoute title="Cutoff Management" extraButtons={[]} />
 
-      {/* ✅ Side-by-Side Layout */}
-      <div className="flex flex-col lg:flex-row gap-4">
-        {/* ✅ Left Column: Shift Category */}
-        <div className="bg-white rounded-lg shadow p-4 flex-1">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Shift Category</h2>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-            >
-              + Add Category
-            </button>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              Select Category
-            </label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 w-full"
-            >
-              <option value="">Select</option>
-              <option value="Default">Default</option>
-              {/* Add dynamic categories if needed */}
-            </select>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="bg-white rounded-lg shadow p-4 border">
+          <h3 className="text-blue-600 font-semibold mb-2">Booking Cutoff</h3>
+          <div className="space-y-2">
+            <input
+              type="number"
+              name="booking"
+              min="0"
+              step="0.5"
+              value={booking}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded px-3 py-2"
+              placeholder="Enter booking cutoff in hours"
+            />
+            <p className="text-sm text-gray-500">
+              Saved: <strong>{formData.booking}</strong> hours
+            </p>
           </div>
         </div>
 
-        {/* ✅ Right Column: Set Cut-Off Filters */}
-        <div className="bg-white rounded-lg shadow p-4 flex-[2]">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Set Cut-Off Filters</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm block mb-1">Shift Type</label>
-              <select className="w-full px-3 py-2 border rounded-lg">
-                <option>Select</option>
-                {shiftTypes.map((type) => (
-                  <option key={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-sm block mb-1">Shift</label>
-              <select className="w-full px-3 py-2 border rounded-lg">
-                <option>Select</option>
-                {shifts.map((shift) => (
-                  <option key={shift}>{shift}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-sm block mb-1">Cutoff Type</label>
-              <select className="w-full px-3 py-2 border rounded-lg">
-                {cutoffTypes.map((type) => (
-                  <option key={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <button
-              className="text-sm text-blue-600 underline"
-              onClick={() => alert("Show cutoff history")}
-            >
-              View Cut-Off History
-            </button>
+        <div className="bg-white rounded-lg shadow p-4 border">
+          <h3 className="text-blue-600 font-semibold mb-2">Cancellation Cutoff</h3>
+          <div className="space-y-2">
+            <input
+              type="number"
+              name="cancellation"
+              min="0"
+              step="0.5"
+              value={cancellation}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded px-3 py-2"
+              placeholder="Enter cancellation cutoff in hours"
+            />
+            <p className="text-sm text-gray-500">
+              Saved: <strong>{formData.cancellation}</strong> hours
+            </p>
           </div>
         </div>
       </div>
 
-      {/* ✅ Info Text */}
-      <div className="text-sm text-gray-600">
-        Schedule Edit cutoff defines the number of hours before you can edit the schedule.
-      </div>
-
-      {/* ✅ Action Buttons */}
-      <div className="flex flex-wrap gap-4">
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-          Bulk Download
-        </button>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-          Bulk Upload
-        </button>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-          Click here for field Description
+      <div className="flex justify-end mt-4">
+        <button
+          onClick={handleSave}
+          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+          disabled={status === 'saving'}
+        >
+          {status === 'saving' ? 'Saving...' : 'Save Cutoffs'}
         </button>
       </div>
 
-      {/* ✅ Table */}
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <h3 className="text-blue-600 font-semibold px-4 py-3 border-b">
-          {category || "Default"}
-        </h3>
-        <table className="min-w-full text-sm text-left">
-          <thead className="bg-gray-100 text-gray-700 uppercase text-xs">
-            <tr>
-              <th className="px-4 py-3">Day</th>
-              <th className="px-4 py-3">Shift Type</th>
-              <th className="px-4 py-3">Shift Time</th>
-              <th className="px-4 py-3">Available to Employee</th>
-              <th className="px-4 py-3">Cut Off for Employee (hrs)</th>
-              <th className="px-4 py-3">Available to SPOC</th>
-              <th className="px-4 py-3">Cut Off for SPOC (hrs)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border-t">
-              <td className="px-4 py-3">Monday</td>
-              <td className="px-4 py-3">Morning</td>
-              <td className="px-4 py-3">9 AM - 6 PM</td>
-              <td className="px-4 py-3">Yes</td>
-              <td className="px-4 py-3">4</td>
-              <td className="px-4 py-3">Yes</td>
-              <td className="px-4 py-3">3</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      {error && <p className="text-red-600 text-sm">Error: {error}</p>}
 
-      {/* ✅ Save/Cancel */}
-      <div className="flex justify-center gap-4">
-        <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-          Save
-        </button>
-        <button className="bg-gray-400 text-white px-6 py-2 rounded-lg hover:bg-gray-500">
-          Cancel
-        </button>
-      </div>
+      {/* {data && (
+        <div className="mt-6 p-4 bg-gray-100 border border-gray-300 rounded">
+          <h4 className="font-semibold mb-2 text-gray-700">🔍 Raw Cutoff API Data</h4>
+          <pre className="text-sm text-gray-800">
+            {JSON.stringify(data, null, 2)}
+          </pre>
+        </div>
+      )} */}
     </div>
   );
 };
