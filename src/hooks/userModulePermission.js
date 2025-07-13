@@ -4,9 +4,9 @@ import { log } from "../utils/logger";
 
 export const useModulePermission = (moduleName) => {
   const { modulePermissions, loading } = useContext(ModulePermissionContext);
-  log("Module permissions in hook:", modulePermissions);
+  // log("Module permissions in hook:", modulePermissions);
 
-  // Find the module permission object where module matches
+ 
   const module = (modulePermissions || []).find(
     (perm) => perm.module === moduleName
   );
@@ -19,6 +19,6 @@ export const useModulePermission = (moduleName) => {
     canDelete: actions.includes("delete"),
     loading,
     notFound: !module,
-    raw: module, // optional: expose the raw module permission if you need constraints etc.
+    raw: module, 
   };
 };
