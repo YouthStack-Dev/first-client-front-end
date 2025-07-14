@@ -7,6 +7,7 @@ import { setUser } from './redux/features/userSlice';
 import Layout from './components/layout/layout';
 import Loading from './components/ui/Loading';
 import { ModulePermissionContext } from './context/ModulePermissionContext';
+import ProtectedRouteLogin from './middleware/ProtectedRouteLogin';
 
 import ManageClients from './pages/ManageClients';
 import ManageRoles from './pages/ManageRoles';
@@ -81,7 +82,12 @@ function App() {
       <Suspense fallback={<Loading />}>
         <Routes>
           {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
+          {/* <Route path="/login" element={<Login />} /> */}
+
+          <Route element={<ProtectedRouteLogin />}>
+            <Route path="/login" element={<Login />} />
+          </Route>
+          
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/" element={<Home />} />
 
