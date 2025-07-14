@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Search, Calendar, History, UserX, ArrowLeft, Download, Trash2 } from 'lucide-react';
+import { Search,  ArrowLeft, Trash2 } from 'lucide-react';
 import { mockTeams, mockBookings } from '../../staticData/EmployeMockData'; // Make sure mockBookings has user_id or employee_code for filtering
 import BookingModal from '../modals/BookingModalProps';
 import EmployeeHistoryModal from '../modals/EmployeeHistoryModalProps';
 import WeekOffModal from '../modals/WeekOffModal';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchEmployeesOfDepartment } from '../../redux/features/manageTeam/manageTeamThunks';
 import { log } from '../../utils/logger';
 
 const EmployeeList = () => {
@@ -35,18 +34,13 @@ const EmployeeList = () => {
   useEffect(() => {
     if (teamId) {
       log("📡 Dispatching fetchEmployeesOfDepartment with departmentId:", teamId);
-      dispatch(fetchEmployeesOfDepartment({ departmentId: teamId }));
+      // dispatch(fetchEmployeesOfDepartment({ departmentId: teamId }));
     }
   }, [dispatch, teamId]);
 
   // Filter employees by search
   const filteredEmployees = (employees || []).filter(emp =>
-    // Ensure 'status' field exists and is 'active'
-    // If your backend returns other statuses, adjust this.
-    // Assuming 'status' is a direct property or you infer it.
-    // Based on your sample, there's no explicit 'status' property, so I'm commenting it out for now.
-    // If 'status' is always 'active' for these employees, or inferred, then you can keep it.
-    // emp.status === 'active' &&
+
     (emp.username.toLowerCase().includes(searchQuery.toLowerCase()) || // Use username
      (emp.position && emp.position.toLowerCase().includes(searchQuery.toLowerCase())) || // Position can be null
      emp.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
