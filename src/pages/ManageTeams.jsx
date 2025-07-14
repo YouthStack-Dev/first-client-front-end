@@ -105,13 +105,13 @@ const ManageTeams = () => {
             <UserX size={16} /> Create Employee
           </button>
 
-          <button className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded flex items-center gap-1 text-sm">
+          {/* <button className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded flex items-center gap-1 text-sm">
             <Download size={16} /> Download Report
-          </button>
-
+          </button> */}
+{/* 
           <button className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1.5 rounded flex items-center gap-1 text-sm">
             <History size={16} /> View History
-          </button>
+          </button> */}
 
           {selectedTeams.length > 0 && (
             <button

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import FormSteps from './FormSteps';
 import PersonalInfoForm from './PersonalInfoForm';
-import AddressForm from './AddressForm';
 import NavigationButtons from './NavigationButtons';
 import HeaderWithAction from './HeaderWithAction';
+import EmployeeAddressGoogleMapView from './Map';
 
 const initialFormData = {
   employeeName: '',
-  employeeId: '',
+  employee_code: '',
   emailId: '',
   gender: '',
   mobileNumber: '',
@@ -20,7 +20,6 @@ const initialFormData = {
   subscribeSms: false,
   mobileApp: false,
   address: '',
-  geoCoordinates: '',
   landmark: '',
   nodalPoint: '',
   showAll: false,
@@ -53,7 +52,7 @@ const EmployeeForm = () => {
   const validatePersonalInfo = () => {
     const newErrors = {};
     if (!formData.employeeName.trim()) newErrors.employeeName = 'Employee name is required';
-    if (!formData.employeeId.trim()) newErrors.employeeId = 'Employee ID is required';
+    if (!formData.employee_code.trim()) newErrors.employee_code = 'Employee ID is required';
     if (!formData.emailId.trim()) {
       newErrors.emailId = 'Email ID is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.emailId)) {
@@ -112,7 +111,7 @@ const EmployeeForm = () => {
   return (
     <>
       <HeaderWithAction title="NEW EMPLOYEE" showBackButton={true} />
-      <div className='p-2 m-3 bg-white rounded-xl max-h-[700px] overflow-auto'>
+      <div className='p-2 m-3 bg-white rounded-xl  '>
         <FormSteps currentStep={currentStep} completedSteps={completedSteps} />
         <div className="mt-6 m-3">
           {currentStep === 'personalInfo' && (
@@ -124,16 +123,16 @@ const EmployeeForm = () => {
             />
           )}
 
-          {currentStep === 'address' && (
-            <AddressForm
-              formData={formData}
-              onChange={handleInputChange}
-              onCheckboxChange={handleCheckboxChange}
-              errors={errors}
-              isSubmitting={isSubmitting}
-              onSubmit={handleSubmit}
-            />
-          )}
+{currentStep === 'address' && (
+  <>
+    <EmployeeAddressGoogleMapView formData={formData} />
+    
+    <div className="bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-sm rounded p-3 mt-3">
+      📍 <strong>Note:</strong> The <code>CP</code> button in the map shows the location where the company is located.
+    </div>
+  </>
+)}
+
         </div>
 
         {currentStep !== 'address' && (

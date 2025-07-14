@@ -20,6 +20,7 @@ import ManageCompanies from './pages/ManageCompanies';
 import TrackingScreen from './pages/TrackingScreen';
 import AdminDashboard from './components/dashboards/AdminDashboard';
 import ClientDashboard from './components/dashboards/ClientDashboard';
+import GoogleMapView from './components/Map';
 
 
 // Lazy-loaded components
@@ -84,7 +85,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/" element={<Home />} />
-
+          <Route path="/map" element={<GoogleMapView />} />
           {/* Protected Routes */}
           <Route element={<Layout />}>
             <Route element={<ProtectedRouteAuth />}>
