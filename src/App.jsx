@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Suspense, lazy, useContext, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { jwtDecode } from 'jwt-decode';
-import { setUser } from './redux/features/userSlice';
+
 
 import Layout from './components/layout/layout';
 import Loading from './components/ui/Loading';
@@ -62,7 +62,7 @@ function App() {
     if (token) {
       try {
         const decoded = jwtDecode(token);
-        dispatch(setUser(decoded));
+        // dispatch(setUser(decoded));
       } catch (err) {
         console.error("Invalid token");
         localStorage.removeItem("access_token");

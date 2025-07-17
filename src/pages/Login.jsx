@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Lock, User } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import { useDispatch, useSelector } from "react-redux";
-import { setUser } from "../redux/features/userSlice";
+
 import { ModulePermissionContext } from "../context/ModulePermissionContext";
-import { loginUser } from "../redux/features/authSlice";
 import { log, error } from "../utils/logger";
+import { loginUser } from "../redux/features/auth/authTrunk";
+import { setUser } from "../redux/features/auth/authSlice";
 
 const Login = () => {
   const [credentials, setCredentials] = useState({ username: "", password: "" });
@@ -34,7 +35,7 @@ const Login = () => {
         loginUser({ username: credentials.username, password: credentials.password })
       ).unwrap();
 
-      log(" this is the login request data ", res.data);
+      log(" this is the login request data ", res);
 
       const token = res?.access_token;
       if (!token) {
@@ -46,17 +47,13 @@ const Login = () => {
       setModulePermissions(permissions);
 
       const decoded = jwtDecode(token);
-      log("This is the decoded code ", decoded);
+      // log("This is the decoded code ", decoded);
 
-      const expirationTime = decoded?.exp
-        ? new Date(decoded.exp * 1000)
-        : new Date(Date.now() + 60 * 60 * 1000);
-      log("This is expire time ", expirationTime);
 
       localStorage.setItem("access_token", token);
       dispatch(setUser(decoded));
 
-      log("Token from localStorage:", localStorage.getItem("access_token"));
+      // log("Token from localStorage:", localStorage.getItem("access_token"));
 
       navigate("/dashboard");
     } catch (err) {
@@ -129,14 +126,7 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="mt-6 text-sm text-gray-700 border-t pt-4">
-          <p className="text-center font-medium">Demo Accounts</p>
-          <ul className="mt-2 space-y-1 text-xs">
-            <li>Super Admin: <b>superadmin</b> / 123456</li>
-            <li>Company Admin 1: <b>admin1</b> / 123456</li>
-            <li>Company Admin 2: <b>admin2</b> / 123456</li>
-          </ul>
-        </div>
+
       </div>
     </div>
   );
