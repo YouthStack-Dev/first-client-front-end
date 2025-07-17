@@ -1,15 +1,45 @@
-name: BUID AND PUSH TO DOCKER HUB
+name: deployment
 
 on:
- push:
-  branches:
-    - chethanr
+  pull_request:
+    types: [closed]
+    branches:
+      - main
 
 jobs:
-  build-and-push-to-docker:
-    runs-on: unbuntu-latest
+  build-and-deploy:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
 
     steps:
-      - name: echo the  state ment
-        run: echo "check on "
-        
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies and build
+        run: |
+          npm install
+          npm run build
+
+      - name: Copy build to VPS
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.VPS_HOST }} 
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASS }}
+          port: ${{ secrets.VPS_PORT }}   
+          source: "dist/*"
+          target: "/var/www/euronext-client-front-end/"
+
+      - name: Reload nginx on VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASS }}
+          port: ${{ secrets.VPS_PORT }}   
+          script: sudo systemctl reload nginx
