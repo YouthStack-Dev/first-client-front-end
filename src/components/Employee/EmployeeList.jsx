@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Search, Calendar, History, UserX, ArrowLeft, Download, Trash2 } from 'lucide-react';
-import { mockTeams, mockBookings } from '../../staticData/EmployeMockData';
+import { mockTeams, mockBookings } from '../../staticData/EmployeMockData'; // Make sure mockBookings has user_id or employee_code for filtering
 import BookingModal from '../modals/BookingModalProps';
 import EmployeeHistoryModal from '../modals/EmployeeHistoryModalProps';
 import WeekOffModal from '../modals/WeekOffModal';
@@ -28,6 +28,7 @@ const EmployeeList = () => {
   log(`📦 Employees from Redux: `, employees);
 
   // Get team info from static mock
+  // Ensure mockTeams has an 'id' that matches `teamId` from route, and 'manager'
   const team = mockTeams.find(t => t.id === parseInt(teamId || '0'));
 
   // Load employees on mount
@@ -40,24 +41,30 @@ const EmployeeList = () => {
 
   // Filter employees by search
   const filteredEmployees = (employees || []).filter(emp =>
-    emp.status === 'active' &&
-    (emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-     emp.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    // Ensure 'status' field exists and is 'active'
+    // If your backend returns other statuses, adjust this.
+    // Assuming 'status' is a direct property or you infer it.
+    // Based on your sample, there's no explicit 'status' property, so I'm commenting it out for now.
+    // If 'status' is always 'active' for these employees, or inferred, then you can keep it.
+    // emp.status === 'active' &&
+    (emp.username.toLowerCase().includes(searchQuery.toLowerCase()) || // Use username
+     (emp.position && emp.position.toLowerCase().includes(searchQuery.toLowerCase())) || // Position can be null
      emp.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-     emp.id.toString().includes(searchQuery))
+     emp.employee_code.toLowerCase().includes(searchQuery.toLowerCase()) || // Use employee_code for ID search
+     emp.user_id.toString().includes(searchQuery)) // user_id for ID search
   );
 
   const handleSelectAll = () => {
     if (selectedEmployees.length === filteredEmployees.length) {
       setSelectedEmployees([]);
     } else {
-      setSelectedEmployees(filteredEmployees.map(emp => emp.id));
+      setSelectedEmployees(filteredEmployees.map(emp => emp.user_id)); // Use user_id
     }
   };
 
-  const handleSelectEmployee = (employeeId) => {
+  const handleSelectEmployee = (employeeUserId) => { // Renamed parameter for clarity
     setSelectedEmployees(prev =>
-      prev.includes(employeeId) ? prev.filter(id => id !== employeeId) : [...prev, employeeId]
+      prev.includes(employeeUserId) ? prev.filter(id => id !== employeeUserId) : [...prev, employeeUserId]
     );
   };
 
@@ -68,6 +75,9 @@ const EmployeeList = () => {
 
   const handleViewHistory = (employee) => {
     setSelectedEmployee(employee);
+    // Ensure mockBookings can be filtered by user_id or employee_code if employee.id is not used there.
+    // For now, I'm assuming mockBookings are filtered by employee.id. You might need to adjust mockBookings
+    // or the filtering logic here if mockBookings use employee.user_id or employee.employee_code as the ID.
     setShowHistoryModal(true);
   };
 
@@ -91,6 +101,8 @@ const EmployeeList = () => {
       log('⬇ Downloading report for employees:', selectedEmployees);
     } else if (action === 'delete') {
       log('🗑 Deleting employees:', selectedEmployees);
+      // Here, you would typically dispatch an action to delete employees from your Redux store/backend
+      // For now, just clear local selection
       setSelectedEmployees([]);
     }
   };
@@ -111,23 +123,26 @@ const EmployeeList = () => {
             <h1 className="text-2xl font-bold text-gray-900">
               {team?.name} - Active Employees
             </h1>
-            <p className="text-gray-600">Manager: {team?.manager}</p>
+            <p className="text-gray-600">Manager: {team?.manager || 'N/A'}</p>
           </div>
         </div>
 
         {/* Status & error logging */}
         {status === 'loading' && <p className="text-blue-500">Loading employees...</p>}
         {error && <p className="text-red-500">Error: {error}</p>}
+        {status === 'succeeded' && filteredEmployees.length === 0 && !searchQuery && (
+          <p className="text-gray-500 text-center mt-8">No active employees found in this department.</p>
+        )}
 
         {/* Toolbar */}
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4 bg-white p-4 rounded-lg shadow-sm">
           <div className="flex items-center gap-3 flex-wrap">
-            <button
+            {/* <button
               onClick={() => handleBulkActions('download')}
               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-2 text-sm"
             >
               <Download size={16} /> Download Report
-            </button>
+            </button> */}
             {selectedEmployees.length > 0 && (
               <button
                 onClick={() => handleBulkActions('delete')}
@@ -174,39 +189,51 @@ const EmployeeList = () => {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {filteredEmployees.map((employee) => (
-                  <tr key={employee.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedEmployees.includes(employee.id)}
-                        onChange={() => handleSelectEmployee(employee.id)}
-                        className="h-4 w-4 text-blue-600"
-                      />
-                    </td>
-                    <td className="px-4 py-3">#{employee.id}</td>
-                    <td className="px-4 py-3">{employee.name}</td>
-                    <td className="px-4 py-3">{employee.position}</td>
-                    <td className="px-4 py-3">{employee.email}</td>
-                    <td className="px-4 py-3">{employee.phone}</td>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Active</span>
-                    </td>
-                    <td className="px-4 py-3 flex gap-1">
-                      <button onClick={() => handleBookRide(employee)} className="bg-blue-500 text-white px-2 py-1 rounded text-xs">Book</button>
-                      <button onClick={() => handleViewHistory(employee)} className="bg-gray-200 px-2 py-1 rounded text-xs">History</button>
-                      <button onClick={() => handleWeekOff(employee)} className="bg-orange-200 px-2 py-1 rounded text-xs">Week Off</button>
+                {filteredEmployees.length > 0 ? (
+                  filteredEmployees.map((employee) => (
+                    <tr key={employee.user_id} className="hover:bg-gray-50"> {/* Use user_id as key */}
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedEmployees.includes(employee.user_id)}
+                          onChange={() => handleSelectEmployee(employee.user_id)}
+                          className="h-4 w-4 text-blue-600"
+                        />
+                      </td>
+                      <td className="px-4 py-3">#{employee.employee_code}</td> {/* Use employee_code */}
+                      <td className="px-4 py-3">{employee.username}</td> {/* Use username */}
+                      <td className="px-4 py-3">{employee.position || 'N/A'}</td> {/* Use position, add fallback */}
+                      <td className="px-4 py-3">{employee.email}</td>
+                      <td className="px-4 py-3">{employee.mobile_number || 'N/A'}</td> {/* Use mobile_number, add fallback */}
+                      {/* Assuming 'status' isn't explicitly in your sample, but if it is always 'active' or derived: */}
+                      <td className="px-4 py-3">
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Active</span>
+                      </td>
+                      <td className="px-4 py-3 flex gap-1">
+                        <button onClick={() => handleBookRide(employee)} className="bg-blue-500 text-white px-2 py-1 rounded text-xs">Book</button>
+                        <button onClick={() => handleViewHistory(employee)} className="bg-gray-200 px-2 py-1 rounded text-xs">History</button>
+                        <button onClick={() => handleWeekOff(employee)} className="bg-orange-200 px-2 py-1 rounded text-xs">Week Off</button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="8" className="px-4 py-8 text-center text-gray-500">
+                      {status === 'loading' ? 'Loading employees...' : 'No employees found matching your criteria.'}
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* No data */}
-        {filteredEmployees.length === 0 && (
-          <div className="py-12 text-center text-gray-500">No employees found.</div>
+        {/* No data (moved inside table for better UX, but kept standalone for clarity if table is not always rendered) */}
+        {filteredEmployees.length === 0 && !status.includes('loading') && searchQuery && (
+          <div className="py-12 text-center text-gray-500">No employees found matching "{searchQuery}".</div>
+        )}
+         {filteredEmployees.length === 0 && !status.includes('loading') && !searchQuery && (
+          <div className="py-12 text-center text-gray-500">No active employees to display in this department.</div>
         )}
 
         {/* Modals */}

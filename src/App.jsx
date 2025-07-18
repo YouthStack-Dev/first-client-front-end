@@ -7,6 +7,7 @@ import { jwtDecode } from 'jwt-decode';
 import Layout from './components/layout/layout';
 import Loading from './components/ui/Loading';
 import { ModulePermissionContext } from './context/ModulePermissionContext';
+// import ProtectedRouteLogin from './middleware/ProtectedRouteLogin';
 
 import ManageClients from './pages/ManageClients';
 import ManageRoles from './pages/ManageRoles';
@@ -20,8 +21,8 @@ import ManageCompanies from './pages/ManageCompanies';
 import TrackingScreen from './pages/TrackingScreen';
 import AdminDashboard from './components/dashboards/AdminDashboard';
 import ClientDashboard from './components/dashboards/ClientDashboard';
+import GoogleMapView from './components/Map';
 import { setUser } from './redux/features/auth/authSlice';
-
 
 // Lazy-loaded components
 const Login = lazy(() => import('./pages/Login'));
@@ -85,7 +86,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/" element={<Home />} />
-
+          <Route path="/map" element={<GoogleMapView />} />
           {/* Protected Routes */}
           <Route element={<Layout />}>
             <Route element={<ProtectedRouteAuth />}>

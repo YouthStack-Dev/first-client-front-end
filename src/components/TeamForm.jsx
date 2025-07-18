@@ -1,29 +1,43 @@
 import React, { useState } from 'react';
 import PopupModal from './PopupModal';
+import { log } from '../utils/logger';
 
 const TeamForm = ({ isOpen, onClose, onSubmit }) => {
-  const [teamName, setTeamName] = useState('');
+  // use camelCase for local state
+  const [departmentName, setDepartmentName] = useState('');
   const [description, setDescription] = useState('');
+
+  const resetForm = () => {
+    setDepartmentName('');
+    setDescription('');
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const formData = {
-      teamName,
+      department_name: departmentName,  // payload uses snake_case
       description,
     };
+    log("This is the team creation data", formData);
     onSubmit(formData);
+    resetForm();     // ✅ clear fields
+    onClose();
+  };
+
+  const handleCancel = () => {
+    resetForm();     // clear fields on cancel too
     onClose();
   };
 
   return (
-    <PopupModal title="Create Team" isOpen={isOpen} onClose={onClose}>
+    <PopupModal title="Create Department" isOpen={isOpen} onClose={handleCancel}>
       <form onSubmit={handleSubmit} className="space-y-4 text-sm">
         <div>
-          <label className="block font-medium mb-1">Team Name *</label>
+          <label className="block font-medium mb-1">Department Name *</label>
           <input
             type="text"
-            value={teamName}
-            onChange={(e) => setTeamName(e.target.value)}
+            value={departmentName}
+            onChange={(e) => setDepartmentName(e.target.value)}
             required
             className="w-full border px-3 py-2 rounded"
           />
@@ -40,11 +54,11 @@ const TeamForm = ({ isOpen, onClose, onSubmit }) => {
         </div>
 
         <div className="flex justify-end gap-3 mt-6">
-          <button type="button" onClick={onClose} className="bg-gray-200 px-4 py-2 rounded">
+          <button type="button" onClick={handleCancel} className="bg-gray-200 px-4 py-2 rounded">
             Cancel
           </button>
           <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
-            Update
+            Create
           </button>
         </div>
       </form>

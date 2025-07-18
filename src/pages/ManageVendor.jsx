@@ -215,16 +215,15 @@
 
 // export default ManageVendor;
 
-
 import React, { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { openModal, closeModal } from "../redux/features/manageVendors/vendorSlice";
+import { openModal, closeModal } from "../redux/features/managevendors/vendorSlice";
 import {
   fetchVendors,
   addVendor,
   editVendor,
   removeVendor,
-} from "../redux/features/manageVendors/vendorThunks";
+} from "../redux/features/managevendors/vendorThunks";
 import AddVendorModal from "../components/modals/AddVendorModal";
 import DynamicTable from "../components/DynamicTable";
 

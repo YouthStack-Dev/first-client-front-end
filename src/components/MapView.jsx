@@ -3,8 +3,7 @@ import { APIProvider, Map, AdvancedMarker } from '@vis.gl/react-google-maps';
 import { MapPin, Navigation, Clock, Car } from 'lucide-react';
 
 const MapView = () => {
-  const API_KEY = 'AIzaSyCI7CwlYJ6Qt5pQGW--inSsJmdEManW-K0';
-
+  const API_KEY = import.meta.env.VITE_GOOGE_API
   // Static vehicle data
   const vehicle = {
     vehicleNumber: 'KA-01-AB-1234',

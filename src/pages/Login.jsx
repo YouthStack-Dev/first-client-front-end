@@ -154,7 +154,10 @@ const Login = () => {
   const dispatch = useDispatch();
   const { setModulePermissions } = useContext(ModulePermissionContext);
 
-  const { loading: isLoading, error: err, user } = useSelector((state) => state.auth);
+  const { loading:isLoading,error:err, user } = useSelector((state) => state.auth);
+
+
+  // 🔐 Static Login Function (with mock username/password check)
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -171,7 +174,7 @@ const Login = () => {
 
     try {
       const res = await dispatch(
-        loginUser({ username: credentials.username, password: credentials.password })
+        loginUser({ username: credentials?.username, password: credentials?.password })
       ).unwrap();
 
       console.log("✅ Login API Response:", res);
@@ -181,15 +184,19 @@ const Login = () => {
         console.error("❌ No token found in response");
         throw new Error("No token found in response");
       }
-
+  
+      // Store permissions (optional)
       const permissions = res?.permissions || [];
       console.log("✅ Received module permissions:", permissions);
       setModulePermissions(permissions);
-
+  
+      // Decode token to get user info
       const decoded = jwtDecode(token);
       console.log("✅ Decoded JWT Token:", decoded);
 
       localStorage.setItem("access_token", token);
+  
+  
       dispatch(setUser(decoded));
       console.log("✅ Token saved to localStorage");
 
@@ -203,6 +210,7 @@ const Login = () => {
       console.error("❌ Login failed:", err);
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-tr from-blue-50 to-blue-200 flex items-center justify-center p-4">
@@ -236,7 +244,9 @@ const Login = () => {
               <input
                 type="text"
                 value={credentials.username}
-                onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
+                onChange={(e) =>
+                  setCredentials({ ...credentials, username: e.target.value })
+                }
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 placeholder="Enter username"
               />
@@ -250,7 +260,9 @@ const Login = () => {
               <input
                 type="password"
                 value={credentials.password}
-                onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                onChange={(e) =>
+                  setCredentials({ ...credentials, password: e.target.value })
+                }
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 placeholder="Enter password"
               />

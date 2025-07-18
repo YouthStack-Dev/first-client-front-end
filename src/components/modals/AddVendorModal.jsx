@@ -63,19 +63,21 @@ const AddVendorModal = ({ isOpen, onClose, onSave, initialData }) => {
         <div>
           <label className="block font-medium">Vendor Name *</label>
           <input
-            name="name"
-            value={form.name}
+            name="vendor_name"
+            value={form.vendor_name}
             onChange={handleChange}
             className="w-full mt-1 border px-3 py-2 rounded"
           />
-          {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+          {errors.vendor_name && (
+            <p className="text-sm text-red-500">{errors.vendor_name}</p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">Pickup/Drop Point</label>
           <input
-            name="pickupDropPoint"
-            value={form.pickupDropPoint}
+            name="address"
+            value={form.address}
             onChange={handleChange}
             className="w-full mt-1 border px-3 py-2 rounded"
           />
@@ -84,19 +86,21 @@ const AddVendorModal = ({ isOpen, onClose, onSave, initialData }) => {
         <div>
           <label className="block font-medium">Point of Contact *</label>
           <input
-            name="pointOfContact"
-            value={form.pointOfContact}
+            name="contact_person"
+            value={form.contact_person}
             onChange={handleChange}
             className="w-full mt-1 border px-3 py-2 rounded"
           />
-          {errors.pointOfContact && <p className="text-sm text-red-500">{errors.pointOfContact}</p>}
+          {errors.contact_person && (
+            <p className="text-sm text-red-500">{errors.contact_person}</p>
+          )}
         </div>
 
         <div>
           <label className="block font-medium">Phone Number</label>
           <input
-            name="phoneNumber"
-            value={form.phoneNumber}
+            name="phone_number"
+            value={form.phone_number}
             onChange={handleChange}
             className="w-full mt-1 border px-3 py-2 rounded"
           />
@@ -111,17 +115,9 @@ const AddVendorModal = ({ isOpen, onClose, onSave, initialData }) => {
             onChange={handleChange}
             className="w-full mt-1 border px-3 py-2 rounded"
           />
-          {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
-        </div>
-
-        <div>
-          <label className="block font-medium">Comments</label>
-          <textarea
-            name="comments"
-            value={form.comments}
-            onChange={handleChange}
-            className="w-full mt-1 border px-3 py-2 rounded"
-          />
+          {errors.email && (
+            <p className="text-sm text-red-500">{errors.email}</p>
+          )}
         </div>
 
         <p className="text-sm text-gray-500">* Please enter mandatory fields</p>
