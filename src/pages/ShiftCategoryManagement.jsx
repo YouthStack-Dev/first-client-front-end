@@ -116,11 +116,13 @@
 // };
 
 // export default ShiftCategoryManagement;
+
+
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
 import {
-  // fetchCutoffData,
+  fetchCutoffData,
   saveCutoffData,
 } from "../redux/features/Category/shiftCategoryThunks";
 import {
@@ -144,6 +146,13 @@ const ShiftCategoryManagement = () => {
   // useEffect(() => {
   //   dispatch(fetchCutoffData());
   // }, [dispatch]);
+
+    useEffect(() => {
+  if (!data?.id) {
+    dispatch(fetchCutoffData());
+  }
+}, [dispatch]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;

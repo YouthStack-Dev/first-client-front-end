@@ -1,13 +1,12 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
-
 import driverReducer from "../redux/features/driverSlice";
 import authReducer from "../redux/features/auth/authSlice";
 import manageTeamReducer from "../redux/features/manageTeam/manageTeamSlice";
 import shiftCategoryReducer from "../redux/features/Category/shiftCategorySlice";
 import shiftReducer from "../redux/features/Shifts/shiftSlice";
 import vehicleTypeReducer from "../redux/features/managevehicletype/vehicleTypeSlice";
-import vendorReducer from "../redux/features/manageVendors/vendorSlice";  // ✅ Added vendorReducer
+import vendorReducer from "../redux/features/manageVendors/vendorSlice";  
 
 const store = configureStore({
   reducer: {

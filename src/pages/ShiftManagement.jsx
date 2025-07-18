@@ -286,22 +286,15 @@ const ShiftManagement = () => {
   });
 
   useEffect(() => {
-    if (!canRead) return;
+  if (!canRead) return;
 
-    if (activeTab === 'all') {
-      dispatch(fetchAllShifts());
-    } else {
-      dispatch(fetchShiftsByLogType(activeTab === 'login' ? 'in' : 'out'));
-    }
-  }, [dispatch, canRead, activeTab]
-  );
+  if (activeTab === 'all') {
+    if (shifts.length === 0) dispatch(fetchAllShifts());
+  } else {
+    dispatch(fetchShiftsByLogType(activeTab === 'login' ? 'in' : 'out'));
+  }
+}, [dispatch, canRead, activeTab]);
 
-  // Optional: fetch tenant list
-  // useEffect(() => {
-  //   API_CLIENT.get('/tenants/?skip=0&limit=10')
-  //     .then((res) => setTenantList(res.data))
-  //     .catch((err) => console.error('Error fetching tenants:', err));
-  // }, []);
 
   if (notFound) return <PermissionDenied />;
 
