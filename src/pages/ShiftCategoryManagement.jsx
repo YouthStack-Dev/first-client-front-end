@@ -120,7 +120,7 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
 import {
-  fetchCutoffData,
+  // fetchCutoffData,
   saveCutoffData,
 } from "../redux/features/Category/shiftCategoryThunks";
 import {
@@ -141,9 +141,9 @@ const ShiftCategoryManagement = () => {
 
   const { booking, cancellation } = formData;
 
-  useEffect(() => {
-    dispatch(fetchCutoffData());
-  }, [dispatch]);
+  // useEffect(() => {
+  //   dispatch(fetchCutoffData());
+  // }, [dispatch]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

@@ -237,8 +237,8 @@ import { Trash2, Edit } from 'lucide-react';
 import { useModulePermission } from '../hooks/userModulePermission';
 import PermissionDenied from '../components/PermissionDenied';
 import {
-  fetchShiftsByLogType,
-  fetchAllShifts,
+  // fetchShiftsByLogType,
+  // fetchAllShifts,
   createShift,
   updateShift,
   deleteShiftById,
@@ -288,12 +288,13 @@ const ShiftManagement = () => {
   useEffect(() => {
     if (!canRead) return;
 
-    if (activeTab === 'all') {
-      dispatch(fetchAllShifts());
-    } else {
-      dispatch(fetchShiftsByLogType(activeTab === 'login' ? 'in' : 'out'));
-    }
-  }, [dispatch, canRead, activeTab]);
+  //   if (activeTab === 'all') {
+  //     dispatch(fetchAllShifts());
+  //   } else {
+  //     dispatch(fetchShiftsByLogType(activeTab === 'login' ? 'in' : 'out'));
+  //   }
+  }, [dispatch, canRead, activeTab]
+  );
 
   // Optional: fetch tenant list
   // useEffect(() => {

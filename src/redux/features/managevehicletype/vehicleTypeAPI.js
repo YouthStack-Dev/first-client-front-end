@@ -1,8 +1,8 @@
 import { API_CLIENT } from '../../../Api/API_Client';
 
 // 🔽 Get all vehicle types for a specific vendor
-export const getVehicleTypes = (vendorId = 2) =>
-  API_CLIENT.get(`/vehicle_types/?vendor_id=${vendorId}`);
+// export const getVehicleTypes = (vendorId = 2) =>
+//   API_CLIENT.get(`/vehicle_types/?vendor_id=${vendorId}`);
 
 
 // 🔽 Get a single vehicle type by ID

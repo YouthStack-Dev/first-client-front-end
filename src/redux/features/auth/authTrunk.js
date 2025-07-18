@@ -1,9 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { API_CLIENT } from "../../../Api/API_Client";
 
-
-
-
   export const loginUser = createAsyncThunk(
     'auth/loginUser',
     async ({ username, password }, { rejectWithValue }) => {

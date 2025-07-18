@@ -197,6 +197,10 @@
 // };
 
 // export default ManageVehicleTypes;
+
+
+
+
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
@@ -204,7 +208,7 @@ import { Modal, InputField } from "../components/SmallComponents";
 import DynamicTable from "../components/DynamicTable";
 import { Edit, Trash2 } from "lucide-react";
 import {
-  fetchVehicleTypes,
+  // fetchVehicleTypes,
   createVehicleType,
   updateVehicleType,
   deleteVehicleType,
@@ -219,11 +223,12 @@ import {
 const ManageVehicleTypes = () => {
   const dispatch = useDispatch();
   const { vehicleTypes, isModalOpen, formData, editingId } = useSelector((state) => state.vehicleType);
-  const { user } = useSelector((state) => state.user);
+const { user } = useSelector((state) => state.auth);
 
-  useEffect(() => {
-    dispatch(fetchVehicleTypes(user?.vendor_id || 2));
-  }, [dispatch, user?.vendor_id]);
+
+  // useEffect(() => {
+  //   dispatch(fetchVehicleTypes(user?.vendor_id || 2));
+  // }, [dispatch, user?.vendor_id]);
 
   const formFields = [
     {

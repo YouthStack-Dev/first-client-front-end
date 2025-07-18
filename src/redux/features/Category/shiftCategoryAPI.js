@@ -3,7 +3,7 @@
 import { API_CLIENT } from '../../../Api/API_Client';
 
 // GET /cutoff/
-export const getCutoff = () => API_CLIENT.get('/cutoff/');
+// export const getCutoff = () => API_CLIENT.get('/cutoff/');
 
 // POST /cutoff/
 export const postCutoff = (payload) => API_CLIENT.post('/cutoff/', payload);

@@ -2,8 +2,8 @@
 
 import { createSlice } from '@reduxjs/toolkit';
 import {
-  fetchAllShifts,
-  fetchShiftsByLogType,
+  // fetchAllShifts,
+  // fetchShiftsByLogType,
   createShift,
   updateShift,
   deleteShiftById,
@@ -32,33 +32,33 @@ const shiftSlice = createSlice({
     builder
 
       // 🚚 FETCH ALL
-      .addCase(fetchAllShifts.pending, (state) => {
-        state.status = 'loading';
-        state.error = null;
-      })
-      .addCase(fetchAllShifts.fulfilled, (state, action) => {
-        state.status = 'succeeded';
-        state.shifts = action.payload;
-      })
-      .addCase(fetchAllShifts.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.payload;
-      })
+      // .addCase(fetchAllShifts.pending, (state) => {
+      //   state.status = 'loading';
+      //   state.error = null;
+      // })
+      // .addCase(fetchAllShifts.fulfilled, (state, action) => {
+      //   state.status = 'succeeded';
+      //   state.shifts = action.payload;
+      // })
+      // .addCase(fetchAllShifts.rejected, (state, action) => {
+      //   state.status = 'failed';
+      //   state.error = action.payload;
+      // })
 
 
       // 🔍 FETCH BY LOG TYPE
-      .addCase(fetchShiftsByLogType.pending, (state) => {
-        state.status = 'loading';
-        state.error = null;
-      })
-      .addCase(fetchShiftsByLogType.fulfilled, (state, action) => {
-        state.status = 'succeeded';
-        state.shifts = action.payload;
-      })
-      .addCase(fetchShiftsByLogType.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.payload;
-      })
+      // .addCase(fetchShiftsByLogType.pending, (state) => {
+      //   state.status = 'loading';
+      //   state.error = null;
+      // })
+      // .addCase(fetchShiftsByLogType.fulfilled, (state, action) => {
+      //   state.status = 'succeeded';
+      //   state.shifts = action.payload;
+      // })
+      // .addCase(fetchShiftsByLogType.rejected, (state, action) => {
+      //   state.status = 'failed';
+      //   state.error = action.payload;
+      // })
 
 
       // ➕ CREATE SHIFT

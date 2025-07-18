@@ -1,7 +1,7 @@
 // src/redux/features/managevehicletype/vehicleTypeSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 import {
-  fetchVehicleTypes,
+  // fetchVehicleTypes,
   createVehicleType,
   updateVehicleType,
   deleteVehicleType,
@@ -41,18 +41,18 @@ const vehicleTypeSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // 🔄 Fetch vehicle types
-      .addCase(fetchVehicleTypes.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchVehicleTypes.fulfilled, (state, action) => {
-        state.loading = false;
-        state.vehicleTypes = action.payload;
-      })
-      .addCase(fetchVehicleTypes.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
+      // .addCase(fetchVehicleTypes.pending, (state) => {
+      //   state.loading = true;
+      //   state.error = null;
+      // })
+      // .addCase(fetchVehicleTypes.fulfilled, (state, action) => {
+      //   state.loading = false;
+      //   state.vehicleTypes = action.payload;
+      // })
+      // .addCase(fetchVehicleTypes.rejected, (state, action) => {
+      //   state.loading = false;
+      //   state.error = action.payload;
+      // })
 
       // ➕ Add new vehicle type
       .addCase(createVehicleType.fulfilled, (state, action) => {

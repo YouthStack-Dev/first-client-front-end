@@ -1,7 +1,7 @@
 // src/redux/features/managevehicletype/vehicleTypeThunks.js
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
-  getVehicleTypes,
+  // getVehicleTypes,
   getVehicleTypeById,
   postVehicleType,
   putVehicleType,
@@ -9,17 +9,17 @@ import {
 } from './vehicleTypeAPI';
 
 // 🔽 Fetch all vehicle types for a vendor
-export const fetchVehicleTypes = createAsyncThunk(
-  'vehicleType/fetchAll',
-  async (vendorId = 2, { rejectWithValue }) => {
-    try {
-      const res = await getVehicleTypes(vendorId);
-      return res.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
-    }
-  }
-);
+// export const fetchVehicleTypes = createAsyncThunk(
+//   'vehicleType/fetchAll',
+//   async (vendorId = 2, { rejectWithValue }) => {
+//     try {
+//       const res = await getVehicleTypes(vendorId);
+//       return res.data;
+//     } catch (error) {
+//       return rejectWithValue(error.response?.data || error.message);
+//     }
+//   }
+// );
 
 // 📌 Fetch single vehicle type by ID
 export const fetchVehicleTypeById = createAsyncThunk(
