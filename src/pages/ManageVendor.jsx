@@ -215,6 +215,7 @@
 
 // export default ManageVendor;
 
+
 import React, { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { openModal, closeModal } from "../redux/features/manageVendors/vendorSlice";
@@ -229,35 +230,17 @@ import DynamicTable from "../components/DynamicTable";
 
 const ManageVendor = () => {
   const dispatch = useDispatch();
-
-  const { vendors, total, loading, isModalOpen, selectedVendor } = useSelector(
-    (state) => state.vendor
-  );
+  const { vendors, isModalOpen, selectedVendor } = useSelector((state) => state.vendor);
   const { user } = useSelector((state) => state.auth);
 
-if (!user?.tenant_id) {
-  console.log("Waiting for user tenant_id...");
-  return null; // prevents premature render
-}
+  const tenantId = user?.tenant_id || 1;
 
-useEffect(() => {
-  if (user?.tenant_id && vendors.length === 0) {
-    console.log("🚀 Fetching vendors only once");
-    dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: user.tenant_id }));
-  }
-}, [user?.tenant_id]);
-
-
-// useEffect(() => {
-//   console.log("🚀 tenant_id from ManageVendor:", user.tenant_id);
-//   dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: user.tenant_id }));
-// }, [dispatch, user.tenant_id]);
-
-// useEffect(() => {
-//   console.log("🚀 tenant_id from ManageVendor:", user.tenant_id);
-//   dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: user.tenant_id }));
-// }, []);
-
+  // ✅ Fetch vendors initially
+  useEffect(() => {
+    if (tenantId && vendors.length === 0) {
+      dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: tenantId }));
+    }
+  }, [tenantId, dispatch, vendors.length]);
 
   const handleAdd = () => {
     dispatch(openModal(null));
@@ -269,27 +252,53 @@ useEffect(() => {
 
   const handleDelete = (vendor) => {
     if (window.confirm(`Are you sure you want to delete ${vendor.vendor_name}?`)) {
-      dispatch(removeVendor(vendor.vendor_id));
+      dispatch(removeVendor(vendor.vendor_id))
+        .then(() => {
+          console.log("✅ Vendor deleted:", vendor.vendor_name);
+          dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: tenantId }));
+        })
+        .catch((error) => console.error("❌ Delete error:", error));
     }
   };
 
   const handleSave = (formData) => {
-    const tenantId = user?.tenant_id || 1; // ✅ fallback safeguard
+    console.log("➡️ Form Data:", formData);
+
+    const mappedData = {
+      vendor_name: formData.name,
+      contact_person: formData.pointOfContact,
+      phone_number: formData.phoneNumber,
+      email: formData.email,
+      address: formData.pickupDropPoint,
+      tenant_id: tenantId,
+      is_active: true,
+    };
+
     if (selectedVendor) {
-      const finalData = {
+      const updatedVendor = {
         ...selectedVendor,
-        ...formData,
-        tenant_id: tenantId,
+        ...mappedData,
         is_active: selectedVendor.is_active !== undefined ? selectedVendor.is_active : true,
       };
-      dispatch(editVendor({ id: selectedVendor.vendor_id, vendorData: finalData }));
+      console.log("🟢 Updating Vendor:", updatedVendor);
+
+      dispatch(editVendor({ id: selectedVendor.vendor_id, vendorData: updatedVendor }))
+        .then(() => {
+          console.log("✅ Vendor updated!");
+          dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: tenantId }));
+          dispatch(closeModal());
+        })
+        .catch((error) => console.error("❌ Update error:", error));
     } else {
-      const finalData = {
-        ...formData,
-        tenant_id: tenantId,
-        is_active: true,
-      };
-      dispatch(addVendor(finalData));
+      console.log("🟢 Adding Vendor:", mappedData);
+
+      dispatch(addVendor(mappedData))
+        .then(() => {
+          console.log("✅ Vendor added!");
+          dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: tenantId }));
+          dispatch(closeModal());
+        })
+        .catch((error) => console.error("❌ Add error:", error));
     }
   };
 
@@ -305,6 +314,8 @@ useEffect(() => {
       render: (row) => (row.is_active ? "Active" : "Inactive"),
     },
   ], []);
+
+  if (!user?.tenant_id) return <p className="p-4">Loading user info...</p>;
 
   return (
     <div className="px-4 md:px-6 py-4">

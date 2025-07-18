@@ -2,22 +2,16 @@ import { API_CLIENT } from '../../../Api/API_Client';
 
 // Create Vendor
 export const createVendor = async (data) => {
-  const response = await API_CLIENT.post(`/vendors`, data);
+  const response = await API_CLIENT.post(`/vendors/`, data);
   return response.data;
 };
 
 // Get All Vendors with Pagination
-// export const getAllVendors = async ({ skip = 0, limit = 100 }) => {
-//   const response = await API_CLIENT.get(`/vendors/?skip=${skip}&limit=${limit}`);
-//   return response.data;
-// };
 
-export const getAllVendors = async ({ skip, limit, tenant_id }) => {
+export const getAllVendors = async ({ skip=0, limit =100, tenant_id }) => {
   const response = await API_CLIENT.get(`/vendors/?skip=${skip}&limit=${limit}&tenant_id=${tenant_id}`);
   return response;
 };
-
-
 
 // Get Single Vendor by ID
 export const getVendorById = async (id) => {

@@ -1,7 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
-  // getAllShifts,
-  // getShiftsByLogType,
+  getAllShifts,
+  getShiftsByLogType,
   postShift,
   putShift,
   deleteShift,
@@ -9,35 +9,35 @@ import {
 
 
 // 🔄 Get All Shifts
-// export const fetchAllShifts = createAsyncThunk(
-//   'shift/fetchAllShifts',
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       const response = await getAllShifts();
-//       return response.data;
-//     } catch (error) {
-//       return rejectWithValue(
-//         error.response?.data?.detail || 'Failed to fetch shifts'
-//       );
-//     }
-//   }
-// );
+export const fetchAllShifts = createAsyncThunk(
+  'shift/fetchAllShifts',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await getAllShifts();
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.detail || 'Failed to fetch shifts'
+      );
+    }
+  }
+);
 
 
-// // 🔍 Get Shifts by Log Type
-// export const fetchShiftsByLogType = createAsyncThunk(
-//   'shift/fetchShiftsByLogType',
-//   async (logType, { rejectWithValue }) => {
-//     try {
-//       const response = await getShiftsByLogType(logType);
-//       return response.data;
-//     } catch (error) {
-//       return rejectWithValue(
-//         error.response?.data?.detail || 'Failed to fetch shifts by log type'
-//       );
-//     }
-//   }
-// );
+// 🔍 Get Shifts by Log Type
+export const fetchShiftsByLogType = createAsyncThunk(
+  'shift/fetchShiftsByLogType',
+  async (logType, { rejectWithValue }) => {
+    try {
+      const response = await getShiftsByLogType(logType);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.detail || 'Failed to fetch shifts by log type'
+      );
+    }
+  }
+);
 
 // ➕ Create Shift
 export const createShift = createAsyncThunk(

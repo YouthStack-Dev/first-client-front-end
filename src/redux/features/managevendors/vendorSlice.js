@@ -1,5 +1,3 @@
-// src/redux/features/manageVendors/vendorSlice.js
-
 import { createSlice } from '@reduxjs/toolkit';
 import {
   fetchVendors,
