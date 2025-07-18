@@ -20,6 +20,7 @@ import ManageCompanies from './pages/ManageCompanies';
 import TrackingScreen from './pages/TrackingScreen';
 import AdminDashboard from './components/dashboards/AdminDashboard';
 import ClientDashboard from './components/dashboards/ClientDashboard';
+import { setUser } from './redux/features/auth/authSlice';
 
 
 // Lazy-loaded components
@@ -62,7 +63,7 @@ function App() {
     if (token) {
       try {
         const decoded = jwtDecode(token);
-        // dispatch(setUser(decoded));
+        dispatch(setUser(decoded));
       } catch (err) {
         console.error("Invalid token");
         localStorage.removeItem("access_token");

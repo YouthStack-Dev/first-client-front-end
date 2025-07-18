@@ -30,7 +30,7 @@ export const ModulePermissionProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('token'); // or the actual key you use for the auth token
+    const token = localStorage.getItem('access_token'); // or the actual key you use for the auth token
     if (token) {
       fetchPermissions();
     } else {
