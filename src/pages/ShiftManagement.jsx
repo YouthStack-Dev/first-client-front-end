@@ -230,7 +230,7 @@
 // ShiftManagement.jsx
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import ShiftForm from '../components/ShiftForm';
+import ShiftForm from '../components/shiftForm';
 import PopupModal from '../components/PopupModal';
 import DynamicTable from '../components/DynamicTable';
 import { Trash2, Edit } from 'lucide-react';
