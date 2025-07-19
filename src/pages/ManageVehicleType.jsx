@@ -199,8 +199,6 @@
 // export default ManageVehicleTypes;
 
 
-
-
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
@@ -208,7 +206,7 @@ import { Modal, InputField } from "../components/SmallComponents";
 import DynamicTable from "../components/DynamicTable";
 import { Edit, Trash2 } from "lucide-react";
 import {
-  // fetchVehicleTypes,
+  fetchVehicleTypes,
   createVehicleType,
   updateVehicleType,
   deleteVehicleType,
@@ -223,12 +221,21 @@ import {
 const ManageVehicleTypes = () => {
   const dispatch = useDispatch();
   const { vehicleTypes, isModalOpen, formData, editingId } = useSelector((state) => state.vehicleType);
-const { user } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.auth);
+
+  
+useEffect(() => {
+  if (!user?.vendor_id) {
+    console.error('No vendor_id available, auth state:', user);
+    return;
+  }
+  console.log('Fetching vehicle types for vendor_id:', user.vendor_id);
+  dispatch(fetchVehicleTypes(user.vendor_id)).then((result) => {
+    console.log('fetchVehicleTypes result:', result);
+  });
+}, [dispatch, user?.vendor_id]);
 
 
-  // useEffect(() => {
-  //   dispatch(fetchVehicleTypes(user?.vendor_id || 2));
-  // }, [dispatch, user?.vendor_id]);
 
   const formFields = [
     {
@@ -281,27 +288,35 @@ const { user } = useSelector((state) => state.auth);
     dispatch(setFormData({ ...formData, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    const payload = {
-      name: formData.vehicle_type_name,
-      description: formData.description || "",
-      capacity: Number(formData.capacity),
-      fuel_type: formData.fuel_type?.toLowerCase(), 
-      comment: formData.comment || "",
-      vendor_id: user?.vendor_id || 2,
-    };
+  if (!formData.vehicle_type_name || !formData.capacity || !formData.fuel_type) {
+    alert("Please fill all required fields.");
+    return;
+  }
 
-    if (editingId) {
-      dispatch(updateVehicleType({ id: editingId, ...payload }));
-    } else {
-      dispatch(createVehicleType(payload));
-    }
-
-    dispatch(toggleModal(false));
-    dispatch(resetForm());
+  const payload = {
+    name: formData.vehicle_type_name,
+    description: formData.description || "",
+    capacity: Number(formData.capacity),
+    fuel_type: formData.fuel_type?.toLowerCase(),
+    comment: formData.comment || "",
+    vendor_id: user?.vendor_id || 1,
   };
+
+  if (editingId) {
+    await dispatch(updateVehicleType({ id: editingId, ...payload }));
+  } else {
+    await dispatch(createVehicleType(payload));
+  }
+
+  // ✅ fetch again after save
+  dispatch(fetchVehicleTypes(user.vendor_id));
+
+  dispatch(toggleModal(false));
+  dispatch(resetForm());
+};
 
   const handleEdit = (row) => {
     dispatch(setEditingId(row.vehicle_type_id));
@@ -315,11 +330,13 @@ const { user } = useSelector((state) => state.auth);
     dispatch(toggleModal(true));
   };
 
-  const handleDelete = (row) => {
-    if (window.confirm("Are you sure you want to delete this vehicle type?")) {
-      dispatch(deleteVehicleType(row.vehicle_type_id));
-    }
-  };
+ const handleDelete = async (row) => {
+  if (window.confirm("Are you sure you want to delete this vehicle type?")) {
+    await dispatch(deleteVehicleType(row.vehicle_type_id));
+    // ✅ fetch again after delete
+    dispatch(fetchVehicleTypes(user.vendor_id));
+  }
+};
 
   return (
     <>
@@ -337,7 +354,6 @@ const { user } = useSelector((state) => state.auth);
         <DynamicTable
           headers={headers}
           data={vehicleTypes}
-          menuOpen={null}
           onMenuToggle={() => {}}
           renderActions={(row) => (
             <div className="flex justify-center gap-2">

@@ -94,7 +94,7 @@
 
 import { createSlice } from '@reduxjs/toolkit';
 import { 
-  // fetchCutoffData, 
+  fetchCutoffData, 
   saveCutoffData 
 } from './shiftCategoryThunks';
 
@@ -130,27 +130,27 @@ const shiftCategorySlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // .addCase(fetchCutoffData.pending, (state) => {
-      //   state.status = 'loading';
-      //   state.error = null;
-      // })
-      // .addCase(fetchCutoffData.fulfilled, (state, action) => {
-      //   state.status = 'succeeded';
-      //   state.data = action.payload;
+      .addCase(fetchCutoffData.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(fetchCutoffData.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.data = action.payload;
 
-      //   if (action.payload) {
-      //     const { booking_cutoff, cancellation_cutoff, id } = action.payload;
-      //     state.formData = {
-      //       booking: booking_cutoff?.toString() || '',
-      //       cancellation: cancellation_cutoff?.toString() || '',
-      //     };
-      //     state.editingId = id;
-      //   }
-      // })
-      // .addCase(fetchCutoffData.rejected, (state, action) => {
-      //   state.status = 'failed';
-      //   state.error = action.payload;
-      // })
+        if (action.payload) {
+          const { booking_cutoff, cancellation_cutoff, id } = action.payload;
+          state.formData = {
+            booking: booking_cutoff?.toString() || '',
+            cancellation: cancellation_cutoff?.toString() || '',
+          };
+          state.editingId = id;
+        }
+      })
+      .addCase(fetchCutoffData.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload;
+      })
       .addCase(saveCutoffData.pending, (state) => {
         state.status = 'saving';
         state.error = null;

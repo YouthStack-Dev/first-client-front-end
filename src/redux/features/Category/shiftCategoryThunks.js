@@ -2,25 +2,25 @@
 
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { 
-  // getCutoff, 
+  getCutoff, 
   postCutoff, putCutoff } from './shiftCategoryAPI';
 
 /**
  * Fetches the existing cutoff data (returns all from API).
  */
-// export const fetchCutoffData = createAsyncThunk(
-//   'shiftCategory/fetchCutoffData',
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       const response = await getCutoff();
-//       return response.data;
-//     } catch (err) {
-//       return rejectWithValue(
-//         err.response?.data?.detail || 'Failed to fetch cutoff data'
-//       );
-//     }
-//   }
-// );
+export const fetchCutoffData = createAsyncThunk(
+  'shiftCategory/fetchCutoffData',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await getCutoff();
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.detail || 'Failed to fetch cutoff data'
+      );
+    }
+  }
+);
 
 /**
  * Saves cutoff data using POST if no ID, or PUT (with ID in body) if ID exists.
