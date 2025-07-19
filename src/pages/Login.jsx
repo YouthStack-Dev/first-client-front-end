@@ -163,7 +163,7 @@ const Login = () => {
 
     if (!credentials.username.trim() || !credentials.password.trim()) {
       setValidationMsg("⚠️ Please fill in all fields.");
-      console.warn("⚠️ Login failed: Empty fields");
+      // console.warn("⚠️ Login failed: Empty fields");
       return;
     } else {
       setValidationMsg("");
@@ -174,7 +174,7 @@ const Login = () => {
         loginUser({ username: credentials.username, password: credentials.password })
       ).unwrap();
 
-      console.log("✅ Login API Response:", res);
+      // console.log("✅ Login API Response:", res);
 
       const token = res?.access_token;
       if (!token) {
@@ -183,24 +183,24 @@ const Login = () => {
       }
 
       const permissions = res?.permissions || [];
-      console.log("✅ Received module permissions:", permissions);
+      // console.log("✅ Received module permissions:", permissions);
       setModulePermissions(permissions);
 
       const decoded = jwtDecode(token);
-      console.log("✅ Decoded JWT Token:", decoded);
+      // console.log("✅ Decoded JWT Token:", decoded);
 
       localStorage.setItem("access_token", token);
       dispatch(setUser(decoded));
-      console.log("✅ Token saved to localStorage");
+      // console.log("✅ Token saved to localStorage");
 
       navigate("/dashboard");
-      console.log("✅ Navigation to /dashboard successful");
+      // console.log("✅ Navigation to /dashboard successful");
     } catch (err) {
       if (err.message === "Network Error") {
-        console.error("❌ Network Error:", err);
+        // console.error("❌ Network Error:", err);
         return;
       }
-      console.error("❌ Login failed:", err);
+      // console.error("❌ Login failed:", err);
     }
   };
 
