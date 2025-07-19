@@ -72,60 +72,81 @@
 //   }
 // );
 
+// ✅ Thunks: src/redux/features/managevehicletype/vehicleTypeThunks.js
 
-import { createAsyncThunk } from "@reduxjs/toolkit";
+import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
   getVehicleTypes,
+  getVehicleTypeById,
   postVehicleType,
   putVehicleType,
- deleteVehicleType as apiDeleteVehicleType, 
-} from "./vehicleTypeApi";
+  deleteVehicleType as apiDeleteVehicleType,
+} from './vehicleTypeAPI';
 
 export const fetchVehicleTypes = createAsyncThunk(
-  "vehicleType/fetchVehicleTypes",
-  async (vendorId, { rejectWithValue }) => {
+  'vehicleType/fetchAll',
+  async (vendorId = 2, { rejectWithValue }) => {
     try {
       const res = await getVehicleTypes(vendorId);
+      console.log('✅ fetched vehicle types:', res.data);
       return res.data;
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to fetch vehicle types");
+    } catch (error) {
+      console.error('⛔ fetch error:', error);
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+export const fetchVehicleTypeById = createAsyncThunk(
+  'vehicleType/fetchById',
+  async (id, { rejectWithValue }) => {
+    try {
+      console.log("📡 Fetching vehicle type by ID:", id);
+      const res = await getVehicleTypeById(id);
+      console.log("✅ Fetched vehicle type:", res.data);
+      return res.data;
+    } catch (error) {
+      console.error("❌ Error fetching vehicle type by ID:", error);
+      return rejectWithValue(error.response?.data || error.message);
     }
   }
 );
 
 export const createVehicleType = createAsyncThunk(
-  "vehicleType/createVehicleType",
+  'vehicleType/create',
   async (payload, { rejectWithValue }) => {
     try {
       const res = await postVehicleType(payload);
+      console.log('✅ created vehicle type:', res.data);
       return res.data;
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to create vehicle type");
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
     }
   }
 );
 
 export const updateVehicleType = createAsyncThunk(
-  "vehicleType/updateVehicleType",
-  async ({ id, ...payload }, { rejectWithValue }) => {
+  'vehicleType/update',
+  async ({ id, ...data }, { rejectWithValue }) => {
     try {
-      const res = await putVehicleType(id, payload);
+      const res = await putVehicleType(id, data);
+      console.log('✅ updated vehicle type:', res.data);
       return res.data;
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to update vehicle type");
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
     }
   }
 );
 
 export const deleteVehicleType = createAsyncThunk(
-  "vehicleType/deleteVehicleType",
+  'vehicleType/delete',
   async (id, { rejectWithValue }) => {
     try {
-      const res = await apiDeleteVehicleType(id);  // ✅ FIX HERE
-      return { id, message: res.data.message };
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to delete vehicle type");
+      await apiDeleteVehicleType(id);
+      console.log('✅ deleted vehicle type id:', id);
+      return id;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
     }
   }
 );
-

@@ -215,7 +215,6 @@
 
 // export default ManageVendor;
 
-
 import React, { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { openModal, closeModal } from "../redux/features/manageVendors/vendorSlice";
@@ -235,35 +234,28 @@ const ManageVendor = () => {
 
   const tenantId = user?.tenant_id || 1;
 
-  // ✅ Fetch vendors initially
+  // Fetch only once if vendors not loaded
   useEffect(() => {
     if (tenantId && vendors.length === 0) {
       dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: tenantId }));
     }
-  }, [tenantId, dispatch, vendors.length]);
+  }, [tenantId, dispatch]);
 
-  const handleAdd = () => {
-    dispatch(openModal(null));
-  };
+  const handleAdd = () => dispatch(openModal(null));
 
-  const handleEdit = (vendor) => {
-    dispatch(openModal(vendor));
-  };
+  const handleEdit = (vendor) => dispatch(openModal(vendor));
 
   const handleDelete = (vendor) => {
     if (window.confirm(`Are you sure you want to delete ${vendor.vendor_name}?`)) {
-      dispatch(removeVendor(vendor.vendor_id))
+      dispatch(removeVendor(vendor.vendor_id)).unwrap()
         .then(() => {
-          console.log("✅ Vendor deleted:", vendor.vendor_name);
           dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: tenantId }));
         })
-        .catch((error) => console.error("❌ Delete error:", error));
+        .catch((err) => console.error("Delete Error:", err));
     }
   };
 
   const handleSave = (formData) => {
-    console.log("➡️ Form Data:", formData);
-
     const mappedData = {
       vendor_name: formData.name,
       contact_person: formData.pointOfContact,
@@ -275,30 +267,19 @@ const ManageVendor = () => {
     };
 
     if (selectedVendor) {
-      const updatedVendor = {
-        ...selectedVendor,
-        ...mappedData,
-        is_active: selectedVendor.is_active !== undefined ? selectedVendor.is_active : true,
-      };
-      console.log("🟢 Updating Vendor:", updatedVendor);
-
-      dispatch(editVendor({ id: selectedVendor.vendor_id, vendorData: updatedVendor }))
+      dispatch(editVendor({ id: selectedVendor.vendor_id, vendorData: mappedData })).unwrap()
         .then(() => {
-          console.log("✅ Vendor updated!");
           dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: tenantId }));
           dispatch(closeModal());
         })
-        .catch((error) => console.error("❌ Update error:", error));
+        .catch((err) => console.error("Update Error:", err));
     } else {
-      console.log("🟢 Adding Vendor:", mappedData);
-
-      dispatch(addVendor(mappedData))
+      dispatch(addVendor(mappedData)).unwrap()
         .then(() => {
-          console.log("✅ Vendor added!");
           dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: tenantId }));
           dispatch(closeModal());
         })
-        .catch((error) => console.error("❌ Add error:", error));
+        .catch((err) => console.error("Add Error:", err));
     }
   };
 
@@ -315,7 +296,7 @@ const ManageVendor = () => {
     },
   ], []);
 
-  if (!user?.tenant_id) return <p className="p-4">Loading user info...</p>;
+  if (!tenantId) return <p className="p-4">Loading user info...</p>;
 
   return (
     <div className="px-4 md:px-6 py-4">
@@ -334,18 +315,8 @@ const ManageVendor = () => {
         data={vendors}
         renderActions={(row) => (
           <div className="flex gap-2 text-sm">
-            <button
-              className="text-blue-600 hover:underline"
-              onClick={() => handleEdit(row)}
-            >
-              Edit
-            </button>
-            <button
-              className="text-red-600 hover:underline"
-              onClick={() => handleDelete(row)}
-            >
-              Delete
-            </button>
+            <button className="text-blue-600 hover:underline" onClick={() => handleEdit(row)}>Edit</button>
+            <button className="text-red-600 hover:underline" onClick={() => handleDelete(row)}>Delete</button>
           </div>
         )}
       />

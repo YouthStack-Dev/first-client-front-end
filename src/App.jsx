@@ -3,7 +3,6 @@ import { Suspense, lazy, useContext, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { jwtDecode } from 'jwt-decode';
 
-
 import Layout from './components/layout/layout';
 import Loading from './components/ui/Loading';
 import { ModulePermissionContext } from './context/ModulePermissionContext';
@@ -13,7 +12,6 @@ import ManageRoles from './pages/ManageRoles';
 import ProtectedRouteAuth from './middleware/ProtectedRouteAuth';
 import ShiftCategoryManagement from "./pages/ShiftCategoryManagement";
 
-
 // ✅ Vehicle Contract Related Pages
 import VehicleContract from './pages/VehicleContract';
 import ManageCompanies from './pages/ManageCompanies';
@@ -21,7 +19,9 @@ import TrackingScreen from './pages/TrackingScreen';
 import AdminDashboard from './components/dashboards/AdminDashboard';
 import ClientDashboard from './components/dashboards/ClientDashboard';
 import { setUser } from './redux/features/auth/authSlice';
-
+import { fetchVendors } from './redux/features/manageVendors/vendorThunks';
+import { fetchAllShifts } from './redux/features/Shifts/shiftThunks';
+import { fetchCutoffData } from './redux/features/Category/shiftCategoryThunks';
 
 // Lazy-loaded components
 const Login = lazy(() => import('./pages/Login'));
@@ -57,13 +57,18 @@ function App() {
   const [userLoading, setUserLoading] = useState(true);
   const { loading: permissionLoading } = useContext(ModulePermissionContext);
 
-
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (token) {
       try {
         const decoded = jwtDecode(token);
         dispatch(setUser(decoded));
+        
+        setTimeout(() => {
+          dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: decoded.tenant_id }));
+          dispatch(fetchAllShifts());
+          dispatch(fetchCutoffData());
+        }, 300);
       } catch (err) {
         console.error("Invalid token");
         localStorage.removeItem("access_token");
@@ -71,7 +76,6 @@ function App() {
     }
     setUserLoading(false);
   }, [dispatch]);
-  
 
   if (userLoading || permissionLoading) {
     return <Loading />;
@@ -81,26 +85,19 @@ function App() {
     <Router>
       <Suspense fallback={<Loading />}>
         <Routes>
-          {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/" element={<Home />} />
 
-          {/* Protected Routes */}
           <Route element={<Layout />}>
-            <Route element={<ProtectedRouteAuth />}>
-
-              {/* General */}
+            <Route element={<ProtectedRouteAuth />}>              
               <Route path="/drivers" element={<ManageDrivers />} />
               <Route path="/driver-form" element={<DriverForm />} />
-              <Route path="/billings-dashboard" element={<h1>This will be my billing dashboard</h1>} />
-              <Route path="/staff-administration" element={<h1>This will staff-administration</h1>} />
               <Route path="/vehicles" element={<ManageVehicles />} />
               <Route path="/client_dashboard" element={<ClientDashboard />} />
               <Route path="/admin_dashboard" element={<AdminDashboard />} />
               <Route path="/calender" element={<CalendarPopupExample />} />
               <Route path="/manage-company" element={<ManageCompanies />} />
-              {/* Admin & Super Admin */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/role-management" element={<ManageRoles />} />
               <Route path="/staffs" element={<ManageStaffs />} />
@@ -110,34 +107,15 @@ function App() {
               <Route path="/vehicles/add-vehicle" element={<VehicleForm />} />
               <Route path="/manage-shift" element={<ShiftManagement />} />
               <Route path="/shift-Categories" element={<ShiftCategoryManagement />} />
-              <Route path="/shedule-polysies" element={<h1>Schedule Policies management</h1>} />
-              <Route path="/audit-report" element={<h1>This is the audit report implementation</h1>} />
               <Route path="/manage-team" element={<ManageTeams />} />
               <Route path="/teams/:teamId/employees" element={<EmployeeList />} />
-              <Route path="/manage-marshal" element={<h1>Marshal management</h1>} />
-              <Route path="/schedule-policies" element={<h1>Schedule Policies</h1>} />
-              <Route path="/staf-administration" element={<h1>Staff Administration</h1>} />
-              <Route path="/security-dashboard" element={<h1>Security Dashboard</h1>} />
               <Route path="/routing" element={<RouteManagement />} />
               <Route path="/vendors" element={<ManageVendor />} />
-              <Route path="/company-admins" element={<h1>Company Admins management</h1>} />
-              <Route path="/subadmins" element={<h1>Subadmin management</h1>} />
-              <Route path="/sms-config" element={<h1>SMS Configuration</h1>} />
               <Route path="/manage-client" element={<ManageClients />} />
-              <Route path="/tracking" element={<TrackingScreen/>} />
-              <Route path="/switch-office" element={<h1> This is the screen where u can switch to those company  under u </h1>} />
-              {/* ✅ VEHICLE CONTRACT EXTENSIONS */}
-
-              
-
-              {/* Legacy Route if needed */}
+              <Route path="/tracking" element={<TrackingScreen />} />
               <Route path="/vehicle-contract" element={<VehicleContract />} />
               <Route path="/vehicle-group" element={<ManageVehicleTypes />} />
               <Route path="/contract/create-contract" element={<AddContractForm />} />
-
-              {/* Client Specific */}
-              <Route path="/client-dashboard" element={<h1>Client Dashboard</h1>} />
-              <Route path="/client-profile" element={<h1>Client Profile</h1>} />
             </Route>
           </Route>
 

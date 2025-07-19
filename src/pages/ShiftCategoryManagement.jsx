@@ -117,7 +117,6 @@
 
 // export default ShiftCategoryManagement;
 
-
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
@@ -143,16 +142,11 @@ const ShiftCategoryManagement = () => {
 
   const { booking, cancellation } = formData;
 
-  // useEffect(() => {
-  //   dispatch(fetchCutoffData());
-  // }, [dispatch]);
-
-    useEffect(() => {
-  if (!data?.id) {
-    dispatch(fetchCutoffData());
-  }
-}, [dispatch]);
-
+  useEffect(() => {
+    if (!data?.id) {
+      dispatch(fetchCutoffData());
+    }
+  }, [dispatch]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -186,66 +180,63 @@ const ShiftCategoryManagement = () => {
     <div className="space-y-6 p-4 w-full">
       <HeaderWithActionNoRoute title="Cutoff Management" extraButtons={[]} />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-white rounded-lg shadow p-4 border">
-          <h3 className="text-blue-600 font-semibold mb-2">Booking Cutoff</h3>
-          <div className="space-y-2">
-            <input
-              type="number"
-              name="booking"
-              min="0"
-              step="0.5"
-              value={booking}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded px-3 py-2"
-              placeholder="Enter booking cutoff in hours"
-            />
-            <p className="text-sm text-gray-500">
-              Saved: <strong>{formData.booking}</strong> hours
-            </p>
+      {!data?.id ? (
+        <p className="text-gray-600">Loading cutoff data...</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-white rounded-lg shadow p-4 border">
+              <h3 className="text-blue-600 font-semibold mb-2">Booking Cutoff</h3>
+              <div className="space-y-2">
+                <input
+                  type="number"
+                  name="booking"
+                  min="0"
+                  step="0.5"
+                  value={booking}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  placeholder="Enter booking cutoff in hours"
+                />
+                <p className="text-sm text-gray-500">
+                  Saved: <strong>{formData.booking}</strong> hours
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-4 border">
+              <h3 className="text-blue-600 font-semibold mb-2">Cancellation Cutoff</h3>
+              <div className="space-y-2">
+                <input
+                  type="number"
+                  name="cancellation"
+                  min="0"
+                  step="0.5"
+                  value={cancellation}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  placeholder="Enter cancellation cutoff in hours"
+                />
+                <p className="text-sm text-gray-500">
+                  Saved: <strong>{formData.cancellation}</strong> hours
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div className="bg-white rounded-lg shadow p-4 border">
-          <h3 className="text-blue-600 font-semibold mb-2">Cancellation Cutoff</h3>
-          <div className="space-y-2">
-            <input
-              type="number"
-              name="cancellation"
-              min="0"
-              step="0.5"
-              value={cancellation}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded px-3 py-2"
-              placeholder="Enter cancellation cutoff in hours"
-            />
-            <p className="text-sm text-gray-500">
-              Saved: <strong>{formData.cancellation}</strong> hours
-            </p>
+          <div className="flex justify-end mt-4">
+            <button
+              onClick={handleSave}
+              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+              disabled={status === 'saving'}
+            >
+              {status === 'saving' ? 'Saving...' : 'Save Cutoffs'}
+            </button>
           </div>
-        </div>
-      </div>
 
-      <div className="flex justify-end mt-4">
-        <button
-          onClick={handleSave}
-          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-          disabled={status === 'saving'}
-        >
-          {status === 'saving' ? 'Saving...' : 'Save Cutoffs'}
-        </button>
-      </div>
-
-      {error && <p className="text-red-600 text-sm">Error: {error}</p>}
-
-      {/* {data && (
-        <div className="mt-6 p-4 bg-gray-100 border border-gray-300 rounded">
-          <h4 className="font-semibold mb-2 text-gray-700">🔍 Raw Cutoff API Data</h4>
-          <pre className="text-sm text-gray-800">
-            {JSON.stringify(data, null, 2)}
-          </pre>
-        </div>
-      )} */}
+          {error && <p className="text-red-600 text-sm">Error: {error}</p>}
+        </>
+      )}
     </div>
   );
 };

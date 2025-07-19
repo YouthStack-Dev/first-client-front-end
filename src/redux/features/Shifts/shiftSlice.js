@@ -21,10 +21,15 @@ const shiftSlice = createSlice({
   initialState,
   reducers: {
     setEditingShift: (state, action) => {
-      state.editingShift = action.payload; // Payload will be a shift object to pre-fill form
+      state.editingShift = action.payload;
     },
     clearEditingShift: (state) => {
       state.editingShift = null;
+    },
+    clearShifts: (state) => {
+      state.shifts = [];
+      state.status = 'idle';
+      state.error = null;
     },
   },
 
@@ -68,7 +73,7 @@ const shiftSlice = createSlice({
       })
       .addCase(createShift.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.shifts.push(action.payload); // Add new shift to list
+        state.shifts.push(action.payload);
       })
       .addCase(createShift.rejected, (state, action) => {
         state.status = 'failed';
@@ -101,7 +106,7 @@ const shiftSlice = createSlice({
       })
       .addCase(deleteShiftById.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.shifts = state.shifts.filter((s) => s.id !== action.payload); // remove by ID
+        state.shifts = state.shifts.filter((s) => s.id !== action.payload);
       })
       .addCase(deleteShiftById.rejected, (state, action) => {
         state.status = 'failed';
@@ -110,6 +115,5 @@ const shiftSlice = createSlice({
   },
 });
 
-
-export const { setEditingShift, clearEditingShift } = shiftSlice.actions;
+export const { setEditingShift, clearEditingShift, clearShifts } = shiftSlice.actions;
 export default shiftSlice.reducer;
