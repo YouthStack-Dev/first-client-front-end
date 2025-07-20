@@ -1,27 +1,17 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { fetchTeams, fetchEmployeesOfDepartment } from './manageTeamThunks';
+import { createDepartment, fetchTeams, updateDepartment, deleteTeams } from './manageTeamThunks';
 
 const initialState = {
-  teams: null,
-  status: 'idle',
-  error: null,
-
-  employeess: null,
-  employeesStatus: 'idle',
-  employeesError: null,
-
+  teams: [],
   selectedTeams: [],
   showModal: false,
   editingTeamId: null,
-  formData: {
-    teamName: '',
-    teamManager1: '',
-    teamManager2: '',
-    teamManager3: '',
-    shiftCategory: 'Default',
-    description: '',
-    notification: '',
-  }
+  apiStatus: {
+    fetchTeams: { status: 'idle', error: null },
+    createDepartment: { status: 'idle', error: null },
+    updateDepartment: { status: 'idle', error: null },
+    deleteTeams: { status: 'idle', error: null },
+  },
 };
 
 const manageTeamSlice = createSlice({
@@ -34,13 +24,10 @@ const manageTeamSlice = createSlice({
     setEditingTeamId(state, action) {
       state.editingTeamId = action.payload;
     },
-    setFormData(state, action) {
-      state.formData = action.payload;
-    },
     toggleSelect(state, action) {
       const id = action.payload;
       if (state.selectedTeams.includes(id)) {
-        state.selectedTeams = state.selectedTeams.filter(i => i !== id);
+        state.selectedTeams = state.selectedTeams.filter((i) => i !== id);
       } else {
         state.selectedTeams.push(id);
       }
@@ -50,42 +37,82 @@ const manageTeamSlice = createSlice({
     },
     removeTeams(state, action) {
       const idsToRemove = action.payload;
-      state.teams = state.teams?.filter(team => !idsToRemove.includes(team.id));
-      state.selectedTeams = state.selectedTeams.filter(id => !idsToRemove.includes(id));
-    }
+      state.teams = state.teams.filter((team) => !idsToRemove.includes(team.department_id));
+      state.selectedTeams = state.selectedTeams.filter((id) => !idsToRemove.includes(id));
+    },
   },
   extraReducers: (builder) => {
-    // fetchTeams handlers
     builder
+      // Fetch Teams
       .addCase(fetchTeams.pending, (state) => {
-        state.status = 'loading';
-        state.error = null;
+        state.apiStatus.fetchTeams.status = 'loading';
+        state.apiStatus.fetchTeams.error = null;
       })
       .addCase(fetchTeams.fulfilled, (state, action) => {
-        state.status = 'succeeded';
+        state.apiStatus.fetchTeams.status = 'succeeded';
         state.teams = action.payload;
       })
       .addCase(fetchTeams.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.payload || action.error.message;
-      });
-
-    // fetchEmployeesOfDepartment handlers
-    builder
-      .addCase(fetchEmployeesOfDepartment.pending, (state) => {
-        state.employeesStatus = 'loading';
-        state.employeesError = null;
+        state.apiStatus.fetchTeams.status = 'failed';
+        state.apiStatus.fetchTeams.error = action.payload || action.error.message;
       })
-      .addCase(fetchEmployeesOfDepartment.fulfilled, (state, action) => {
-        state.employeesStatus = 'succeeded';
-        state.employees = action.payload.employees;
+      // Create Department
+      .addCase(createDepartment.pending, (state) => {
+        state.apiStatus.createDepartment.status = 'loading';
+        state.apiStatus.createDepartment.error = null;
       })
-      .addCase(fetchEmployeesOfDepartment.rejected, (state, action) => {
-        state.employeesStatus = 'failed';
-        state.employeesError = action.payload || action.error.message;
+      .addCase(createDepartment.fulfilled, (state, action) => {
+        state.apiStatus.createDepartment.status = 'succeeded';
+        const newDepartment = {
+          ...action.payload,
+          employee_count: action.payload.employee_count ?? 0,
+        };
+        state.teams = [...state.teams, newDepartment];
+      })
+      .addCase(createDepartment.rejected, (state, action) => {
+        state.apiStatus.createDepartment.status = 'failed';
+        state.apiStatus.createDepartment.error = action.payload || action.error.message;
+      })
+      // Update Department
+      .addCase(updateDepartment.pending, (state) => {
+        state.apiStatus.updateDepartment.status = 'loading';
+        state.apiStatus.updateDepartment.error = null;
+      })
+      .addCase(updateDepartment.fulfilled, (state, action) => {
+        state.apiStatus.updateDepartment.status = 'succeeded';
+        state.teams = state.teams.map((team) =>
+          team.department_id === action.payload.department_id
+            ? { ...team, ...action.payload } // Merge only changed fields
+            : team
+        );
+      })
+      .addCase(updateDepartment.rejected, (state, action) => {
+        state.apiStatus.updateDepartment.status = 'failed';
+        state.apiStatus.updateDepartment.error = action.payload || action.error.message;
+      })
+      // Delete Teams
+      .addCase(deleteTeams.pending, (state) => {
+        state.apiStatus.deleteTeams.status = 'loading';
+        state.apiStatus.deleteTeams.error = null;
+      })
+      .addCase(deleteTeams.fulfilled, (state, action) => {
+        state.apiStatus.deleteTeams.status = 'succeeded';
+        state.teams = state.teams.filter((team) => !action.payload.includes(team.department_id));
+        state.selectedTeams = state.selectedTeams.filter((id) => !action.payload.includes(id));
+      })
+      .addCase(deleteTeams.rejected, (state, action) => {
+        state.apiStatus.deleteTeams.status = 'failed';
+        state.apiStatus.deleteTeams.error = action.payload || action.error.message;
       });
-  }
+  },
 });
 
-export const { toggleModal, setEditingTeamId, setFormData, toggleSelect, clearSelectedTeams, removeTeams } = manageTeamSlice.actions;
+export const {
+  toggleModal,
+  setEditingTeamId,
+  toggleSelect,
+  clearSelectedTeams,
+  removeTeams,
+} = manageTeamSlice.actions;
+
 export default manageTeamSlice.reducer;

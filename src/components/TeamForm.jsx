@@ -1,36 +1,58 @@
-import React, { useState } from 'react';
-import PopupModal from './PopupModal';
-import { log } from '../utils/logger';
 
-const TeamForm = ({ isOpen, onClose, onSubmit }) => {
-  // use camelCase for local state
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import PopupModal from './PopupModal';
+
+import { createDepartment, updateDepartment } from '../redux/features/manageTeam/manageTeamThunks';
+
+const TeamForm = ({ isOpen, onClose }) => {
+  const dispatch = useDispatch();
+  const { editingTeamId, teams } = useSelector((state) => state.manageTeam);
+
+  const isEditing = Boolean(editingTeamId);
   const [departmentName, setDepartmentName] = useState('');
   const [description, setDescription] = useState('');
 
-  const resetForm = () => {
-    setDepartmentName('');
-    setDescription('');
-  };
+  // Update form fields when editingTeamId changes
+  useEffect(() => {
+    if (isEditing) {
+      const team = teams.find((team) => team.department_id === editingTeamId);
+      if (team) {
+        setDepartmentName(team.department_name || '');
+        setDescription(team.description || '');
+      }
+    } else {
+      setDepartmentName('');
+      setDescription('');
+    }
+  }, [editingTeamId, teams, isEditing]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const formData = {
-      department_name: departmentName,  // payload uses snake_case
+    const payload = {
+      department_name: departmentName,
       description,
     };
-    log("This is the team creation data", formData);
-    onSubmit(formData);
-    resetForm();     // ✅ clear fields
+
+    if (isEditing) {
+      await dispatch(updateDepartment({ id: editingTeamId, data: payload }));
+    } else {
+      await dispatch(createDepartment(payload));
+    }
+
+    setDepartmentName('');
+    setDescription('');
     onClose();
   };
 
   const handleCancel = () => {
-    resetForm();     // clear fields on cancel too
+    setDepartmentName('');
+    setDescription('');
     onClose();
   };
 
   return (
-    <PopupModal title="Create Department" isOpen={isOpen} onClose={handleCancel}>
+    <PopupModal title={isEditing ? 'Edit Department' : 'Create Department'} isOpen={isOpen} onClose={handleCancel}>
       <form onSubmit={handleSubmit} className="space-y-4 text-sm">
         <div>
           <label className="block font-medium mb-1">Department Name *</label>
@@ -58,7 +80,7 @@ const TeamForm = ({ isOpen, onClose, onSubmit }) => {
             Cancel
           </button>
           <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
-            Create
+            {isEditing ? 'Update' : 'Create'}
           </button>
         </div>
       </form>
