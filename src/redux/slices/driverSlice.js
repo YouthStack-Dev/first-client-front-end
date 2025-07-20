@@ -2,14 +2,13 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { LocalClient } from "../../Api/API_Client";
 
 
-// Async Thunk for fetching drivers
+
 export const fetchDrivers = createAsyncThunk(
     "drivers/fetchDrivers",
     async (_, { rejectWithValue }) => {
         try {
-            const response = await LocalClient.get("getDrivers"); // API call using LocalClient
-            console.log(" this is  the fetched drivers ",response.data);
-            
+            const response = await LocalClient.get("getDrivers"); 
+          
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data || error.message);

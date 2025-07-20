@@ -13,7 +13,7 @@ const AddVendorModal = ({ isOpen, onClose, onSave, initialData }) => {
 
   const [errors, setErrors] = useState({});
 
-  // ✅ Prefill form when editing
+  // ✅ Prefill form properly
   useEffect(() => {
     if (initialData) {
       setForm({
@@ -50,7 +50,6 @@ const AddVendorModal = ({ isOpen, onClose, onSave, initialData }) => {
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
     } else {
-      console.log("Form Data Before Saving:", form);
       onSave(form);
       onClose();
       setErrors({});
@@ -59,25 +58,23 @@ const AddVendorModal = ({ isOpen, onClose, onSave, initialData }) => {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={initialData ? "Edit Vendor" : "Add Vendor"} size="md">
-      <div>
+      <div className="space-y-3">
         <div>
           <label className="block font-medium">Vendor Name *</label>
           <input
-            name="vendor_name"
-            value={form.vendor_name}
+            name="name"
+            value={form.name}
             onChange={handleChange}
             className="w-full mt-1 border px-3 py-2 rounded"
           />
-          {errors.vendor_name && (
-            <p className="text-sm text-red-500">{errors.vendor_name}</p>
-          )}
+          {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
         </div>
 
         <div>
           <label className="block font-medium">Pickup/Drop Point</label>
           <input
-            name="address"
-            value={form.address}
+            name="pickupDropPoint"
+            value={form.pickupDropPoint}
             onChange={handleChange}
             className="w-full mt-1 border px-3 py-2 rounded"
           />
@@ -86,21 +83,19 @@ const AddVendorModal = ({ isOpen, onClose, onSave, initialData }) => {
         <div>
           <label className="block font-medium">Point of Contact *</label>
           <input
-            name="contact_person"
-            value={form.contact_person}
+            name="pointOfContact"
+            value={form.pointOfContact}
             onChange={handleChange}
             className="w-full mt-1 border px-3 py-2 rounded"
           />
-          {errors.contact_person && (
-            <p className="text-sm text-red-500">{errors.contact_person}</p>
-          )}
+          {errors.pointOfContact && <p className="text-sm text-red-500">{errors.pointOfContact}</p>}
         </div>
 
         <div>
           <label className="block font-medium">Phone Number</label>
           <input
-            name="phone_number"
-            value={form.phone_number}
+            name="phoneNumber"
+            value={form.phoneNumber}
             onChange={handleChange}
             className="w-full mt-1 border px-3 py-2 rounded"
           />
@@ -115,9 +110,17 @@ const AddVendorModal = ({ isOpen, onClose, onSave, initialData }) => {
             onChange={handleChange}
             className="w-full mt-1 border px-3 py-2 rounded"
           />
-          {errors.email && (
-            <p className="text-sm text-red-500">{errors.email}</p>
-          )}
+          {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+        </div>
+
+        <div>
+          <label className="block font-medium">Comments</label>
+          <textarea
+            name="comments"
+            value={form.comments}
+            onChange={handleChange}
+            className="w-full mt-1 border px-3 py-2 rounded"
+          />
         </div>
 
         <p className="text-sm text-gray-500">* Please enter mandatory fields</p>

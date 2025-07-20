@@ -1,13 +1,9 @@
-// src/redux/features/shiftCategory/shiftCategoryThunks.js
-
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { 
   getCutoff, 
   postCutoff, putCutoff } from './shiftCategoryAPI';
 
-/**
- * Fetches the existing cutoff data (returns all from API).
- */
+
 export const fetchCutoffData = createAsyncThunk(
   'shiftCategory/fetchCutoffData',
   async (_, { rejectWithValue }) => {
@@ -22,9 +18,6 @@ export const fetchCutoffData = createAsyncThunk(
   }
 );
 
-/**
- * Saves cutoff data using POST if no ID, or PUT (with ID in body) if ID exists.
- */
 export const saveCutoffData = createAsyncThunk(
   'shiftCategory/saveCutoffData',
   async ({ id, booking_cutoff, cancellation_cutoff }, { rejectWithValue }) => {
@@ -33,7 +26,7 @@ export const saveCutoffData = createAsyncThunk(
 
       let response;
       if (id) {
-        response = await putCutoff({ id, ...payload }); // Send `id` inside body
+        response = await putCutoff({ id, ...payload }); 
       } else {
         response = await postCutoff(payload);
       }

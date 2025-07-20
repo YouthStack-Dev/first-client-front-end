@@ -6,7 +6,7 @@ import manageTeamReducer from "../redux/features/manageTeam/manageTeamSlice";
 import shiftCategoryReducer from "../redux/features/Category/shiftCategorySlice";
 import shiftReducer from "../redux/features/Shifts/shiftSlice";
 import vehicleTypeReducer from "../redux/features/managevehicletype/vehicleTypeSlice";
-import vendorReducer from "../redux/features/managevendors/vendorSlice";  // ✅ Added vendorReducer
+import vendorReducer from "../redux/features/vendors/vendorSlice";  // ✅ Added vendorReducer
 
 const store = configureStore({
   reducer: {

@@ -10,10 +10,10 @@ import {
 } from './shiftThunks';
 
 const initialState = {
-  shifts: [],           // All fetched shift records
-  status: 'idle',       // idle | loading | succeeded | failed | saving | deleting
-  error: null,          // Stores error messages (if any)
-  editingShift: null,   // Used to pre-fill form when editing
+  shifts: [],           
+  status: 'idle',       
+   error: null,          
+  editingShift: null,   
 };
 
 const shiftSlice = createSlice({
@@ -36,7 +36,7 @@ const shiftSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      // 🚚 FETCH ALL
+    
       .addCase(fetchAllShifts.pending, (state) => {
         state.status = 'loading';
         state.error = null;
@@ -51,7 +51,7 @@ const shiftSlice = createSlice({
       })
 
 
-      // 🔍 FETCH BY LOG TYPE
+     
       .addCase(fetchShiftsByLogType.pending, (state) => {
         state.status = 'loading';
         state.error = null;
@@ -66,7 +66,6 @@ const shiftSlice = createSlice({
       })
 
 
-      // ➕ CREATE SHIFT
       .addCase(createShift.pending, (state) => {
         state.status = 'saving';
         state.error = null;
@@ -81,7 +80,7 @@ const shiftSlice = createSlice({
       })
 
 
-      // ✏️ UPDATE SHIFT
+
       .addCase(updateShift.pending, (state) => {
         state.status = 'saving';
         state.error = null;
@@ -99,7 +98,6 @@ const shiftSlice = createSlice({
       })
 
 
-      // ❌ DELETE SHIFT
       .addCase(deleteShiftById.pending, (state) => {
         state.status = 'deleting';
         state.error = null;
