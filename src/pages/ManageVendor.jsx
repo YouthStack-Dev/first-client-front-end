@@ -220,7 +220,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { openModal, closeModal } from "../redux/features/managevendors/vendorSlice";
 import AddVendorModal from "../components/modals/AddVendorModal";
 import DynamicTable from "../components/DynamicTable";
-import { addVendor, fetchVendors  ,editVendor ,removeVendor} from "../redux/features/manageVendors/vendorThunks";
+// import { addVendor, fetchVendors  ,editVendor ,removeVendor} from "../redux/features/managevendors/vendorThunks";
 
 const ManageVendor = () => {
   const dispatch = useDispatch();
