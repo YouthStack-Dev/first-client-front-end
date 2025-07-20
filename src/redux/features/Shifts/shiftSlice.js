@@ -10,10 +10,10 @@ import {
 } from './shiftThunks';
 
 const initialState = {
-  shifts: [],           // All fetched shift records
-  status: 'idle',       // idle | loading | succeeded | failed | saving | deleting
-  error: null,          // Stores error messages (if any)
-  editingShift: null,   // Used to pre-fill form when editing
+  shifts: [],           
+  status: 'idle',       
+  error: null,          
+  editingShift: null,   
 };
 
 const shiftSlice = createSlice({

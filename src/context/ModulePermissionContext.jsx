@@ -12,11 +12,12 @@ export const ModulePermissionProvider = ({ children }) => {
   const fetchPermissions = async () => {
     try {
       const response = await API_CLIENT.get('/auth/me');
-      log("Fetched /auth/me response:", response);
+      response;
+      // log("Fetched /auth/me response:", response);
 
       if (response.data?.user?.permissions) {
         setModulePermissions(response.data.user.permissions);
-        log("Permissions set from /auth/me:", response.data.user.permissions);
+        // log("Permissions set from /auth/me:", response.data.user.permissions);
       } else {
         log("No permissions found in response.");
         setModulePermissions([]);
