@@ -1,7 +1,8 @@
-// src/redux/features/managevehicletype/vehicleTypeSlice.js
+// ✅ Slice: src/redux/features/managevehicletype/vehicleTypeSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 import {
   fetchVehicleTypes,
+  fetchVehicleTypeById, // ✅ Added
   createVehicleType,
   updateVehicleType,
   deleteVehicleType,
@@ -9,6 +10,7 @@ import {
 
 const initialState = {
   vehicleTypes: [],
+  singleVehicleType: null,  // ✅ For fetching a single vehicle type
   loading: false,
   error: null,
   isModalOpen: false,
@@ -16,7 +18,9 @@ const initialState = {
   formData: {
     vehicle_type_name: '',
     description: '',
-    is_active: true,
+    capacity: '',
+    fuel_type: '',
+    comment: '',
   },
 };
 
@@ -36,40 +40,48 @@ const vehicleTypeSlice = createSlice({
     resetForm(state) {
       state.formData = initialState.formData;
       state.editingId = null;
+      state.singleVehicleType = null;  // ✅ Reset single vehicle when form resets
     },
   },
   extraReducers: (builder) => {
     builder
-      // 🔄 Fetch vehicle types
+      // 🔄 Fetch All
       .addCase(fetchVehicleTypes.pending, (state) => {
         state.loading = true;
-        state.error = null;
       })
       .addCase(fetchVehicleTypes.fulfilled, (state, action) => {
         state.loading = false;
         state.vehicleTypes = action.payload;
       })
-      .addCase(fetchVehicleTypes.rejected, (state, action) => {
+
+      // ✅ Fetch Single by ID
+      .addCase(fetchVehicleTypeById.pending, (state) => {
+        state.loading = true;
+        state.singleVehicleType = null;
+      })
+      .addCase(fetchVehicleTypeById.fulfilled, (state, action) => {
+        state.loading = false;
+        state.singleVehicleType = action.payload;
+      })
+      .addCase(fetchVehicleTypeById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
-      // ➕ Add new vehicle type
+      // ➕ Create
       .addCase(createVehicleType.fulfilled, (state, action) => {
         state.vehicleTypes.push(action.payload);
       })
 
-      // ✏️ Update existing vehicle type
+      // ✏️ Update
       .addCase(updateVehicleType.fulfilled, (state, action) => {
         const index = state.vehicleTypes.findIndex(
           (vt) => vt.vehicle_type_id === action.payload.vehicle_type_id
         );
-        if (index !== -1) {
-          state.vehicleTypes[index] = action.payload;
-        }
+        if (index !== -1) state.vehicleTypes[index] = action.payload;
       })
 
-      // ❌ Delete vehicle type
+      // ❌ Delete
       .addCase(deleteVehicleType.fulfilled, (state, action) => {
         state.vehicleTypes = state.vehicleTypes.filter(
           (vt) => vt.vehicle_type_id !== action.payload
@@ -78,11 +90,5 @@ const vehicleTypeSlice = createSlice({
   },
 });
 
-export const {
-  setFormData,
-  toggleModal,
-  setEditingId,
-  resetForm,
-} = vehicleTypeSlice.actions;
-
+export const { setFormData, toggleModal, setEditingId, resetForm } = vehicleTypeSlice.actions;
 export default vehicleTypeSlice.reducer;

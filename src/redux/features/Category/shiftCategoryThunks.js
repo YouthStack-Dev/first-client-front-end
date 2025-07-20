@@ -1,7 +1,9 @@
 // src/redux/features/shiftCategory/shiftCategoryThunks.js
 
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { getCutoff, postCutoff, putCutoff } from './shiftCategoryAPI';
+import { 
+  getCutoff, 
+  postCutoff, putCutoff } from './shiftCategoryAPI';
 
 /**
  * Fetches the existing cutoff data (returns all from API).

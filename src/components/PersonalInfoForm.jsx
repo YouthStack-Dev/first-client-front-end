@@ -1,38 +1,43 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { DateRange } from 'react-date-range'; // Changed from DateRangePicker to DateRange
-import 'react-date-range/dist/styles.css'; // main style file
-import 'react-date-range/dist/theme/default.css'; // theme css file
-import { format } from 'date-fns';
+import { DateRange } from 'react-date-range';
+import 'react-date-range/dist/styles.css';
+import 'react-date-range/dist/theme/default.css';
+import { format, parseISO } from 'date-fns';
 
-const PersonalInfoForm = ({
-  formData,
-  onChange,
-  errors,
-}) => {
+const PersonalInfoForm = ({ formData, onChange, errors, onCheckboxChange, isReadOnly }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const datePickerRef = useRef(null);
 
-  // Initialize with values from formData or sensible defaults
-  // Ensure startDate and endDate are Date objects for react-date-range
+  // Initialize date range from form data or use current date as default
   const [dateRangeSelection, setDateRangeSelection] = useState([
     {
-      startDate: formData.dateRange && formData.dateRange.startDate ? new Date(formData.dateRange.startDate) : new Date(),
-      endDate: formData.dateRange && formData.dateRange.endDate ? new Date(formData.dateRange.endDate) : new Date(),
+      startDate: formData.dateRange?.startDate 
+        ? typeof formData.dateRange.startDate === 'string'
+          ? parseISO(formData.dateRange.startDate)
+          : new Date(formData.dateRange.startDate)
+        : new Date(),
+      endDate: formData.dateRange?.endDate
+        ? typeof formData.dateRange.endDate === 'string'
+          ? parseISO(formData.dateRange.endDate)
+          : new Date(formData.dateRange.endDate)
+        : new Date(),
       key: 'selection',
     },
   ]);
 
-  // Effect to update form data when dateRangeSelection changes
+  // Update form data when date range changes
   useEffect(() => {
-    if (dateRangeSelection[0].startDate && dateRangeSelection[0].endDate) {
+    if (!isReadOnly && dateRangeSelection[0].startDate && dateRangeSelection[0].endDate) {
       const newDateRange = {
         startDate: format(dateRangeSelection[0].startDate, 'yyyy-MM-dd'),
         endDate: format(dateRangeSelection[0].endDate, 'yyyy-MM-dd'),
       };
-      // Only call onChange if the date range has actually changed
+      
+      // Only update if dates have changed
       if (
-        formData.dateRange?.startDate !== newDateRange.startDate ||
-        formData.dateRange?.endDate !== newDateRange.endDate
+        !formData.dateRange ||
+        formData.dateRange.startDate !== newDateRange.startDate ||
+        formData.dateRange.endDate !== newDateRange.endDate
       ) {
         onChange({
           target: {
@@ -42,16 +47,15 @@ const PersonalInfoForm = ({
         });
       }
     }
-  }, [dateRangeSelection, formData.dateRange, onChange]);
+  }, [dateRangeSelection, formData.dateRange, onChange, isReadOnly]);
 
-  // Handle clicks outside the date picker to close it
+  // Close date picker when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (datePickerRef.current && !datePickerRef.current.contains(event.target)) {
         setShowDatePicker(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -59,21 +63,47 @@ const PersonalInfoForm = ({
   }, []);
 
   const handleDateSelect = (ranges) => {
+    if (isReadOnly) return;
     setDateRangeSelection([ranges.selection]);
   };
 
   const displayDateRange = () => {
-    if (dateRangeSelection[0].startDate && dateRangeSelection[0].endDate) {
-      const start = format(dateRangeSelection[0].startDate, 'yyyy-MM-dd');
-      const end = format(dateRangeSelection[0].endDate, 'yyyy-MM-dd');
+    if (formData.dateRange?.startDate && formData.dateRange?.endDate) {
+      const start = format(
+        typeof formData.dateRange.startDate === 'string'
+          ? parseISO(formData.dateRange.startDate)
+          : new Date(formData.dateRange.startDate),
+        'yyyy-MM-dd'
+      );
+      const end = format(
+        typeof formData.dateRange.endDate === 'string'
+          ? parseISO(formData.dateRange.endDate)
+          : new Date(formData.dateRange.endDate),
+        'yyyy-MM-dd'
+      );
       return `${start} - ${end}`;
     }
     return '';
   };
 
+  // Common input class utility function
+  const getInputClasses = (hasError) => {
+    return `w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+      hasError ? 'border-red-500 bg-red-50' : 'border-gray-300'
+    } ${isReadOnly ? 'bg-gray-100 cursor-not-allowed' : ''}`;
+  };
+
+  // Common select classes utility function
+  const getSelectClasses = (hasError) => {
+    return `w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none ${
+      hasError ? 'border-red-500 bg-red-50' : 'border-gray-300'
+    } ${isReadOnly ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`;
+  };
+
   return (
     <div className="animate-fadeIn">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Employee Name */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Employee Name <span className="text-red-500">*</span>
@@ -81,18 +111,18 @@ const PersonalInfoForm = ({
           <input
             type="text"
             name="employeeName"
-            value={formData.employeeName}
+            value={formData.employeeName || ''}
             onChange={onChange}
-            className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-              errors.employeeName ? 'border-red-500 bg-red-50' : 'border-gray-300'
-            }`}
+            className={getInputClasses(errors.employeeName)}
             placeholder="Enter employee name"
+            disabled={isReadOnly}
           />
           {errors.employeeName && (
             <p className="mt-1 text-sm text-red-500">{errors.employeeName}</p>
           )}
         </div>
 
+        {/* Employee ID */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Employee ID <span className="text-red-500">*</span>
@@ -100,18 +130,18 @@ const PersonalInfoForm = ({
           <input
             type="text"
             name="employee_code"
-            value={formData.employee_code}
+            value={formData.employee_code || ''}
             onChange={onChange}
-            className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-              errors.employee_code ? 'border-red-500 bg-red-50' : 'border-gray-300'
-            }`}
+            className={getInputClasses(errors.employee_code)}
             placeholder="Enter employee ID"
+            disabled={isReadOnly}
           />
           {errors.employee_code && (
             <p className="mt-1 text-sm text-red-500">{errors.employee_code}</p>
           )}
         </div>
 
+        {/* Email */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Email ID <span className="text-red-500">*</span>
@@ -119,29 +149,28 @@ const PersonalInfoForm = ({
           <input
             type="email"
             name="emailId"
-            value={formData.emailId}
+            value={formData.emailId || ''}
             onChange={onChange}
-            className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-              errors.emailId ? 'border-red-500 bg-red-50' : 'border-gray-300'
-            }`}
+            className={getInputClasses(errors.emailId)}
             placeholder="Enter email ID"
+            disabled={isReadOnly}
           />
           {errors.emailId && (
             <p className="mt-1 text-sm text-red-500">{errors.emailId}</p>
           )}
         </div>
 
+        {/* Gender */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Gender <span className="text-red-500">*</span>
           </label>
           <select
             name="gender"
-            value={formData.gender}
+            value={formData.gender || ''}
             onChange={onChange}
-            className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white ${
-              errors.gender ? 'border-red-500 bg-red-50' : 'border-gray-300'
-            }`}
+            className={getSelectClasses(errors.gender)}
+            disabled={isReadOnly}
           >
             <option value="">Select gender</option>
             <option value="MALE">MALE</option>
@@ -153,6 +182,7 @@ const PersonalInfoForm = ({
           )}
         </div>
 
+        {/* Mobile Number */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Mobile Number
@@ -160,13 +190,15 @@ const PersonalInfoForm = ({
           <input
             type="tel"
             name="mobileNumber"
-            value={formData.mobileNumber}
+            value={formData.mobileNumber || ''}
             onChange={onChange}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className={getInputClasses(false)}
             placeholder="Enter mobile number"
+            disabled={isReadOnly}
           />
         </div>
 
+        {/* Alternate Mobile Number */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Alternate Mobile Number
@@ -174,29 +206,28 @@ const PersonalInfoForm = ({
           <input
             type="tel"
             name="alternateMobileNumber"
-            value={formData.alternateMobileNumber}
+            value={formData.alternateMobileNumber || ''}
             onChange={onChange}
-            className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-              errors.alternateMobileNumber ? 'border-red-500 bg-red-50' : 'border-gray-300'
-            }`}
+            className={getInputClasses(errors.alternateMobileNumber)}
             placeholder="Enter alternate mobile number"
+            disabled={isReadOnly}
           />
           {errors.alternateMobileNumber && (
             <p className="mt-1 text-sm text-red-500">{errors.alternateMobileNumber}</p>
           )}
         </div>
 
+        {/* Office */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Office <span className="text-red-500">*</span>
           </label>
           <select
             name="office"
-            value={formData.office}
+            value={formData.office || ''}
             onChange={onChange}
-            className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white ${
-              errors.office ? 'border-red-500 bg-red-50' : 'border-gray-300'
-            }`}
+            className={getSelectClasses(errors.office)}
+            disabled={isReadOnly}
           >
             <option value="">Select office</option>
             <option value="STONEX_PUNE">STONEX_PUNE</option>
@@ -208,15 +239,17 @@ const PersonalInfoForm = ({
           )}
         </div>
 
+        {/* Special Need */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Special Need
           </label>
           <select
             name="specialNeed"
-            value={formData.specialNeed}
+            value={formData.specialNeed || 'None'}
             onChange={onChange}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white"
+            className={getSelectClasses(false)}
+            disabled={isReadOnly}
           >
             <option value="None">None</option>
             <option value="Wheelchair">Wheelchair</option>
@@ -225,7 +258,7 @@ const PersonalInfoForm = ({
           </select>
         </div>
 
-        {/* Date Range Picker (Calendar only) Integration */}
+        {/* Date Range */}
         <div className="relative" ref={datePickerRef}>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Date Range
@@ -234,35 +267,38 @@ const PersonalInfoForm = ({
             type="text"
             name="dateRangeDisplay"
             value={displayDateRange()}
-            onClick={() => setShowDatePicker(!showDatePicker)}
+            onClick={() => !isReadOnly && setShowDatePicker(!showDatePicker)}
             readOnly
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer"
+            className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+              isReadOnly ? 'bg-gray-100 cursor-not-allowed' : 'cursor-pointer'
+            }`}
             placeholder="Select date range"
           />
-          {showDatePicker && (
+          {showDatePicker && !isReadOnly && (
             <div className="absolute z-10 mt-1 shadow-lg rounded-md overflow-hidden bg-white">
-              <DateRange // Changed component here
+              <DateRange
                 ranges={dateRangeSelection}
                 onChange={handleDateSelect}
                 moveRangeOnFirstSelection={false}
                 months={1}
                 direction="horizontal"
                 className="date-range-picker"
-                // No showSelectionPreview or other props needed, DateRange is simpler
               />
             </div>
           )}
         </div>
 
+        {/* Department */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Department
+            Department <span className="text-red-500">*</span>
           </label>
           <select
             name="department"
-            value={formData.department}
+            value={formData.department || ''}
             onChange={onChange}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white"
+            className={getSelectClasses(errors.department)}
+            disabled={isReadOnly}
           >
             <option value="">Select Department</option>
             <option value="HR">HR</option>
