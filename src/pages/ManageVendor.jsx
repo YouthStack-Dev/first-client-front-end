@@ -218,14 +218,9 @@
 import React, { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { openModal, closeModal } from "../redux/features/managevendors/vendorSlice";
-import {
-  fetchVendors,
-  addVendor,
-  editVendor,
-  removeVendor,
-} from "../redux/features/managevendors/vendorThunks";
 import AddVendorModal from "../components/modals/AddVendorModal";
 import DynamicTable from "../components/DynamicTable";
+import { addVendor, fetchVendors  ,editVendor ,removeVendor} from "../redux/features/manageVendors/vendorThunks";
 
 const ManageVendor = () => {
   const dispatch = useDispatch();
