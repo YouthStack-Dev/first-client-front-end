@@ -225,7 +225,8 @@
 // };
 
 // export default ShiftManagement;
-// ShiftManagement.jsx
+
+
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import ShiftForm from '../components/shiftForm';
@@ -267,14 +268,23 @@ const ShiftManagement = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [showPopup, setShowPopup] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [formData, setFormData] = useState({
-    shiftCode: '', shiftType: '', hours: '', minutes: '', days: [],
-    waitingTime: '', pickOn: '', gender: '', isActive: true,
-  });
+
+  const initialForm = {
+    shiftCode: '',
+    shiftType: '',
+    hours: '',
+    minutes: '',
+    days: [],
+    waitingTime: '',
+    pickOn: '',
+    gender: '',
+    isActive: true,
+  };
+
+  const [formData, setFormData] = useState(initialForm);
 
   useEffect(() => {
-  if (!canRead) return;
-
+    if (!canRead) return;
     if (shifts.length === 0) {
       if (activeTab === 'all') dispatch(fetchAllShifts());
       else if (activeTab === 'login') dispatch(fetchShiftsByLogType('in'));
@@ -285,27 +295,32 @@ const ShiftManagement = () => {
   if (notFound) return <PermissionDenied />;
 
   const resetForm = () => {
-    setFormData({ shiftCode: '', shiftType: '', hours: '', minutes: '', days: [],
-      waitingTime: '', pickOn: '', gender: '', isActive: true });
+    setFormData(initialForm);
     setEditId(null);
   };
 
-  const handleAddShift = () => { resetForm(); setShowPopup(true); };
+  const handleAddShift = () => {
+    resetForm();
+    setShowPopup(true);
+  };
 
   const handleSave = () => {
     const payload = {
       shift_code: formData.shiftCode,
       log_type: formData.shiftType === 'login' ? 'in' : 'out',
-      shift_time: `${formData.hours.padStart(2, '0')}:${formData.minutes.padStart(2, '0')}:00`,
-      day: formData.days.map((d) => d.toLowerCase()),
+      shift_time: `${formData.hours.toString().padStart(2, '0')}:${formData.minutes.toString().padStart(2, '0')}:00`,
+      day: formData.days.map(d => d.toLowerCase()),
       waiting_time_minutes: Number(formData.waitingTime),
       pickup_type: formData.pickOn,
       gender: formData.gender,
       is_active: formData.isActive,
       tenant_id: 1,
     };
-    if (editId) dispatch(updateShift({ ...payload, id: editId }));
-    else dispatch(createShift(payload));
+    if (editId) {
+      dispatch(updateShift({ ...payload, id: editId }));
+    } else {
+      dispatch(createShift(payload));
+    }
     setShowPopup(false);
     resetForm();
   };
@@ -333,21 +348,20 @@ const ShiftManagement = () => {
     }
   };
 
- const transformedShifts = shifts
-  .filter((shift) => {
-    if (activeTab === 'login') return shift.log_type === 'in';
-    if (activeTab === 'logout') return shift.log_type === 'out';
-    return true; // for 'all'
-  })
-  .map((shift) => {
-    const shiftDays = Array.isArray(shift.day) ? shift.day : [shift.day];
-    const dayColumns = DAYS.reduce((acc, day) => {
-      acc[day] = shiftDays.includes(day) ? '✅' : '';
-      return acc;
-    }, {});
-    return { ...shift, ...dayColumns };
-  });
-
+  const transformedShifts = shifts
+    .filter(shift => {
+      if (activeTab === 'login') return shift.log_type === 'in';
+      if (activeTab === 'logout') return shift.log_type === 'out';
+      return true;
+    })
+    .map(shift => {
+      const shiftDays = Array.isArray(shift.day) ? shift.day : [shift.day];
+      const dayColumns = DAYS.reduce((acc, day) => {
+        acc[day] = shiftDays.includes(day) ? '✅' : '';
+        return acc;
+      }, {});
+      return { ...shift, ...dayColumns };
+    });
 
   return (
     <div className="w-full min-h-screen bg-gray-50 px-8 py-6">
@@ -358,7 +372,7 @@ const ShiftManagement = () => {
       </div>
 
       <div className="flex space-x-4 border-b mb-4">
-        {TABS.map((tab) => (
+        {TABS.map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
@@ -375,7 +389,12 @@ const ShiftManagement = () => {
 
       {showPopup && (
         <PopupModal title="Shift Form" isOpen={true} onClose={() => setShowPopup(false)}>
-          <ShiftForm {...formData} setFormData={setFormData} onCancel={() => setShowPopup(false)} onSave={handleSave} />
+          <ShiftForm
+            formData={formData}
+            setFormData={setFormData}
+            onCancel={() => setShowPopup(false)}
+            onSave={handleSave}
+          />
         </PopupModal>
       )}
 
@@ -386,8 +405,12 @@ const ShiftManagement = () => {
           onMenuToggle={() => {}}
           renderActions={(row) => (
             <div className="flex gap-2">
-              <button onClick={() => handleEdit(row)} className="text-blue-600 hover:underline"><Edit size={14} /></button>
-              <button onClick={() => handleDelete(row)} className="text-red-600 hover:underline"><Trash2 size={14} /></button>
+              <button onClick={() => handleEdit(row)} className="text-blue-600 hover:underline">
+                <Edit size={14} />
+              </button>
+              <button onClick={() => handleDelete(row)} className="text-red-600 hover:underline">
+                <Trash2 size={14} />
+              </button>
             </div>
           )}
         />

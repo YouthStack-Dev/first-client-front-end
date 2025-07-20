@@ -6,7 +6,6 @@ import { jwtDecode } from 'jwt-decode';
 import Layout from './components/layout/layout';
 import Loading from './components/ui/Loading';
 import { ModulePermissionContext } from './context/ModulePermissionContext';
-// import ProtectedRouteLogin from './middleware/ProtectedRouteLogin';
 
 import ManageClients from './pages/ManageClients';
 import ManageRoles from './pages/ManageRoles';
@@ -66,12 +65,7 @@ function App() {
       try {
         const decoded = jwtDecode(token);
         dispatch(setUser(decoded));
-        
-        setTimeout(() => {
-          dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: decoded.tenant_id }));
-          dispatch(fetchAllShifts());
-          dispatch(fetchCutoffData());
-        }, 300);
+       
       } catch (err) {
         console.error("Invalid token");
         localStorage.removeItem("access_token");

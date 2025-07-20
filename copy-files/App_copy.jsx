@@ -66,11 +66,7 @@ function App() {
   
 
   if (userLoading || permissionLoading) {
-    return <Loading />; // 👈 Show loading screen until both are ready
-  }
-
-  if (userLoading || permissionLoading) {
-    return <Loading />;
+    return <Loading />; 
   }
 
   return (
