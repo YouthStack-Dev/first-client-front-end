@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
 import FormSteps from './FormSteps';
 import PersonalInfoForm from './PersonalInfoForm';
 import NavigationButtons from './NavigationButtons';
@@ -14,25 +15,81 @@ const initialFormData = {
   alternateMobileNumber: '',
   office: '',
   specialNeed: 'None',
-  dateRange: '',
-  transportUser: false,
-  subscribeEmail: false,
-  subscribeSms: false,
-  mobileApp: false,
+  dateRange: {
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0]
+  },
   address: '',
   landmark: '',
-  nodalPoint: '',
-  showAll: false,
+  latitude: '',
+  longitude: '',
+  distance_from_company: '',
 };
 
-const EmployeeForm = () => {
+const EmployeeForm = ({ mode = 'create' }) => {
+  const { employeeId } = useParams();
+  const { state } = useLocation();
+  
   const [formData, setFormData] = useState(initialFormData);
   const [currentStep, setCurrentStep] = useState('personalInfo');
   const [completedSteps, setCompletedSteps] = useState([]);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(mode !== 'create');
+
+  // Load employee data for edit/view modes
+  useEffect(() => {
+    if (mode === 'create') {
+      setIsLoading(false);
+      return;
+    }
+
+    const loadEmployeeData = () => {
+      setIsLoading(true);
+      try {
+        // First try to get from route state
+        const employee = state?.employee;
+        console.log('Employee from route state:', employee);
+
+        if (employee) {
+          const mappedData = {
+            ...initialFormData,
+            // Map all fields from the employee object to form fields
+            employeeName: employee.username || employee.employeeName || '',
+            employee_code: employee.employee_code || '',
+            emailId: employee.email || employee.emailId || '',
+            gender: employee.gender || '',
+            mobileNumber: employee.mobile_number || employee.mobileNumber || '',
+            alternateMobileNumber: employee.alternateMobileNumber || '',
+            office: employee.office || '',
+            specialNeed: employee.specialNeed || 'None',
+            dateRange: employee.dateRange || {
+              startDate: new Date().toISOString().split('T')[0],
+              endDate: new Date().toISOString().split('T')[0]
+            },
+            address: employee.address || '',
+            landmark: employee.landmark || '',
+            latitude: employee.latitude || '',
+            longitude: employee.longitude || '',
+            distance_from_company: employee.distance_from_company || '',
+          };
+          setFormData(mappedData);
+        } else {
+          console.error(`Employee data not found in route state for ID ${employeeId}`);
+        }
+      } catch (error) {
+        console.error('Error loading employee data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadEmployeeData();
+  }, [mode, employeeId, state]);
 
   const handleInputChange = (e) => {
+    if (mode === 'view') return;
+    
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
@@ -46,6 +103,7 @@ const EmployeeForm = () => {
   };
 
   const handleCheckboxChange = (name, checked) => {
+    if (mode === 'view') return;
     setFormData((prev) => ({ ...prev, [name]: checked }));
   };
 
@@ -68,8 +126,10 @@ const EmployeeForm = () => {
   };
 
   const validateAddress = () => {
-    // Add any address validation here if needed
-    return true;
+    const newErrors = {};
+    if (!formData.address) newErrors.address = 'Address is required';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleNext = () => {
@@ -91,63 +151,136 @@ const EmployeeForm = () => {
   };
 
   const handleSubmit = () => {
-    const isValid = validateAddress();
+    // Handle view mode separately
+    if (mode === 'view') {
+      // Navigate back or to a specific route
+      window.history.back();
+      return;
+    }
+  
+    let isValid = true;
+    if (currentStep === 'address') {
+      isValid = validateAddress();
+    } else {
+      isValid = validatePersonalInfo();
+    }
+    
     if (!isValid) return;
-
+  
     setIsSubmitting(true);
+    
+    // Here you would call your API based on the mode
+    console.log(`Form submitted in ${mode} mode:`, formData);
+    
     setTimeout(() => {
-      console.log('Form submitted:', formData);
       setIsSubmitting(false);
-      alert('Employee registration successful!');
-      setFormData(initialFormData);
-      setCurrentStep('personalInfo');
-      setCompletedSteps([]);
+      if (mode !== 'view') {
+        alert(`Employee ${mode === 'create' ? 'created' : 'updated'} successfully!`);
+      }
+      if (mode === 'create') {
+        setFormData(initialFormData);
+        setCurrentStep('personalInfo');
+        setCompletedSteps([]);
+      }
     }, 1500);
   };
 
   const isFirstStep = currentStep === 'personalInfo';
   const isLastStep = currentStep === 'address';
 
-  return (
-    <>
-      <HeaderWithAction title="NEW EMPLOYEE" showBackButton={true} />
-      <div className='p-2 m-3 bg-white rounded-xl  '>
-        <FormSteps currentStep={currentStep} completedSteps={completedSteps} />
-        <div className="mt-6 m-3">
-          {currentStep === 'personalInfo' && (
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <span className="ml-4">Loading employee data...</span>
+      </div>
+    );
+  }
+// In EmployeeForm.js, replace the current return statement with:
+return (
+  <>
+    <HeaderWithAction 
+      title={mode === 'create' ? 'NEW EMPLOYEE' : mode === 'edit' ? 'EDIT EMPLOYEE' : 'EMPLOYEE DETAILS'} 
+      showBackButton={true} 
+    />
+    <div className='p-2 m-3 bg-white rounded-xl'>
+      {mode === 'view' ? (
+        // View mode - show all information at once
+        <>
+          <div className="mb-6">
+            <h2 className="text-xl font-bold mb-4">Personal Information</h2>
             <PersonalInfoForm
               formData={formData}
               onChange={handleInputChange}
               onCheckboxChange={handleCheckboxChange}
               errors={errors}
+              isReadOnly={true}
             />
-          )}
+          </div>
+          
+          <div className="mt-8">
+            <h2 className="text-xl font-bold mb-4">Address Information</h2>
+            <EmployeeAddressGoogleMapView 
+              formData={formData} 
+              setFormData={setFormData}
+              setErrors={setErrors}
+              isReadOnly={true}
+            />
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-sm rounded p-3 mt-3">
+              📍 <strong>Note:</strong> The <code>CP</code> button shows company location.
+            </div>
+          </div>
 
-{currentStep === 'address' && (
-  <>
-    <EmployeeAddressGoogleMapView formData={formData} />
-    
-    <div className="bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-sm rounded p-3 mt-3">
-      📍 <strong>Note:</strong> The <code>CP</code> button in the map shows the location where the company is located.
-    </div>
-  </>
-)}
+          <NavigationButtons
+            currentStep="complete"
+            onSubmit={handleSubmit}
+            isLastStep={true}
+            mode={mode}
+          />
+        </>
+      ) : (
+        // Edit/Create mode - show stepped form
+        <>
+          <FormSteps currentStep={currentStep} completedSteps={completedSteps} />
+          <div className="mt-6 m-3">
+            {currentStep === 'personalInfo' ? (
+              <PersonalInfoForm
+                formData={formData}
+                onChange={handleInputChange}
+                onCheckboxChange={handleCheckboxChange}
+                errors={errors}
+                isReadOnly={false}
+              />
+            ) : (
+              <>
+                <EmployeeAddressGoogleMapView 
+                  formData={formData} 
+                  setFormData={setFormData}
+                  setErrors={setErrors}
+                  isReadOnly={false}
+                />
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-sm rounded p-3 mt-3">
+                  📍 <strong>Note:</strong> The <code>CP</code> button shows company location.
+                </div>
+              </>
+            )}
+          </div>
 
-        </div>
-
-        {currentStep !== 'address' && (
           <NavigationButtons
             currentStep={currentStep}
             onBack={handleBack}
             onNext={handleNext}
+            onSubmit={handleSubmit}
             isLastStep={isLastStep}
             isFirstStep={isFirstStep}
             isSubmitting={isSubmitting}
+            mode={mode}
           />
-        )}
-      </div>
-    </>
-  );
+        </>
+      )}
+    </div>
+  </>
+);
 };
 
 export default EmployeeForm;

@@ -12,7 +12,7 @@ const NavigationButtons = ({
 }) => {
   return (
     <div className="flex justify-between mt-6">
-      {!isFirstStep && (
+      {!isFirstStep && mode !== 'view' && (
         <button
           onClick={onBack}
           className="bg-gray-300 text-gray-700 p-2 rounded hover:bg-gray-400 transition"
@@ -25,7 +25,9 @@ const NavigationButtons = ({
       {isLastStep ? (
         <button
           onClick={onSubmit}
-          className="bg-green-500 text-white p-2 rounded hover:bg-green-600 transition disabled:bg-gray-400"
+          className={`${
+            mode === 'view' ? 'bg-gray-500 hover:bg-gray-600' : 'bg-green-500 hover:bg-green-600'
+          } text-white p-2 rounded transition disabled:bg-gray-400`}
           disabled={isSubmitting}
         >
           {isSubmitting
@@ -37,13 +39,15 @@ const NavigationButtons = ({
             : 'Update Employee'}
         </button>
       ) : (
-        <button
-          onClick={onNext}
-          className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
-          disabled={isSubmitting}
-        >
-          Next
-        </button>
+        mode !== 'view' && (
+          <button
+            onClick={onNext}
+            className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
+            disabled={isSubmitting}
+          >
+            Next
+          </button>
+        )
       )}
     </div>
   );

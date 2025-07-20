@@ -1,23 +1,45 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { createDepartment, fetchTeams, updateDepartment, deleteTeams } from './manageTeamThunks';
+import {
+  createDepartment,
+  fetchTeams,
+  updateDepartment,
+  deleteTeams,
+  fetchEmployeesByDepartment,
+} from './manageTeamThunks';
 
 const initialState = {
+  // Teams
   teams: [],
   selectedTeams: [],
   showModal: false,
   editingTeamId: null,
+
+  // Employees
+  employees: [],
+  selectedEmployees: [],
+  employeesByDepartment: {}, // ✅ missing key added
+  employeeFetchStatus: {     // ✅ missing key added
+    status: 'idle',
+    error: null,
+  },
+
+  // API Status Tracking
   apiStatus: {
     fetchTeams: { status: 'idle', error: null },
     createDepartment: { status: 'idle', error: null },
     updateDepartment: { status: 'idle', error: null },
     deleteTeams: { status: 'idle', error: null },
+    fetchEmployees: { status: 'idle', error: null },
+    fetchEmployeesByDepartment: { status: 'idle', error: null },
   },
 };
+
 
 const manageTeamSlice = createSlice({
   name: 'manageTeam',
   initialState,
   reducers: {
+    // Modal & Team Management
     toggleModal(state) {
       state.showModal = !state.showModal;
     },
@@ -40,10 +62,25 @@ const manageTeamSlice = createSlice({
       state.teams = state.teams.filter((team) => !idsToRemove.includes(team.department_id));
       state.selectedTeams = state.selectedTeams.filter((id) => !idsToRemove.includes(id));
     },
+
+    // Employee Selection
+    toggleSelectEmployee(state, action) {
+      const id = action.payload;
+      if (state.selectedEmployees.includes(id)) {
+        state.selectedEmployees = state.selectedEmployees.filter((i) => i !== id);
+      } else {
+        state.selectedEmployees.push(id);
+      }
+    },
+    clearSelectedEmployees(state) {
+      state.selectedEmployees = [];
+    },
   },
   extraReducers: (builder) => {
+    // =====================
+    // Teams - CRUD
+    // =====================
     builder
-      // Fetch Teams
       .addCase(fetchTeams.pending, (state) => {
         state.apiStatus.fetchTeams.status = 'loading';
         state.apiStatus.fetchTeams.error = null;
@@ -56,7 +93,6 @@ const manageTeamSlice = createSlice({
         state.apiStatus.fetchTeams.status = 'failed';
         state.apiStatus.fetchTeams.error = action.payload || action.error.message;
       })
-      // Create Department
       .addCase(createDepartment.pending, (state) => {
         state.apiStatus.createDepartment.status = 'loading';
         state.apiStatus.createDepartment.error = null;
@@ -73,7 +109,6 @@ const manageTeamSlice = createSlice({
         state.apiStatus.createDepartment.status = 'failed';
         state.apiStatus.createDepartment.error = action.payload || action.error.message;
       })
-      // Update Department
       .addCase(updateDepartment.pending, (state) => {
         state.apiStatus.updateDepartment.status = 'loading';
         state.apiStatus.updateDepartment.error = null;
@@ -82,7 +117,7 @@ const manageTeamSlice = createSlice({
         state.apiStatus.updateDepartment.status = 'succeeded';
         state.teams = state.teams.map((team) =>
           team.department_id === action.payload.department_id
-            ? { ...team, ...action.payload } // Merge only changed fields
+            ? { ...team, ...action.payload }
             : team
         );
       })
@@ -90,7 +125,6 @@ const manageTeamSlice = createSlice({
         state.apiStatus.updateDepartment.status = 'failed';
         state.apiStatus.updateDepartment.error = action.payload || action.error.message;
       })
-      // Delete Teams
       .addCase(deleteTeams.pending, (state) => {
         state.apiStatus.deleteTeams.status = 'loading';
         state.apiStatus.deleteTeams.error = null;
@@ -104,6 +138,25 @@ const manageTeamSlice = createSlice({
         state.apiStatus.deleteTeams.status = 'failed';
         state.apiStatus.deleteTeams.error = action.payload || action.error.message;
       });
+
+    // =====================
+    // Employees
+    // =====================
+    builder
+    .addCase(fetchEmployeesByDepartment.pending, (state) => {
+      state.employeeFetchStatus.status = 'loading';
+      state.employeeFetchStatus.error = null;
+    })
+    .addCase(fetchEmployeesByDepartment.fulfilled, (state, action) => {
+      const { departmentId, employees } = action.payload;
+      state.employeeFetchStatus.status = 'succeeded';
+      state.employeesByDepartment[departmentId] = employees;
+    })
+    .addCase(fetchEmployeesByDepartment.rejected, (state, action) => {
+      state.employeeFetchStatus.status = 'failed';
+      state.employeeFetchStatus.error = action.payload || action.error.message;
+    });
+    
   },
 });
 
@@ -113,6 +166,8 @@ export const {
   toggleSelect,
   clearSelectedTeams,
   removeTeams,
+  toggleSelectEmployee,
+  clearSelectedEmployees,
 } = manageTeamSlice.actions;
 
 export default manageTeamSlice.reducer;

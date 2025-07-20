@@ -24,6 +24,8 @@ import { setUser } from './redux/features/auth/authSlice';
 import { fetchVendors } from './redux/features/manageVendors/vendorThunks';
 import { fetchAllShifts } from './redux/features/Shifts/shiftThunks';
 import { fetchCutoffData } from './redux/features/Category/shiftCategoryThunks';
+import EmployeeEdit from './components/Employee/EmployeeEdit';
+import EmployeeView from './components/Employee/EmployeeView';
 
 // Lazy-loaded components
 const Login = lazy(() => import('./pages/Login'));
@@ -104,7 +106,6 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/role-management" element={<ManageRoles />} />
               <Route path="/staffs" element={<ManageStaffs />} />
-              <Route path="/employee/create-employee" element={<EmployeeForm />} />
               <Route path="/users" element={<ManageUser />} />
               <Route path="/bookings" element={<BookingManagement />} />
               <Route path="/vehicles/add-vehicle" element={<VehicleForm />} />
@@ -112,6 +113,10 @@ function App() {
               <Route path="/shift-Categories" element={<ShiftCategoryManagement />} />
               <Route path="/manage-team" element={<ManageTeams />} />
               <Route path="/teams/:teamId/employees" element={<EmployeeList />} />
+              <Route path="/employee/create-employee" element={<EmployeeForm />} />
+
+              <Route path="/employee/:employeeId/edit" element={<EmployeeForm mode="edit" />} />
+              <Route path="/employee/:employeeId/view" element={<EmployeeForm mode="view" />} />
               <Route path="/routing" element={<RouteManagement />} />
               <Route path="/vendors" element={<ManageVendor />} />
               <Route path="/manage-client" element={<ManageClients />} />
