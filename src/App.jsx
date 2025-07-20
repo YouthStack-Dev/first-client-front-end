@@ -22,7 +22,6 @@ import ClientDashboard from './components/dashboards/ClientDashboard';
 import GoogleMapView from './components/Map';
 
 import { setUser } from './redux/features/auth/authSlice';
-import { fetchVendors } from './redux/features/manageVendors/vendorThunks';
 import { fetchAllShifts } from './redux/features/Shifts/shiftThunks';
 import { fetchCutoffData } from './redux/features/Category/shiftCategoryThunks';
 
