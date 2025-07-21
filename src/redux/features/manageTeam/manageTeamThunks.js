@@ -74,3 +74,57 @@ export const fetchEmployeesByDepartment = createAsyncThunk(
     }
   }
 );
+
+
+//  Employe Trunks 
+
+
+export const createEmployee = createAsyncThunk(
+  'manageTeam/createEmployee',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await API_CLIENT.post('/employees/', payload);
+      return response.data; // ✅ Return data to reducer
+    } catch (error) {
+      // ✅ Return custom error to reducer
+      return rejectWithValue(
+        error.response?.data || { message: 'Something went wrong' }
+      );
+    }
+  }
+);
+
+
+
+
+// export const updateEmployee = createAsyncThunk(
+//   'manageTeam/updateEmployee',
+//   async ({ id, payload }, { rejectWithValue }) => {
+//     try {
+//       const response = await API_CLIENT.put(`/employees/${id}`, payload);
+//       return response.data;
+//     } catch (error) {
+//       return rejectWithValue(error.response?.data || 'Something went wrong');
+//     }
+//   }
+// );
+
+
+export const updateEmployee = createAsyncThunk(
+  'manageTeam/updateEmployee',
+  async ({ id, payload }, { rejectWithValue }) => {
+    try {
+      console.log('Updating Employee with ID:', id);
+      console.log('Payload:', payload);
+
+      // Simulate a successful API response
+      return {
+        id,
+        ...payload,
+        message: 'Simulated update success'
+      };
+    } catch (error) {
+      return rejectWithValue('Simulated error');
+    }
+  }
+);

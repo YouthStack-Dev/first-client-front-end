@@ -14,6 +14,7 @@ const NavigationButtons = ({
     <div className="flex justify-between mt-6">
       {!isFirstStep && mode !== 'view' && (
         <button
+        type="button"
           onClick={onBack}
           className="bg-gray-300 text-gray-700 p-2 rounded hover:bg-gray-400 transition"
           disabled={isSubmitting}
@@ -24,6 +25,7 @@ const NavigationButtons = ({
       <div className="flex-1" />
       {isLastStep ? (
         <button
+        type="button"
           onClick={onSubmit}
           className={`${
             mode === 'view' ? 'bg-gray-500 hover:bg-gray-600' : 'bg-green-500 hover:bg-green-600'
@@ -39,8 +41,9 @@ const NavigationButtons = ({
             : 'Update Employee'}
         </button>
       ) : (
-        mode !== 'view' && (
+        mode !== 'view' && (  
           <button
+          type="button"
             onClick={onNext}
             className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
             disabled={isSubmitting}

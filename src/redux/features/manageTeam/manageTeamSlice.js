@@ -1,10 +1,10 @@
 import { createSlice } from '@reduxjs/toolkit';
-import {
-  createDepartment,
-  fetchTeams,
+import {  createDepartment,  fetchTeams,
   updateDepartment,
   deleteTeams,
   fetchEmployeesByDepartment,
+  createEmployee,
+  updateEmployee,
 } from './manageTeamThunks';
 
 const initialState = {
@@ -17,8 +17,8 @@ const initialState = {
   // Employees
   employees: [],
   selectedEmployees: [],
-  employeesByDepartment: {}, // ✅ missing key added
-  employeeFetchStatus: {     // ✅ missing key added
+  employeesByDepartment: {},
+  employeeFetchStatus: {     
     status: 'idle',
     error: null,
   },
@@ -31,6 +31,8 @@ const initialState = {
     deleteTeams: { status: 'idle', error: null },
     fetchEmployees: { status: 'idle', error: null },
     fetchEmployeesByDepartment: { status: 'idle', error: null },
+    createEmployee: { status: 'idle', error: " default value" }, 
+    updateEmployee: { status: 'idle', error: null }, // ✅ add this
   },
 };
 
@@ -142,6 +144,54 @@ const manageTeamSlice = createSlice({
     // =====================
     // Employees
     // =====================
+
+   
+
+    builder
+    // 🚀 createEmployee - Pending
+    .addCase(createEmployee.pending, (state) => {
+      console.log('🔄 Creating employee...'); // LOG
+      state.apiStatus.createEmployee.status = 'loading';
+      state.apiStatus.createEmployee.error = null;
+    })
+  
+    // ✅ createEmployee - Fulfilled
+// createEmployee - Fulfilled
+.addCase(createEmployee.fulfilled, (state, action) => {
+  const newEmployee = action.payload;
+  const teamId = newEmployee?.department_id || newEmployee?.team_id; // Ensure the key you're using matches your data
+
+  console.log('✅ Employee created and appended to employees array:', newEmployee);
+
+  // ✅ Update global status
+  state.apiStatus.createEmployee.status = 'succeeded';
+  state.apiStatus.createEmployee.error = null;
+
+  // ✅ Push to main list (optional if you're not using it)
+  state.employees.push(newEmployee);
+
+  // ✅ Push to the specific department
+  if (teamId) {
+    if (!state.employeesByDepartment[teamId]) {
+      // Initialize if not present
+      state.employeesByDepartment[teamId] = { employees: [] };
+    }
+    state.employeesByDepartment[teamId].employees.push(newEmployee);
+  }
+
+  console.log(`👥 Updated employeesByDepartment[${teamId}] array:`, state.employeesByDepartment[teamId]?.employees || []);
+})
+
+
+
+    // ❌ createEmployee - Rejected
+    .addCase(createEmployee.rejected, (state, action) => {
+      console.error('❌ Failed to create employee:', action.payload); // LOG
+      state.apiStatus.createEmployee.status = 'failed';
+      state.apiStatus.createEmployee.error = action.payload || 'Failed to create employee';
+    });
+  
+  
     builder
     .addCase(fetchEmployeesByDepartment.pending, (state) => {
       state.employeeFetchStatus.status = 'loading';
@@ -157,6 +207,35 @@ const manageTeamSlice = createSlice({
       state.employeeFetchStatus.error = action.payload || action.error.message;
     });
     
+
+    builder
+    // 🔄 updateEmployee pending
+    .addCase(updateEmployee.pending, (state) => {
+      state.apiStatus.updateEmployee.status = 'loading';
+      state.apiStatus.updateEmployee.error = null;
+    })
+
+    // ✅ updateEmployee fulfilled
+    .addCase(updateEmployee.fulfilled, (state, action) => {
+      state.apiStatus.updateEmployee.status = 'succeeded';
+      state.apiStatus.updateEmployee.error = null;
+    
+      const updated = action.payload;
+      const index = state.employees.findIndex(emp => emp.id === updated.id);
+      if (index !== -1) {
+        console.log('🔁 Updating employee:', state.employees[index]); // Before update
+        state.employees[index] = updated;
+        console.log('✅ Employee updated:', updated); // After update
+      } else {
+        console.warn('⚠️ Updated employee not found in array:', updated.id);
+      }
+    })
+
+    // ❌ updateEmployee rejected
+    .addCase(updateEmployee.rejected, (state, action) => {
+      state.apiStatus.updateEmployee.status = 'failed';
+      state.apiStatus.updateEmployee.error = action.payload || 'Update failed';
+    });
   },
 });
 

@@ -1,34 +1,28 @@
-// src/components/ShiftForm.jsx
 import React from 'react';
 import FormField from './FormField';
 
-const ShiftForm = ({
-  shiftCode, setShiftCode,
-  shiftType, setShiftType,
-  hours, setHours,
-  minutes, setMinutes,
-  days, setDays,
-  avgSpeed, setAvgSpeed,
-  waitingTime, setWaitingTime,
-  pickOn, setPickOn,
-  gender, setGender,
-  femaleConstraint, setFemaleConstraint,
-  office, setOffice,
-  isActive, setIsActive,
-  onCancel, onSave,
-  errors = {}
-}) => {
+const ShiftForm = ({ formData = {}, setFormData, onCancel, onSave, errors = {} }) => {
+  const {
+    shiftCode = '', shiftType = '', hours = '', minutes = '', days = [],
+    waitingTime = '', pickOn = '', gender = '', isActive = true
+  } = formData;
+
   const hourOptions = Array.from({ length: 13 }, (_, i) => i);
   const minuteOptions = Array.from({ length: 12 }, (_, i) => i * 5);
   const waitingTimeOptions = Array.from({ length: 10 }, (_, i) => i + 1);
   const dayOptions = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
+  const updateField = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   const toggleDay = (day) => {
-    if (days.includes(day)) {
-      setDays(days.filter(d => d !== day));
-    } else {
-      setDays([...days, day]);
-    }
+    setFormData(prev => ({
+      ...prev,
+      days: prev.days?.includes(day)
+        ? prev.days.filter(d => d !== day)
+        : [...(prev.days || []), day]
+    }));
   };
 
   return (
@@ -40,14 +34,14 @@ const ShiftForm = ({
             placeholder="Enter shift code"
             className="w-full border px-3 py-2 rounded"
             value={shiftCode}
-            onChange={(e) => setShiftCode(e.target.value)}
+            onChange={(e) => updateField('shiftCode', e.target.value)}
           />
         </FormField>
 
         <FormField label="Shift Type" name="shiftType" required error={errors.shiftType}>
           <select
             value={shiftType}
-            onChange={(e) => setShiftType(e.target.value)}
+            onChange={(e) => updateField('shiftType', e.target.value)}
             className="w-full border px-3 py-2 rounded"
           >
             <option value="">Select Type</option>
@@ -60,21 +54,21 @@ const ShiftForm = ({
           <div className="flex gap-4">
             <select
               value={hours}
-              onChange={(e) => setHours(e.target.value)}
+              onChange={(e) => updateField('hours', e.target.value)}
               className="w-1/2 border px-3 py-2 rounded"
             >
               <option value="">Hours</option>
-              {hourOptions.map((hr) => (
+              {hourOptions.map(hr => (
                 <option key={hr} value={hr}>{hr} hr</option>
               ))}
             </select>
             <select
               value={minutes}
-              onChange={(e) => setMinutes(e.target.value)}
+              onChange={(e) => updateField('minutes', e.target.value)}
               className="w-1/2 border px-3 py-2 rounded"
             >
               <option value="">Minutes</option>
-              {minuteOptions.map((min) => (
+              {minuteOptions.map(min => (
                 <option key={min} value={min}>{min} min</option>
               ))}
             </select>
@@ -83,12 +77,11 @@ const ShiftForm = ({
 
         <FormField label="Days" name="days" required error={errors.days}>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {dayOptions.map((day) => (
+            {dayOptions.map(day => (
               <label key={day} className="inline-flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  value={day}
-                  checked={days.includes(day)}
+                  checked={(days || []).includes(day)}
                   onChange={() => toggleDay(day)}
                   className="form-checkbox h-4 w-4 text-blue-600"
                 />
@@ -101,11 +94,11 @@ const ShiftForm = ({
         <FormField label="Waiting Time (mins)" name="waitingTime" required error={errors.waitingTime}>
           <select
             value={waitingTime}
-            onChange={(e) => setWaitingTime(e.target.value)}
+            onChange={(e) => updateField('waitingTime', e.target.value)}
             className="w-full border px-3 py-2 rounded"
           >
             <option value="">Select Waiting Time</option>
-            {waitingTimeOptions.map((min) => (
+            {waitingTimeOptions.map(min => (
               <option key={min} value={min}>{min} min</option>
             ))}
           </select>
@@ -114,7 +107,7 @@ const ShiftForm = ({
         <FormField label="Pick On" name="pickOn" required error={errors.pickOn}>
           <select
             value={pickOn}
-            onChange={(e) => setPickOn(e.target.value)}
+            onChange={(e) => updateField('pickOn', e.target.value)}
             className="w-full border px-3 py-2 rounded"
           >
             <option value="">Select</option>
@@ -128,7 +121,7 @@ const ShiftForm = ({
         <FormField label="Gender" name="gender" required error={errors.gender}>
           <select
             value={gender}
-            onChange={(e) => setGender(e.target.value)}
+            onChange={(e) => updateField('gender', e.target.value)}
             className="w-full border px-3 py-2 rounded"
           >
             <option value="">Select</option>
@@ -138,23 +131,12 @@ const ShiftForm = ({
           </select>
         </FormField>
 
-        {/* <FormField label="Office" name="office" error={errors.office}>
-          <select
-            value={office}
-            onChange={(e) => setOffice(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-          >
-            <option value="">Select Office</option>
-            <option value="stonex">Stonex</option>
-          </select>
-        </FormField> */}
-
         <FormField label="Status" name="isActive">
           <label className="inline-flex items-center space-x-3">
             <input
               type="checkbox"
               checked={isActive}
-              onChange={(e) => setIsActive(e.target.checked)}
+              onChange={(e) => updateField('isActive', e.target.checked)}
               className="form-checkbox h-5 w-5 text-green-600"
             />
             <span className="text-sm text-gray-700">

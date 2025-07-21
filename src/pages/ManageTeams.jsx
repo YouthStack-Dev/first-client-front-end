@@ -105,12 +105,12 @@ const ManageTeams = () => {
                     >
                       Edit
                     </button>
-                    <button
+                    {/* <button
                       className="text-gray-700 hover:underline"
                       onClick={() => alert(`History for ${team.department_name}`)}
                     >
                       History
-                    </button>
+                    </button> */}
                     <button
                       className="text-red-500 hover:underline"
                       onClick={() => handleDelete(team.department_id)}

@@ -5,6 +5,10 @@ import PersonalInfoForm from './PersonalInfoForm';
 import NavigationButtons from './NavigationButtons';
 import HeaderWithAction from './HeaderWithAction';
 import EmployeeAddressGoogleMapView from './Map';
+import { createEmployee, updateEmployee } from '../redux/features/manageTeam/manageTeamThunks';
+import { useDispatch, useSelector } from 'react-redux';
+import { log } from '../utils/logger';
+import { toast, ToastContainer } from 'react-toastify';
 
 const initialFormData = {
   employeeName: '',
@@ -12,7 +16,7 @@ const initialFormData = {
   emailId: '',
   gender: '',
   mobileNumber: '',
-  alternateMobileNumber: '',
+  alternate_mobile_number: '',
   office: '',
   specialNeed: 'None',
   dateRange: {
@@ -36,7 +40,14 @@ const EmployeeForm = ({ mode = 'create' }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(mode !== 'create');
+  const dispatch = useDispatch(); // Initialize useDispatch
+  const { status, error } = useSelector(
+    (state) => state.manageTeam.apiStatus.createEmployee
+  );
 
+  console.log(" this is the error in  employe form" ,error);
+  
+  
   // Load employee data for edit/view modes
   useEffect(() => {
     if (mode === 'create') {
@@ -60,9 +71,10 @@ const EmployeeForm = ({ mode = 'create' }) => {
             emailId: employee.email || employee.emailId || '',
             gender: employee.gender || '',
             mobileNumber: employee.mobile_number || employee.mobileNumber || '',
-            alternateMobileNumber: employee.alternateMobileNumber || '',
+            alternate_mobile_number: employee.alternate_mobile_number || '',
             office: employee.office || '',
             specialNeed: employee.specialNeed || 'None',
+            department:1,
             dateRange: employee.dateRange || {
               startDate: new Date().toISOString().split('T')[0],
               endDate: new Date().toISOString().split('T')[0]
@@ -117,9 +129,9 @@ const EmployeeForm = ({ mode = 'create' }) => {
       newErrors.emailId = 'Enter a valid email';
     }
     if (!formData.gender) newErrors.gender = 'Gender is required';
-    if (!formData.office) newErrors.office = 'Office is required';
-    if (formData.alternateMobileNumber && formData.mobileNumber === formData.alternateMobileNumber) {
-      newErrors.alternateMobileNumber = 'Alternate mobile number must be different';
+    // if (!formData.office) newErrors.office = 'Office is required';
+    if (formData.alternate_mobile_number && formData.mobileNumber === formData.alternate_mobile_number) {
+      newErrors.alternate_mobile_number = 'Alternate mobile number must be different';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -149,11 +161,10 @@ const EmployeeForm = ({ mode = 'create' }) => {
       setCurrentStep('personalInfo');
     }
   };
-
-  const handleSubmit = () => {
-    // Handle view mode separately
+ 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (mode === 'view') {
-      // Navigate back or to a specific route
       window.history.back();
       return;
     }
@@ -164,27 +175,70 @@ const EmployeeForm = ({ mode = 'create' }) => {
     } else {
       isValid = validatePersonalInfo();
     }
-    
+  
     if (!isValid) return;
   
     setIsSubmitting(true);
-    
-    // Here you would call your API based on the mode
-    console.log(`Form submitted in ${mode} mode:`, formData);
-    
-    setTimeout(() => {
-      setIsSubmitting(false);
-      if (mode !== 'view') {
-        alert(`Employee ${mode === 'create' ? 'created' : 'updated'} successfully!`);
+  
+    const payload = {
+      employee_code: formData.employee_code,
+      gender: formData.gender,
+      mobile_number: formData.mobileNumber,
+      alternate_mobile_number: formData.alternate_mobile_number,
+      office: formData.office || "SEF OFFICE",
+      special_need: formData.specialNeed,
+      email: formData.emailId,
+      address: formData.address,
+      latitude: formData.latitude,
+      longitude: formData.longitude,
+      landmark: formData.landmark,
+      department_id: Number(formData.department),
+      subscribe_via_email: formData.subscribeViaEmail ?? false,
+      subscribe_via_sms: formData.subscribeViaSms ?? false,
+      username: formData.employeeName,
+      hashed_password: formData.employee_code, // Consider improving password generation
+      ...(formData.employeeName && { employee_name: formData.employeeName }),
+      ...(formData.dateRange && {
+        start_date: formData.dateRange.startDate,
+        end_date: formData.dateRange.endDate,
+      }),
+      ...(formData.distance_from_company && {
+        distance_from_company: formData.distance_from_company,
+      }),
+    };
+  
+    console.log("this is the data submitted", payload);
+  
+    try {
+      if (mode === 'create') {
+        await dispatch(createEmployee(payload)).unwrap();
+      } else {
+        await dispatch(updateEmployee({ id: payload.employee_code, payload }
+        )).unwrap();
+
       }
+  
+      toast.success(`✅ Employee ${mode === 'create' ? 'created' : 'updated'} successfully!`, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+  
       if (mode === 'create') {
         setFormData(initialFormData);
         setCurrentStep('personalInfo');
         setCompletedSteps([]);
       }
-    }, 1500);
+    } catch (err) {
+      const errorMessage = err?.detail || err?.message || 'Something went wrong';
+      toast.error(`❌ Failed to ${mode === 'create' ? 'create' : 'update'} employee: ${errorMessage}`, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+      console.error(`Error during employee ${mode === 'create' ? 'creation' : 'update'}:`, err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-
   const isFirstStep = currentStep === 'personalInfo';
   const isLastStep = currentStep === 'address';
 
@@ -199,6 +253,18 @@ const EmployeeForm = ({ mode = 'create' }) => {
 // In EmployeeForm.js, replace the current return statement with:
 return (
   <>
+  <ToastContainer
+      position="top-right"
+      autoClose={3000}
+      hideProgressBar={false}
+      newestOnTop={false}
+      closeOnClick
+      rtl={false}
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+    />
+
     <HeaderWithAction 
       title={mode === 'create' ? 'NEW EMPLOYEE' : mode === 'edit' ? 'EDIT EMPLOYEE' : 'EMPLOYEE DETAILS'} 
       showBackButton={true} 

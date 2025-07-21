@@ -21,8 +21,7 @@ import AdminDashboard from './components/dashboards/AdminDashboard';
 import ClientDashboard from './components/dashboards/ClientDashboard';
 import GoogleMapView from './components/Map';
 import { setUser } from './redux/features/auth/authSlice';
-import { fetchAllShifts } from './redux/features/Shifts/shiftThunks';
-import { fetchCutoffData } from './redux/features/Category/shiftCategoryThunks';
+import { AlertModal } from './components/modals/AlertModal';
 
 
 // Lazy-loaded components
@@ -42,7 +41,6 @@ const ManageVehicleTypes = lazy(() => import('./pages/ManageVehicleType'));
 const ShiftManagement = lazy(() => import('./pages/ShiftManagement'));
 const ManageVendor = lazy(() => import('./pages/ManageVendor'));
 const ManageStaffs = lazy(() => import('./pages/ManageStaffs'));
-const DashboardRouter = lazy(() => import('./components/dashboards/DashboardRouter'));
 const ManageTeams = lazy(() => import('./pages/ManageTeams'));
 const CalendarPopupExample = lazy(() => import('./components/ui/CalendarPopupExample'));
 const EmployeeList = lazy(() => import('./components/Employee/EmployeeList'));
@@ -58,26 +56,36 @@ function App() {
   const dispatch = useDispatch();
   const [userLoading, setUserLoading] = useState(true);
   const { loading: permissionLoading } = useContext(ModulePermissionContext);
-
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   useEffect(() => {
     const token = localStorage.getItem("access_token");
+  
     if (token) {
       try {
         const decoded = jwtDecode(token);
         dispatch(setUser(decoded));
-        
-        setTimeout(() => {
-          dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: decoded.tenant_id }));
-          dispatch(fetchAllShifts());
-          dispatch(fetchCutoffData());
-        }, 300);
       } catch (err) {
-        console.error("Invalid token");
+        console.error("Invalid token:", err);
         localStorage.removeItem("access_token");
       }
     }
-    setUserLoading(false);
+  
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+  
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+  
+    setUserLoading(false); // Mark loading complete regardless of token outcome
+  
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
   }, [dispatch]);
+  
+
+
 
   if (userLoading || permissionLoading) {
     return <Loading />;
@@ -85,6 +93,14 @@ function App() {
 
   return (
     <Router>
+       {!isOnline && (
+        <AlertModal
+          show={true}
+          type="error"
+          message="No internet connection. Please check your network."
+          onClose={() => {}}
+        />
+      )}
       <Suspense fallback={<Loading />}>
         <Routes>
           <Route path="/login" element={<Login />} />

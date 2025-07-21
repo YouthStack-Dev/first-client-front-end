@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Eye, Pencil } from 'lucide-react';
+import { Eye, Pencil, Plus } from 'lucide-react';
 import { clearSelectedEmployees, toggleSelectEmployee } from '../../redux/features/manageTeam/manageTeamSlice';
 import { fetchEmployeesByDepartment } from '../../redux/features/manageTeam/manageTeamThunks';
 import { useParams, useNavigate } from 'react-router-dom';
+import ToolBar from '../ui/ToolBar';
+import { log } from '../../utils/logger';
 
 const EmployeeList = () => {
   const dispatch = useDispatch();
@@ -13,16 +15,15 @@ const EmployeeList = () => {
   const employees = useSelector((state) => 
     state.manageTeam?.employeesByDepartment?.[teamId]?.employees || []
   );
-
   const fetchStatus = useSelector((state) => state.manageTeam?.employeeFetchStatus);
   const selectedEmployeeIds = useSelector((state) => state.manageTeam?.selectedEmployees || []);
 
   useEffect(() => {
-    if (teamId && fetchStatus.status === 'idle') {
+    if (teamId && !employees.length && fetchStatus.status !== 'loading') {
       dispatch(fetchEmployeesByDepartment(teamId));
       dispatch(clearSelectedEmployees());
     }
-  }, [dispatch, teamId, fetchStatus.status]);
+  }, [dispatch, teamId, employees.length, fetchStatus.status]);
 
   const handleCheckboxChange = (employeeId) => {
     dispatch(toggleSelectEmployee(employeeId));
@@ -45,22 +46,40 @@ const EmployeeList = () => {
     navigate(`/employee/${employee.user_id}/edit`, { state: { employee } });
   };
 
-  const handleCreate = () => {
-    navigate('/employee/create');
-  };
-
   return (
     <div className="space-y-4">
-  
-
+      <ToolBar
+        onAddClick={() => navigate('/employee/create-employee')}
+        addButtonLabel="Add employee"
+        addButtonIcon={<Plus size={16} />}
+        className="p-4 bg-white border rounded shadow-sm"
+      />
       <div className="overflow-x-auto border rounded-xl">
         <table className="w-full text-left border-collapse min-w-[800px]">
-          {/* Table headers remain the same */}
+          <thead className="bg-gray-100 text-gray-700 uppercase text-sm font-medium">
+            <tr>
+              <th className="p-4">
+                <input type="checkbox" disabled className="w-4 h-4" />
+              </th>
+              <th className="p-4">Name</th>
+              <th className="p-4">Employee Code</th>
+              <th className="p-4">Email</th>
+              <th className="p-4">Mobile Number</th>
+              <th className="p-4">Gender</th>
+              <th className="p-4">Actions</th>
+            </tr>
+          </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {fetchStatus.status === 'loading' ? (
               <tr>
                 <td colSpan="7" className="text-center py-8 text-gray-500">
                   Loading employees...
+                </td>
+              </tr>
+            ) : fetchStatus.status === 'failed' ? (
+              <tr>
+                <td colSpan="7" className="text-center py-8 text-red-500">
+                  Failed to load employees: {fetchStatus.error || 'Unknown error'}
                 </td>
               </tr>
             ) : employees.length === 0 ? (

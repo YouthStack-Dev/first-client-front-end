@@ -3,10 +3,25 @@ import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import { format, parseISO } from 'date-fns';
+import { useSelector, useDispatch } from 'react-redux';
+import { log } from '../utils/logger';
+import { fetchTeams } from '../redux/features/manageTeam/manageTeamThunks';
+// import { fetchTeams } from '../redux/features/manageTeam/manageTeamAPI'; // Import the fetchTeams action
 
 const PersonalInfoForm = ({ formData, onChange, errors, onCheckboxChange, isReadOnly }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const datePickerRef = useRef(null);
+  const dispatch = useDispatch(); // Initialize useDispatch
+  const { teams, status } = useSelector((state) => state.manageTeam); // Include status to track loading state
+
+  // log("this is the teams in the personal info", teams);
+
+  // Fetch teams when the component mounts if teams array is empty
+  useEffect(() => {
+    if (teams.length === 0 && status !== 'loading') {
+      dispatch(fetchTeams({ skip: 0, limit: 10 }));
+    }
+  }, [dispatch, teams.length, status]);
 
   // Initialize date range from form data or use current date as default
   const [dateRangeSelection, setDateRangeSelection] = useState([
@@ -205,37 +220,15 @@ const PersonalInfoForm = ({ formData, onChange, errors, onCheckboxChange, isRead
           </label>
           <input
             type="tel"
-            name="alternateMobileNumber"
-            value={formData.alternateMobileNumber || ''}
+            name="alternate_mobile_number"
+            value={formData.alternate_mobile_number || ''}
             onChange={onChange}
-            className={getInputClasses(errors.alternateMobileNumber)}
+            className={getInputClasses(errors.alternate_mobile_number)}
             placeholder="Enter alternate mobile number"
             disabled={isReadOnly}
           />
-          {errors.alternateMobileNumber && (
-            <p className="mt-1 text-sm text-red-500">{errors.alternateMobileNumber}</p>
-          )}
-        </div>
-
-        {/* Office */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Office <span className="text-red-500">*</span>
-          </label>
-          <select
-            name="office"
-            value={formData.office || ''}
-            onChange={onChange}
-            className={getSelectClasses(errors.office)}
-            disabled={isReadOnly}
-          >
-            <option value="">Select office</option>
-            <option value="STONEX_PUNE">STONEX_PUNE</option>
-            <option value="STONEX_MUMBAI">STONEX_MUMBAI</option>
-            <option value="STONEX_DELHI">STONEX_DELHI</option>
-          </select>
-          {errors.office && (
-            <p className="mt-1 text-sm text-red-500">{errors.office}</p>
+          {errors.alternate_mobile_number && (
+            <p className="mt-1 text-sm text-red-500">{errors.alternate_mobile_number}</p>
           )}
         </div>
 
@@ -252,9 +245,7 @@ const PersonalInfoForm = ({ formData, onChange, errors, onCheckboxChange, isRead
             disabled={isReadOnly}
           >
             <option value="None">None</option>
-            <option value="Wheelchair">Wheelchair</option>
-            <option value="Visual Assistance">Visual Assistance</option>
-            <option value="Hearing Assistance">Hearing Assistance</option>
+            <option value="Pregnancy">Pregnancy</option>
           </select>
         </div>
 
@@ -293,20 +284,28 @@ const PersonalInfoForm = ({ formData, onChange, errors, onCheckboxChange, isRead
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Department <span className="text-red-500">*</span>
           </label>
-          <select
-            name="department"
-            value={formData.department || ''}
-            onChange={onChange}
-            className={getSelectClasses(errors.department)}
-            disabled={isReadOnly}
-          >
-            <option value="">Select Department</option>
-            <option value="HR">HR</option>
-            <option value="Engineering">Engineering</option>
-            <option value="Sales">Sales</option>
-            <option value="Marketing">Marketing</option>
-            <option value="Finance">Finance</option>
-          </select>
+          {status === 'loading' ? (
+            <p className="text-sm text-gray-500">Loading departments...</p>
+          ) : teams.length === 0 ? (
+            <p className="text-sm text-red-500">
+              No teams found. A team is needed to create employees.
+            </p>
+          ) : (
+            <select
+              name="department"
+              value={formData.department || ''}
+              onChange={onChange}
+              className={getSelectClasses(errors.department)}
+              disabled={isReadOnly}
+            >
+              <option value="">Select Department</option>
+              {teams?.map((dept) => (
+                <option key={dept.department_id} value={dept.department_id}>
+                  {dept.department_name}
+                </option>
+              ))}
+            </select>
+          )}
           {errors.department && (
             <p className="mt-1 text-sm text-red-500">{errors.department}</p>
           )}
