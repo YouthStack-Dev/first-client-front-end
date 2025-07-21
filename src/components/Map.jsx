@@ -165,7 +165,7 @@ const EmployeeAddressGoogleMapView = ({ formData, setFormData, setErrors, isRead
         </label>
         {distance !== null && (
           <p className="text-gray-700">
-            Distance from company: <strong>{distance.toFixed(2)} km</strong>
+            {/* Distance from company: <strong>{distance.toFixed(2)} km</strong> */}
           </p>
         )}
         {distanceError && !isReadOnly && <p className="text-red-500 text-sm">{distanceError}</p>}
