@@ -3,18 +3,19 @@ import { useNavigate } from 'react-router-dom';
 
 const DriverToolbar = ({ vendors = [], onFilterChange, onBulkUpload, onManageCompliance }) => {
   const [driverStatus, setDriverStatus] = useState('All');
-  const [vendorType, setVendorType] = useState('All');
+  const [vendorId, setVendorId] = useState('All');
   const navigate = useNavigate();
+
   const handleStatusChange = (e) => {
     const value = e.target.value;
     setDriverStatus(value);
-    onFilterChange?.({ driverStatus: value, vendorType });
+    onFilterChange?.({ driverStatus: value, vendorId });
   };
 
   const handleVendorChange = (e) => {
     const value = e.target.value;
-    setVendorType(value);
-    onFilterChange?.({ driverStatus, vendorType: value });
+    setVendorId(value);
+    onFilterChange?.({ driverStatus, vendorId: value });
   };
 
   return (
@@ -34,18 +35,18 @@ const DriverToolbar = ({ vendors = [], onFilterChange, onBulkUpload, onManageCom
         </select>
       </div>
 
-      {/* Vendor Type Filter */}
+      {/* Vendor Filter */}
       <div className="flex space-x-4 items-center mt-2 md:mt-0">
-        <label className="font-semibold mr-2">Vendor Type:</label>
+        <label className="font-semibold mr-2">Vendor:</label>
         <select
-          value={vendorType}
+          value={vendorId}
           onChange={handleVendorChange}
           className="border border-gray-300 rounded px-2 py-1"
         >
-          <option value="All">All</option>
+          
           {vendors.map((vendor) => (
-            <option key={vendor.id} value={vendor.type}>
-              {vendor.type}
+            <option key={vendor.id} value={vendor.id}>
+              {vendor.name}
             </option>
           ))}
         </select>
@@ -54,10 +55,10 @@ const DriverToolbar = ({ vendors = [], onFilterChange, onBulkUpload, onManageCom
       {/* Buttons */}
       <div className="flex space-x-4 mt-4 md:mt-0">
         <button
-          onClick={()=>navigate("/driver-form")}
+          onClick={() => navigate('/driver-form')}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 focus:outline-none"
         >
-         Add Driver
+          Add Driver
         </button>
         <button
           onClick={onBulkUpload}

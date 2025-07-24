@@ -1,5 +1,3 @@
-// src/redux/features/manageVendors/vendorThunks.js
-
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
   createVendor,
