@@ -52,23 +52,22 @@ const DriverList = ({ drivers, onEdit, onDelete, onStatusToggle }) => {
                         index + 1
                       ) : header.key === 'actions' ? (
                         <div className="flex gap-2 items-center justify-center">
-                          <button
-                            onClick={() => onStatusToggle(driver)}
-                            title="Click to toggle status"
-                            className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer ${
-                              getDriverStatus(driver) === 'ACTIVE'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {getDriverStatus(driver)}
-                          </button>
-                          <button onClick={() => onEdit(driver)} className="p-1 hover:bg-gray-100 rounded-full">
+                           <button  onClick={() => onStatusToggle(driver)}  title="Click to toggle status"
+                                className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer ${getDriverStatus(driver) === 'ACTIVE'
+                                    ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                                aria-label="Toggle driver status">
+                                {getDriverStatus(driver)}
+                              </button>
+
+                          <button onClick={() => onEdit(driver)} className="p-1 hover:bg-gray-100 rounded-full" aria-label="Edit driver" title="Edit driver">
                             <Edit size={16} color="blue" />
                           </button>
-                          <button onClick={() => onDelete(driver.driver_id)} className="p-1 hover:bg-gray-100 rounded-full">
-                            <Trash2 size={16} color="red" />
-                          </button>
+
+                            <button
+                              onClick={() => onDelete(driver.driver_id)} className="p-1 hover:bg-gray-100 rounded-full"
+                              aria-label="Delete driver" title="Delete driver">
+                              <Trash2 size={16} color="red" />
+                            </button>
                         </div>
                       ) : (
                         getValueByKeyPath(driver, header.key)

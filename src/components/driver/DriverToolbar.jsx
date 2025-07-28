@@ -24,26 +24,32 @@ const DriverToolbar = ({ vendors = [], onFilterChange, onBulkUpload, onManageCom
       <div className="flex flex-wrap items-center space-x-6">
         {/* Driver Status */}
         <div className="flex items-center space-x-2">
-          <label className="font-semibold">Driver Status:</label>
+          <label htmlFor="driverStatus" className="font-semibold">Driver Status:</label>
           <select
+            id="driverStatus"
+            name="driverStatus"
             value={driverStatus}
             onChange={handleStatusChange}
             className="border border-gray-300 rounded px-2 py-1"
+            aria-label="Filter by driver status"
           >
-             <option value="ALL">All</option>
-              <option value="ACTIVE">Active Driver</option>
-              <option value="INACTIVE">Inactive Driver</option>
-              {/* <option value="BLACKLIST">Blacklisted Driver</option> */}
+            <option value="ALL">All</option>
+            <option value="ACTIVE">Active Driver</option>
+            <option value="INACTIVE">Inactive Driver</option>
           </select>
         </div>
 
         {/* Vendor */}
         <div className="flex items-center space-x-2">
-          <label className="font-semibold">Vendor:</label>
+          <label htmlFor="vendorSelect" className="font-semibold">Vendor:</label>
           <select
+            id="vendorSelect"
+            name="vendorSelect"
             value={vendorId}
             onChange={handleVendorChange}
-            className="border border-gray-300 rounded px-2 py-1">
+            className="border border-gray-300 rounded px-2 py-1"
+            aria-label="Filter by vendor"
+          >
             {vendors.map((vendor) => (
               <option key={vendor.id} value={vendor.id}>
                 {vendor.name}
@@ -58,18 +64,21 @@ const DriverToolbar = ({ vendors = [], onFilterChange, onBulkUpload, onManageCom
         <button
           onClick={() => navigate('/driver-form')}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          aria-label="Add new driver"
         >
           Add Driver
         </button>
         <button
           onClick={onBulkUpload}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          aria-label="Bulk upload drivers"
         >
           Bulk Upload
         </button>
         <button
           onClick={onManageCompliance}
           className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          aria-label="Manage driver compliance"
         >
           Manage Compliance
         </button>

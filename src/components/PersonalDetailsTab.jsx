@@ -20,7 +20,7 @@ const PersonalDetailsTab = ({
     }
   }, [dispatch]);
 
-    console.log("Fetched Vendors:", vendors);
+    // console.log("Fetched Vendors:", vendors);
 
   return (
     <div className="p-6 bg-white rounded-md shadow-sm border border-gray-200">

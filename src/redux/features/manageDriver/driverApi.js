@@ -23,6 +23,7 @@ export const getDrivers = (vendor_id) => {
   return API_CLIENT.get(`/vendors/${vendor_id}/drivers/?skip=0&limit=100`);
 };
 
+
 /**
  * Fetch all tenant-level drivers
  */
