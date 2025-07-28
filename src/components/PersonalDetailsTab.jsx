@@ -1,9 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Pencil } from 'lucide-react';
-
 import FormField from './FormField';
-import { fetchVendors } from '../redux/features/managevendors/vendorThunks';
+import { Pencil } from 'lucide-react';
 
 const PersonalDetailsTab = ({
   formData,
@@ -22,37 +20,39 @@ const PersonalDetailsTab = ({
     }
   }, [dispatch]);
 
+    console.log("Fetched Vendors:", vendors);
+
   return (
     <div className="p-6 bg-white rounded-md shadow-sm border border-gray-200">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+        
         {/* Profile Image */}
         <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center relative mx-auto">
-          {formData.profileImage ? (
-            <img
-              src={URL.createObjectURL(formData.profileImage)}
-              alt="Profile"
-              className="w-full h-full object-cover rounded-lg"
+            {formData.profileImage ? (
+              <img
+                src={URL.createObjectURL(formData.profileImage)}
+                alt="Profile"
+                className="w-full h-full object-cover rounded-lg"
+              />
+            ) : (
+              <div className="text-center p -4">
+                <Pencil className="w-8 h-8 mx-auto text-gray-400" />
+                <p className="text-xs text-gray-500 mt-2">Add image (JPG, JPEG & PNG)</p>
+              </div>
+            )}
+            <input
+              type="file"
+              accept="image/jpeg,image/png"
+              onChange={(e) => e.target.files?.[0] && onImageChange(e.target.files[0])}
+              className="absolute inset-0 opacity-0 cursor-pointer"
             />
-          ) : (
-            <div className="text-center p-4">
-              <Pencil className="w-8 h-8 mx-auto text-gray-400" />
-              <p className="text-xs text-gray-500 mt-2">Add image (JPG, JPEG & PNG)</p>
-            </div>
-          )}
-          <input
-            type="file"
-            accept="image/jpeg,image/png"
-            onChange={(e) => e.target.files?.[0] && onImageChange(e.target.files[0])}
-            className="absolute inset-0 opacity-0 cursor-pointer"
-          />
-        </div>
-
-        {/* Basic Fields */}
+          </div>
+        {/* Driver Name */}
         <FormField label="Driver Name" name="driverName" required error={errors.driverName}>
           <input
             type="text"
             name="driverName"
-            value={formData.driverName || ''}
+            value={formData.driverName}
             onChange={onChange}
             placeholder="Enter driver name"
             className="w-full p-2 border border-gray-300 rounded-md"
@@ -63,7 +63,7 @@ const PersonalDetailsTab = ({
           <input
             type="text"
             name="city"
-            value={formData.city || ''}
+            value={formData.city || ""}
             onChange={onChange}
             placeholder="Enter city"
             className="w-full p-2 border border-gray-300 rounded-md"
@@ -74,7 +74,7 @@ const PersonalDetailsTab = ({
           <input
             type="date"
             name="dateOfBirth"
-            value={formData.dateOfBirth || ''}
+            value={formData.dateOfBirth || ""}
             onChange={onChange}
             className="w-full p-2 border border-gray-300 rounded-md"
           />
@@ -84,7 +84,7 @@ const PersonalDetailsTab = ({
           <input
             type="tel"
             name="alternateMobileNumber"
-            value={formData.alternateMobileNumber || ''}
+            value={formData.alternateMobileNumber}
             onChange={onChange}
             placeholder="Enter alternate mobile number"
             className="w-full p-2 border border-gray-300 rounded-md"
@@ -95,31 +95,31 @@ const PersonalDetailsTab = ({
           <input
             type="tel"
             name="mobileNumber"
-            value={formData.mobileNumber || ''}
+            value={formData.mobileNumber || ""}
             onChange={onChange}
             placeholder="Enter mobile number"
             className="w-full p-2 border border-gray-300 rounded-md"
           />
         </FormField>
 
+        {/* Email */}
         <FormField label="Email" name="email" required error={errors.email}>
           <input
             type="email"
             name="email"
-            value={formData.email || ''}
-            autoComplete="off"
+            value={formData.email || ""}
             onChange={onChange}
             placeholder="Enter email"
             className="w-full p-2 border border-gray-300 rounded-md"
           />
         </FormField>
 
+        {/* Password */}
         <FormField label="Password" name="password" required error={errors.password}>
           <input
             type="password"
             name="password"
-            value={formData.password || ''}
-             autoComplete="new-password"
+            value={formData.password || ""}
             onChange={onChange}
             placeholder="Enter password"
             className="w-full p-2 border border-gray-300 rounded-md"
@@ -130,27 +130,31 @@ const PersonalDetailsTab = ({
         <FormField label="Vendor" name="vendor" required error={errors.vendor}>
           <select
             name="vendor"
-            value={formData.vendor || ''}
+            value={formData.vendor || ""}
             onChange={onChange}
             className="w-full p-2 border border-gray-300 rounded-md"
           >
             <option value="">Select Vendor</option>
-            {loading && <option disabled>Loading vendors...</option>}
-            {!loading && vendors?.length > 0 &&
+            {loading ? (
+              <option disabled>Loading vendors...</option>
+            ) : vendors?.length > 0 ? (
               vendors.map((v) => (
                 <option key={v.vendor_id} value={v.vendor_id}>
                   {v.vendor_name}
                 </option>
-              ))}
-            {!loading && vendors?.length === 0 && <option disabled>No vendors found</option>}
+              ))
+            ) : (
+              <option disabled>No vendors found</option>
+            )}
           </select>
         </FormField>
 
+        {/* Driver Code */}
         <FormField label="Driver Code" name="driverId" required error={errors.driverId}>
           <input
             type="text"
             name="driverId"
-            value={formData.driverId || ''}
+            value={formData.driverId}
             onChange={onChange}
             placeholder="Enter driver code"
             className="w-full p-2 border border-gray-300 rounded-md"
@@ -162,36 +166,39 @@ const PersonalDetailsTab = ({
           <FormField label="Permanent Address" name="permanentAddress" error={errors.permanentAddress}>
             <textarea
               name="permanentAddress"
-              value={formData.permanentAddress || ''}
+              value={formData.permanentAddress || ""}
               onChange={onChange}
               rows={3}
               className="w-full p-2 border border-gray-300 rounded-md"
             />
           </FormField>
 
-          <FormField label="Current Address" name="currentAddress" error={errors.currentAddress}>
-            <div className="space-y-2">
-              {!formData.isSameAddress && (
-                <textarea
-                  name="currentAddress"
-                  value={formData.currentAddress || ''}
-                  onChange={onChange}
-                  rows={3}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                />
-              )}
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.isSameAddress || false}
-                  onChange={(e) => onCheckboxChange('isSameAddress', e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600"
-                />
-                <span className="text-sm text-gray-600 ml-2">Same as Permanent Address</span>
-              </label>
-            </div>
-          </FormField>
-        </div>
+  {/* Current Address */}
+  <FormField label="Current Address" name="currentAddress" error={errors.currentAddress}>
+    <div className="space-y-2">
+     
+      {!formData.isSameAddress && (
+        <textarea
+          name="currentAddress"
+          value={formData.currentAddress}
+          onChange={onChange}
+          rows={3}
+          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      )}
+       <label className="flex items-center ">
+        <input
+          type="checkbox"
+          checked={formData.isSameAddress}
+          onChange={(e) => onCheckboxChange('isSameAddress', e.target.checked)}
+          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        />
+        <span className="text-sm text-gray-600">Same as Permanent Address</span>
+      </label>
+    </div>
+  </FormField>
+</div>
+
 
         {/* Gender */}
         <FormField label="Gender" name="gender" required error={errors.gender}>
@@ -206,7 +213,7 @@ const PersonalDetailsTab = ({
                   onChange={onChange}
                   className="text-blue-600"
                 />
-                <span className="capitalize">{g}</span>
+                <span>{g.charAt(0).toUpperCase() + g.slice(1)}</span>
               </label>
             ))}
           </div>
