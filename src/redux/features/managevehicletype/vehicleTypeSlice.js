@@ -2,7 +2,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import {
   fetchVehicleTypes,
-  fetchVehicleTypeById, // ✅ Added
+  fetchVehicleTypeById, 
   createVehicleType,
   updateVehicleType,
   deleteVehicleType,
@@ -10,7 +10,7 @@ import {
 
 const initialState = {
   vehicleTypes: [],
-  singleVehicleType: null,  // ✅ For fetching a single vehicle type
+  singleVehicleType: null,  
   loading: false,
   error: null,
   isModalOpen: false,
@@ -40,7 +40,7 @@ const vehicleTypeSlice = createSlice({
     resetForm(state) {
       state.formData = initialState.formData;
       state.editingId = null;
-      state.singleVehicleType = null;  // ✅ Reset single vehicle when form resets
+      state.singleVehicleType = null;  
     },
   },
   extraReducers: (builder) => {

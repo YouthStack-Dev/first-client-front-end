@@ -88,7 +88,7 @@ export const fetchVehicleTypes = createAsyncThunk(
   async (vendorId = 2, { rejectWithValue }) => {
     try {
       const res = await getVehicleTypes(vendorId);
-      console.log('✅ fetched vehicle types:', res.data);
+      // console.log('✅ fetched vehicle types:', res.data);
       return res.data;
     } catch (error) {
       console.error('⛔ fetch error:', error);
@@ -103,7 +103,7 @@ export const fetchVehicleTypeById = createAsyncThunk(
     try {
       console.log("📡 Fetching vehicle type by ID:", id);
       const res = await getVehicleTypeById(id);
-      console.log("✅ Fetched vehicle type:", res.data);
+      // console.log("✅ Fetched vehicle type:", res.data);
       return res.data;
     } catch (error) {
       console.error("❌ Error fetching vehicle type by ID:", error);
@@ -117,7 +117,7 @@ export const createVehicleType = createAsyncThunk(
   async (payload, { rejectWithValue }) => {
     try {
       const res = await postVehicleType(payload);
-      console.log('✅ created vehicle type:', res.data);
+      // console.log('✅ created vehicle type:', res.data);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to create vehicle type");
@@ -130,7 +130,7 @@ export const updateVehicleType = createAsyncThunk(
   async ({ id, ...payload }, { rejectWithValue }) => {
     try {
       const res = await putVehicleType(id, data);
-      console.log('✅ updated vehicle type:', res.data);
+      // console.log('✅ updated vehicle type:', res.data);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to update vehicle type");
@@ -143,7 +143,7 @@ export const deleteVehicleType = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       await apiDeleteVehicleType(id);
-      console.log('✅ deleted vehicle type id:', id);
+      // console.log('✅ deleted vehicle type id:', id);
       return id;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);

@@ -7,7 +7,7 @@ import {
 } from './vendorThunks';
 
 const vendorSlice = createSlice({
-  name: 'vendors',
+  name: 'vendor',
   initialState: {
     vendors: [],
     total: 0,
