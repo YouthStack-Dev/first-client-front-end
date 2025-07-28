@@ -9,47 +9,18 @@ import HeaderWithActionNoRoute from '../HeaderWithActionNoRoute';
 
 import { createDriverThunk, updateDriverThunk } from '../../redux/features/manageDriver/driverThunks';
 
-
 const defaultFormData = {
-  driverName: '',
-  dateOfBirth: '',
-  mobileNumber: '',
-  driverId: '', 
-  permanentAddress: '',
-  currentAddress: '',
-  isSameAddress: false, 
-  alternateMobileNumber: '',
-  city: '', 
-  vendor: '',
-  email: '', 
-  password: '', 
-  gender: 'male',
-  bgvStatus: 'pending',
-  policeVerification: 'pending',
-  medicalVerification: 'pending', 
-  trainingVerification: 'pending',
-  bgvExpiryDate: '',
-  policeExpiryDate: '', 
-  medicalExpiryDate: '', 
-  trainingExpiryDate: '',
-  eyeTestExpiryDate: '',
-  licenseNumber: '', 
-  licenseExpiryDate: '', 
-  inductionDate: '', 
-  badgeNumber: '', 
-  badgeExpiryDate: '',
-  alternateGovtId: '', 
-  govtIdNumber: '',
-  bgvDocument: null,
-  policeDocument: null,
-  medicalDocument: null,
-  trainingDocument: null,
-  eyeTestDocument: null,
-  licenseDocument: null, 
-  inductionDocument: null,
-  badgeDocument: null, 
-  govtIdDocument: null, 
-  profileImage: null,
+  driverName: '', dateOfBirth: '', mobileNumber: '', driverId: '',
+  permanentAddress: '', currentAddress: '', isSameAddress: false,
+  alternateMobileNumber: '', city: '', vendor: '', email: '', password: '',
+  gender: 'male', bgvStatus: 'pending', policeVerification: 'pending',
+  medicalVerification: 'pending', trainingVerification: 'pending',
+  bgvExpiryDate: '', policeExpiryDate: '', medicalExpiryDate: '', trainingExpiryDate: '',
+  eyeTestExpiryDate: '', licenseNumber: '', licenseExpiryDate: '', inductionDate: '',
+  badgeNumber: '', badgeExpiryDate: '', alternateGovtId: '', govtIdNumber: '',
+  bgvDocument: null, policeDocument: null, medicalDocument: null, trainingDocument: null,
+  eyeTestDocument: null, licenseDocument: null, inductionDocument: null,
+  badgeDocument: null, govtIdDocument: null, profileImage: null,
 };
 
 const DriverForm = ({ initialData = null, isEdit = false, onClose, vendors = [] }) => {
@@ -59,47 +30,35 @@ const DriverForm = ({ initialData = null, isEdit = false, onClose, vendors = [] 
   const [errors, setErrors] = useState({});
   const [tabErrors, setTabErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [personalValid, setPersonalValid] = useState(false);
 
   useEffect(() => {
     if (initialData) setFormData(initializeFormData(initialData));
   }, [initialData]);
 
- 
   const initializeFormData = (data) => ({
     ...defaultFormData,
-    driverName: data.name || '', 
-    dateOfBirth: data.date_of_birth || '', 
-    mobileNumber: data.mobile_number || '',
-    driverId: data.driver_code || '',
-    permanentAddress: data.permanent_address || '',
-    currentAddress: data.current_address || '',
-    alternateMobileNumber: data.alternate_mobile_number || '', 
-    city: data.city || '', vendor: data.vendor?.vendor_id || '',
-    email: data.email || '', gender: data.gender || 'male',
-    bgvStatus: data.bgv_status || 'pending', 
-    policeVerification: data.police_verification_status || 'pending',
-    medicalVerification: data.medical_verification_status || 'pending', 
-    trainingVerification: data.training_verification_status || 'pending',
-    bgvExpiryDate: data.bgv_date || '', 
-    policeExpiryDate: data.police_verification_date || '',
-     medicalExpiryDate: data.medical_verification_date || '',
-    trainingExpiryDate: data.training_verification_date || '', 
-    eyeTestExpiryDate: data.eye_test_verification_date || '',
-    licenseNumber: data.license_number || '', 
-    licenseExpiryDate: data.license_expiry_date || '',
-    inductionDate: data.induction_date || '', 
-    badgeNumber: data.badge_number || '', 
-    badgeExpiryDate: data.badge_expiry_date || '',
-    alternateGovtId: data.alternate_govt_id || '', 
-    govtIdNumber: data.govt_id_number || '',
-    bgvDocumentName: data.bgv_doc_url?.split('/').pop() || '', 
+    driverName: data.name || '', dateOfBirth: data.date_of_birth || '',
+    mobileNumber: data.mobile_number || '', driverId: data.driver_code || '',
+    permanentAddress: data.permanent_address || '', currentAddress: data.current_address || '',
+    alternateMobileNumber: data.alternate_mobile_number || '', city: data.city || '',
+    vendor: data.vendor?.vendor_id || '', email: data.email || '', gender: data.gender || 'male',
+    bgvStatus: data.bgv_status || 'pending', policeVerification: data.police_verification_status || 'pending',
+    medicalVerification: data.medical_verification_status || 'pending', trainingVerification: data.training_verification_status || 'pending',
+    bgvExpiryDate: data.bgv_date || '', policeExpiryDate: data.police_verification_date || '',
+    medicalExpiryDate: data.medical_verification_date || '', trainingExpiryDate: data.training_verification_date || '',
+    eyeTestExpiryDate: data.eye_test_verification_date || '', licenseNumber: data.license_number || '',
+    licenseExpiryDate: data.license_expiry_date || '', inductionDate: data.induction_date || '',
+    badgeNumber: data.badge_number || '', badgeExpiryDate: data.badge_expiry_date || '',
+    alternateGovtId: data.alternate_govt_id || '', govtIdNumber: data.govt_id_number || '',
+    bgvDocumentName: data.bgv_doc_url?.split('/').pop() || '',
     policeDocumentName: data.police_verification_doc_url?.split('/').pop() || '',
-    medicalDocumentName: data.medical_verification_doc_url?.split('/').pop() || '', 
+    medicalDocumentName: data.medical_verification_doc_url?.split('/').pop() || '',
     trainingDocumentName: data.training_verification_doc_url?.split('/').pop() || '',
     eyeTestDocumentName: data.eye_test_verification_doc_url?.split('/').pop() || '',
-     licenseDocumentName: data.license_doc_url?.split('/').pop() || '',
+    licenseDocumentName: data.license_doc_url?.split('/').pop() || '',
     inductionDocumentName: data.induction_doc_url?.split('/').pop() || '',
-     badgeDocumentName: data.badge_doc_url?.split('/').pop() || '',
+    badgeDocumentName: data.badge_doc_url?.split('/').pop() || '',
     govtIdDocumentName: data.alternate_govt_id_doc_url?.split('/').pop() || '',
   });
 
@@ -148,7 +107,6 @@ const DriverForm = ({ initialData = null, isEdit = false, onClose, vendors = [] 
     alternate_govt_id_doc_file: formData.govtIdDocument,
   });
 
-  
   const handleInputChange = ({ target: { name, value } }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => {
@@ -236,6 +194,12 @@ const DriverForm = ({ initialData = null, isEdit = false, onClose, vendors = [] 
     }
   };
 
+  const handleNext = () => {
+    const valid = validatePersonalDetails();
+    setPersonalValid(valid);
+    if (valid) setActiveTab('documents');
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-4">
       <HeaderWithActionNoRoute
@@ -276,7 +240,7 @@ const DriverForm = ({ initialData = null, isEdit = false, onClose, vendors = [] 
             )}
 
             <button
-              onClick={activeTab !== 'documents' ? () => setActiveTab('documents') : handleSave}
+              onClick={activeTab !== 'documents' ? handleNext : handleSave}
               disabled={isSubmitting}
               className={`ml-auto px-6 py-2 rounded-md transition ${isSubmitting ? 'bg-gray-400 cursor-not-allowed text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
             >

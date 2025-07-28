@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Pencil } from 'lucide-react';
-
 import FormField from './FormField';
 import { fetchVendors } from '../redux/features/managevendors/vendorThunks';
 
@@ -14,13 +13,13 @@ const PersonalDetailsTab = ({
 }) => {
   const dispatch = useDispatch();
   const { vendors, loading } = useSelector((state) => state.vendor);
+  const tenantId = useSelector((state) => state.auth?.user?.tenant_id);
 
   useEffect(() => {
-    const tenant_id = localStorage.getItem('tenant_id');
-    if (tenant_id) {
-      dispatch(fetchVendors({ tenant_id, skip: 0, limit: 100 }));
+    if (tenantId && vendors.length === 0) {
+      dispatch(fetchVendors({ tenant_id: tenantId, skip: 0, limit: 100 }));
     }
-  }, [dispatch]);
+  }, [tenantId, vendors.length, dispatch]);
 
   return (
     <div className="p-6 bg-white rounded-md shadow-sm border border-gray-200">
@@ -47,7 +46,7 @@ const PersonalDetailsTab = ({
           />
         </div>
 
-        {/* Basic Fields */}
+        {/* Driver Name */}
         <FormField label="Driver Name" name="driverName" required error={errors.driverName}>
           <input
             type="text"
@@ -59,6 +58,7 @@ const PersonalDetailsTab = ({
           />
         </FormField>
 
+        {/* City */}
         <FormField label="City" name="city" required error={errors.city}>
           <input
             type="text"
@@ -70,6 +70,7 @@ const PersonalDetailsTab = ({
           />
         </FormField>
 
+        {/* Date of Birth */}
         <FormField label="Date of Birth" name="dateOfBirth" required error={errors.dateOfBirth}>
           <input
             type="date"
@@ -80,6 +81,7 @@ const PersonalDetailsTab = ({
           />
         </FormField>
 
+        {/* Alternate Mobile Number */}
         <FormField label="Alternate Mobile Number" name="alternateMobileNumber" error={errors.alternateMobileNumber}>
           <input
             type="tel"
@@ -91,6 +93,7 @@ const PersonalDetailsTab = ({
           />
         </FormField>
 
+        {/* Mobile Number */}
         <FormField label="Mobile Number" name="mobileNumber" required error={errors.mobileNumber}>
           <input
             type="tel"
@@ -102,6 +105,7 @@ const PersonalDetailsTab = ({
           />
         </FormField>
 
+        {/* Email */}
         <FormField label="Email" name="email" required error={errors.email}>
           <input
             type="email"
@@ -114,38 +118,44 @@ const PersonalDetailsTab = ({
           />
         </FormField>
 
+        {/* Password */}
         <FormField label="Password" name="password" required error={errors.password}>
           <input
             type="password"
             name="password"
             value={formData.password || ''}
-             autoComplete="new-password"
+            autoComplete="new-password"
             onChange={onChange}
             placeholder="Enter password"
             className="w-full p-2 border border-gray-300 rounded-md"
           />
         </FormField>
 
-        {/* Vendor Dropdown */}
+        {/* Vendor */}
         <FormField label="Vendor" name="vendor" required error={errors.vendor}>
           <select
             name="vendor"
             value={formData.vendor || ''}
             onChange={onChange}
             className="w-full p-2 border border-gray-300 rounded-md"
+            disabled={loading}
           >
             <option value="">Select Vendor</option>
-            {loading && <option disabled>Loading vendors...</option>}
-            {!loading && vendors?.length > 0 &&
+            {loading ? (
+              <option disabled>Loading vendors...</option>
+            ) : vendors?.length > 0 ? (
               vendors.map((v) => (
                 <option key={v.vendor_id} value={v.vendor_id}>
                   {v.vendor_name}
                 </option>
-              ))}
-            {!loading && vendors?.length === 0 && <option disabled>No vendors found</option>}
+              ))
+            ) : (
+              <option disabled>No vendors found</option>
+            )}
           </select>
         </FormField>
 
+        {/* Driver Code */}
         <FormField label="Driver Code" name="driverId" required error={errors.driverId}>
           <input
             type="text"

@@ -6,6 +6,9 @@ const DriverToolbar = ({ vendors = [], onFilterChange, onBulkUpload, onManageCom
   const [vendorId, setVendorId] = useState('All');
   const navigate = useNavigate();
 
+
+  
+
   const handleStatusChange = (e) => {
     const status = e.target.value;
     setDriverStatus(status);
@@ -28,9 +31,8 @@ const DriverToolbar = ({ vendors = [], onFilterChange, onBulkUpload, onManageCom
           <select
             value={driverStatus}
             onChange={handleStatusChange}
-            className="border border-gray-300 rounded px-2 py-1"
-          >
-             <option value="ALL">All</option>
+            className="border border-gray-300 rounded px-2 py-1">
+             {/* <option value="ALL">All</option> */}
               <option value="ACTIVE">Active Driver</option>
               <option value="INACTIVE">Inactive Driver</option>
               {/* <option value="BLACKLIST">Blacklisted Driver</option> */}
