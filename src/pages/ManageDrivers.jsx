@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Edit, Trash2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
 import DriverToolbar from '../components/driver/DriverToolbar';
 import DriverForm from '../components/driver/DriverForm';
 import { DriverTableHeaders } from '../staticData/DriverData';
@@ -13,7 +14,6 @@ import {
   patchDriverStatusAPI,
 } from '../redux/features/manageDriver/driverApi';
 
-// Helpers
 const getValueByKeyPath = (obj, keyPath) =>
   keyPath.split('.').reduce((acc, key) => acc?.[key], obj) ?? '—';
 
@@ -105,6 +105,7 @@ function ManageDrivers() {
     }
   }, [tenantId, vendors.length, dispatch]);
 
+
   // Fetch drivers when vendor changes
   useEffect(() => {
     if (vendors.length > 0) {
@@ -112,10 +113,12 @@ function ManageDrivers() {
     }
   }, [filters.vendorId, vendors]);
 
+
   // Filter status changes
   useEffect(() => {
     filterDriversByStatus(filters.driverStatus, allDrivers);
   }, [filters.driverStatus, allDrivers]);
+
 
   const loadDrivers = async (vendorId = 'All') => {
     setLoading(true);
@@ -179,29 +182,40 @@ function ManageDrivers() {
     }
   };
 
-  const handleSave = async (formData) => {
-    const { isEditing, selectedVendorId } = modalState;
-    const vendorId = selectedVendorId || formData.vendor_id;
-    if (!vendorId) return alert('Vendor not selected.');
 
-    try {
-      const response = isEditing
-        ? await updateDriverAPI(vendorId, formData)
-        : await createDriverAPI(vendorId, formData);
+const handleSave = async (formData) => {
+  const { isEditing, selectedVendorId } = modalState;
+  const vendorId = Number(selectedVendorId || formData.vendor);
 
-      const success = response?.data?.id || response?.status === 201;
-      if (success) {
-        alert(isEditing ? 'Driver updated successfully!' : 'Driver created successfully!');
-        closeModal();
-        loadDrivers(filters.vendorId);
-      } else {
-        alert('Something went wrong while saving the driver.');
-      }
-    } catch (err) {
-      console.error('Save failed:', err);
-      alert('Failed to save driver.');
-    }
+  if (!vendorId || Number.isNaN(vendorId)) {
+    toast.error('Vendor not selected.');
+    return;
+  }
+  const payload = {
+    ...formData,
+    vendor_id: vendorId, 
   };
+  try {
+    const response = isEditing
+      ? await updateDriverAPI(vendorId, payload)
+      : await createDriverAPI(vendorId, payload);
+    const success = response?.data?.driver_id || response?.status === 201;
+
+    if (success) {
+      toast.success(isEditing ? 'Driver updated successfully!' : 'Driver created successfully!');
+      closeModal();
+      if (filters?.vendorId) {
+        loadDrivers(filters.vendorId);
+      }
+    } else {
+      toast.error('Something went wrong while saving the driver.');
+    }
+  } catch (err) {
+    console.error('Save failed:', err);
+    toast.error('Failed to save driver. Please try again.');
+  }
+};
+
 
   const closeModal = () => {
     setModalState({ show: false, isEditing: false, editData: null, selectedVendorId: null });

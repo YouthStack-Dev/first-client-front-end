@@ -13,7 +13,6 @@ export const fetchDriversThunk = createAsyncThunk(
   'drivers/fetchDrivers',
   async (_, { rejectWithValue }) => {
     try {
-      console.log('[Thunk] Fetching tenant-level drivers...');
       const response = await getTenantDriversAPI();
       return response.data?.data || [];
     } catch (error) {
@@ -23,22 +22,21 @@ export const fetchDriversThunk = createAsyncThunk(
   }
 );
 
-/**
- * Create a new driver
- */
-export const createDriverThunk = createAsyncThunk(
+
+  export const createDriverThunk = createAsyncThunk(
   'drivers/createDriver',
   async ({ vendor_id, formData }, { rejectWithValue }) => {
     try {
-      console.log('[Thunk] Creating driver for vendor:', vendor_id);
       const response = await createDriverAPI(vendor_id, formData);
       return response.data;
     } catch (error) {
+      const errorData = error.response?.data;
       console.error('[Thunk] Failed to create driver:', error);
-      return rejectWithValue(error.response?.data || error.message || 'Failed to create driver');
+      return rejectWithValue(errorData || error.message || 'Failed to create driver');
     }
   }
 );
+
 
 /**
  * Update an existing driver
@@ -47,7 +45,6 @@ export const updateDriverThunk = createAsyncThunk(
   'drivers/updateDriver',
   async ({ vendor_id, driver_id, formData }, { rejectWithValue }) => {
     try {
-      console.log('[Thunk] Updating driver:', driver_id);
       const response = await updateDriverAPI(vendor_id, driver_id, formData);
       return response.data;
     } catch (error) {
@@ -107,7 +104,6 @@ export const getFilteredDriversThunk = createAsyncThunk(
 
         response = await API_CLIENT.get(`/vendors/${vendor_id}/drivers/?${params.toString()}`);
       }
-
       return response.data?.data || [];
     } catch (error) {
       console.error('[Thunk] Failed to fetch filtered drivers:', error);

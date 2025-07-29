@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch  } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import DriverTabNavigation from './DriverTabNavigation';
@@ -25,6 +26,7 @@ const defaultFormData = {
 
 const DriverForm = ({ initialData = null, isEdit = false, onClose, vendors = [] }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('personalDetails');
   const [formData, setFormData] = useState(defaultFormData);
   const [errors, setErrors] = useState({});
@@ -82,7 +84,7 @@ const DriverForm = ({ initialData = null, isEdit = false, onClose, vendors = [] 
     medical_verification_date: formData.medicalExpiryDate,
     training_verification_status: formData.trainingVerification,
     training_verification_date: formData.trainingExpiryDate,
-    eye_test_verification_status: 'pending',
+    eye_test_verification_status: formData.eyeTestStatus,
     eye_test_verification_date: formData.eyeTestExpiryDate,
     license_number: formData.licenseNumber,
     license_expiry_date: formData.licenseExpiryDate,
@@ -91,7 +93,7 @@ const DriverForm = ({ initialData = null, isEdit = false, onClose, vendors = [] 
     badge_expiry_date: formData.badgeExpiryDate,
     alternate_govt_id: formData.alternateGovtId,
     govt_id_number: formData.govtIdNumber,
-    alternate_govt_id_doc_type: 'aadhaar',
+    alternate_govt_id_doc_type: formData.alternateGovtIdDocType,
   });
 
   const getFileMap = () => ({
@@ -107,14 +109,83 @@ const DriverForm = ({ initialData = null, isEdit = false, onClose, vendors = [] 
     alternate_govt_id_doc_file: formData.govtIdDocument,
   });
 
-  const handleInputChange = ({ target: { name, value } }) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors((prev) => {
-      const newErrors = { ...prev };
-      delete newErrors[name];
-      return newErrors;
-    });
-  };
+ const handleInputChange = ({ target: { name, value } }) => {
+  setFormData((prev) => ({ ...prev, [name]: value }));
+
+
+  if (name === 'dateOfBirth') {
+    const dob = new Date(value);
+    const today = new Date();
+    const age = today.getFullYear() - dob.getFullYear();
+    const isBeforeBirthday =
+      today.getMonth() < dob.getMonth() ||
+      (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate());
+    const actualAge = isBeforeBirthday ? age - 1 : age;
+
+    if (actualAge < 18) {
+      setErrors((prev) => ({
+        ...prev,
+        dateOfBirth: 'Driver must be at least 18 years old',
+      }));
+    } else {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.dateOfBirth;
+        return newErrors;
+      });
+    }
+  }
+
+  if (name === 'mobileNumber') {
+    if (!/^\d{10}$/.test(value)) {
+      setErrors((prev) => ({
+        ...prev,
+        mobileNumber: 'Enter a valid 10-digit mobile number',
+      }));
+    } else if (formData.alternateMobileNumber === value) {
+      setErrors((prev) => ({
+        ...prev,
+        mobileNumber: 'Mobile number must be different from alternate number',
+      }));
+    } else {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.mobileNumber;
+        return newErrors;
+      });
+    }
+  }
+
+  if (name === 'alternateMobileNumber') {
+    if (!/^\d{10}$/.test(value)) {
+      setErrors((prev) => ({
+        ...prev,
+        alternateMobileNumber: 'Enter a valid 10-digit alternate number',
+      }));
+    } else if (formData.mobileNumber === value) {
+      setErrors((prev) => ({
+        ...prev,
+        alternateMobileNumber: 'Alternate number must be different from mobile number',
+      }));
+    } else {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.alternateMobileNumber;
+        return newErrors;
+      });
+    }
+  }
+  if (!['dateOfBirth', 'mobileNumber', 'alternateMobileNumber'].includes(name)) {
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  }
+};
+
 
   const handleImageChange = (file) => {
     if (file) setFormData((prev) => ({ ...prev, profileImage: file }));
@@ -134,25 +205,107 @@ const DriverForm = ({ initialData = null, isEdit = false, onClose, vendors = [] 
     }));
   };
 
-  const validatePersonalDetails = () => {
-    const requiredFields = ['driverName', 'dateOfBirth', 'mobileNumber', 'city', 'vendor', 'gender'];
-    const newErrors = requiredFields.reduce((acc, field) => {
-      if (!formData[field]) acc[field] = 'This field is required';
-      return acc;
-    }, {});
-    setErrors(newErrors);
-    setTabErrors((prev) => ({ ...prev, personalDetails: !!Object.keys(newErrors).length }));
-    return !Object.keys(newErrors).length;
-  };
+    const validatePersonalDetails = () => {
+      const errors = {};
+      const requiredFields = [
+        'driverName',
+        'dateOfBirth',
+        'mobileNumber',
+        'city',
+        'vendor',
+        'gender',
+        'email',
+      ];
 
-  const validateDocuments = () => {
-    const docErrors = {};
-    if (!formData.licenseNumber) docErrors.licenseNumber = 'License number is required';
-    if (!formData.licenseExpiryDate) docErrors.licenseExpiryDate = 'License expiry date is required';
-    setErrors(docErrors);
-    setTabErrors((prev) => ({ ...prev, documents: !!Object.keys(docErrors).length }));
-    return !Object.keys(docErrors).length;
-  };
+      requiredFields.forEach((field) => {
+        if (!formData[field] || formData[field].toString().trim() === '') {
+          errors[field] = `${field} is required`;
+        }
+      });
+
+      if (formData.mobileNumber) {
+        const mobile = formData.mobileNumber.trim();
+        if (!/^\d{10}$/.test(mobile)) {
+          errors.mobileNumber = 'Enter a valid 10-digit mobile number';
+        }
+      }
+
+      if (formData.alternateMobileNumber) {
+        const altMobile = formData.alternateMobileNumber.trim();
+        if (!/^\d{10}$/.test(altMobile)) {
+          errors.alternateMobileNumber = 'Enter a valid 10-digit alternate number';
+        } else if (altMobile === formData.mobileNumber) {
+          errors.alternateMobileNumber = 'Alternate number must be different from mobile number';
+        }
+      }
+      
+      if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+        errors.email = 'Enter a valid email address';
+      }
+
+      if (formData.dateOfBirth) {
+        const dob = new Date(formData.dateOfBirth);
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const isBeforeBirthday =
+          today.getMonth() < dob.getMonth() ||
+          (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate());
+        if (isBeforeBirthday) age--;
+
+        if (age < 18) {
+          errors.dateOfBirth = 'Driver must be at least 18 years old';
+        }
+      }
+
+      setErrors(errors);
+      setTabErrors((prev) => ({
+        ...prev,
+        personalDetails: Object.keys(errors).length > 0,
+      }));
+
+      return Object.keys(errors).length === 0;
+    };
+
+
+const validateDocuments = () => {
+  const errors = {};
+
+  const docFieldSets = [
+    ['bgvStatus', 'bgvExpiryDate', 'bgvDocument', 'BGV'],
+    ['policeVerification', 'policeExpiryDate', 'policeDocument', 'Police Verification'],
+    ['medicalVerification', 'medicalExpiryDate', 'medicalDocument', 'Medical Verification'],
+    ['trainingVerification', 'trainingExpiryDate', 'trainingDocument', 'Training Verification'],
+    ['eyeTestExpiryDate', 'eyeTestDocument', 'eyeTestDocument', 'Eye Test'],
+    ['inductionDate', 'inductionDocument', 'inductionDocument', 'Induction'],
+    ['badgeNumber', 'badgeExpiryDate', 'badgeDocument', 'Badge'],
+  ];
+
+  docFieldSets.forEach(([field1, field2, field3, label]) => {
+    if (!formData[field1]) {errors[field1] = `${label} status/date is required`; }
+    if (!formData[field2]) {errors[field2] = `${label} expiry date is required`;}
+    if (!formData[field3]) { errors[field3] = `${label} document is required`; }
+  });
+
+  const license = formData.licenseNumber;
+  if (!license) {
+    errors.licenseNumber = 'License number is required';
+  } else if (!/^[A-Za-z0-9\s\-]{5,20}$/.test(license)) {
+    errors.licenseNumber = 'Enter a valid license number (5–20 characters, letters, numbers, dashes, spaces allowed)';
+  }
+  if (!formData.licenseExpiryDate) {
+    errors.licenseExpiryDate = 'License expiry date is required';
+  }
+  setErrors(errors);
+  setTabErrors((prev) => ({
+    ...prev,
+    documents: Object.keys(errors).length > 0,
+  }));
+
+  if (!formData.alternateGovtId && !formData.alternateGovtIdNumber && !formData.alternateGovtIdDoc) {
+    toast.warning('Alternate government ID details are not filled. Please complete them if available.');
+  }
+  return Object.keys(errors).length === 0;
+};
 
   const mapToFormData = () => {
     const form = new FormData();
@@ -161,38 +314,28 @@ const DriverForm = ({ initialData = null, isEdit = false, onClose, vendors = [] 
 
     Object.entries(fieldMap).forEach(([key, val]) => form.append(key, val || ''));
     Object.entries(fileMap).forEach(([key, file]) => { if (file) form.append(key, file); });
-
     return { vendorId: formData.vendor || vendors[0]?.vendor_id || '', payload: form };
   };
 
-  const handleSave = async () => {
-    if (!validatePersonalDetails()) return setActiveTab('personalDetails');
-    if (!validateDocuments()) return setActiveTab('documents');
+ const handleSave = () => {
+  const isPersonalValid = validatePersonalDetails();
+  const isDocumentValid = validateDocuments();
+  if (!isPersonalValid || !isDocumentValid) {
+    return;
+  }
+  const { vendorId, payload } = mapToFormData();
 
-    setIsSubmitting(true);
-    const { vendorId, payload } = mapToFormData();
+  dispatch(createDriverThunk({ vendor_id: vendorId, formData: payload }))
+    .unwrap()
+    .then(() => {
+      navigate('/drivers');
+    })
+    .catch((err) => {
+      console.error("Submission error:", err);
+    });
+};
 
-    try {
-      const thunk = isEdit
-        ? updateDriverThunk({ vendor_id: vendorId, driver_id: initialData.driver_id, formData: payload })
-        : createDriverThunk({ vendor_id: vendorId, formData: payload });
 
-      const result = await dispatch(thunk);
-
-      if (result.meta.requestStatus === 'fulfilled') {
-        toast.success(isEdit ? 'Driver updated successfully!' : 'Driver added successfully!');
-        onClose?.();
-        setFormData(defaultFormData);
-      } else {
-        toast.error(result.payload?.message || 'Something went wrong.');
-      }
-    } catch (err) {
-      console.error('Driver save failed', err);
-      toast.error('Unexpected error occurred.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleNext = () => {
     const valid = validatePersonalDetails();
@@ -242,8 +385,7 @@ const DriverForm = ({ initialData = null, isEdit = false, onClose, vendors = [] 
             <button
               onClick={activeTab !== 'documents' ? handleNext : handleSave}
               disabled={isSubmitting}
-              className={`ml-auto px-6 py-2 rounded-md transition ${isSubmitting ? 'bg-gray-400 cursor-not-allowed text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
-            >
+              className={`ml-auto px-6 py-2 rounded-md transition ${isSubmitting ? 'bg-gray-400 cursor-not-allowed text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
               {activeTab !== 'documents' ? 'Next' : isSubmitting ? 'Submitting...' : 'Submit'}
             </button>
           </div>

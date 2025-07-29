@@ -49,6 +49,7 @@ const PersonalDetailsTab = ({
         {/* Driver Name */}
         <FormField label="Driver Name" name="driverName" required error={errors.driverName}>
           <input
+          id="driverName"
             type="text"
             name="driverName"
             value={formData.driverName || ''}
@@ -59,8 +60,9 @@ const PersonalDetailsTab = ({
         </FormField>
 
         {/* City */}
-        <FormField label="City" name="city" required error={errors.city}>
+        <FormField id="City" name="city" required error={errors.city}>
           <input
+           id ="city"
             type="text"
             name="city"
             value={formData.city || ''}
@@ -73,6 +75,7 @@ const PersonalDetailsTab = ({
         {/* Date of Birth */}
         <FormField label="Date of Birth" name="dateOfBirth" required error={errors.dateOfBirth}>
           <input
+            id="dateofBirth"
             type="date"
             name="dateOfBirth"
             value={formData.dateOfBirth || ''}
@@ -84,6 +87,7 @@ const PersonalDetailsTab = ({
         {/* Alternate Mobile Number */}
         <FormField label="Alternate Mobile Number" name="alternateMobileNumber" error={errors.alternateMobileNumber}>
           <input
+           id="alternateMobileNumber"
             type="tel"
             name="alternateMobileNumber"
             value={formData.alternateMobileNumber || ''}
@@ -96,6 +100,7 @@ const PersonalDetailsTab = ({
         {/* Mobile Number */}
         <FormField label="Mobile Number" name="mobileNumber" required error={errors.mobileNumber}>
           <input
+            id="mobileNumber"
             type="tel"
             name="mobileNumber"
             value={formData.mobileNumber || ''}
@@ -108,6 +113,7 @@ const PersonalDetailsTab = ({
         {/* Email */}
         <FormField label="Email" name="email" required error={errors.email}>
           <input
+            id="email"
             type="email"
             name="email"
             value={formData.email || ''}
@@ -121,6 +127,7 @@ const PersonalDetailsTab = ({
         {/* Password */}
         <FormField label="Password" name="password" required error={errors.password}>
           <input
+            id="password"
             type="password"
             name="password"
             value={formData.password || ''}
@@ -132,32 +139,46 @@ const PersonalDetailsTab = ({
         </FormField>
 
         {/* Vendor */}
-        <FormField label="Vendor" name="vendor" required error={errors.vendor}>
-          <select
-            name="vendor"
-            value={formData.vendor || ''}
-            onChange={onChange}
-            className="w-full p-2 border border-gray-300 rounded-md"
-            disabled={loading}
-          >
-            <option value="">Select Vendor</option>
-            {loading ? (
-              <option disabled>Loading vendors...</option>
-            ) : vendors?.length > 0 ? (
-              vendors.map((v) => (
-                <option key={v.vendor_id} value={v.vendor_id}>
-                  {v.vendor_name}
-                </option>
-              ))
-            ) : (
-              <option disabled>No vendors found</option>
-            )}
-          </select>
-        </FormField>
+       <FormField label="Vendor" name="vendor" required error={errors.vendor}>
+        <select
+         id="vendor"
+          name="vendor"
+          value={formData.vendor || ''}
+          onChange={(e) => {
+            const selectedId = Number(e.target.value);
+            const selectedVendor = vendors.find((v) => v.vendor_id === selectedId);
+
+            onChange({
+              target: {
+                name: 'vendor',
+                value: selectedId,
+              },
+            });
+          }}
+          className="w-full p-2 border border-gray-300 rounded-md"
+          disabled={loading}
+        >
+          <option value="">Select Vendor</option>
+          {loading ? (
+            <option disabled>Loading vendors...</option>
+          ) : vendors?.length > 0 ? (
+            vendors.map((v) => (
+              <option key={v.vendor_id} value={v.vendor_id}>
+                {v.vendor_name}
+              </option>
+            ))
+          ) : (
+            <option disabled>No vendors found</option>
+          )}
+        </select>
+      </FormField>
+
+
 
         {/* Driver Code */}
         <FormField label="Driver Code" name="driverId" required error={errors.driverId}>
           <input
+            id="driverId"
             type="text"
             name="driverId"
             value={formData.driverId || ''}
@@ -171,6 +192,7 @@ const PersonalDetailsTab = ({
         <div className="flex flex-col md:grid md:grid-cols-2 md:gap-4">
           <FormField label="Permanent Address" name="permanentAddress" error={errors.permanentAddress}>
             <textarea
+               id="permanentAddress"
               name="permanentAddress"
               value={formData.permanentAddress || ''}
               onChange={onChange}
@@ -183,6 +205,7 @@ const PersonalDetailsTab = ({
             <div className="space-y-2">
               {!formData.isSameAddress && (
                 <textarea
+                id="currentAddress"
                   name="currentAddress"
                   value={formData.currentAddress || ''}
                   onChange={onChange}
@@ -192,6 +215,7 @@ const PersonalDetailsTab = ({
               )}
               <label className="flex items-center">
                 <input
+                id="isSameAddress"
                   type="checkbox"
                   checked={formData.isSameAddress || false}
                   onChange={(e) => onCheckboxChange('isSameAddress', e.target.checked)}
@@ -209,6 +233,7 @@ const PersonalDetailsTab = ({
             {['male', 'female'].map((g) => (
               <label key={g} className="flex items-center space-x-2">
                 <input
+                  id="gender1"
                   type="radio"
                   name="gender"
                   value={g}

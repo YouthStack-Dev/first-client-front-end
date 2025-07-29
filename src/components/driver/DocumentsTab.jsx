@@ -44,6 +44,7 @@ const DocumentsTab = ({ formData, errors, onChange, onFileChange }) => {
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:text-blue-800"
                 title="Preview"
+                aria-label="Preview document"
               >
                 <Eye size={18} />
               </a>
@@ -96,7 +97,7 @@ const DocumentsTab = ({ formData, errors, onChange, onFileChange }) => {
       {renderDocumentRow('Police Verification', 'policeVerification', 'policeExpiryDate', 'policeDocument', true)}
       {renderDocumentRow('Medical Verification', 'medicalVerification', 'medicalExpiryDate', 'medicalDocument', true)}
       {renderDocumentRow('Training Verification', 'trainingVerification', 'trainingExpiryDate', 'trainingDocument', true)}
-      {renderDocumentRow('Eye Test', '', 'eyeTestExpiryDate', 'eyeTestDocument')}
+      {renderDocumentRow('Eye Test', 'eyeTestStatus', 'eyeTestExpiryDate', 'eyeTestDocument', true)}
 
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
         <FormField label="License Number" name="licenseNumber" required error={errors.licenseNumber}>
@@ -153,6 +154,7 @@ const DocumentsTab = ({ formData, errors, onChange, onFileChange }) => {
               onChange={onChange}
               className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
+            <UploadButton name="badgeDocument" label="Upload" />
           </div>
         </FormField>
 

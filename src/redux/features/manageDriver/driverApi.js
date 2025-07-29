@@ -8,10 +8,8 @@ import { API_CLIENT } from '../../../Api/API_Client';
  */
 export const getFilteredDrivers = (vendor_id, driver_code, bgv_status) => {
   const params = new URLSearchParams();
-
   if (driver_code) params.append('driver_code', driver_code);
   if (bgv_status) params.append('bgv_status', bgv_status);
-
   return API_CLIENT.get(`/vendors/${vendor_id}/drivers/?${params.toString()}`);
 };
 
@@ -29,7 +27,6 @@ export const getDrivers = (vendor_id) => {
 export const getTenantDriversAPI = async () => {
   try {
     const response = await API_CLIENT.get(`/vendors/tenants/drivers/?skip=0&limit=100`);
-    // console.log('✅ [API] Full Response:', response);
     return response;
   } catch (error) {
     console.error('❌ Error fetching tenant drivers:', error);

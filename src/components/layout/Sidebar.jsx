@@ -172,7 +172,8 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
         <button
           onClick={handleLogout}
           className="flex items-center justify-center w-full p-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-        >
+          aria-label="Logout"
+          title="Logout">
           <LogOut size={16} />
           {isOpen && <span className="ml-2">Logout</span>}
         </button>

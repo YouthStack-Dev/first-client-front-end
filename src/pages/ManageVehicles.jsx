@@ -198,7 +198,6 @@ const data ={}
     console.log(
       `Toggling status for ${vehicle.vehicleId} to ${updatedStatus ? "Active" : "Inactive"}`
     );
-    // TODO: Call API to update vehicle status
   };
 
   return (

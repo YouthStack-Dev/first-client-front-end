@@ -18,18 +18,23 @@ const DriverTabNavigation = ({ activeTab, errors, onTabChange }) => {
           const errorStyle = hasError && !isActive ? 'text-red-600' : '';
 
           return (
-            <button
-              key={id}
-              className={`${baseStyle} ${isActive ? activeStyle : inactiveStyle} ${errorStyle}`}
-              onClick={() => onTabChange(id)}
-            >
-              {label}
-              {hasError && (
-                <div className="absolute -right-1 -top-1 w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-xs">
-                  !
-                </div>
-              )}
-            </button>
+           <button
+            key={id}
+            className={`${baseStyle} ${isActive ? activeStyle : inactiveStyle} ${errorStyle}`}
+            onClick={() => onTabChange(id)}
+            aria-label={`${label}${hasError ? ' - Error in this section' : ''}`}
+          >
+            {label}
+            {hasError && (
+              <div
+                className="absolute -right-1 -top-1 w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-xs"
+                aria-hidden="true"
+              >
+                !
+              </div>
+            )}
+          </button>
+
           );
         })}
       </div>
