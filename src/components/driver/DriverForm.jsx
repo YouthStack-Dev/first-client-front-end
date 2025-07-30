@@ -15,7 +15,7 @@ const defaultFormData = {
   permanentAddress: '', currentAddress: '', isSameAddress: false,
   alternateMobileNumber: '', city: '', vendor: '', email: '', password: '',
   gender: 'male', bgvStatus: 'pending', policeVerification: 'pending',
-  medicalVerification: 'pending', trainingVerification: 'pending',
+  medicalVerification: 'pending', trainingVerification: 'pending', eyeTestStatus: 'pending',
   bgvExpiryDate: '', policeExpiryDate: '', medicalExpiryDate: '', trainingExpiryDate: '',
   eyeTestExpiryDate: '', licenseNumber: '', licenseExpiryDate: '', inductionDate: '',
   badgeNumber: '', badgeExpiryDate: '', alternateGovtId: '', govtIdNumber: '',
@@ -30,6 +30,7 @@ const DriverForm = ({ initialData = null, isEdit = false, onClose, vendors = [] 
   const [activeTab, setActiveTab] = useState('personalDetails');
   const [formData, setFormData] = useState(defaultFormData);
   const [errors, setErrors] = useState({});
+  const [documentError, setDocumentError] = useState({});
   const [tabErrors, setTabErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [personalValid, setPersonalValid] = useState(false);
@@ -266,46 +267,32 @@ const DriverForm = ({ initialData = null, isEdit = false, onClose, vendors = [] 
       return Object.keys(errors).length === 0;
     };
 
-
 const validateDocuments = () => {
   const errors = {};
-
-  const docFieldSets = [
-    ['bgvStatus', 'bgvExpiryDate', 'bgvDocument', 'BGV'],
-    ['policeVerification', 'policeExpiryDate', 'policeDocument', 'Police Verification'],
-    ['medicalVerification', 'medicalExpiryDate', 'medicalDocument', 'Medical Verification'],
-    ['trainingVerification', 'trainingExpiryDate', 'trainingDocument', 'Training Verification'],
-    ['eyeTestExpiryDate', 'eyeTestDocument', 'eyeTestDocument', 'Eye Test'],
-    ['inductionDate', 'inductionDocument', 'inductionDocument', 'Induction'],
-    ['badgeNumber', 'badgeExpiryDate', 'badgeDocument', 'Badge'],
+  const docFields = [
+    ["bgvDocument", "bgvDocumentName", "BGV"],
+    ["policeDocument", "policeDocumentName", "Police Verification"],
+    ["medicalDocument", "medicalDocumentName", "Medical"],
+    ["trainingDocument", "trainingDocumentName", "Training Certificate"],
+    ["eyeTestDocument", "eyeTestDocumentName", "Eye Test"],
+    ["licenseDocument", "licenseDocumentName", "Driving License"],
+    ["inductionDocument", "inductionDocumentName", "Induction Certificate"],
+    ["badgeDocument", "badgeDocumentName", "Badge"],
+    ["govtIdDocument", "govtIdDocumentName", "Government ID"],
   ];
 
-  docFieldSets.forEach(([field1, field2, field3, label]) => {
-    if (!formData[field1]) {errors[field1] = `${label} status/date is required`; }
-    if (!formData[field2]) {errors[field2] = `${label} expiry date is required`;}
-    if (!formData[field3]) { errors[field3] = `${label} document is required`; }
+  docFields.forEach(([field, nameField, label]) => {
+    const hasUploadedFile = !!formData[field];
+    const hasExistingUrl = !!formData[nameField];
+    if (!hasUploadedFile && !hasExistingUrl) {
+      errors[field] = `${label} document is required`;
+    }
   });
 
-  const license = formData.licenseNumber;
-  if (!license) {
-    errors.licenseNumber = 'License number is required';
-  } else if (!/^[A-Za-z0-9\s\-]{5,20}$/.test(license)) {
-    errors.licenseNumber = 'Enter a valid license number (5–20 characters, letters, numbers, dashes, spaces allowed)';
-  }
-  if (!formData.licenseExpiryDate) {
-    errors.licenseExpiryDate = 'License expiry date is required';
-  }
-  setErrors(errors);
-  setTabErrors((prev) => ({
-    ...prev,
-    documents: Object.keys(errors).length > 0,
-  }));
-
-  if (!formData.alternateGovtId && !formData.alternateGovtIdNumber && !formData.alternateGovtIdDoc) {
-    toast.warning('Alternate government ID details are not filled. Please complete them if available.');
-  }
+  setDocumentError(errors);
   return Object.keys(errors).length === 0;
 };
+
 
   const mapToFormData = () => {
     const form = new FormData();
@@ -317,22 +304,40 @@ const validateDocuments = () => {
     return { vendorId: formData.vendor || vendors[0]?.vendor_id || '', payload: form };
   };
 
- const handleSave = () => {
+  const handleSave = async () => {
   const isPersonalValid = validatePersonalDetails();
   const isDocumentValid = validateDocuments();
+
   if (!isPersonalValid || !isDocumentValid) {
+    console.warn('[VALIDATION FAILED] Personal or document validation failed.');
     return;
   }
-  const { vendorId, payload } = mapToFormData();
 
-  dispatch(createDriverThunk({ vendor_id: vendorId, formData: payload }))
-    .unwrap()
-    .then(() => {
-      navigate('/drivers');
-    })
-    .catch((err) => {
-      console.error("Submission error:", err);
-    });
+  const { vendorId, payload } = mapToFormData();
+  setIsSubmitting(true);
+
+  try {
+    if (isEdit) {
+      await dispatch(updateDriverThunk({
+        vendor_id: vendorId,
+        driver_id: initialData?.driver_id,
+        formData: payload,
+      })).unwrap();
+      toast.success('Driver updated successfully');
+    } else {
+      await dispatch(createDriverThunk({
+        vendor_id: vendorId,
+        formData: payload,
+      })).unwrap();
+      toast.success('Driver created successfully');
+    }
+    onClose?.();
+  } catch (error) {
+    console.error('[SAVE FAILED]', error);
+    toast.error('Something went wrong while saving the driver.');
+  } finally {
+    setIsSubmitting(false);
+  }
 };
 
 
@@ -348,8 +353,7 @@ const validateDocuments = () => {
       <HeaderWithActionNoRoute
         title={isEdit ? 'Edit Driver' : 'Add New Driver'}
         showBackButton
-        onBack={onClose}
-      />
+        onBack={onClose} />
 
       <div className="bg-white max-h-[600px] rounded-lg overflow-y-auto">
         <DriverTabNavigation activeTab={activeTab} errors={tabErrors} onTabChange={setActiveTab} />
@@ -362,8 +366,7 @@ const validateDocuments = () => {
               onChange={handleInputChange}
               onImageChange={handleImageChange}
               onCheckboxChange={handleCheckboxChange}
-              vendors={vendors}
-            />
+              vendors={vendors}  />
           )}
 
           {activeTab === 'documents' && (
@@ -371,8 +374,7 @@ const validateDocuments = () => {
               formData={formData}
               errors={errors}
               onChange={handleInputChange}
-              onFileChange={handleFileChange}
-            />
+              onFileChange={handleFileChange}  />
           )}
 
           <div className="flex justify-between mt-6">

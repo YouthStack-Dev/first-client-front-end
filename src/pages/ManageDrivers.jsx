@@ -147,14 +147,16 @@ function ManageDrivers() {
     setFilters(newFilters);
   };
 
-  const handleEditDriver = (driver) => {
-    setModalState({
-      show: true,
-      isEditing: true,
-      editData: driver,
-      selectedVendorId: driver.vendor?.vendor_id || null,
-    });
-  };
+ const handleEditDriver = (driver) => {
+  setModalState({
+    show: true,
+    isEditing: true,
+    editData: driver,
+    editingDriverId: driver.driver_id, 
+    selectedVendorId: driver.vendor?.vendor_id || null,
+  });
+};
+
 
   const handleAddDriver = () => {
     setModalState({ show: true, isEditing: false, editData: null, selectedVendorId: null });
@@ -182,23 +184,32 @@ function ManageDrivers() {
     }
   };
 
-
 const handleSave = async (formData) => {
-  const { isEditing, selectedVendorId } = modalState;
+  const { isEditing, selectedVendorId, editingDriverId } = modalState;
   const vendorId = Number(selectedVendorId || formData.vendor);
 
   if (!vendorId || Number.isNaN(vendorId)) {
     toast.error('Vendor not selected.');
     return;
   }
+
   const payload = {
     ...formData,
-    vendor_id: vendorId, 
+    vendor_id: vendorId,
   };
+
   try {
-    const response = isEditing
-      ? await updateDriverAPI(vendorId, payload)
-      : await createDriverAPI(vendorId, payload);
+    let response;
+    if (isEditing) {
+      if (!editingDriverId) {
+        toast.error('Driver ID missing for update.');
+        return;
+      }
+      response = await updateDriverAPI(vendorId, editingDriverId, payload);
+    } else {
+      response = await createDriverAPI(vendorId, payload);
+    }
+
     const success = response?.data?.driver_id || response?.status === 201;
 
     if (success) {
@@ -217,9 +228,16 @@ const handleSave = async (formData) => {
 };
 
 
-  const closeModal = () => {
-    setModalState({ show: false, isEditing: false, editData: null, selectedVendorId: null });
-  };
+const closeModal = () => {
+  setModalState({
+    show: false,
+    isEditing: false,
+    editData: null,
+    selectedVendorId: null,
+    editingDriverId: null, 
+  });
+};
+
 
   return (
     <>

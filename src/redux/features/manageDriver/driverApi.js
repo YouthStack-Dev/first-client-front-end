@@ -49,9 +49,11 @@ export const createDriverAPI = (vendor_id, payload) => {
  * @param {string} driver_id
  * @param {object} payload
  */
+
 export const updateDriverAPI = (vendor_id, driver_id, payload) => {
   return API_CLIENT.put(`/vendors/${vendor_id}/drivers/${driver_id}`, payload);
 };
+
 
 /**
  * Patch driver status (partial update)
