@@ -101,7 +101,7 @@ export const fetchVehicleTypeById = createAsyncThunk(
   'vehicleType/fetchById',
   async (id, { rejectWithValue }) => {
     try {
-      console.log("📡 Fetching vehicle type by ID:", id);
+      // console.log("📡 Fetching vehicle type by ID:", id);
       const res = await getVehicleTypeById(id);
       // console.log("✅ Fetched vehicle type:", res.data);
       return res.data;

@@ -123,7 +123,7 @@ function ManageDrivers() {
   const loadDrivers = async (vendorId = 'All') => {
     setLoading(true);
     try {
-      const res = vendorId === 'All' ? await getTenantDriversAPI() : await getFilteredDrivers(vendorId, '', '');
+      const res = vendorId === 'All' ? await getTenantDriversAPI() :await getFilteredDrivers(vendorId, {});
       const drivers = Array.isArray(res?.data) ? res.data : res?.data?.data || [];
       setAllDrivers(drivers);
       filterDriversByStatus(filters.driverStatus, drivers);

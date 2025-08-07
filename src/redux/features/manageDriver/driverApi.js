@@ -6,20 +6,25 @@ import { API_CLIENT } from '../../../Api/API_Client';
  * @param {string} driver_code
  * @param {string} bgv_status
  */
-export const getFilteredDrivers = (vendor_id, driver_code, bgv_status) => {
+export const getFilteredDrivers = (vendor_id, {
+  driver_code = "",
+  bgv_status = "",
+  search = "",
+  skip = 0,
+  limit = 100
+}) => {
   const params = new URLSearchParams();
-  if (driver_code) params.append('driver_code', driver_code);
-  if (bgv_status) params.append('bgv_status', bgv_status);
+  if (driver_code) params.append("driver_code", driver_code);
+  if (bgv_status) params.append("bgv_status", bgv_status);
+  if (search) params.append("search", search);
+  params.append("skip", skip);
+  params.append("limit", limit);
+
   return API_CLIENT.get(`/vendors/${vendor_id}/drivers/?${params.toString()}`);
 };
 
-/**
- * Fetch all drivers for a specific vendor
- * @param {string} vendor_id
- */
-export const getDrivers = (vendor_id) => {
-  return API_CLIENT.get(`/vendors/${vendor_id}/drivers/?skip=0&limit=100`);
-};
+
+
 
 /**
  * Fetch all tenant-level drivers

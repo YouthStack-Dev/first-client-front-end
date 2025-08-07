@@ -53,7 +53,12 @@ const vehicleTypeSlice = createSlice({
         state.loading = false;
         state.vehicleTypes = action.payload;
       })
+        .addCase(fetchVehicleTypes.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to fetch vehicle types';
+      })
 
+      
       // ✅ Fetch Single by ID
       .addCase(fetchVehicleTypeById.pending, (state) => {
         state.loading = true;
