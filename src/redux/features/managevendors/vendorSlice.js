@@ -4,6 +4,7 @@ import {
   addVendor,
   editVendor,
   removeVendor,
+  fetchVendorById,
 } from './vendorThunks';
 
 const vendorSlice = createSlice({
@@ -25,25 +26,44 @@ const vendorSlice = createSlice({
       state.isModalOpen = false;
       state.selectedVendor = null;
     },
+    // ✅ New reducer to instantly update active/inactive in state
+    updateVendorStatusLocally: (state, action) => {
+      const { id, is_active } = action.payload;
+      const vendorIndex = state.vendors.findIndex((v) => v.vendor_id === id);
+      if (vendorIndex !== -1) {
+        state.vendors[vendorIndex].is_active = is_active;
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
-     .addCase(fetchVendors.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    })
-    .addCase(fetchVendors.fulfilled, (state, action) => {
-      state.loading = false;
-      state.vendors = action.payload || [];
-      state.total = action.payload?.length || 0;
-    })
-    .addCase(fetchVendors.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.payload;
-    })
+      // Fetch Vendors
+      .addCase(fetchVendors.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchVendors.fulfilled, (state, action) => {
+        state.loading = false;
+        state.vendors = action.payload || [];
+        state.total = action.payload?.length || 0;
+      })
+      .addCase(fetchVendors.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
 
-
-      
+      // Fetch Single Vendor
+      .addCase(fetchVendorById.fulfilled, (state, action) => {
+        const updatedVendor = action.payload;
+        const index = state.vendors.findIndex(
+          (v) => v.vendor_id === updatedVendor.vendor_id
+        );
+        if (index !== -1) {
+          state.vendors[index] = updatedVendor;
+        } else {
+          state.vendors.unshift(updatedVendor);
+        }
+      })
 
       // Add Vendor
       .addCase(addVendor.fulfilled, (state, action) => {
@@ -54,7 +74,9 @@ const vendorSlice = createSlice({
       // Edit Vendor
       .addCase(editVendor.fulfilled, (state, action) => {
         state.vendors = state.vendors.map((vendor) =>
-          vendor.vendor_id === action.payload.vendor_id ? action.payload : vendor
+          vendor.vendor_id === action.payload.vendor_id
+            ? action.payload
+            : vendor
         );
         state.isModalOpen = false;
       })
@@ -68,5 +90,5 @@ const vendorSlice = createSlice({
   },
 });
 
-export const { openModal, closeModal } = vendorSlice.actions;
+export const { openModal, closeModal, updateVendorStatusLocally } = vendorSlice.actions;
 export default vendorSlice.reducer;

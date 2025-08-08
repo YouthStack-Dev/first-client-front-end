@@ -4,6 +4,7 @@ import {
   getAllVendors,
   updateVendor,
   deleteVendor,
+  getVendorById,
 } from './vendorApi';
 
 // 🟢 Fetch Vendors (List)
@@ -18,6 +19,20 @@ export const fetchVendors = createAsyncThunk(
     }
   }
 );
+
+
+export const fetchVendorById = createAsyncThunk(
+  "vendors/fetchVendorById",
+  async (vendorId, { rejectWithValue }) => {
+    try {
+      const data = await getVendorById(vendorId);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Error fetching vendor");
+    }
+  }
+);
+
 
 // 🟢 Add Vendor
 export const addVendor = createAsyncThunk(

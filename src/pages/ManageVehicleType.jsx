@@ -21,8 +21,8 @@ const ManageVehicleTypes = () => {
   const { vehicleTypes, isModalOpen, formData, editingId } = useSelector((state) => state.vehicleType);
   const { user } = useSelector((state) => state.auth);
 
+  
   const vendorId = user?.vendor_id || 1;
-
   useEffect(() => {
     if (vendorId && vehicleTypes.length === 0) {
       dispatch(fetchVehicleTypes(vendorId));
