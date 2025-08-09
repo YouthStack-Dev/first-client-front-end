@@ -5,13 +5,11 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import {
   createVehicleThunk,
-  updateVehicleThunk, 
+  updateVehicleThunk,
 } from "../redux/features/manageVehicles/vehicleThunk";
-
 
 const TABS = ["BASIC INFO", "CONTRACTS", "DOCUMENTS", "DRIVER"];
 
-// Initial State
 const initialState = {
   vendor_id: "",
   vehicle_code: "",
@@ -50,7 +48,6 @@ const VehicleForm = ({
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch drivers
   useEffect(() => {
     if (formData.vendor_id) fetchDrivers(formData.vendor_id);
     else setDrivers([]);
@@ -66,7 +63,6 @@ const VehicleForm = ({
         search: "",
       });
       const driverList = Array.isArray(res?.data) ? res.data : [];
-      // console.log("✅ Drivers fetched:", driverList);
       setDrivers(driverList);
     } catch (error) {
       console.error("❌ Error fetching drivers:", error);
@@ -91,26 +87,24 @@ const VehicleForm = ({
     }
   };
 
-  // Validations
+  // Validation methods per tab
   const validateBasicInfo = () => {
     const newErrors = {};
     if (!formData.vendor_id) newErrors.vendor_id = "Vendor is required";
     if (!formData.vehicle_code) newErrors.vehicle_code = "Vehicle code is required";
     if (!formData.reg_number) newErrors.reg_number = "Registration number is required";
     if (!formData.status) newErrors.status = "Status is required";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
   };
 
   const validateContracts = () => {
     const newErrors = {};
     if (!formData.vehicle_type_id) newErrors.vehicle_type_id = "Vehicle type is required";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
   };
 
   const validateDocuments = () => {
-    if (isEdit) return true; // ✅ Skip validation on edit
+    if (isEdit) return {};
     const newErrors = {};
     const requiredDocs = [
       "rc_card_file",
@@ -125,23 +119,29 @@ const VehicleForm = ({
         newErrors[doc] = "This document is required";
       }
     });
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
   };
 
-  const validateCurrentTab = () => {
-    if (activeTab === "BASIC INFO") return validateBasicInfo();
-    if (activeTab === "CONTRACTS") return validateContracts();
-    if (activeTab === "DOCUMENTS") return validateDocuments();
-    return true;
+  const validateAllTabs = () => {
+    // Merge errors from all tabs
+    return {
+      ...validateBasicInfo(),
+      ...validateContracts(),
+      ...validateDocuments(),
+    };
   };
 
-  // Tab Navigation
   const handleNext = () => {
-    // console.log(`➡️ Moving to next tab from: ${activeTab}`);
-    if (validateCurrentTab()) {
+    const newErrors = {};
+    if (activeTab === "BASIC INFO") Object.assign(newErrors, validateBasicInfo());
+    if (activeTab === "CONTRACTS") Object.assign(newErrors, validateContracts());
+    if (activeTab === "DOCUMENTS") Object.assign(newErrors, validateDocuments());
+
+    if (Object.keys(newErrors).length === 0) {
       const index = TABS.indexOf(activeTab);
       if (index < TABS.length - 1) setActiveTab(TABS[index + 1]);
+    } else {
+      setErrors(newErrors);
     }
   };
 
@@ -150,14 +150,25 @@ const VehicleForm = ({
     if (index > 0) setActiveTab(TABS[index - 1]);
   };
 
-  // Handle Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // console.log("🔥 SUBMIT INITIATED");
-    if (!validateCurrentTab()) {
-      console.warn("⚠️ Validation failed");
+
+    const newErrors = validateAllTabs();
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      // Switch to first tab containing an error
+      if (newErrors.vendor_id || newErrors.vehicle_code || newErrors.reg_number || newErrors.status) {
+        setActiveTab("BASIC INFO");
+      } else if (newErrors.vehicle_type_id) {
+        setActiveTab("CONTRACTS");
+      } else {
+        setActiveTab("DOCUMENTS");
+      }
+      toast.error("Please fix errors before submitting.");
       return;
     }
+
     setIsSubmitting(true);
 
     const formDataToSubmit = new FormData();
@@ -172,15 +183,15 @@ const VehicleForm = ({
       }
     });
 
-    // console.log("📤 Submitting form data:");
-    for (let [key, value] of formDataToSubmit.entries()) {
-      // console.log(`${key}:`, value);
+    // DEBUG LOG
+    console.log("🚀 Submitting form data:");
+    for (const [key, val] of formDataToSubmit.entries()) {
+      console.log(`- ${key}:`, val);
     }
 
     try {
-      let response;
       if (isEdit) {
-        response = await dispatch(
+        await dispatch(
           updateVehicleThunk({
             vehicle_id: initialData?.vehicle_id,
             vendor_id: formData.vendor_id,
@@ -189,7 +200,7 @@ const VehicleForm = ({
         ).unwrap();
         toast.success("Vehicle updated successfully");
       } else {
-        response = await dispatch(
+        await dispatch(
           createVehicleThunk({
             vendorId: formData.vendor_id,
             formData: formDataToSubmit,
@@ -197,17 +208,15 @@ const VehicleForm = ({
         ).unwrap();
         toast.success("Vehicle created successfully");
       }
-      // console.log("✅ API response:", response);
       onClose?.();
     } catch (err) {
       console.error("❌ Submission failed:", err);
-      toast.error("Something went wrong.");
+      toast.error("Something went wrong during submission.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Render Helpers
   const renderField = (label, field, type = "text", placeholder = "", required = false) => (
     <div>
       <label className="block font-medium mb-1">
@@ -277,15 +286,23 @@ const VehicleForm = ({
 
         {isEdit && existingFileUrl && !newFile && (
           <div className="flex items-center gap-3 mb-2">
-            <a href={existingFileUrl} target="_blank" className="text-blue-600 underline text-sm">View</a>
-            <a href={existingFileUrl} download className="text-green-600 underline text-sm">Download</a>
+            <a href={existingFileUrl} target="_blank" className="text-blue-600 underline text-sm" rel="noreferrer">
+              View
+            </a>
+            <a href={existingFileUrl} download className="text-green-600 underline text-sm">
+              Download
+            </a>
           </div>
         )}
 
         {newFileUrl && (
           <div className="flex items-center gap-3 mb-2">
-            <a href={newFileUrl} target="_blank" className="text-blue-600 underline text-sm">View</a>
-            <a href={newFileUrl} download={newFile.name} className="text-green-600 underline text-sm">Download</a>
+            <a href={newFileUrl} target="_blank" className="text-blue-600 underline text-sm" rel="noreferrer">
+              View
+            </a>
+            <a href={newFileUrl} download={newFile.name} className="text-green-600 underline text-sm">
+              Download
+            </a>
           </div>
         )}
 
@@ -320,7 +337,12 @@ const VehicleForm = ({
       <div className="grid grid-cols-2 gap-4">
         {activeTab === "BASIC INFO" && (
           <>
-            {renderSearchableSelect("Vendor", "vendor_id", vendors.map((v) => ({ value: v.vendor_id, label: v.vendor_name })), true)}
+            {renderSearchableSelect(
+              "Vendor",
+              "vendor_id",
+              vendors.map((v) => ({ value: v.vendor_id, label: v.vendor_name })),
+              true
+            )}
             {renderField("Vehicle Code", "vehicle_code", "text", "", true)}
             {renderField("Registration Number", "reg_number", "text", "", true)}
             {renderStatusSelect()}
@@ -329,7 +351,12 @@ const VehicleForm = ({
 
         {activeTab === "CONTRACTS" && (
           <>
-            {renderSearchableSelect( "Vehicle Type", "vehicle_type_id",vehicleTypes.map((vt, index) => ({ value: index, label: vt.name  })), true )}
+            {renderSearchableSelect(
+              "Vehicle Type",
+              "vehicle_type_id",
+              vehicleTypes.map((vt) => ({ value: vt.vehicle_type_id, label: vt.name })),
+              true
+            )}
             {renderField("Description", "description", "text", "")}
           </>
         )}
@@ -347,7 +374,13 @@ const VehicleForm = ({
 
         {activeTab === "DRIVER" && (
           <>
-            {renderSearchableSelect("Driver", "driver_id", drivers.map((d) => ({ value: d.driver_id, label: d.name })), false, loadingDrivers)}
+            {renderSearchableSelect(
+              "Driver",
+              "driver_id",
+              drivers.map((d) => ({ value: d.driver_id, label: d.name })),
+              false,
+              loadingDrivers
+            )}
           </>
         )}
       </div>
@@ -360,7 +393,13 @@ const VehicleForm = ({
         )}
         <div className="flex space-x-4">
           {activeTab === "DRIVER" ? (
-            <button type="submit" disabled={isSubmitting} className={`bg-blue-600 text-white px-6 py-2 rounded ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`bg-blue-600 text-white px-6 py-2 rounded ${
+                isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
               {isSubmitting ? "Submitting..." : isEdit ? "Update Vehicle" : "Save Vehicle"}
             </button>
           ) : (

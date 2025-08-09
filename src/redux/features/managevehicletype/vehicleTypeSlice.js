@@ -45,6 +45,7 @@ const vehicleTypeSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+
       // 🔄 Fetch All
       .addCase(fetchVehicleTypes.pending, (state) => {
         state.loading = true;
@@ -53,12 +54,13 @@ const vehicleTypeSlice = createSlice({
         state.loading = false;
         state.vehicleTypes = action.payload;
       })
-        .addCase(fetchVehicleTypes.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || 'Failed to fetch vehicle types';
-      })
+       .addCase(fetchVehicleTypes.rejected, (state, action) => {
+          state.loading = false;
+          state.error = action.payload || 'Failed to fetch vehicle types';
+          console.error('❌ fetchVehicleTypes failed:', action.error?.message || action.payload);
+        })
 
-      
+
       // ✅ Fetch Single by ID
       .addCase(fetchVehicleTypeById.pending, (state) => {
         state.loading = true;

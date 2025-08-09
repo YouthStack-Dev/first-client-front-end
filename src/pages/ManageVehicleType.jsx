@@ -4,6 +4,8 @@ import HeaderWithActionNoRoute from '../components/HeaderWithActionNoRoute';
 import { Modal, InputField } from '../components/SmallComponents';
 import DynamicTable from '../components/DynamicTable';
 import { Edit, Trash2 } from 'lucide-react';
+import { toast, ToastContainer } from 'react-toastify'; 
+import 'react-toastify/dist/ReactToastify.css';
 import {
   fetchVehicleTypes,
   createVehicleType,
@@ -11,46 +13,69 @@ import {
   deleteVehicleType,
 } from '../redux/features/managevehicletype/vehicleTypeThunks';
 import { setFormData, toggleModal, setEditingId, resetForm } from '../redux/features/managevehicletype/vehicleTypeSlice';
+ 
 
-// ✅ Helper function to capitalize fuel_type for dropdown
 const capitalizeFirst = (str) =>
   str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
+
+const formFields = [
+  { label: 'Vehicle Type Name *', name: 'vehicle_type_name', type: 'text', required: true },
+  { label: 'Description', name: 'description', type: 'textarea' },
+  { label: 'Capacity *', name: 'capacity', type: 'number', required: true, min: 1 },
+  { label: 'Fuel Type *',name: 'fuel_type',type: 'select', options: ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'CNG'],required: true,},
+  { label: 'Comment', name: 'comment', type: 'textarea' },
+];
+
+const headers = [
+  { label: 'Vehicle Type Name', key: 'name', className: 'w-1/4' },
+  { label: 'Description', key: 'description', className: 'w-1/3' },
+  { label: 'Total Capacity', key: 'capacity', className: 'w-1/6' },
+  { label: 'Fuel Type', key: 'fuel_type', className: 'w-1/6' },
+];
 
 const ManageVehicleTypes = () => {
   const dispatch = useDispatch();
   const { vehicleTypes, isModalOpen, formData, editingId } = useSelector((state) => state.vehicleType);
   const { user } = useSelector((state) => state.auth);
+    const tenantId = user?.tenant_id;
 
-  
-  const vendorId = user?.vendor_id || 1;
   useEffect(() => {
-    if (vendorId && vehicleTypes.length === 0) {
-      dispatch(fetchVehicleTypes(vendorId));
+    if (tenantId && vehicleTypes.length === 0) {
+      dispatch(fetchVehicleTypes(tenantId))
+        .unwrap()
+        .catch(() => {
+          toast.error('Failed to load vehicle types');
+        });
     }
-  }, [vendorId, dispatch, vehicleTypes.length]);
-
-  const headers = [
-    { label: 'Vehicle Type Name', key: 'name', className: 'w-1/4' },
-    { label: 'Description', key: 'description', className: 'w-1/3' },
-    { label: 'Total Capacity', key: 'capacity', className: 'w-1/6' },
-    { label: 'Fuel Type', key: 'fuel_type', className: 'w-1/6' },
-  ];
-
-  const formFields = [
-    { label: 'Vehicle Type Name *', name: 'vehicle_type_name', type: 'text', required: true },
-    { label: 'Description', name: 'description', type: 'textarea' },
-    { label: 'Capacity *', name: 'capacity', type: 'number', required: true, min: 1 },
-    { label: 'Fuel Type *', name: 'fuel_type', type: 'select', options: ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'CNG'], required: true },
-    { label: 'Comment', name: 'comment', type: 'textarea' },
-  ];
+  }, [tenantId, dispatch, vehicleTypes.length]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     dispatch(setFormData({ ...formData, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    for (const field of formFields) {
+      if (field.required) {
+        const val = formData[field.name];
+        if (!val || (typeof val === 'string' && val.trim() === '')) {
+          toast.error(`Please fill the required field: ${field.label}`);
+          return false;
+        }
+        if (field.type === 'number' && Number(val) < (field.min || 0)) {
+          toast.error(`${field.label} must be at least ${field.min}`);
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
+
     const payload = {
       name: formData.vehicle_type_name,
       description: formData.description,
@@ -59,54 +84,80 @@ const ManageVehicleTypes = () => {
       comment: formData.comment,
       vendor_id: vendorId,
     };
-    if (editingId) {
-      dispatch(updateVehicleType({ id: editingId, ...payload }));
-    } else {
-      dispatch(createVehicleType(payload));
+
+    try {
+      if (editingId) {
+        await dispatch(updateVehicleType({ id: editingId, ...payload })).unwrap();
+        toast.success('Vehicle Type updated successfully');
+      } else {
+        await dispatch(createVehicleType(payload)).unwrap();
+        toast.success('Vehicle Type created successfully');
+      }
+      await dispatch(fetchVehicleTypes(vendorId)).unwrap();
+    } catch {
+      toast.error(`Failed to ${editingId ? 'update' : 'create'} vehicle type`);
+    } finally {
+      dispatch(toggleModal(false));
+      dispatch(resetForm());
+      dispatch(setEditingId(null));
     }
-    dispatch(toggleModal(false));
-    dispatch(resetForm());
   };
 
   const handleEdit = (row) => {
     dispatch(setEditingId(row.vehicle_type_id));
-    dispatch(setFormData({
-      vehicle_type_name: row.name,
-      description: row.description,
-      capacity: row.capacity,
-      fuel_type: capitalizeFirst(row.fuel_type),
-      comment: row.comment || '',
-    }));
+    dispatch(
+      setFormData({
+        vehicle_type_name: row.name,
+        description: row.description,
+        capacity: row.capacity,
+        fuel_type: capitalizeFirst(row.fuel_type),
+        comment: row.comment || '',
+      })
+    );
     dispatch(toggleModal(true));
   };
 
-  const handleDelete = (row) => {
-    if (window.confirm('Are you sure?')) {
-      dispatch(deleteVehicleType(row.vehicle_type_id));
+  const handleDelete = async (row) => {
+    if (!window.confirm('Are you sure?')) return;
+
+    try {
+      await dispatch(deleteVehicleType(row.vehicle_type_id)).unwrap();
+      toast.success('Vehicle Type deleted successfully');
+      await dispatch(fetchVehicleTypes(vendorId)).unwrap();
+    } catch {
+      toast.error('Failed to delete vehicle type');
     }
   };
 
   return (
     <>
       <HeaderWithActionNoRoute
-        title='Manage Vehicle Types'
-        buttonLabel='Add'
+        title="Manage Vehicle Types"
+        buttonLabel="Add"
         onButtonClick={() => {
           dispatch(resetForm());
+          dispatch(setEditingId(null));
           dispatch(toggleModal(true));
         }}
       />
-      <div className='bg-white p-4 shadow rounded mt-4'>
+
+      <div className="bg-white p-4 shadow rounded mt-4">
         <DynamicTable
           headers={headers}
           data={vehicleTypes}
           onMenuToggle={() => {}}
           renderActions={(row) => (
-            <div className='flex gap-2'>
-              <button onClick={() => handleEdit(row)} className='text-blue-600 text-sm flex items-center gap-1'>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleEdit(row)}
+                className="text-blue-600 text-sm flex items-center gap-1"
+              >
                 <Edit size={16} /> Edit
               </button>
-              <button onClick={() => handleDelete(row)} className='text-red-600 text-sm flex items-center gap-1'>
+              <button
+                onClick={() => handleDelete(row)}
+                className="text-red-600 text-sm flex items-center gap-1"
+              >
                 <Trash2 size={16} /> Delete
               </button>
             </div>
@@ -116,39 +167,45 @@ const ManageVehicleTypes = () => {
 
       <Modal
         isOpen={isModalOpen}
-        onClose={() => dispatch(toggleModal(false))}
+        onClose={() => {
+          dispatch(toggleModal(false));
+          dispatch(resetForm());
+          dispatch(setEditingId(null));
+        }}
         onSubmit={handleSubmit}
         title={editingId ? 'Edit Vehicle Type' : 'Add Vehicle Type'}
       >
-        <div className='space-y-4'>
+        <div className="space-y-4">
           {formFields.map((field) => {
             if (field.type === 'textarea') {
               return (
                 <div key={field.name}>
-                  <label className='block text-sm font-medium mb-1'>{field.label}</label>
+                  <label className="block text-sm font-medium mb-1">{field.label}</label>
                   <textarea
                     name={field.name}
                     value={formData[field.name] || ''}
                     onChange={handleInputChange}
                     rows={3}
-                    className='w-full border rounded p-2'
+                    className="w-full border rounded p-2"
                   />
                 </div>
               );
             } else if (field.type === 'select') {
               return (
                 <div key={field.name}>
-                  <label className='block text-sm font-medium mb-1'>{field.label}</label>
+                  <label className="block text-sm font-medium mb-1">{field.label}</label>
                   <select
                     name={field.name}
                     value={formData[field.name] || ''}
                     onChange={handleInputChange}
                     required={field.required}
-                    className='w-full border rounded p-2'
+                    className="w-full border rounded p-2"
                   >
-                    <option value="">Select {field.label}</option>
+                    <option value="">{`Select ${field.label}`}</option>
                     {field.options.map((opt) => (
-                      <option key={opt} value={opt}>{opt}</option>
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -166,9 +223,20 @@ const ManageVehicleTypes = () => {
           })}
         </div>
       </Modal>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </>
   );
 };
 
 export default ManageVehicleTypes;
-

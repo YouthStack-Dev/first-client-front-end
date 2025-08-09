@@ -85,9 +85,12 @@ import {
 
 export const fetchVehicleTypes = createAsyncThunk(
   'vehicleType/fetchAll',
-  async (vendorId = 2, { rejectWithValue }) => {
+  async (tenantId, { rejectWithValue }) => {
+    if (!tenantId) {
+      return rejectWithValue('tenantId is required');
+    }
     try {
-      const res = await getVehicleTypes(vendorId);
+      const res = await getVehicleTypes(tenantId);
       // console.log('✅ fetched vehicle types:', res.data);
       return res.data;
     } catch (error) {
@@ -96,6 +99,8 @@ export const fetchVehicleTypes = createAsyncThunk(
     }
   }
 );
+
+
 
 export const fetchVehicleTypeById = createAsyncThunk(
   'vehicleType/fetchById',
@@ -129,14 +134,14 @@ export const updateVehicleType = createAsyncThunk(
   "vehicleType/updateVehicleType",
   async ({ id, ...payload }, { rejectWithValue }) => {
     try {
-      const res = await putVehicleType(id, data);
-      // console.log('✅ updated vehicle type:', res.data);
+      const res = await putVehicleType(id, payload);  
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to update vehicle type");
     }
   }
 );
+
 
 export const deleteVehicleType = createAsyncThunk(
   "vehicleType/deleteVehicleType",
