@@ -63,6 +63,17 @@ const DriverForm = ({ initialData = null, isEdit = false, onClose, vendors = [] 
     inductionDocumentName: data.induction_doc_url?.split('/').pop() || '',
     badgeDocumentName: data.badge_doc_url?.split('/').pop() || '',
     govtIdDocumentName: data.alternate_govt_id_doc_url?.split('/').pop() || '',
+
+    bgvDocument: data.bgv_doc_url || null,
+policeDocument: data.police_verification_doc_url || null,
+medicalDocument: data.medical_verification_doc_url || null,
+trainingDocument: data.training_verification_doc_url || null,
+eyeTestDocument: data.eye_test_verification_doc_url || null,
+licenseDocument: data.license_doc_url || null,
+inductionDocument: data.induction_doc_url || null,
+badgeDocument: data.badge_doc_url || null,
+govtIdDocument: data.alternate_govt_id_doc_url || null,
+
   });
 
   const getFieldMap = () => ({
