@@ -82,7 +82,7 @@ const vehicleSlice = createSlice({
       .addCase(updateVehicleThunk.fulfilled, (state, action) => {
         state.updateStatus = "succeeded";
         const updated = action.payload;
-        const index = state.vehicles.findIndex(v => v.id === updated.id);
+        const index = state.vehicles.findIndex(v => v.vehicle_id === updated.vehicle_id);
         if (index !== -1) {
           state.vehicles[index] = updated;
         }

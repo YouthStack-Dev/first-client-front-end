@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { openModal, closeModal, updateVendorStatusLocally } from "../redux/features/managevendors/vendorSlice";
+import { openModal, closeModal, updateVendorStatusLocally } from "../redux/features/manageVendors/vendorSlice";
 import AddVendorModal from "../components/modals/AddVendorModal";
 import DynamicTable from "../components/DynamicTable";
 import {
@@ -9,7 +9,7 @@ import {
   editVendor,
   removeVendor,
   fetchVendorById,
-} from "../redux/features/managevendors/vendorThunks";
+} from "../redux/features/manageVendors/vendorThunks";
 
 // ✅ Common mapper for Add, Edit, Toggle
 const mapVendorData = (source = {}, formData = {}, tenantId) => ({

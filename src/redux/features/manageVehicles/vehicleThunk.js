@@ -15,19 +15,19 @@ export const clearVehicles = () => {
 
 export const fetchVehicles = createAsyncThunk(
   "vehicle/fetchVehicles",
-  async ({ vendorId, status, offset, limit }, { rejectWithValue }) => {
+  async ({ vendorId, status = "active", offset = 0, limit = 10 }, { rejectWithValue }) => {
     try {
       const response = await getVehicles(vendorId, status, offset, limit);
-
       return {
-        data: response.data,
-        total: response.data.length, // or response.total if API returns it
+        data: response.data,           
+        total: response.data.length,  
       };
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
     }
   }
 );
+
 
 
 // ✅ Create Vehicle

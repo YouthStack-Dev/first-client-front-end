@@ -61,6 +61,7 @@ const vehicleTypeSlice = createSlice({
         })
 
 
+
       // ✅ Fetch Single by ID
       .addCase(fetchVehicleTypeById.pending, (state) => {
         state.loading = true;
