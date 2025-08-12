@@ -469,6 +469,7 @@
 // export default VehicleForm;
 
 
+
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from 'react-redux';
 import Select from "react-select";
@@ -770,7 +771,7 @@ const VehicleForm = ({
   const renderFileWithExpiry = (label, fileField, expiryField) => {
     const existingFileUrl = initialData?.[fileField] || null;
     const newFile = formData[fileField];
-    const newFileUrl = newFile instanceof File ? URL.createObjectURL(newFile) : null;
+    const newFileUrl = newFile instanceof File ? URL.createObjectURL(newFile) : null;74231
 
     return (
       <div className="col-span-1 space-y-2">
@@ -811,7 +812,7 @@ const VehicleForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} onKeyDown={(e) => e.key === "Enter" && e.preventDefault()} className="space-y-6">
+    <div onSubmit={handleSubmit} onKeyDown={(e) => e.key === "Enter" && e.preventDefault()} className="space-y-6">
       {/* Tabs */}
       <div className="flex space-x-6 border-b mb-4">
         {TABS.map((tab) => (
@@ -891,7 +892,7 @@ const VehicleForm = ({
           )}
         </div>
       </div>
-    </form>
+    </div>
   );
 };
 
