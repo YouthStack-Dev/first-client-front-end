@@ -38,6 +38,7 @@ const ManageVehicleTypes = () => {
   const { vehicleTypes, isModalOpen, formData, editingId } = useSelector((state) => state.vehicleType);
   const { user } = useSelector((state) => state.auth);
     const tenantId = user?.tenant_id;
+    const vendorId = useSelector((state) => state.auth?.user?.vendor_id);
 
   useEffect(() => {
     if (tenantId && vehicleTypes.length === 0) {
@@ -71,37 +72,43 @@ const ManageVehicleTypes = () => {
     return true;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!validateForm()) return;
+  if (!validateForm()) return;
 
-    const payload = {
-      name: formData.vehicle_type_name,
-      description: formData.description,
-      capacity: Number(formData.capacity),
-      fuel_type: formData.fuel_type?.toLowerCase(),
-      comment: formData.comment,
-      vendor_id: vendorId,
-    };
+  if (!vendorId) {
+    toast.error("Vendor ID not found for this tenant");
+    return;
+  }
 
-    try {
-      if (editingId) {
-        await dispatch(updateVehicleType({ id: editingId, ...payload })).unwrap();
-        toast.success('Vehicle Type updated successfully');
-      } else {
-        await dispatch(createVehicleType(payload)).unwrap();
-        toast.success('Vehicle Type created successfully');
-      }
-      await dispatch(fetchVehicleTypes(vendorId)).unwrap();
-    } catch {
-      toast.error(`Failed to ${editingId ? 'update' : 'create'} vehicle type`);
-    } finally {
-      dispatch(toggleModal(false));
-      dispatch(resetForm());
-      dispatch(setEditingId(null));
-    }
+  const payload = {
+    name: formData.vehicle_type_name,
+    description: formData.description,
+    capacity: Number(formData.capacity),
+    fuel_type: formData.fuel_type?.toLowerCase(),
+    comment: formData.comment,
+    vendor_id: vendorId, // ✅ Now this will always be valid
   };
+
+  try {
+    if (editingId) {
+      await dispatch(updateVehicleType({ id: editingId, ...payload })).unwrap();
+      toast.success("Vehicle Type updated successfully");
+    } else {
+      await dispatch(createVehicleType(payload)).unwrap();
+      toast.success("Vehicle Type created successfully");
+    }
+    await dispatch(fetchVehicleTypes(vendorId)).unwrap();
+  } catch {
+    toast.error(`Failed to ${editingId ? "update" : "create"} vehicle type`);
+  } finally {
+    dispatch(toggleModal(false));
+    dispatch(resetForm());
+    dispatch(setEditingId(null));
+  }
+};
+
 
   const handleEdit = (row) => {
     dispatch(setEditingId(row.vehicle_type_id));

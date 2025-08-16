@@ -112,9 +112,7 @@ const ShiftForm = ({ formData = {}, setFormData, onCancel, onSave, errors = {} }
           >
             <option value="">Select</option>
             <option value="nodal">Nodal Point</option>
-            <option value="pickdrop">Pick/Drop Point</option>
             <option value="pickup">Pickup</option>
-            <option value="drop">Drop</option>
           </select>
         </FormField>
 

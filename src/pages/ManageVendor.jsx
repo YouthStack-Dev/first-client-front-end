@@ -25,16 +25,18 @@ const mapVendorData = (source = {}, formData = {}, tenantId) => ({
 const ManageVendor = () => {
   const dispatch = useDispatch();
   const { vendors, isModalOpen, selectedVendor } = useSelector((state) => state.vendor);
-  const { user } = useSelector((state) => state.auth);
-  const tenantId = user?.tenant_id || 1;
+
+  
 
   // ✅ Fetch vendors on first load
-  useEffect(() => {
-    if (tenantId && vendors.length === 0) {
-      console.log(`📢 API Call: GET /vendors?skip=0&limit=100&tenant_id=${tenantId}`);
-      dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: tenantId }));
-    }
-  }, [tenantId, vendors.length, dispatch]);
+useEffect(() => {
+  if (vendors.length === 0) {
+    dispatch(fetchVendors({ skip: 0, limit: 100 }))
+      .unwrap()
+      .catch(err => log("❌ Vendor fetch failed", err));
+  }
+}, [vendors.length, dispatch]);
+
 
   const handleAdd = () => dispatch(openModal(null));
   const handleEdit = (vendor) => dispatch(openModal(vendor));
@@ -92,8 +94,8 @@ const ManageVendor = () => {
         await dispatch(addVendor(payload)).unwrap();
         console.log(`✅ Vendor added: ${payload.vendor_name}`);
       }
-      console.log(`📢 API Call: GET /vendors?skip=0&limit=100&tenant_id=${tenantId}`);
-      dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: tenantId }));
+      console.log(`📢 API Call: GET /vendors?skip=0&limit=100`);
+      dispatch(fetchVendors({ skip: 0, limit: 100}));
       dispatch(closeModal());
     } catch (err) {
       console.error("❌ Save Error:", err);

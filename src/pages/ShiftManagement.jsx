@@ -79,7 +79,6 @@ const ShiftManagement = () => {
       pickup_type: formData.pickOn,
       gender: formData.gender,
       is_active: formData.isActive,
-      tenant_id: 1,
     };
     if (editId) {
       dispatch(updateShift({ ...payload, id: editId }));

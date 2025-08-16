@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Pencil } from 'lucide-react';
 import FormField from './FormField';
-import { fetchVendors } from '../redux/features/managevendors/vendorThunks';
+import { fetchVendors } from '../redux/features/manageVendors/vendorThunks';
 
 const PersonalDetailsTab = ({
   formData,
@@ -13,13 +13,16 @@ const PersonalDetailsTab = ({
 }) => {
   const dispatch = useDispatch();
   const { vendors, loading } = useSelector((state) => state.vendor);
-  const tenantId = useSelector((state) => state.auth?.user?.tenant_id);
 
-  useEffect(() => {
-    if (tenantId && vendors.length === 0) {
-      dispatch(fetchVendors({ tenant_id: tenantId, skip: 0, limit: 100 }));
-    }
-  }, [tenantId, vendors.length, dispatch]);
+useEffect(() => {
+  if (vendors.length === 0) {
+    dispatch(fetchVendors({ skip: 0, limit: 100 }))
+      .unwrap()
+      .catch(err => log("❌ Vendor fetch failed", err));
+  }
+}, [vendors.length, dispatch]);
+
+
 
   return (
     <div className="p-6 bg-white rounded-md shadow-sm border border-gray-200">

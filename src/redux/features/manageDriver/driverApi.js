@@ -39,6 +39,8 @@ export const getTenantDriversAPI = async () => {
   }
 };
 
+
+
 /**
  * Create a new driver
  * @param {string} vendor_id
@@ -47,6 +49,7 @@ export const getTenantDriversAPI = async () => {
 export const createDriverAPI = (vendor_id, payload) => {
   return API_CLIENT.post(`/vendors/${vendor_id}/drivers/`, payload);
 };
+
 
 /**
  * Update full driver info

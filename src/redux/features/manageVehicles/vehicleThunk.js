@@ -1,17 +1,9 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { API_CLIENT } from '../../../Api/API_Client';
 import {
   getVehicles, createVehicle ,updateVehicleApi ,deleteVehicle
 } from './vehicleApi';
 
 
-// ✅ Clear vehicles from Redux state
-export const clearVehicles = () => {
-  console.log("🧹 Dispatching clearVehicles action");
-  return {
-    type: "vehicle/clearVehicles",
-  };
-};
 
 export const fetchVehicles = createAsyncThunk(
   "vehicle/fetchVehicles",
