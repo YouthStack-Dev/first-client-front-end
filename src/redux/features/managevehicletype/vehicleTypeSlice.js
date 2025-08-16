@@ -2,7 +2,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import {
   fetchVehicleTypes,
-  fetchVehicleTypeById, // ✅ Added
+  fetchVehicleTypeById, 
   createVehicleType,
   updateVehicleType,
   deleteVehicleType,
@@ -10,7 +10,7 @@ import {
 
 const initialState = {
   vehicleTypes: [],
-  singleVehicleType: null,  // ✅ For fetching a single vehicle type
+  singleVehicleType: null,  
   loading: false,
   error: null,
   isModalOpen: false,
@@ -40,11 +40,12 @@ const vehicleTypeSlice = createSlice({
     resetForm(state) {
       state.formData = initialState.formData;
       state.editingId = null;
-      state.singleVehicleType = null;  // ✅ Reset single vehicle when form resets
+      state.singleVehicleType = null;  
     },
   },
   extraReducers: (builder) => {
     builder
+
       // 🔄 Fetch All
       .addCase(fetchVehicleTypes.pending, (state) => {
         state.loading = true;
@@ -53,6 +54,13 @@ const vehicleTypeSlice = createSlice({
         state.loading = false;
         state.vehicleTypes = action.payload;
       })
+       .addCase(fetchVehicleTypes.rejected, (state, action) => {
+          state.loading = false;
+          state.error = action.payload || 'Failed to fetch vehicle types';
+          console.error('❌ fetchVehicleTypes failed:', action.error?.message || action.payload);
+        })
+
+
 
       // ✅ Fetch Single by ID
       .addCase(fetchVehicleTypeById.pending, (state) => {

@@ -1,7 +1,7 @@
 import { useSelector } from "react-redux";
 import { Navigate, Outlet } from "react-router-dom";
 
-const ProtectedRouteAuth = ({ redirectPath = "/login" }) => {
+const ProtectedRouteAuth = ({ redirectPath = "/" }) => {
   const { isAuthenticated, loading, user } = useSelector((state) => state.auth);
 
   // Show a loading state while checking authentication

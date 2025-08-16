@@ -4,6 +4,7 @@ export const pathTitleMap = {
     '/clients': 'Manage Clients',
     '/drivers': 'Manage Drivers',
     '/reports': 'Reports',
+    '/manage-team':'Driver Management'
   };
 
 

@@ -97,14 +97,14 @@ const EmployeeAddressGoogleMapView = ({ formData, setFormData, setErrors, isRead
     <div className="animate-fadeIn grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="relative bg-gray-100 rounded-lg overflow-hidden min-h-[450px]">
         <APIProvider apiKey={API_KEY} libraries={['places']}>
-          <MapContent
-            homePosition={homePosition}
-            setHomePosition={handlePositionChange}
-            setAddress={(value) => !isReadOnly && setFormData((prev) => ({ ...prev, address: value }))}
-            landmarkInputRef={landmarkInputRef}
-            setLandmark={(value) => !isReadOnly && setFormData((prev) => ({ ...prev, landmark: value }))}
-            isReadOnly={isReadOnly}
-          />
+        <MapContent
+  homePosition={homePosition}
+  setHomePosition={handlePositionChange}
+  setAddress={(value) => !isReadOnly && setFormData((prev) => ({ ...prev, address: value }))}
+  landmarkInputRef={landmarkInputRef}
+  setLandmark={(value) => !isReadOnly && setFormData((prev) => ({ ...prev, landmark: value }))}
+  isReadOnly={isReadOnly}
+/>
         </APIProvider>
       </div>
       <div className="flex flex-col gap-4 bg-white p-4 rounded shadow">
@@ -128,7 +128,7 @@ const EmployeeAddressGoogleMapView = ({ formData, setFormData, setErrors, isRead
         <label className="flex flex-col">
           <span className="text-gray-700 mb-1">Latitude</span>
           <input
-            type="number"
+            type="text"
             name="latitude"
             value={formData.latitude}
             onChange={(e) => {
@@ -147,7 +147,7 @@ const EmployeeAddressGoogleMapView = ({ formData, setFormData, setErrors, isRead
         <label className="flex flex-col">
           <span className="text-gray-700 mb-1">Longitude</span>
           <input
-            type="number"
+            type="text"
             name="longitude"
             value={formData.longitude}
             onChange={(e) => {

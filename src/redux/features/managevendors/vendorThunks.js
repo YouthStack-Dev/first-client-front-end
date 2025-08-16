@@ -1,11 +1,10 @@
-// src/redux/features/manageVendors/vendorThunks.js
-
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
   createVendor,
   getAllVendors,
   updateVendor,
   deleteVendor,
+  getVendorById,
 } from './vendorApi';
 
 // 🟢 Fetch Vendors (List)
@@ -14,12 +13,26 @@ export const fetchVendors = createAsyncThunk(
   async ({ skip = 0, limit = 100, tenant_id }, { rejectWithValue }) => {
     try {
       const response = await getAllVendors({ skip, limit, tenant_id });
-      return response.data; // Array of vendors
+      return response.data; 
     } catch (err) {
       return rejectWithValue(err.response?.data?.detail || 'Failed to fetch vendors');
     }
   }
 );
+
+
+export const fetchVendorById = createAsyncThunk(
+  "vendors/fetchVendorById",
+  async (vendorId, { rejectWithValue }) => {
+    try {
+      const data = await getVendorById(vendorId);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Error fetching vendor");
+    }
+  }
+);
+
 
 // 🟢 Add Vendor
 export const addVendor = createAsyncThunk(

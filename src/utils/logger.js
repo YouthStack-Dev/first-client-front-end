@@ -12,6 +12,10 @@ const levels = {
 
 const currentLevel = levels[LOG_LEVEL.toLowerCase()] ?? 4; // default debug
 
+export const logError = (...args) => {
+  if (currentLevel >= levels.error) console.error(...args);
+};
+
 export const error = (...args) => {
   if (currentLevel >= levels.error) console.error(...args);
 };
@@ -25,5 +29,9 @@ export const info = (...args) => {
 };
 
 export const log = (...args) => {
+  if (currentLevel >= levels.debug) console.log(...args);
+};
+
+export const logDebug = (...args) => {
   if (currentLevel >= levels.debug) console.log(...args);
 };
