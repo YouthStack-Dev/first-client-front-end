@@ -1,590 +1,372 @@
-// import React, { useState, useEffect } from 'react';
-// import { Edit, Trash2 } from 'lucide-react';
-// import { useDispatch, useSelector } from 'react-redux';
-// import { toast } from 'react-toastify';
-// import DriverToolbar from '../components/driver/DriverToolbar';
-// import DriverForm from '../components/driver/DriverForm';
-// import { DriverTableHeaders } from '../staticData/DriverData';
-// import { fetchVendors } from '../redux/features/managevendors/vendorThunks';
-// import {
-//   getTenantDriversAPI,
-//   getFilteredDrivers,
-//   createDriverAPI,
-//   updateDriverAPI,
-//   patchDriverStatusAPI,
-// } from '../redux/features/manageDriver/driverApi';
-
-// // ---------- LOGGING HELPER ----------
-// const log = (label, ...data) => {
-//   console.log(`📢 [DRIVERS] ${label}`, ...data);
-// };
-
-// const getValueByKeyPath = (obj, keyPath) =>
-//   keyPath.split('.').reduce((acc, key) => acc?.[key], obj) ?? '—';
-
-// const getDriverStatus = (driver) => (driver.is_active ? 'ACTIVE' : 'INACTIVE');
-
-// // ---------- DriverList ----------
-// const DriverList = ({ drivers, onEdit, onDelete, onStatusToggle }) => {
-//   const visibleHeaders = DriverTableHeaders.filter(h => h.key !== 'documentsUploaded');
-
-//   return (
-//     <div className="rounded-lg overflow-hidden shadow-sm mt-2">
-//       <div className="overflow-auto h-[620px]">
-//         <table className="min-w-full border-collapse">
-//           <thead className="bg-gray-50 border-b sticky top-0">
-//             <tr className="text-left text-gray-600">
-//               {visibleHeaders.map(header => (
-//                 <th key={header.key} className="px-4 py-3 whitespace-nowrap">
-//                   {header.label}
-//                 </th>
-//               ))}
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {drivers.length === 0 ? (
-//               <tr>
-//                 <td colSpan={visibleHeaders.length} className="p-4 text-center text-gray-500">
-//                   No drivers found
-//                 </td>
-//               </tr>
-//             ) : (
-//               drivers.map((driver, index) => (
-//                 <tr key={driver.driver_id} className="border-b hover:bg-gray-50 transition">
-//                   {visibleHeaders.map(header => (
-//                     <td key={header.key} className="px-4 py-3 text-sm">
-//                       {header.key === 's_no' ? (
-//                         index + 1
-//                       ) : header.key === 'actions' ? (
-//                         <div className="flex gap-2 items-center justify-center">
-//                           <button
-//                             onClick={() => onStatusToggle(driver)}
-//                             title="Click to toggle status"
-//                             className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer ${
-//                               getDriverStatus(driver) === 'ACTIVE'
-//                                 ? 'bg-green-100 text-green-800'
-//                                 : 'bg-red-100 text-red-800'
-//                             }`}
-//                           >
-//                             {getDriverStatus(driver)}
-//                           </button>
-//                           <button onClick={() => onEdit(driver)} className="p-1 hover:bg-gray-100 rounded-full">
-//                             <Edit size={16} color="blue" />
-//                           </button>
-//                           <button onClick={() => onDelete(driver.driver_id)} className="p-1 hover:bg-gray-100 rounded-full">
-//                             <Trash2 size={16} color="red" />
-//                           </button>
-//                         </div>
-//                       ) : (
-//                         getValueByKeyPath(driver, header.key)
-//                       )}
-//                     </td>
-//                   ))}
-//                 </tr>
-//               ))
-//             )}
-//           </tbody>
-//         </table>
-//       </div>
-//     </div>
-//   );
-// };
-
-// // ---------- ManageDrivers ----------
-// function ManageDrivers() {
-//   const dispatch = useDispatch();
-//   const { vendors } = useSelector(state => state.vendor);
-//   const { user } = useSelector(state => state.auth);
-//   const tenantId = user?.tenant_id || 1;
-
-//   const [allDrivers, setAllDrivers] = useState([]);
-//   const [filteredDrivers, setFilteredDrivers] = useState([]);
-//   const [filters, setFilters] = useState({ vendorId: 'All', driverStatus: '' });
-//   const [modalState, setModalState] = useState({ show: false, isEditing: false, editData: null, selectedVendorId: null });
-//   const [loading, setLoading] = useState(false);
-
-//   // Fetch vendors initially
-//   useEffect(() => {
-//     if (tenantId && vendors.length === 0) {
-//       log("Trigger → Fetch Vendors API", { tenantId });
-//       dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: tenantId }))
-//         .unwrap()
-//         .then(res => log("✅ Vendors fetched", res))
-//         .catch(err => log("❌ Vendor fetch failed", err));
-//     }
-//   }, [tenantId, vendors.length, dispatch]);
-
-//   // Fetch drivers when vendor changes
-//   useEffect(() => {
-//     if (vendors.length > 0) {
-//       log("Trigger → Vendor Change", { selectedVendorId: filters.vendorId });
-//       loadDrivers(filters.vendorId);
-//     }
-//   }, [filters.vendorId, vendors]);
-
-//   // Filter status changes
-//   useEffect(() => {
-//     log("Trigger → Status Filter Change", { newStatus: filters.driverStatus });
-//     filterDriversByStatus(filters.driverStatus, allDrivers);
-//   }, [filters.driverStatus, allDrivers]);
-
-//   const loadDrivers = async (vendorId = 'All') => {
-//     setLoading(true);
-//     log("API Call → Fetch Drivers", { vendorId, endpoint: vendorId === 'All' ? "/drivers/tenant" : `/drivers?vendorId=${vendorId}` });
-//     try {
-//       const res = vendorId === 'All' ? await getTenantDriversAPI() : await getFilteredDrivers(vendorId, {});
-//       const drivers = Array.isArray(res?.data) ? res.data : res?.data?.data || [];
-//       log("✅ Drivers fetched", { count: drivers.length, data: drivers });
-//       setAllDrivers(drivers);
-//       filterDriversByStatus(filters.driverStatus, drivers);
-//     } catch (err) {
-//       log("❌ Fetch drivers failed", err);
-//       setAllDrivers([]);
-//       setFilteredDrivers([]);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const filterDriversByStatus = (status = '', drivers = allDrivers) => {
-//   log("Filter → By Status", { status, totalBefore: drivers.length });
-
-//   const isNoFilter = !status || status === 'All';
-//   const filtered = isNoFilter
-//     ? drivers
-//     : drivers.filter(d => (status === 'ACTIVE' ? d.is_active : !d.is_active));
-
-//   log("Filter → Result Count", filtered.length);
-//   setFilteredDrivers(filtered);
-// };
-
-
-//   const handleFilterChange = (newFilters) => {
-//     log("UI Action → Filter Change", newFilters);
-//     setFilters(newFilters);
-//   };
-
-//   const handleEditDriver = (driver) => {
-//     log("UI Action → Edit Driver Clicked", driver);
-//     setModalState({
-//       show: true,
-//       isEditing: true,
-//       editData: driver,
-//       editingDriverId: driver.driver_id,
-//       selectedVendorId: driver.vendor?.vendor_id || null,
-//     });
-//   };
-
-//   const handleAddDriver = () => {
-//     log("UI Action → Add Driver Clicked");
-//     setModalState({ show: true, isEditing: false, editData: null, selectedVendorId: null });
-//   };
-
-//   const handleDeleteDriver = (id) => {
-//     log("UI Action → Delete Driver Clicked", { driverId: id });
-//     if (window.confirm('Are you sure you want to delete this driver?')) {
-//       log("Soft Delete → Removing driver from state", { driverId: id });
-//       setAllDrivers(prev => prev.filter(d => d.driver_id !== id));
-//       setFilteredDrivers(prev => prev.filter(d => d.driver_id !== id));
-//     }
-//   };
-
-//   const handleStatusToggle = async (driver) => {
-//     const current = getDriverStatus(driver);
-//     const next = current === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-//     const confirmChange = window.confirm(`Change status from ${current} to ${next}?`);
-//     if (!confirmChange) return;
-
-//     log("API Call → Toggle Driver Status", {
-//       driverId: driver.driver_id,
-//       vendorId: driver.vendor.vendor_id,
-//       from: current,
-//       to: next,
-//       endpoint: `/drivers/${driver.driver_id}/status`
-//     });
-
-//     try {
-//       await patchDriverStatusAPI(driver.vendor.vendor_id, driver.driver_id, { status: next });
-//       log("✅ Status updated successfully");
-//       loadDrivers(filters.vendorId);
-//     } catch (err) {
-//       log("❌ Status update failed", err);
-//       alert('Failed to update status');
-//     }
-//   };
-
-//   const handleSave = async (formData) => {
-//     const { isEditing, selectedVendorId, editingDriverId } = modalState;
-//     const vendorId = Number(selectedVendorId || formData.vendor);
-
-//     if (!vendorId || Number.isNaN(vendorId)) {
-//       toast.error('Vendor not selected.');
-//       return;
-//     }
-
-//     const payload = { ...formData, vendor_id: vendorId };
-//     let apiType = isEditing ? "Edit" : "Add";
-
-//     log(`API Call → ${apiType} Driver`, {
-//       vendorId,
-//       driverId: isEditing ? editingDriverId : null,
-//       payload,
-//       endpoint: isEditing
-//         ? `/vendors/${vendorId}/drivers/${editingDriverId}`
-//         : `/vendors/${vendorId}/drivers`
-//     });
-
-//     try {
-//       let response;
-//       if (isEditing) {
-//         if (!editingDriverId) {
-//           toast.error('Driver ID missing for update.');
-//           return;
-//         }
-//         response = await updateDriverAPI(vendorId, editingDriverId, payload);
-//       } else {
-//         response = await createDriverAPI(vendorId, payload);
-//       }
-
-//       const success = response?.data?.driver_id || response?.status === 201;
-//       if (success) {
-//         log(`✅ ${apiType} Driver Success`, response?.data);
-//         toast.success(isEditing ? 'Driver updated successfully!' : 'Driver created successfully!');
-//         closeModal();
-//         if (filters?.vendorId) {
-//           loadDrivers(filters.vendorId);
-//         }
-//       } else {
-//         log(`❌ ${apiType} Driver Failed`, response);
-//         toast.error('Something went wrong while saving the driver.');
-//       }
-//     } catch (err) {
-//       log(`❌ ${apiType} Driver API Error`, err);
-//       toast.error('Failed to save driver. Please try again.');
-//     }
-//   };
-
-//   const closeModal = () => {
-//     log("UI Action → Close Modal");
-//     setModalState({
-//       show: false,
-//       isEditing: false,
-//       editData: null,
-//       selectedVendorId: null,
-//       editingDriverId: null,
-//     });
-//   };
-
-//   return (
-//     <>
-//       <DriverToolbar
-//         vendors={[{ id: 'All', name: 'All' }, ...vendors.map(v => ({ id: v.vendor_id, name: v.vendor_name }))]}
-//         onFilterChange={handleFilterChange}
-//         onBulkUpload={() => log("UI Action → Bulk Upload Clicked")}
-//         onManageCompliance={() => log("UI Action → Manage Compliance Clicked")}
-//         onAddDriver={handleAddDriver}
-//       />
-
-//       {loading ? (
-//         <p className="p-4 text-gray-500">Loading drivers...</p>
-//       ) : (
-//         <DriverList
-//           drivers={filteredDrivers}
-//           onEdit={handleEditDriver}
-//           onDelete={handleDeleteDriver}
-//           onStatusToggle={handleStatusToggle}
-//         />
-//       )}
-
-//       {modalState.show && (
-//         <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
-//           <div className="bg-white rounded-lg shadow max-w-5xl w-full max-h-[90vh] overflow-y-auto p-4">
-//             <DriverForm
-//               initialData={modalState.editData}
-//               isEdit={modalState.isEditing}
-//               onSave={handleSave}
-//               onClose={closeModal}
-//               vendors={vendors}
-//             />
-//           </div>
-//         </div>
-//       )}
-//     </>
-//   );
-// }
-
-// export default React.memo(ManageDrivers);
-
-
-import React, { useState, useEffect, useRef } from 'react';
-import { Edit } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Plus } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-
-import DriverToolbar from '../components/driver/DriverToolbar';
+import { DriverList } from '../components/driver/DriverList';
+import ToolBar from '../components/ui/ToolBar';
+import Pagination from '../components/ui/Pagination';
+import FilterBadges from '../components/ui/FilterBadges';
+import StatusIndicator from '../components/ui/StatusIndicator';
+import { API_CLIENT } from '../Api/API_Client';
+import {  
+  setSearchTerm, setVendorFilter, setStatusFilter, setVerificationFilter, resetFilters,
+  setPage, setDriversLoading, setDriversError, setDriversData, updateDriverStatus, 
+  selectPaginatedDrivers, selectLoading, selectError, selectVendorOptions, selectStatusOptions,
+  selectVerificationOptions, selectActiveFilters, selectCounts, selectFilteredDrivers
+} from '../redux/features/manageDriver/driverSlice';
 import DriverForm from '../components/driver/DriverForm';
-import { DriverTableHeaders } from '../staticData/DriverData';
-import { fetchVendors } from '../redux/features/managevendors/vendorThunks';
-import {
-  getTenantDriversAPI,
-  getFilteredDrivers,
-  patchDriverStatusAPI,
-} from '../redux/features/manageDriver/driverApi';
+import Modal from '../components/modals/Modal';
+import { logDebug } from '../utils/logger';
+import ConfirmationModal from '../components/modals/ConfirmationModal';
 
-// Logging helper
-const log = (label, ...data) => console.log(`📢 [DRIVERS] ${label}`, ...data);
-
-// Safely access nested object keys from a dot-separated path string
-const getValueByKeyPath = (obj, keyPath) =>
-  keyPath.split('.').reduce((acc, key) => acc?.[key], obj) ?? '—';
-
-// Get driver status string from boolean
-const getDriverStatus = (driver) => (driver.is_active ? 'ACTIVE' : 'INACTIVE');
-
-// DriverList component to display the drivers table
-const DriverList = ({ drivers, onEdit, onStatusToggle }) => {
-  const visibleHeaders = DriverTableHeaders.filter(h => h.key !== 'documentsUploaded');
-
-  return (
-    <div className="rounded-lg overflow-hidden shadow-sm mt-2">
-      <div className="overflow-auto h-[620px]">
-        <table className="min-w-full border-collapse">
-          <thead className="bg-gray-50 border-b sticky top-0">
-            <tr className="text-left text-gray-600">
-              {visibleHeaders.map(header => (
-                <th key={header.key} className="px-4 py-3 whitespace-nowrap">
-                  {header.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {drivers.length === 0 ? (
-              <tr>
-                <td colSpan={visibleHeaders.length} className="p-4 text-center text-gray-500">
-                  No drivers found
-                </td>
-              </tr>
-            ) : (
-              drivers.map((driver, index) => (
-                <tr key={driver.driver_id} className="border-b hover:bg-gray-50 transition">
-                  {visibleHeaders.map(header => (
-                    <td key={header.key} className="px-4 py-3 text-sm">
-                      {header.key === 's_no' ? (
-                        index + 1
-                      ) : header.key === 'actions' ? (
-                        <div className="flex gap-2 items-center justify-center">
-                          <button
-                            onClick={() => onStatusToggle(driver)}
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              getDriverStatus(driver) === 'ACTIVE'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {getDriverStatus(driver)}
-                          </button>
-                          <button
-                            onClick={() => onEdit(driver)}
-                            className="p-1 hover:bg-gray-100 rounded-full"
-                            title="Edit Driver"
-                          >
-                            <Edit size={16} color="blue" />
-                          </button>
-                        </div>
-                      ) : (
-                        getValueByKeyPath(driver, header.key)
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
-
-// Main ManageDrivers component
 function ManageDrivers() {
   const dispatch = useDispatch();
-  const { vendors } = useSelector(state => state.vendor);
-  const { user } = useSelector(state => state.auth);
-  const tenantId = user?.tenant_id || 1;
+  const drivers = useSelector(selectPaginatedDrivers);
+  const loading = useSelector(selectLoading);
+  const error = useSelector(selectError);
+  const vendorOptions = useSelector(selectVendorOptions);
+  const statusOptions = useSelector(selectStatusOptions);
+  const verificationOptions = useSelector(selectVerificationOptions);
+  const activeFilters = useSelector(selectActiveFilters);
+  const counts = useSelector(selectCounts);
+  
+  // Modal and form state
+  const [showModal, setShowModal] = useState(false);
+  const [formMode, setFormMode] = useState('create'); // 'create', 'edit', 'view'
+  const [selectedDriver, setSelectedDriver] = useState(null);
+  
+  // Existing selectors
+  const vendorFilterValue = useSelector(state => state.drivers.filters.vendorFilter);
+  const statusFilterValue = useSelector(state => state.drivers.filters.statusFilter);
+  const verificationFilterValue = useSelector(state => state.drivers.filters.verificationFilter);
+  const searchTermValue = useSelector(state => state.drivers.filters.searchTerm);
+  const paginationSkip = useSelector(state => state.drivers.pagination.skip);
+  const paginationLimit = useSelector(state => state.drivers.pagination.limit);
+  const filteredDriversLength = useSelector(state => selectFilteredDrivers(state).length);
 
-  const [drivers, setDrivers] = useState([]);
-  const [filters, setFilters] = useState({ vendorId: 'ALL', driverStatus: 'ALL' });
-  const [modalState, setModalState] = useState({
+  const hasFetched = useSelector(state => state.drivers.hasFetched);
+  const allDrivers = useSelector(state => state.drivers.ids);
+  const currentPage = Math.floor(paginationSkip / paginationLimit) + 1;
+  const [confirmationModal, setConfirmationModal] = useState({
     show: false,
-    isEditing: false,
-    editData: null,
-    selectedVendorId: null,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    onCancel: () => {}
   });
-  const [loading, setLoading] = useState(false);
+  // Track the last fetched page to prevent refetching when going back
+  const lastFetchedPage = useRef(0);
 
-  const didMountRef = useRef(false);
-
-  // Fetch vendors on mount if not already fetched
-  useEffect(() => {
-    if (vendors.length === 0) {
-      dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: tenantId }))
-        .unwrap()
-        .catch(err => log("❌ Vendor fetch failed", err));
-    }
-  }, [tenantId, dispatch, vendors.length]);
-
-  // Fetch drivers on initial mount and whenever filters or vendors change
-  useEffect(() => {
-    if (!didMountRef.current) {
-      didMountRef.current = true;
-      if (vendors.length > 0) {
-        fetchDrivers(filters.vendorId, filters.driverStatus);
-      }
-      return;
-    }
-    if (vendors.length > 0) {
-      fetchDrivers(filters.vendorId, filters.driverStatus);
-    }
-  }, [filters, vendors.length]);
-
-  // Fetch drivers from API based on filters
-  const fetchDrivers = async (vendorId, status) => {
-    setLoading(true);
-
+  // Fetch drivers data
+  const fetchDrivers = async (page = 1) => {
     try {
-      const vendorIdNorm = vendorId.toUpperCase();
-      let driverStatusNorm = status.toUpperCase();
-
-      if (driverStatusNorm !== 'ACTIVE' && driverStatusNorm !== 'INACTIVE') {
-        driverStatusNorm = 'ALL';
-      }
-
-      if (vendorIdNorm === 'ALL') {
-        if (driverStatusNorm === 'ALL') {
-          const res = await getTenantDriversAPI();
-          const allDrivers = res?.data || res?.data?.data || [];
-          setDrivers(allDrivers);
-        } else {
-          setDrivers([]);
-          toast.warning(`Cannot filter by status "${driverStatusNorm}" when vendor is set to All.`);
+      dispatch(setDriversLoading(true));
+      const response = await API_CLIENT.get(`/vendors/tenants/drivers/`, {
+        params: {
+          skip: (page - 1) * paginationLimit,
+          limit: 100 // Consider making this dynamic based on your needs
         }
-      } else {
-        const res = await getFilteredDrivers(vendorIdNorm, {});
-        let allDrivers = res?.data || res?.data?.data || [];
-
-        if (driverStatusNorm !== 'ALL') {
-          allDrivers = allDrivers.filter(driver => {
-            const driverStatus = driver.is_active ? 'ACTIVE' : 'INACTIVE';
-            return driverStatus === driverStatusNorm;
-          });
-        }
-
-        setDrivers(allDrivers);
-        log("✅ Filtered Drivers fetched (frontend filtered)", { count: allDrivers.length });
-      }
+      });
+      dispatch(setDriversData(response.data || []));
+      lastFetchedPage.current = page;
     } catch (err) {
-      log("❌ Fetch drivers failed", err);
-      setDrivers([]);
-      toast.error('Failed to fetch drivers.');
-    } finally {
-      setLoading(false);
+      dispatch(setDriversError(err.message));
     }
   };
 
-  // Handle filters change
-  const handleFilterChange = (newFilters) => {
-    log("UI → Filter Change", newFilters);
-    setFilters(prev => ({ ...prev, ...newFilters }));
+  // Fetch vendors for the form
+  const fetchVendors = async () => {
+    try {
+      const response = await API_CLIENT.get('/vendors/');
+      return response.data || [];
+    } catch (err) {
+      console.error('Error fetching vendors:', err);
+      return [];
+    }
   };
 
-  // Handle driver status toggle with optimistic update
+  const [vendors, setVendors] = useState([]);
+
+  useEffect(() => {
+    // Fetch vendors when component mounts
+    fetchVendors().then(setVendors);
+  }, []);
+
+  useEffect(() => {
+    // Fetch drivers if:
+    // 1. We haven't fetched any data yet (initial load)
+    // 2. We're moving to a new page that hasn't been fetched before
+    if (!hasFetched || (currentPage > lastFetchedPage.current && !allDrivers.length)) {
+      fetchDrivers(currentPage);
+    }
+  }, [currentPage, hasFetched, allDrivers.length, dispatch, paginationLimit]);
+
+  // Modal handlers
+  const openCreateModal = () => {
+    setFormMode('create');
+    setSelectedDriver(null);
+    setShowModal(true);
+  };
+
+  const openEditModal = (driver) => {
+    setFormMode('edit');
+    setSelectedDriver(driver);
+    setShowModal(true);
+  };
+
+  const openViewModal = (driver) => {
+    setFormMode('view');
+    setSelectedDriver(driver);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedDriver(null);
+    setFormMode('create');
+  };
+
+  const handleFormSuccess = () => {
+    // Refresh drivers data after successful create/update
+    // fetchDrivers(currentPage);
+    closeModal();
+  };
+
   const handleStatusToggle = (driver) => {
-    const current = getDriverStatus(driver);
-    const next = current === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-
-    if (!window.confirm(`Change status from ${current} to ${next}?`)) return;
-
-    // Optimistically update UI
-    setDrivers(prevDrivers =>
-      prevDrivers.map(d =>
-        d.driver_id === driver.driver_id ? { ...d, is_active: next === 'ACTIVE' } : d
-      )
-    );
-
-    patchDriverStatusAPI(driver.vendor.vendor_id, driver.driver_id, { status: next })
-      .then(() => {
-        toast.success('Status updated successfully');
-        // Optional: refresh list from backend to sync
-        fetchDrivers(filters.vendorId, filters.driverStatus);
-      })
-      .catch(() => {
-        toast.error('Failed to update status');
-        // Revert UI change on failure
-        setDrivers(prevDrivers =>
-          prevDrivers.map(d =>
-            d.driver_id === driver.driver_id ? { ...d, is_active: current === 'ACTIVE' } : d
-          )
-        );
-      });
+    setConfirmationModal({
+      show: true,
+      title: 'Confirm Status Change',
+      message: `Are you sure you want to ${driver.is_active ? 'deactivate' : 'activate'} this driver?`,
+      onConfirm: async () => {
+        try {
+          dispatch(setDriversLoading(true));
+          await API_CLIENT.patch(`/vendors/${driver.vendor.vendor_id}/drivers/${driver.driver_id}/status`);
+          dispatch(updateDriverStatus({
+            driverId: driver.driver_id,
+            isActive: !driver.is_active
+          }));
+          // Show success message
+        } catch (err) {
+          dispatch(setDriversError(err.message));
+        } finally {
+          dispatch(setDriversLoading(false));
+          setConfirmationModal({ ...confirmationModal, show: false });
+        }
+      },
+      onCancel: () => {
+        setConfirmationModal({ ...confirmationModal, show: false });
+      }
+    });
   };
+
+  const handlePageChange = (page) => {
+    dispatch(setPage(page));
+  };
+
+  const handleSearch = (term) => {
+    dispatch(setSearchTerm(term));
+  };
+
+  const handleFilterReset = () => {
+    dispatch(resetFilters());
+  };
+
+  const getModalTitle = () => {
+    switch (formMode) {
+      case 'create':
+        return 'Add New Driver';
+      case 'edit':
+        return 'Edit Driver';
+      case 'view':
+        return 'View Driver Details';
+      default:
+        return 'Driver Form';
+    }
+  };
+
+  if (loading) return <div className="flex justify-center items-center h-64">Loading...</div>;
+  if (error) return <div className="text-red-500 p-4">Error: {error}</div>;
 
   return (
-    <>
-      <DriverToolbar
-        vendors={[{ id: 'ALL', name: 'All' }, ...vendors.map(v => ({ id: v.vendor_id, name: v.vendor_name }))]}
-        statusOptions={[
-          { id: 'ALL', name: 'All' },
-          { id: 'ACTIVE', name: 'Active' },
-          { id: 'INACTIVE', name: 'Inactive' }
-        ]}
-        onFilterChange={handleFilterChange}
-        onAddDriver={() => setModalState({ show: true, isEditing: false, editData: null, selectedVendorId: null })}
+    <div className="space-y-4">
+      <ToolBar
+        addButtonLabel="Add Driver"
+        addButtonIcon={<Plus size={16} />}
+        onAddClick={openCreateModal}
+        className="mb-6"
+        leftElements={
+          <div className="flex flex-wrap gap-2">
+            {/* Vendor filter dropdown */}
+            <div className="relative">
+              <select
+                className="appearance-none border border-gray-300 rounded-md pl-3 pr-8 py-2 text-sm 
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                  bg-white text-gray-700 shadow-sm"
+                onChange={(e) => dispatch(setVendorFilter(e.target.value))}
+                value={vendorFilterValue}
+              >
+                {vendorOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Status filter dropdown */}
+            <div className="relative">
+              <select
+                className="appearance-none border border-gray-300 rounded-md pl-3 pr-8 py-2 text-sm 
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                  bg-white text-gray-700 shadow-sm"
+                onChange={(e) => dispatch(setStatusFilter(e.target.value))}
+                value={statusFilterValue}
+              >
+                {statusOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Verification filter dropdown */}
+            <div className="relative">
+              <select
+                className="appearance-none border border-gray-300 rounded-md pl-3 pr-8 py-2 text-sm 
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                  bg-white text-gray-700 shadow-sm"
+                onChange={(e) => dispatch(setVerificationFilter(e.target.value))}
+                value={verificationFilterValue}
+              >
+                {verificationOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        }
+        rightElements={
+          <button
+            onClick={handleFilterReset}
+            className="px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 
+              hover:bg-blue-50 rounded-md transition-colors"
+          >
+            Reset Filters
+          </button>
+        }
+        searchBar={
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search by name, email, phone or license..."
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md 
+                text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 
+                focus:border-blue-500"
+              onChange={(e) => handleSearch(e.target.value)}
+              value={searchTermValue}
+            />
+          </div>
+        }
       />
 
-      {loading ? (
-        <p className="p-4 text-gray-500">Loading drivers...</p>
-      ) : (
-        <DriverList
-          drivers={drivers}
-          onEdit={(driver) => setModalState({
-            show: true,
-            isEditing: true,
-            editData: driver,
-            selectedVendorId: driver.vendor?.vendor_id || null,
-          })}
-          onStatusToggle={handleStatusToggle}
+      {/* Active filters display */}
+      {activeFilters.length > 0 && (
+        <FilterBadges 
+          filters={activeFilters} 
+          onClear={handleFilterReset}
         />
       )}
 
-      {modalState.show && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow max-w-5xl w-full max-h-[90vh] overflow-y-auto p-4">
-            <DriverForm
-              initialData={modalState.editData}
-              isEdit={modalState.isEditing}
-              onSave={() => fetchDrivers(filters.vendorId, filters.driverStatus)}
-              onClose={() => setModalState({ show: false, isEditing: false, editData: null, selectedVendorId: null })}
-              vendors={vendors}
-            />
-          </div>
-        </div>
-      )}
+      {/* Status indicators */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <StatusIndicator
+          label="Total Drivers"
+          value={counts.total}
+          icon="users"
+          className="bg-blue-50 text-blue-600"
+        />
+        <StatusIndicator
+          label="Active Drivers"
+          value={counts.active}
+          icon="check-circle"
+          className="bg-green-50 text-green-600"
+        />
+        <StatusIndicator
+          label="Pending Verifications"
+          value={counts.pendingVerifications}
+          icon="clock"
+          className="bg-yellow-50 text-yellow-600"
+          tooltip="Drivers with pending document verifications"
+        />
+        <StatusIndicator
+          label="Expired Documents"
+          value={counts.expiredDocuments}
+          icon="alert-triangle"
+          className="bg-red-50 text-red-600"
+          tooltip="Drivers with expired licenses or badges"
+        />
+      </div>
 
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
+      <DriverList
+        drivers={drivers}
+        onEdit={openEditModal}
+        onView={openViewModal}
+        onStatusToggle={handleStatusToggle}
       />
-    </>
+      
+      <Pagination
+        currentPage={Math.floor(paginationSkip / paginationLimit) + 1}
+        totalPages={Math.ceil(filteredDriversLength / paginationLimit)}
+        onPageChange={handlePageChange}
+        className="mt-4"
+      />
+
+      {/* Driver Form Modal */}
+      <Modal
+        isOpen={showModal}
+        onClose={closeModal}
+        title={getModalTitle()}
+        size="xl"
+      >
+        <DriverForm
+          initialData={selectedDriver}
+          mode={formMode}
+          vendors={vendors}
+          onClose={handleFormSuccess}
+        />
+      </Modal>
+
+
+      <ConfirmationModal
+      show={confirmationModal.show}
+      title={confirmationModal.title}
+      message={confirmationModal.message}
+      onConfirm={confirmationModal.onConfirm}
+      onCancel={confirmationModal.onCancel}
+    />
+    </div>
   );
 }
 

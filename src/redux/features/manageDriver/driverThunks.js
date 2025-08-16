@@ -14,7 +14,7 @@ export const fetchDriversThunk = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await getTenantDriversAPI();
-      return response.data?.data || [];
+      return response.data || [];
     } catch (error) {
       console.error('[Thunk] Failed to fetch tenant drivers:', error);
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch drivers');

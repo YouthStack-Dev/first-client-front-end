@@ -8,21 +8,52 @@ export const API_CLIENT = axios.create({
   baseURL,
 });
 
-// Add a request interceptor
+// Request interceptor
 API_CLIENT.interceptors.request.use(
   (config) => {
-    // Get token from localStorage (or Cookies if you prefer)
     const token = localStorage.getItem("access_token");
 
     if (token) {
-      // Attach the token in Authorization header
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Log the request details
+    console.log("[API Request] 📡", {
+      url: `${config.baseURL}${config.url}`,
+      method: config.method,
+      headers: config.headers,
+      params: config.params,
+      data: config.data
+    });
 
     return config;
   },
   (error) => {
-    // Handle request error
+    console.error("[API Request Error] ❌", error);
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor
+API_CLIENT.interceptors.response.use(
+  (response) => {
+    console.log("[API Response] ✅", {
+      url: response.config.url,
+      status: response.status,
+      data: response.data
+    });
+    return response;
+  },
+  (error) => {
+    if (error.response) {
+      console.error("[API Response Error] ❌", {
+        url: error.response.config.url,
+        status: error.response.status,
+        data: error.response.data
+      });
+    } else {
+      console.error("[API Error] 🚨", error.message);
+    }
     return Promise.reject(error);
   }
 );

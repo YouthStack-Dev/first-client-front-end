@@ -2,7 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 import driverReducer from "../redux/features/manageDriver/driverSlice";
 import authReducer from "../redux/features/auth/authSlice";
-import manageTeamReducer from "../redux/features/manageTeam/manageTeamSlice";
+import userReducer from "../redux/features/user/userSlice";
 import shiftCategoryReducer from "../redux/features/Category/shiftCategorySlice";
 import shiftReducer from "../redux/features/Shifts/shiftSlice";
 import vehicleTypeReducer from "../redux/features/managevehicletype/vehicleTypeSlice";
@@ -11,9 +11,9 @@ import vehicleReducer  from "../redux/features/manageVehicles/vehicleSlice";
 
 const store = configureStore({
   reducer: {
-    driver: driverReducer,
+    drivers: driverReducer,
     auth: authReducer,
-    manageTeam: manageTeamReducer,
+    user:userReducer,
     shiftCategory: shiftCategoryReducer,
     shift: shiftReducer,
     vehicleType: vehicleTypeReducer,

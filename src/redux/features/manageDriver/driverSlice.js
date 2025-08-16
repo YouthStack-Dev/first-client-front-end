@@ -1,274 +1,211 @@
-// import { createSlice } from '@reduxjs/toolkit';
-// import {
-//   fetchDriversThunk,
-//   createDriverThunk,
-//   updateDriverThunk,
-//   patchDriverStatusThunk,
-// } from './driverThunks';
-
-// const initialState = {
-//   drivers: [],
-//   selectedDrivers: [],
-//   showModal: false,
-//   editingDriverId: null,
-
-//   apiStatus: {
-//     fetchDrivers: { status: 'idle', error: null },
-//     createDriver: { status: 'idle', error: null },
-//     updateDriver: { status: 'idle', error: null },
-//     patchDriverStatus: { status: 'idle', error: null },
-//   },
-// };
-
-// const driverSlice = createSlice({
-//   name: 'drivers',
-//   initialState,
-//   reducers: {
-//     toggleModal(state, action) {
-//       state.showModal = action.payload !== undefined ? action.payload : !state.showModal;
-//     },
-//     setEditingDriverId(state, action) {
-//       state.editingDriverId = action.payload;
-//     },
-//     toggleSelectDriver(state, action) {
-//       const id = action.payload;
-//       state.selectedDrivers = state.selectedDrivers.includes(id)
-//         ? state.selectedDrivers.filter((d) => d !== id)
-//         : [...state.selectedDrivers, id];
-//     },
-//     clearSelectedDrivers(state) {
-//       state.selectedDrivers = [];
-//     },
-//     setDrivers(state, action) {
-//       state.drivers = action.payload;
-//     },
-//   },
-
-//   extraReducers: (builder) => {
-//     builder
-
-//       // 🚚 Fetch Drivers
-//       .addCase(fetchDriversThunk.pending, (state) => {
-//         state.apiStatus.fetchDrivers = { status: 'loading', error: null };
-//       })
-//       .addCase(fetchDriversThunk.fulfilled, (state, action) => {
-//         state.apiStatus.fetchDrivers = { status: 'succeeded', error: null };
-//         state.drivers = action.payload;
-//       })
-//       .addCase(fetchDriversThunk.rejected, (state, action) => {
-//         state.apiStatus.fetchDrivers = {
-//           status: 'failed',
-//           error: action.error?.message || 'Failed to fetch drivers',
-//         };
-//       })
-
-//       // ➕ Create Driver
-//       .addCase(createDriverThunk.pending, (state) => {
-//         state.apiStatus.createDriver = { status: 'loading', error: null };
-//       })
-//       .addCase(createDriverThunk.fulfilled, (state, action) => {
-//         state.apiStatus.createDriver = { status: 'succeeded', error: null };
-//         state.drivers.unshift(action.payload);
-//         state.showModal = false;
-//         state.editingDriverId = null;
-//       })
-//       .addCase(createDriverThunk.rejected, (state, action) => {
-//         state.apiStatus.createDriver = {
-//           status: 'failed',
-//           error: action.error?.message || 'Failed to create driver',
-//         };
-//       })
-
-//       // ✏️ Update Driver
-//       .addCase(updateDriverThunk.pending, (state) => {
-//         state.apiStatus.updateDriver = { status: 'loading', error: null };
-//       })
-//       .addCase(updateDriverThunk.fulfilled, (state, action) => {
-//         state.apiStatus.updateDriver = { status: 'succeeded', error: null };
-//         const updated = action.payload;
-//         const index = state.drivers.findIndex((d) => d.driver_id === updated.driver_id);
-//         if (index !== -1) {
-//           state.drivers[index] = { ...state.drivers[index], ...updated };
-//         }
-//         state.showModal = false;
-//         state.editingDriverId = null;
-//       })
-//       .addCase(updateDriverThunk.rejected, (state, action) => {
-//         state.apiStatus.updateDriver = {
-//           status: 'failed',
-//           error: action.error?.message || 'Failed to update driver',
-//         };
-//       })
-
-//       // ✅ Patch Driver Status
-//       .addCase(patchDriverStatusThunk.pending, (state) => {
-//         state.apiStatus.patchDriverStatus = { status: 'loading', error: null };
-//       })
-//       .addCase(patchDriverStatusThunk.fulfilled, (state, action) => {
-//         state.apiStatus.patchDriverStatus = { status: 'succeeded', error: null };
-//         const updated = action.payload;
-//         const index = state.drivers.findIndex((d) => d.driver_id === updated.driver_id);
-//         if (index !== -1) {
-//           state.drivers[index] = { ...state.drivers[index], ...updated };
-//         }
-//       })
-//       .addCase(patchDriverStatusThunk.rejected, (state, action) => {
-//         state.apiStatus.patchDriverStatus = {
-//           status: 'failed',
-//           error: action.error?.message || 'Failed to update status',
-//         };
-//       });
-//   },
-// });
-
-// export const {
-//   toggleModal,
-//   setEditingDriverId,
-//   toggleSelectDriver,
-//   clearSelectedDrivers,
-//   setDrivers,
-// } = driverSlice.actions;
-
-// export default driverSlice.reducer;
-
-
-
-import { createSlice } from '@reduxjs/toolkit';
-import {
-  fetchDriversThunk,
-  createDriverThunk,
-  updateDriverThunk,
-  patchDriverStatusThunk,
-} from './driverThunks';
+import { createSlice, createSelector } from '@reduxjs/toolkit';
 
 const initialState = {
-  drivers: [],
-  selectedDrivers: [],
-  showModal: false,
-  editingDriverId: null,
-
-  apiStatus: {
-    fetchDrivers: { status: 'idle', error: null },
-    createDriver: { status: 'idle', error: null },
-    updateDriver: { status: 'idle', error: null },
-    patchDriverStatus: { status: 'idle', error: null },
+  entities: {},
+  ids: [],
+  vendors: {},
+  loading: false,
+  error: null,
+  hasFetched: false,
+  filters: {
+    searchTerm: '',
+    vendorFilter: 'all',
+    statusFilter: 'all',
+    verificationFilter: 'all'
   },
+  pagination: {
+    skip: 0,
+    limit: 10
+  }
 };
 
-const driverSlice = createSlice({
+const driversSlice = createSlice({
   name: 'drivers',
   initialState,
   reducers: {
-    toggleModal(state, action) {
-      state.showModal = action.payload !== undefined ? action.payload : !state.showModal;
+    // Filter actions
+    setSearchTerm: (state, action) => {
+      state.filters.searchTerm = action.payload;
+      state.pagination.skip = 0;
     },
-    setEditingDriverId(state, action) {
-      state.editingDriverId = action.payload;
+    setVendorFilter: (state, action) => {
+      state.filters.vendorFilter = action.payload;
+      state.pagination.skip = 0;
     },
-    toggleSelectDriver(state, action) {
-      const id = action.payload;
-      state.selectedDrivers = state.selectedDrivers.includes(id)
-        ? state.selectedDrivers.filter((d) => d !== id)
-        : [...state.selectedDrivers, id];
+    setStatusFilter: (state, action) => {
+      state.filters.statusFilter = action.payload;
+      state.pagination.skip = 0;
     },
-    clearSelectedDrivers(state) {
-      state.selectedDrivers = [];
+    setVerificationFilter: (state, action) => {
+      state.filters.verificationFilter = action.payload;
+      state.pagination.skip = 0;
     },
-    setDrivers(state, action) {
-      state.drivers = action.payload;
+    resetFilters: (state) => {
+      state.filters = initialState.filters;
+      state.pagination.skip = 0;
     },
-    updateDriverStatusLocally(state, action) {
-      const { driver_id, status } = action.payload;
-      const index = state.drivers.findIndex((d) => d.driver_id === driver_id);
-      if (index !== -1) {
-        state.drivers[index].status = status;
-      }
+    setPage: (state, action) => {
+      state.pagination.skip = (action.payload - 1) * state.pagination.limit;
     },
-  },
-
-  extraReducers: (builder) => {
-    builder
-      // 🚚 Fetch Drivers
-      .addCase(fetchDriversThunk.pending, (state) => {
-        state.apiStatus.fetchDrivers = { status: 'loading', error: null };
-      })
-      .addCase(fetchDriversThunk.fulfilled, (state, action) => {
-        state.apiStatus.fetchDrivers = { status: 'succeeded', error: null };
-        state.drivers = action.payload;
-      })
-      .addCase(fetchDriversThunk.rejected, (state, action) => {
-        state.apiStatus.fetchDrivers = {
-          status: 'failed',
-          error: action.error?.message || 'Failed to fetch drivers',
-        };
-      })
-
-      // ➕ Create Driver
-      .addCase(createDriverThunk.pending, (state) => {
-        state.apiStatus.createDriver = { status: 'loading', error: null };
-      })
-      .addCase(createDriverThunk.fulfilled, (state, action) => {
-        state.apiStatus.createDriver = { status: 'succeeded', error: null };
-        state.drivers.unshift(action.payload);
-        state.showModal = false;
-        state.editingDriverId = null;
-      })
-      .addCase(createDriverThunk.rejected, (state, action) => {
-        state.apiStatus.createDriver = {
-          status: 'failed',
-          error: action.error?.message || 'Failed to create driver',
-        };
-      })
-
-      // ✏️ Update Driver
-      .addCase(updateDriverThunk.pending, (state) => {
-        state.apiStatus.updateDriver = { status: 'loading', error: null };
-      })
-      .addCase(updateDriverThunk.fulfilled, (state, action) => {
-        state.apiStatus.updateDriver = { status: 'succeeded', error: null };
-        const updated = action.payload;
-        const index = state.drivers.findIndex((d) => d.driver_id === updated.driver_id);
-        if (index !== -1) {
-          state.drivers[index] = { ...state.drivers[index], ...updated };
+    
+    // Data management actions
+    setDriversLoading: (state, action) => {
+      state.loading = action.payload;
+    },
+    setDriversError: (state, action) => {
+      state.error = action.payload;
+    },
+    setDriversData: (state, action) => {
+      state.loading = false;
+      state.hasFetched = true;
+      state.error = null;
+      
+      const normalized = {
+        entities: {},
+        ids: [],
+        vendors: {}
+      };
+      
+      action.payload.forEach(driver => {
+        normalized.entities[driver.driver_id] = driver;
+        normalized.ids.push(driver.driver_id);
+        if (driver.vendor) {
+          normalized.vendors[driver.vendor.vendor_id] = driver.vendor;
         }
-        state.showModal = false;
-        state.editingDriverId = null;
-      })
-      .addCase(updateDriverThunk.rejected, (state, action) => {
-        state.apiStatus.updateDriver = {
-          status: 'failed',
-          error: action.error?.message || 'Failed to update driver',
-        };
-      })
-
-      // ✅ Patch Driver Status
-      .addCase(patchDriverStatusThunk.pending, (state) => {
-        state.apiStatus.patchDriverStatus = { status: 'loading', error: null };
-      })
-      .addCase(patchDriverStatusThunk.fulfilled, (state, action) => {
-        state.apiStatus.patchDriverStatus = { status: 'succeeded', error: null };
-        const updated = action.payload;
-        const index = state.drivers.findIndex((d) => d.driver_id === updated.driver_id);
-        if (index !== -1) {
-          state.drivers[index] = { ...state.drivers[index], ...updated };
-        }
-      })
-      .addCase(patchDriverStatusThunk.rejected, (state, action) => {
-        state.apiStatus.patchDriverStatus = {
-          status: 'failed',
-          error: action.error?.message || 'Failed to update status',
-        };
       });
-  },
+      
+      state.entities = normalized.entities;
+      state.ids = normalized.ids;
+      state.vendors = normalized.vendors;
+    },
+    updateDriverStatus: (state, action) => {
+      const { driverId, isActive } = action.payload;
+      if (state.entities[driverId]) {
+        state.entities[driverId].is_active = isActive;
+      }
+    }
+  }
 });
 
-export const {
-  toggleModal,
-  setEditingDriverId,
-  toggleSelectDriver,
-  clearSelectedDrivers,
-  setDrivers,
-  updateDriverStatusLocally,
-} = driverSlice.actions;
+// Selectors (same as before)
+const selectDriverState = state => state.drivers;
 
-export default driverSlice.reducer;
+export const selectAllDrivers = createSelector(
+  [selectDriverState],
+  (drivers) => drivers.ids.map(id => drivers.entities[id])
+);
+
+export const selectLoading = state => state.drivers.loading;
+export const selectError = state => state.drivers.error;
+export const selectHasFetched = state => state.drivers.hasFetched;
+export const selectFilters = state => state.drivers.filters;
+export const selectPagination = state => state.drivers.pagination;
+
+export const selectVendorOptions = createSelector(
+  [state => state.drivers.vendors],
+  (vendors) => [
+    { value: 'all', label: 'All Vendors' },
+    ...Object.values(vendors).map(vendor => ({
+      value: vendor.vendor_id.toString(),
+      label: vendor.vendor_name
+    }))
+  ]
+);
+
+export const selectStatusOptions = () => [
+  { value: 'all', label: 'All Statuses' },
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' }
+];
+
+export const selectVerificationOptions = () => [
+  { value: 'all', label: 'All Verifications' },
+  { value: 'Verified', label: 'Verified' },
+  { value: 'Pending', label: 'Pending' },
+  { value: 'Rejected', label: 'Rejected' }
+];
+
+export const selectFilteredDrivers = createSelector(
+  [selectAllDrivers, selectFilters],
+  (drivers, filters) => drivers.filter(driver => {
+    const matchesSearch = filters.searchTerm === '' || 
+      [driver.name, driver.email, driver.mobile_number, driver.license_number]
+        .some(field => field && field.toString().toLowerCase().includes(filters.searchTerm.toLowerCase()));
+
+    const matchesVendor = filters.vendorFilter === 'all' || 
+      (driver.vendor && driver.vendor.vendor_id.toString() === filters.vendorFilter);
+    
+    const matchesStatus = filters.statusFilter === 'all' || 
+      (filters.statusFilter === 'active' && driver.is_active) || 
+      (filters.statusFilter === 'inactive' && !driver.is_active);
+
+    const matchesVerification = filters.verificationFilter === 'all' || 
+      ['bgv_status', 'police_verification_status', 'medical_verification_status', 
+       'training_verification_status', 'eye_test_verification_status']
+        .some(field => driver[field] === filters.verificationFilter);
+
+    return matchesSearch && matchesVendor && matchesStatus && matchesVerification;
+  })
+);
+
+export const selectPaginatedDrivers = createSelector(
+  [selectFilteredDrivers, selectPagination],
+  (filteredDrivers, pagination) => 
+    filteredDrivers.slice(pagination.skip, pagination.skip + pagination.limit)
+);
+
+export const selectCounts = createSelector(
+  [selectAllDrivers],
+  (drivers) => {
+    const now = new Date();
+    return {
+      total: drivers.length,
+      active: drivers.filter(d => d.is_active).length,
+      pendingVerifications: drivers.filter(driver => 
+        ['bgv_status', 'police_verification_status', 'medical_verification_status', 
+         'training_verification_status', 'eye_test_verification_status']
+          .some(field => driver[field] === 'Pending')).length,
+      expiredDocuments: drivers.filter(driver => 
+        (driver.license_expiry_date && new Date(driver.license_expiry_date) < now) ||
+        (driver.badge_expiry_date && new Date(driver.badge_expiry_date) < now)).length,
+      rejectedDocuments: drivers.filter(driver => 
+        ['bgv_status', 'police_verification_status', 'medical_verification_status', 
+         'training_verification_status', 'eye_test_verification_status']
+          .some(field => driver[field] === 'Rejected')).length
+    };
+  }
+);
+
+export const selectActiveFilters = createSelector(
+  [selectFilters, selectVendorOptions],
+  (filters, vendorOptions) => {
+    const activeFilters = [];
+    if (filters.searchTerm) activeFilters.push(`Search: "${filters.searchTerm}"`);
+    if (filters.vendorFilter !== 'all') {
+      const vendor = vendorOptions.find(v => v.value === filters.vendorFilter);
+      if (vendor) activeFilters.push(`Vendor: ${vendor.label}`);
+    }
+    if (filters.statusFilter !== 'all') {
+      activeFilters.push(`Status: ${filters.statusFilter}`);
+    }
+    if (filters.verificationFilter !== 'all') {
+      activeFilters.push(`Verification: ${filters.verificationFilter}`);
+    }
+    return activeFilters;
+  }
+);
+
+export const { 
+  setSearchTerm, 
+  setVendorFilter, 
+  setStatusFilter, 
+  setVerificationFilter, 
+  resetFilters,
+  setPage,
+  setDriversLoading,
+  setDriversError,
+  setDriversData,
+  updateDriverStatus
+} = driversSlice.actions;
+
+export default driversSlice.reducer;
