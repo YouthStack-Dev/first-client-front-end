@@ -1,430 +1,455 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch  } from 'react-redux';
+  import React, { useEffect, useState } from 'react';
+  import DriverTabNavigation from './DriverTabNavigation'; // Import the tab navigation
+  import DriverPersonalDetails from './DriverPersonalDetails'; // Import from your first document
+  import DocumentsTab from './DocumentsTab'; // Import from your second document
+  import { logDebug } from '../../utils/logger';
+  import { API_CLIENT } from '../../Api/API_Client';
+  import { fieldMapping, transformBackendToFormData,} from './driverUtility';
+  import { toast } from 'react-toastify';
+import axios from 'axios';
 
-import DriverTabNavigation from './DriverTabNavigation';
-import PersonalDetailsTab from '../PersonalDetailsTab';
-import DocumentsTab from './DocumentsTab';
+  const defaultFormData = {
+    name: '', dateOfBirth: '', mobileNumber: '', driver_code: '',
+    permanentAddress: '', currentAddress: '', isSameAddress: false,
+    alternateMobileNumber: '', city: '', vendorId: '', email: '', password: '',
+    gender: 'male', bgvStatus: 'pending', policeVerification: 'pending',
+    medicalVerification: 'pending', trainingVerification: 'pending', eyeTestStatus: 'pending',
+    bgvExpiryDate: '', policeExpiryDate: '', medicalExpiryDate: '', trainingExpiryDate: '',
+    eyeTestExpiryDate: '', licenseNumber: '', licenseExpiryDate: '', inductionDate: '',
+    badgeNumber: '', badgeExpiryDate: '', alternateGovtId: '', govtIdNumber: '',
+    bgvDocument: null, policeDocument: null, medicalDocument: null, trainingDocument: null,
+    eyeTestDocument: null, licenseDocument: null, inductionDocument: null,
+    badgeDocument: null, govtIdDocument: null, profileImage: null,
+  };
 
-import { logDebug, logError } from '../../utils/logger';
+  const DriverForm = ({ initialData = null, mode, onClose, vendors = [] }) => {
 
-const defaultFormData = {
-  driverName: '', dateOfBirth: '', mobileNumber: '', driverId: '',
-  permanentAddress: '', currentAddress: '', isSameAddress: false,
-  alternateMobileNumber: '', city: '', vendor: '', email: '', password: '',
-  gender: 'male', bgvStatus: 'pending', policeVerification: 'pending',
-  medicalVerification: 'pending', trainingVerification: 'pending', eyeTestStatus: 'pending',
-  bgvExpiryDate: '', policeExpiryDate: '', medicalExpiryDate: '', trainingExpiryDate: '',
-  eyeTestExpiryDate: '', licenseNumber: '', licenseExpiryDate: '', inductionDate: '',
-  badgeNumber: '', badgeExpiryDate: '', alternateGovtId: '', govtIdNumber: '',
-  bgvDocument: null, policeDocument: null, medicalDocument: null, trainingDocument: null,
-  eyeTestDocument: null, licenseDocument: null, inductionDocument: null,
-  badgeDocument: null, govtIdDocument: null, profileImage: null,
-};
+    const [activeTab, setActiveTab] = useState('personalDetails');
+    const [formData, setFormData] = useState(defaultFormData);
+    const [errors, setErrors] = useState({});
+    const [tabErrors, setTabErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-const DriverForm = ({ 
-  initialData = null, 
-  mode = 'create', // 'create', 'edit', 'view'
-  vendors = [],
-  onClose = () => {}
-}) => {
-  const dispatch = useDispatch();
-  const [activeTab, setActiveTab] = useState('personalDetails');
-  const [formData, setFormData] = useState(defaultFormData);
-  const [errors, setErrors] = useState({});
-  const [documentError, setDocumentError] = useState({});
-  const [tabErrors, setTabErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [personalValid, setPersonalValid] = useState(false);
-
-  const isReadOnly = mode === 'view';
-  const isEdit = mode === 'edit';
-  const isCreate = mode === 'create';
-
-  useEffect(() => {
-    if (initialData) setFormData(initializeFormData(initialData));
-  }, [initialData]);
-
-  const initializeFormData = (data) => ({
-    ...defaultFormData,
-    driverName: data.name || '', 
-    dateOfBirth: data.date_of_birth || '',
-    mobileNumber: data.mobile_number || '', 
-    driverId: data.driver_code || '',
-    permanentAddress: data.permanent_address || '', 
-    currentAddress: data.current_address || '',
-    alternateMobileNumber: data.alternate_mobile_number || '', 
-    city: data.city || '',
-    vendor: data.vendor?.vendor_id || '', 
-    email: data.email || '', 
-    gender: data.gender || 'male',
-    bgvStatus: data.bgv_status || 'pending', 
-    policeVerification: data.police_verification_status || 'pending',
-    medicalVerification: data.medical_verification_status || 'pending', 
-    trainingVerification: data.training_verification_status || 'pending',
-    eyeTestStatus: data.eye_test_verification_status || 'pending',
-    bgvExpiryDate: data.bgv_date || '', 
-    policeExpiryDate: data.police_verification_date || '',
-    medicalExpiryDate: data.medical_verification_date || '', 
-    trainingExpiryDate: data.training_verification_date || '',
-    eyeTestExpiryDate: data.eye_test_verification_date || '', 
-    licenseNumber: data.license_number || '',
-    licenseExpiryDate: data.license_expiry_date || '', 
-    inductionDate: data.induction_date || '',
-    badgeNumber: data.badge_number || '', 
-    badgeExpiryDate: data.badge_expiry_date || '',
-    alternateGovtId: data.alternate_govt_id || '', 
-    govtIdNumber: data.govt_id_number || '',
+    const token = localStorage.getItem("access_token");
+    // Initialize form data if editing
+    useEffect(() => {
+      if (initialData && (mode === "edit" || mode === "view")) {
+        const transformedData = transformBackendToFormData(initialData);
+        const vendorId = initialData.vendor?.vendor_id; // safe access
     
-    // Document URLs for existing documents
-    bgvDocument: data.bgv_doc_url || null,
-    policeDocument: data.police_verification_doc_url || null,
-    medicalDocument: data.medical_verification_doc_url || null,
-    trainingDocument: data.training_verification_doc_url || null,
-    eyeTestDocument: data.eye_test_verification_doc_url || null,
-    licenseDocument: data.license_doc_url || null,
-    inductionDocument: data.induction_doc_url || null,
-    badgeDocument: data.badge_doc_url || null,
-    govtIdDocument: data.alternate_govt_id_doc_url || null,
-    profileImage: data.photo_url || null,
+        setFormData((prev) => ({
+          ...prev,
+          ...transformedData,
+          vendorId: vendorId, // ✅ add vendorId properly
+        }));
+      }
+    }, [initialData, mode]);
+    
+    
 
-    // Document names for display
-    bgvDocumentName: data.bgv_doc_url?.split('/').pop() || '',
-    policeDocumentName: data.police_verification_doc_url?.split('/').pop() || '',
-    medicalDocumentName: data.medical_verification_doc_url?.split('/').pop() || '',
-    trainingDocumentName: data.training_verification_doc_url?.split('/').pop() || '',
-    eyeTestDocumentName: data.eye_test_verification_doc_url?.split('/').pop() || '',
-    licenseDocumentName: data.license_doc_url?.split('/').pop() || '',
-    inductionDocumentName: data.induction_doc_url?.split('/').pop() || '',
-    badgeDocumentName: data.badge_doc_url?.split('/').pop() || '',
-    govtIdDocumentName: data.alternate_govt_id_doc_url?.split('/').pop() || '',
-  });
-  const getFieldMap = () => ({
-    driver_code: formData.driverId,
-    name: formData.driverName,
-    email: formData.email,
-    hashed_password: formData.password,
-    mobile_number: formData.mobileNumber,
-    city: formData.city,
-    date_of_birth: formData.dateOfBirth,
-    gender: formData.gender,
-    alternate_mobile_number: formData.alternateMobileNumber,
-    permanent_address: formData.permanentAddress,
-    current_address: formData.currentAddress,
-    bgv_status: formData.bgvStatus,
-    bgv_date: formData.bgvExpiryDate,
-    police_verification_status: formData.policeVerification,
-    police_verification_date: formData.policeExpiryDate,
-    medical_verification_status: formData.medicalVerification,
-    medical_verification_date: formData.medicalExpiryDate,
-    training_verification_status: formData.trainingVerification,
-    training_verification_date: formData.trainingExpiryDate,
-    eye_test_verification_status: formData.eyeTestStatus,
-    eye_test_verification_date: formData.eyeTestExpiryDate,
-    license_number: formData.licenseNumber,
-    license_expiry_date: formData.licenseExpiryDate,
-    induction_date: formData.inductionDate,
-    badge_number: formData.badgeNumber,
-    badge_expiry_date: formData.badgeExpiryDate,
-    alternate_govt_id: formData.alternateGovtId,
-    govt_id_number: formData.govtIdNumber,
-    alternate_govt_id_doc_type: formData.alternateGovtIdDocType,
-  });
-
-  const getFileMap = () => ({
-    photo_image: formData.profileImage instanceof File ? formData.profileImage : null,
-    bgv_doc_file: formData.bgvDocument instanceof File ? formData.bgvDocument : null,
-    police_verification_doc_file: formData.policeDocument instanceof File ? formData.policeDocument : null,
-    medical_verification_doc_file: formData.medicalDocument instanceof File ? formData.medicalDocument : null,
-    training_verification_doc_file: formData.trainingDocument instanceof File ? formData.trainingDocument : null,
-    eye_test_verification_doc_file: formData.eyeTestDocument instanceof File ? formData.eyeTestDocument : null,
-    license_doc_file: formData.licenseDocument instanceof File ? formData.licenseDocument : null,
-    induction_doc_file: formData.inductionDocument instanceof File ? formData.inductionDocument : null,
-    badge_doc_file: formData.badgeDocument instanceof File ? formData.badgeDocument : null,
-    alternate_govt_id_doc_file: formData.govtIdDocument instanceof File ? formData.govtIdDocument : null,
-  });
-
-    const handleInputChange = (e) => {
+    // Handle form field changes
+    const handleChange = (e) => {
+  if ( mode ==='view')  return
       const { name, value } = e.target;
-  console.log(`[INPUT CHANGE] ${name}: ${value}`);
-
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+      
+      // Clear error for this field
+      if (errors[name]) {
+        setErrors(prev => ({
+          ...prev,
+          [name]: ''
+        }));
+      }
     };
 
-  const handleImageChange = (file) => {
-    if (isReadOnly || !file) return;
-    setFormData((prev) => ({ ...prev, profileImage: file }));
-  };
+    // Handle file changes
+    const handleFileChange = (name, file) => {
+      if ( mode ==='view')  return
+      setFormData(prev => ({
+        ...prev,
+        [name]: file
+      }));
+      
+      // Clear error for this field
+      if (errors[name]) {
+        setErrors(prev => ({
+          ...prev,
+          [name]: ''
+        }));
+      }
+    };
 
-  const handleFileChange = (name, file) => {
-    if (isReadOnly || !file) return;
-    setFormData((prev) => ({ ...prev, [name]: file, [`${name}Name`]: file.name }));
-  };
+    // Handle image upload for profile
+    const handleImageChange = (file) => {
+      if ( mode ==='view')  return
+      setFormData(prev => ({
+        ...prev,
+        profileImage: file
+      }));
+    };
 
-  const handleCheckboxChange = (name, checked) => {
-    if (isReadOnly) return;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: checked,
-      ...(name === 'isSameAddress' && checked ? { currentAddress: prev.permanentAddress } : {}),
-    }));
-  };
+    // Handle checkbox changes
+    const handleCheckboxChange = (name, checked) => {
+      if ( mode ==='view')  return
+      setFormData(prev => {
+        const newData = {
+          ...prev,
+          [name]: checked
+        };
+        
+        // If "same as permanent address" is checked, copy permanent address
+        if (name === 'isSameAddress' && checked) {
+          newData.currentAddress = prev.permanentAddress;
+        }
+        
+        return newData;
+      });
+    };
+
+    // Validate personal details tab
 
   const validatePersonalDetails = () => {
-    if (isReadOnly) return true;
+      const personalErrors = {};
     
-    const errors = {};
-    const requiredFields = [
-      'driverName',
-      'dateOfBirth',
-      'mobileNumber',
-      'city',
-      'vendor',
-      'gender',
-      'email',
-    ];
-
-    // Add password requirement only for create mode
-    if (isCreate) {
-      requiredFields.push('password');
-    }
-
-    requiredFields.forEach((field) => {
-      if (!formData[field] || formData[field].toString().trim() === '') {
-        errors[field] = `${field} is required`;
-      }
-    });
-
-    if (formData.mobileNumber) {
-      const mobile = formData.mobileNumber.trim();
-      if (!/^\d{10}$/.test(mobile)) {
-        errors.mobileNumber = 'Enter a valid 10-digit mobile number';
-      }
-    }
-
-    if (formData.alternateMobileNumber) {
-      const altMobile = formData.alternateMobileNumber.trim();
-      if (!/^\d{10}$/.test(altMobile)) {
-        errors.alternateMobileNumber = 'Enter a valid 10-digit alternate number';
-      } else if (altMobile === formData.mobileNumber) {
-        errors.alternateMobileNumber = 'Alternate number must be different from mobile number';
-      }
-    }
-    
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      errors.email = 'Enter a valid email address';
-    }
-
-    if (formData.dateOfBirth) {
-      const dob = new Date(formData.dateOfBirth);
-      const today = new Date();
-      let age = today.getFullYear() - dob.getFullYear();
-      const isBeforeBirthday =
-        today.getMonth() < dob.getMonth() ||
-        (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate());
-      if (isBeforeBirthday) age--;
-
-      if (age < 18) {
-        errors.dateOfBirth = 'Driver must be at least 18 years old';
-      }
-    }
-
-    setErrors(errors);
-    setTabErrors((prev) => ({
-      ...prev,
-      personalDetails: Object.keys(errors).length > 0,
-    }));
-
-    return Object.keys(errors).length === 0;
-  };
-
-  const validateDocuments = () => {
-    if (isReadOnly) return true;
-    
-    const errors = {};
-    const docFields = [
-      ["bgvDocument", "bgvDocumentName", "BGV"],
-      ["policeDocument", "policeDocumentName", "Police Verification"],
-      ["medicalDocument", "medicalDocumentName", "Medical"],
-      ["trainingDocument", "trainingDocumentName", "Training Certificate"],
-      ["eyeTestDocument", "eyeTestDocumentName", "Eye Test"],
-      ["licenseDocument", "licenseDocumentName", "Driving License"],
-      ["inductionDocument", "inductionDocumentName", "Induction Certificate"],
-      ["badgeDocument", "badgeDocumentName", "Badge"],
-      ["govtIdDocument", "govtIdDocumentName", "Government ID"],
-    ];
-
-    docFields.forEach(([field, nameField, label]) => {
-      const hasUploadedFile = formData[field] instanceof File;
-      const hasExistingUrl = typeof formData[field] === 'string' && formData[field];
-      const hasDocumentName = !!formData[nameField];
+      if (!formData.name?.trim()) personalErrors.name = 'Driver name is required';
+      if (!formData.city?.trim()) personalErrors.city = 'City is required';
+      if (!formData.dateOfBirth) personalErrors.dateOfBirth = 'Date of birth is required';
       
-      if (!hasUploadedFile && !hasExistingUrl && !hasDocumentName) {
-        errors[field] = `${label} document is required`;
+      // Mobile number validation
+      if (!formData.mobileNumber?.trim()) {
+        personalErrors.mobileNumber = 'Mobile number is required';
+      } else if (!/^\d{10}$/.test(formData.mobileNumber)) {
+        personalErrors.mobileNumber = 'Mobile number must be exactly 10 digits';
       }
-    });
-
-    setDocumentError(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const mapToFormData = () => {
-    const form = new FormData();
-    const fieldMap = getFieldMap();
-    const fileMap = getFileMap();
-
-    Object.entries(fieldMap).forEach(([key, val]) => form.append(key, val || ''));
-    Object.entries(fileMap).forEach(([key, file]) => { if (file) form.append(key, file); });
-    return { vendorId: formData.vendor || vendors[0]?.vendor_id || '', payload: form };
-  };
-  const handleSave = async () => {
-    if (isReadOnly) return;
     
-    const isPersonalValid = validatePersonalDetails();
-    const isDocumentValid = validateDocuments();
-  
-    if (!isPersonalValid || !isDocumentValid) {
-      logDebug('[VALIDATION FAILED] Personal or document validation failed.');
-      return;
-    }
-  
-    const { vendorId, payload } = mapToFormData();
-    // setIsSubmitting(true);
-  
-    logDebug('[SUBMITTING]', { vendorId, payload });
-    // try {
-    //   if (isEdit) {
-    //     // For update operation - hit the update endpoint
-    //     const response = await API_CLIENT.put(
-    //       `/vendors/${vendorId}/drivers/${initialData?.driver_id}`,
-    //       payload,
-    //       {
-    //         headers: {
-    //           'Content-Type': 'multipart/form-data'
-    //         }
-    //       }
-    //     );
-        
-    //     // Dispatch the updated driver data to Redux
-    //     dispatch(updateDriverStatus({
-    //       driverId: initialData?.driver_id,
-    //       updatedData: response.data
-    //     }));
-        
-    //     toast.success('Driver updated successfully');
-    //   } else if (isCreate) {
-    //     // For create operation - hit the create endpoint
-    //     const response = await API_CLIENT.post(
-    //       `/vendors/${vendorId}/drivers`,
-    //       payload,
-    //       {
-    //         headers: {
-    //           'Content-Type': 'multipart/form-data'
-    //         }
-    //       }
-    //     );
-        
-    //     // Dispatch the new driver data to Redux
-    //     dispatch(addNewDriver(response.data));
-        
-    //     toast.success('Driver created successfully');
-    //   }
-    //   onClose();
-    // } catch (error) {
-    //   logError('[SAVE FAILED]', error);
-    //   toast.error(error.response?.data?.message || 'Something went wrong while saving the driver.');
-    // } finally {
-    //   setIsSubmitting(false);
-    // }
-  };
-
-  const handleNext = () => {
-    if (isReadOnly) {
-      setActiveTab('documents');
-      return;
-    }
+      // Alternate number validation
+      if (formData.alternateNumber?.trim()) {
+        if (!/^\d{10}$/.test(formData.alternateNumber)) {
+          personalErrors.alternateNumber = 'Alternate number must be exactly 10 digits';
+        } else if (formData.alternateNumber === formData.mobileNumber) {
+          personalErrors.alternateNumber = 'Alternate number cannot be same as Mobile number';
+        }
+      }
     
-    const valid = validatePersonalDetails();
-    setPersonalValid(valid);
-    if (valid) setActiveTab('documents');
-  };
+      if (!formData.email?.trim()) personalErrors.email = 'Email is required';
+      
+      // Password check only when not in edit mode
+      if (!formData.password?.trim() && mode !== 'edit') {
+        personalErrors.password = 'Password is required';
+      }
+      
+      if (!formData.vendorId) personalErrors.vendorId = 'Vendor selection is required';
+      if (!formData.driver_code?.trim()) personalErrors.driver_code = 'Driver code is required';
+      if (!formData.gender) personalErrors.gender = 'Gender is required';
+    
+      return personalErrors;
+    };
+    
+    const validateDocuments = () => {
+      const docErrors = {};
+      const today = new Date();
+    
+      // Required document fields
+      const requiredDocs = [
+        'bgvDocument', 'policeDocument', 'medicalDocument',
+        'trainingDocument', 'eyeTestDocument', 'licenseDocument',
+        'govtIdDocument', 'inductionDocument', 'badgeDocument',
+      ];
+    
+      requiredDocs.forEach((doc) => {
+        if (!formData[doc]) {
+          docErrors[doc] = 'This document is required';
+        }
+      });
+    
+      // License checks
+      if (!formData.licenseNumber?.trim()) {
+        docErrors.licenseNumber = 'License number is required';
+      }
+    
+      if (!formData.licenseExpiryDate) {
+        docErrors.licenseExpiryDate = 'License expiry date is required';
+      } else {
+        const licenseDate = new Date(formData.licenseExpiryDate);
+        if (licenseDate < today) {
+          docErrors.licenseExpiryDate = 'License expiry date cannot be in the past';
+        }
+      }
+    
+      // Expiry date validations for other docs
+      const expiryFields = [
+        { key: 'bgvExpiryDate', label: 'BGV expiry date' },
+        { key: 'policeExpiryDate', label: 'Police verification expiry date' },
+        { key: 'medicalExpiryDate', label: 'Medical expiry date' },
+        { key: 'trainingExpiryDate', label: 'Training expiry date' },
+        { key: 'eyeTestExpiryDate', label: 'Eye test expiry date' },
+        { key: 'badgeExpiryDate', label: 'Badge expiry date' },
+      ];
+    
+      expiryFields.forEach(({ key, label }) => {
+        if (!formData[key]) {
+          docErrors[key] = `${label} is required`;
+        } else {
+          const expDate = new Date(formData[key]);
+          if (expDate < today) {
+            docErrors[key] = `${label} cannot be in the past`;
+          }
+        }
+      });
+    
+      // Extra required fields
+      if (!formData.badgeNumber?.trim()) {
+        docErrors.badgeNumber = 'Badge number is required';
+      }
+      if (!formData.alternateGovtId?.trim()) {
+        docErrors.alternateGovtId = 'Alternate Government ID is required';
+      }
+      if (!formData.govtIdNumber?.trim()) {
+        docErrors.govtIdNumber = 'Government ID number is required';
+      }
+    
+      logDebug("Document validation errors:", docErrors);
+      return docErrors;
+    };
+    
 
-  const getButtonText = () => {
-    if (isReadOnly) return 'Close';
-    if (activeTab !== 'documents') return 'Next';
-    if (isSubmitting) return 'Submitting...';
-    return isEdit ? 'Update' : 'Submit';
-  };
-  logDebug('[RENDER] DriverForm', )
+    // Handle tab change with validation
+    const handleTabChange = (tabId) => {
+      let currentTabErrors = {};
+      
+      // Validate current tab before switching
+      if (activeTab === 'personalDetails') {
+        currentTabErrors = validatePersonalDetails();
+      } else if (activeTab === 'documents') {
+        currentTabErrors = validateDocuments();
+      }
+      
+    
+      
+      setErrors(currentTabErrors);
+      setActiveTab(tabId);
+    };
 
-  return (
-    <div className="max-w-7xl mx-auto p-4">
-      <div className="bg-white max-h-[600px] rounded-lg overflow-y-auto">
-        <DriverTabNavigation 
-          activeTab={activeTab} 
-          errors={tabErrors} 
-          onTabChange={setActiveTab}
-          mode={mode}
-        />
 
-        <div className="p-4">
-          {activeTab === 'personalDetails' && (
-            <PersonalDetailsTab
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      // setIsSubmitting(true);
+    
+      // // 🔹 1. Validate all tabs
+      // const personalErrors = validatePersonalDetails();
+      // const documentErrors = validateDocuments();
+      // const allErrors = { ...personalErrors, ...documentErrors };
+      // setTabErrors({
+      //   personalDetails: Object.keys(personalErrors).length > 0,
+      //   documents: Object.keys(documentErrors).length > 0,
+      // });
+    
+      // if (Object.keys(allErrors).length > 0) {
+      //   setErrors(allErrors);
+      //   setIsSubmitting(false);
+    
+      //   if (Object.keys(personalErrors).length > 0) {
+      //     setActiveTab("personalDetails");
+      //   } else if (Object.keys(documentErrors).length > 0) {
+      //     setActiveTab("documents");
+      //   }
+    
+      //   const firstErrorKey = Object.keys(allErrors)[0];
+      //   const firstErrorMessage = allErrors[firstErrorKey];
+    
+      //   toast.error(`${firstErrorKey}: ${firstErrorMessage}`);
+      //   return;
+      // }
+    
+      try {
+        // 🔹 2. Prepare FormData
+        const formDataToSubmit = new FormData();
+              Object.keys(formData).forEach((key) => {
+                if (formData[key] !== null && formData[key] !== undefined) {
+                  const backendKey = fieldMapping[key] || key;
+          
+                  if (formData[key] instanceof File) {
+                    formDataToSubmit.append(backendKey, formData[key]);
+                  } else if (formData[key] instanceof Date) {
+                    formDataToSubmit.append(backendKey, formData[key].toISOString());
+                  } else if (typeof formData[key] === "boolean") {
+                    formDataToSubmit.append(backendKey, formData[key] ? "true" : "false");
+                  } else {
+                    formDataToSubmit.append(backendKey, formData[key]);
+                  }
+                }
+              });
+    
+              const driverData = {
+                name: "dhhhhhhhh",
+                email: "samle2a121q1sq1@gmail.comqqas",
+                hashed_password: "string",
+                mobile_number: "12q89qs12121q2",
+                city: "string",
+                date_of_birth: "2025-07-19",
+                gender: "string",
+                alternate_mobile_number: "123456712",
+                permanent_address: "string",
+                current_address: "string",
+                bgv_status: "Pending",
+                bgv_date: "2025-07-19",
+                police_verification_status: "Pending",
+                police_verification_date: "2025-07-19",
+                medical_verification_status: "Pending",
+                medical_verification_date: "2025-07-19",
+                training_verification_status: "Pending",
+                training_verification_date: "2025-07-19",
+                eye_test_verification_status: "Pending",
+                eye_test_verification_date: "2025-07-19",
+                license_number: "KA1234567",
+                license_expiry_date: "2027-12-31",
+                induction_date: "2025-07-10",
+                badge_number: "BDG98765",
+                badge_expiry_date: "2026-07-18",
+                alternate_govt_id: "ABC1234567",
+                alternate_govt_id_doc_type: "Aadhaar"
+              };
+              const formData3 = new FormData();
+
+Object.entries(driverData).forEach(([key, value]) => {
+  formData3.append(key, value);
+});
+
+    
+        const vendorId = formData.vendorId || initialData?.vendor?.vendor_id;
+        let response;
+        if (mode === "edit") {    // Convert FormData to plain object for logging
+      
+  
+          response = await API_CLIENT.put(`/vendors/${vendorId}/drivers/${initialData.driver_id}`,formData3);
+          
+          toast.success("Driver updated successfully!");
+        } else {
+
+          response = await API_CLIENT.post(
+            `/vendors/${vendorId}/drivers/`,
+            formDataToSubmit
+          );
+    
+          toast.success("Driver created successfully!");
+        }
+  
+    
+        if (onClose) onClose();
+      } catch (error) {
+        console.error("Error submitting form:", error);
+    
+        if (error.response && error.response.data) {
+          const backendErrors = error.response.data;
+    
+          if (Array.isArray(backendErrors.detail)) {
+            backendErrors.detail.forEach((err) => {
+              toast.error(`${err.loc?.[1] || "field"}: ${err.msg}`);
+            });
+          } else if (backendErrors.detail) {
+            toast.error(backendErrors.detail);
+          } else {
+            toast.error("Something went wrong, please try again.");
+          }
+        } else {
+          toast.error("Server error, please try again later.");
+        }
+    
+        setIsSubmitting(false);
+        return;
+      }
+    
+      setIsSubmitting(false);
+    };
+    
+
+    // Render tab content
+    const renderTabContent = () => {
+      switch (activeTab) {
+        case 'personalDetails':
+          return (
+            <DriverPersonalDetails
               formData={formData}
               errors={errors}
-              onChange={handleInputChange}
+              onChange={handleChange}
               onImageChange={handleImageChange}
               onCheckboxChange={handleCheckboxChange}
               vendors={vendors}
+              loading={isSubmitting}
               mode={mode}
             />
-          )}
-
-          {activeTab === 'documents' && (
+          );
+        
+        case 'documents':
+          return (
             <DocumentsTab
               formData={formData}
-              errors={documentError}
-              onChange={handleInputChange}
+              errors={errors}
+              onChange={handleChange}
               onFileChange={handleFileChange}
-              mode={mode}
+              mode={mode==='edit' ? 'edit' : 'create'}
             />
-          )}
+          );
+        
+        default:
+          return null;
+      }
+    };
 
-          <div className="flex justify-between mt-6">
-            {activeTab !== 'personalDetails' && !isReadOnly && (
-              <button 
-                onClick={() => setActiveTab('personalDetails')} 
-                className="px-6 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50"
-              >
-                Back
-              </button>
-            )}
+    return (
+      <div className="max-w-7xl mx-auto p-4">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
 
-            {isReadOnly && activeTab !== 'personalDetails' && (
-              <button 
-                onClick={() => setActiveTab('personalDetails')} 
-                className="px-6 py-2 border border-gray-600 text-gray-600 rounded-md hover:bg-gray-50"
-              >
-                Back
-              </button>
-            )}
 
-            <button
-              onClick={activeTab !== 'documents' ? handleNext : (isReadOnly ? onClose : handleSave)}
-              disabled={isSubmitting}
-              className={`ml-auto px-6 py-2 rounded-md transition ${
-                isSubmitting 
-                  ? 'bg-gray-400 cursor-not-allowed text-white' 
-                  : isReadOnly
-                  ? 'bg-gray-600 text-white hover:bg-gray-700'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
-            >
-              {getButtonText()}
-            </button>
-          </div>
+          {/* Tab Navigation */}
+          <DriverTabNavigation
+            activeTab={activeTab}
+            errors={tabErrors}
+            onTabChange={handleTabChange}
+          />
+
+          {/* Form Content */}
+          <form onSubmit={handleSubmit}>
+            <div className="p-6">
+              {renderTabContent()}
+            </div>
+
+            {/* Form Actions */}
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+    {onClose && (
+      <button
+        type="button"
+        onClick={onClose}
+        className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        disabled={isSubmitting}
+      >
+        Cancel
+      </button>
+    )}
+
+    {/* Show submit only if not in view mode */}
+    {mode !== "view" && (
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isSubmitting
+          ? "Saving..."
+          : mode === "edit"
+          ? "Update Driver"
+          : "Create Driver"}
+      </button>
+    )}
+  </div>
+
+          </form>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
-export default DriverForm;
+  export default DriverForm;

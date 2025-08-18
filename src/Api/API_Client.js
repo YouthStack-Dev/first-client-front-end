@@ -1,5 +1,6 @@
 // src/Api/API_Client.js
 import axios from "axios";
+import Cookies from "js-cookie";
 
 const baseURL = import.meta.env.VITE_API_URL;
 
@@ -11,7 +12,7 @@ export const API_CLIENT = axios.create({
 // Request interceptor
 API_CLIENT.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("access_token");
+    const token = Cookies.get("access_token"); // ✅ get token from cookies
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -23,7 +24,7 @@ API_CLIENT.interceptors.request.use(
       method: config.method,
       headers: config.headers,
       params: config.params,
-      data: config.data
+      data: config.data,
     });
 
     return config;
@@ -40,7 +41,7 @@ API_CLIENT.interceptors.response.use(
     console.log("[API Response] ✅", {
       url: response.config.url,
       status: response.status,
-      data: response.data
+      data: response.data,
     });
     return response;
   },
@@ -49,7 +50,7 @@ API_CLIENT.interceptors.response.use(
       console.error("[API Response Error] ❌", {
         url: error.response.config.url,
         status: error.response.status,
-        data: error.response.data
+        data: error.response.data,
       });
     } else {
       console.error("[API Error] 🚨", error.message);

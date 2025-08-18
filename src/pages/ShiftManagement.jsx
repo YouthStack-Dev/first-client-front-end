@@ -4,8 +4,6 @@ import ShiftForm from '../components/shiftForm';
 import PopupModal from '../components/PopupModal';
 import DynamicTable from '../components/DynamicTable';
 import { Trash2, Edit } from 'lucide-react';
-import { useModulePermission } from '../hooks/userModulePermission';
-import PermissionDenied from '../components/PermissionDenied';
 import {fetchShiftsByLogType, fetchAllShifts,createShift,updateShift,deleteShiftById,} from '../redux/features/Shifts/shiftThunks';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -27,7 +25,6 @@ const TABS = [
 
 const ShiftManagement = () => {
   const dispatch = useDispatch();
-  const { canRead, notFound } = useModulePermission('shift_management');
   const { shifts } = useSelector((state) => state.shift);
 
   const [activeTab, setActiveTab] = useState('all');
@@ -49,15 +46,14 @@ const ShiftManagement = () => {
   const [formData, setFormData] = useState(initialForm);
 
   useEffect(() => {
-    if (!canRead) return;
+    // if (!canRead) return;
     if (shifts.length === 0) {
       if (activeTab === 'all') dispatch(fetchAllShifts());
       else if (activeTab === 'login') dispatch(fetchShiftsByLogType('in'));
       else if (activeTab === 'logout') dispatch(fetchShiftsByLogType('out'));
     }
-  }, [dispatch, activeTab, canRead, shifts.length]);
+  }, [dispatch, activeTab, shifts.length]);
 
-  if (notFound) return <PermissionDenied />;
 
   const resetForm = () => {
     setFormData(initialForm);

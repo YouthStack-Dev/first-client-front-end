@@ -1,16 +1,11 @@
-import { useSelector } from "react-redux";
 import { Navigate, Outlet } from "react-router-dom";
+import Cookies from "js-cookie";
 
 const ProtectedRouteAuth = ({ redirectPath = "/" }) => {
-  const { isAuthenticated, loading, user } = useSelector((state) => state.auth);
+  const token = Cookies.get("access_token");
 
-  // Show a loading state while checking authentication
-  if (loading) return <div>Loading  from the  Protected auth </div>;
+  if (!token) return <Navigate to={redirectPath} replace />;
 
-  // If not authenticated or user not present, redirect
-  if (!isAuthenticated || !user) return <Navigate to={redirectPath} replace />;
-
-  // Render nested routes if authenticated
   return <Outlet />;
 };
 

@@ -1,124 +1,131 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Edit, Trash2 } from 'lucide-react';
 import {  Modal } from '../SmallComponents';
 import DynamicTable from '../DynamicTable';
 import ToolBar from "../ui/ToolBar";
-import PermissionDenied from '../PermissionDenied';
 import { API_CLIENT } from '../../Api/API_Client';
 import { toast } from 'react-toastify';
 import { logDebug } from '../../utils/logger';
 import InputField from '../InputField';
+import { fetchVehicleTypes } from '../../redux/features/managevehicletype/vehicleTypeThunks';
+import { useDispatch, useSelector } from 'react-redux';
+import { setFormData } from '../../redux/features/managevehicletype/vehicleTypeSlice';
 
 const ManageVehicleTypes = () => {
-  const [vehicleTypes, setVehicleTypes] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({});
-  const [editingId, setEditingId] = useState(null);
-  const [selectedItems, setSelectedItems] = useState([]);
 
+  const dispatch = useDispatch();
+  const { vehicleTypes, isModalOpen, formData, editingId } = useSelector((state) => state.vehicleType);
+  const { user } = useSelector((state) => state.auth);
+    const tenantId = user?.tenant_id;
 
+ 
 
-  const fetchVehicleTypes = async () => {
-    try {
-      setLoading(true);
-      const response = await API_CLIENT.get('/vehicles/get-all-vehicle-types');
-      const data =response.data.data.vehicleTypes
-      setVehicleTypes(data);
-    } catch (error) {
-      console.error('Error fetching vehicle types:', error);
-      toast.error('Failed to load vehicle types');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-
-  const headers = [
-    { label: 'Vehicle Type Name', key: 'name' },
-    { label: 'Description', key: 'description' },
-    { label: 'Capacity', key: 'capacity' },
-    { label: 'Fuel Type', key: 'fuel' },
-    // { label: 'Company ID', key: 'companyId' } // Add if needed
-  ];
-
+  const capitalizeFirst = (str) =>
+    str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
+  
   const formFields = [
-    { label: 'Vehicle Type Name *', name: 'name', type: 'text', required: true },
+    { label: 'Vehicle Type Name *', name: 'vehicle_type_name', type: 'text', required: true },
     { label: 'Description', name: 'description', type: 'textarea' },
     { label: 'Capacity *', name: 'capacity', type: 'number', required: true, min: 1 },
-    {
-      label: 'Fuel Type *',
-      name: 'fuel',
-      type: 'select',
-      options: ['PETROL', 'DIESEL', 'ELECTRIC', 'HYBRID', 'CNG'],
-      required: true,
-    },
+    { label: 'Fuel Type *',name: 'fuel_type',type: 'select', options: ['Petrol', 'Diesel', 'Electric', 'Hybrid', 'CNG'],required: true,},
+    { label: 'Comment', name: 'comment', type: 'textarea' },
   ];
+  
+  const headers = [
+    { label: 'Vehicle Type Name', key: 'name', className: 'w-1/4' },
+    { label: 'Description', key: 'description', className: 'w-1/3' },
+    { label: 'Total Capacity', key: 'capacity', className: 'w-1/6' },
+    { label: 'Fuel Type', key: 'fuel_type', className: 'w-1/6' },
+  ];
+  
 
-  const handleSelectItem = (item, isSelected) => {
-    setSelectedItems(prev => 
-      isSelected 
-        ? [...prev, item] 
-        : prev.filter(i => i.id !== item.id)
-    );
-  };
+  useEffect(() => {
+    if (tenantId && vehicleTypes.length === 0) {
+      dispatch(fetchVehicleTypes(tenantId))
+        .unwrap()
+        .catch(() => {
+          toast.error('Failed to load vehicle types');
+        });
+    }
+  }, [tenantId, dispatch, vehicleTypes.length]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    dispatch(setFormData({ ...formData, [name]: value }));
+  };
+
+  const validateForm = () => {
+    for (const field of formFields) {
+      if (field.required) {
+        const val = formData[field.name];
+        if (!val || (typeof val === 'string' && val.trim() === '')) {
+          toast.error(`Please fill the required field: ${field.label}`);
+          return false;
+        }
+        if (field.type === 'number' && Number(val) < (field.min || 0)) {
+          toast.error(`${field.label} must be at least ${field.min}`);
+          return false;
+        }
+      }
+    }
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    if (!validateForm()) return;
+
     const payload = {
-      name: formData.name,
+      name: formData.vehicle_type_name,
       description: formData.description,
       capacity: Number(formData.capacity),
-      fuel: formData.fuel,
+      fuel_type: formData.fuel_type?.toLowerCase(),
+      comment: formData.comment,
+      vendor_id: vendorId,
     };
-logDebug('Submitting vehicle type:', payload);
-    // try {
-    //   if (editingId) {
-    //     await API_CLIENT.put(`/vehicle-types/${editingId}`, payload);
-    //     toast.success('Vehicle type updated successfully');
-    //   } else {
-    //     await API_CLIENT.post('/vehicle-types', payload);
-    //     toast.success('Vehicle type created successfully');
-    //   }
-      
-    //   fetchVehicleTypes();
-    //   setIsModalOpen(false);
-    //   setFormData({});
-    //   setEditingId(null);
-    // } catch (error) {
-    //   console.error('Error saving vehicle type:', error);
-    //   toast.error(error.response?.data?.message || 'Failed to save vehicle type');
-    // }
+
+    try {
+      if (editingId) {
+        await dispatch(updateVehicleType({ id: editingId, ...payload })).unwrap();
+        toast.success('Vehicle Type updated successfully');
+      } else {
+        await dispatch(createVehicleType(payload)).unwrap();
+        toast.success('Vehicle Type created successfully');
+      }
+      await dispatch(fetchVehicleTypes(vendorId)).unwrap();
+    } catch {
+      toast.error(`Failed to ${editingId ? 'update' : 'create'} vehicle type`);
+    } finally {
+      dispatch(toggleModal(false));
+      dispatch(resetForm());
+      dispatch(setEditingId(null));
+    }
   };
 
   const handleEdit = (row) => {
-    setEditingId(row.id);
-    setFormData({
-      name: row.name,
-      description: row.description,
-      capacity: row.capacity,
-      fuel: row.fuel,
-    });
-    setIsModalOpen(true);
+    dispatch(setEditingId(row.vehicle_type_id));
+    dispatch(
+      setFormData({
+        vehicle_type_name: row.name,
+        description: row.description,
+        capacity: row.capacity,
+        fuel_type: capitalizeFirst(row.fuel_type),
+        comment: row.comment || '',
+      })
+    );
+    dispatch(toggleModal(true));
   };
 
   const handleDelete = async (row) => {
-    if (window.confirm(`Are you sure you want to delete "${row.name}"?`)) {
-      try {
-        await API_CLIENT.delete(`/vehicle-types/${row.id}`);
-        toast.success('Vehicle type deleted successfully');
-        fetchVehicleTypes();
-      } catch (error) {
-        console.error('Error deleting vehicle type:', error);
-        toast.error('Failed to delete vehicle type');
-      }
+    if (!window.confirm('Are you sure?')) return;
+
+    try {
+      await dispatch(deleteVehicleType(row.vehicle_type_id)).unwrap();
+      toast.success('Vehicle Type deleted successfully');
+      await dispatch(fetchVehicleTypes(vendorId)).unwrap();
+    } catch {
+      toast.error('Failed to delete vehicle type');
     }
   };
 
@@ -134,33 +141,27 @@ logDebug('Submitting vehicle type:', payload);
         addButtonLabel="Add Vehicle Type"
    
       />
-
-      <DynamicTable
-        headers={headers}
-        data={vehicleTypes}
-        loading={loading}
-        onSelectItem={handleSelectItem}
-        selectedItems={selectedItems}
-        renderActions={(row) => (
-          <div className="flex gap-2">
+    <DynamicTable
+          headers={headers}
+          data={vehicleTypes}
+          onMenuToggle={() => {}}
+          renderActions={(row) => (
+            <div className="flex gap-2">
               <button
                 onClick={() => handleEdit(row)}
-                className="text-blue-600 hover:bg-gray-100 p-1.5 rounded"
-                title="Edit"
+                className="text-blue-600 text-sm flex items-center gap-1"
               >
-                <Edit size={18} />
+                <Edit size={16} />
               </button>
-
               <button
                 onClick={() => handleDelete(row)}
-                className="text-red-600 hover:bg-gray-100 p-1.5 rounded"
-                title="Delete"
+                className="text-red-600 text-sm flex items-center gap-1"
               >
-                <Trash2 size={18} />
-              </button>  
-          </div>
-        )}
-      />
+                <Trash2 size={16} /> 
+              </button>
+            </div>
+          )}
+        />
 
       <Modal
         isOpen={isModalOpen}

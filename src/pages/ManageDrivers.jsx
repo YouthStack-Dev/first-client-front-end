@@ -15,7 +15,6 @@ import {
 } from '../redux/features/manageDriver/driverSlice';
 import DriverForm from '../components/driver/DriverForm';
 import Modal from '../components/modals/Modal';
-import { logDebug } from '../utils/logger';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 
 function ManageDrivers() {

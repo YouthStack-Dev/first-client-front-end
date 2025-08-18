@@ -4,14 +4,15 @@ import './index.css'
 import App from './App.jsx'
 import { Provider } from 'react-redux'
 import store from './store/store.js'
-import { ModulePermissionProvider } from './context/ModulePermissionContext.jsx'
+import { ThemeProvider } from './context/ThemeContext.jsx'
 
 createRoot(document.getElementById('root')).render(
     <Provider store={store}>
-    <ModulePermissionProvider>
-    <App />
+          <ThemeProvider>
+          <App />
 
-    </ModulePermissionProvider>
+          </ThemeProvider>
+
     </Provider>
     
   

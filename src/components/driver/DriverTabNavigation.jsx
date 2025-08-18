@@ -1,4 +1,5 @@
 import React from 'react';
+import { logDebug } from '../../utils/logger';
 
 const tabs = [
   { id: 'personalDetails', label: 'PERSONAL DETAILS' },
@@ -6,6 +7,8 @@ const tabs = [
 ];
 
 const DriverTabNavigation = ({ activeTab, errors, onTabChange }) => {
+
+  logDebug('Driver errors', errors);
   return (
     <div className="border-b border-gray-200">
       <div className="flex">

@@ -13,7 +13,6 @@ import {
 import Pagination from '../components/Pagination';
 import { logDebug, logError } from '../utils/logger';
 import { fetchDepartments } from '../redux/features/user/userTrunk';
-import { id } from 'date-fns/locale';
 
 const ManageDepartment = () => {
   const navigate = useNavigate();

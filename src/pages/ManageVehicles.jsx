@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
-import { useModulePermission } from "../hooks/userModulePermission";
 import PermissionDenied from "../components/PermissionDenied";
 import VehicleForm from "../components/VehicleForm";
 import { fetchVendors } from "../redux/features/manageVendors/vendorThunks";
@@ -144,9 +143,6 @@ function ManageVehicles() {
   const [viewActive, setViewActive] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [editVehicle, setEditVehicle] = useState(null);
-
-  const { notFound } = useModulePermission("vehicle_management");
-  if (notFound) return <PermissionDenied />;
 
   const tenantId = user?.tenant_id || 1;
   const itemsPerPage = 10;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, AlertCircle, Car, Users, MapPin, Calendar, TrendingUp, Clock, Shield } from 'lucide-react';
 
-const AdminDashboard = () => {
+const CompanyDashboard = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [vehicleSearch, setVehicleSearch] = useState('');
@@ -269,7 +269,8 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       <div className="p-6  mx-auto">
-      
+  
+
         {/* Search Section */}
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Quick Search</h2>
@@ -423,4 +424,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default CompanyDashboard;

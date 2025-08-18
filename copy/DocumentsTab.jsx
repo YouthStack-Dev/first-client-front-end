@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Eye, Upload, FileText, Calendar, Shield, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
-import FormField from '../FormField';
-import { InputField } from '../SmallComponents';
+import { logDebug } from '../../utils/logger';
 
 const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode = 'create' }) => {
   const [expandedSections, setExpandedSections] = useState({
@@ -217,6 +216,42 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
     );
   };
 
+  const TextField = ({ name, label, placeholder, required = false }) => {
+
+
+  const handleTextChange = (e) => {
+    console.log(`TextField ${e.target.name} changed:`, e.target.value);
+    if (onChange) {
+      onChange(e);
+    }
+  }
+    logDebug(`TextField ${name} changed: in form data `, formData[name]);
+    return (
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700">
+          {label}
+          {required && !isReadOnly && <span className="text-red-500 ml-1">*</span>}
+        </label>
+        <input
+          type="text"
+          name={name}
+          value={formData[name] || ''}
+          onChange={handleTextChange}
+          placeholder={!isReadOnly ? placeholder : ''}
+          className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+            isReadOnly ? 'bg-gray-50 cursor-not-allowed' : ''
+          }`}
+          readOnly={isReadOnly}
+        />
+        {errors[name] && (
+          <div className="text-red-500 text-xs flex items-center mt-1">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            {errors[name]}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const SelectField = ({ name, label, options, placeholder = "Select option" }) => {
     const handleSelectChange = useCallback((e) => {
@@ -362,16 +397,12 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
                 Driver License
               </h4>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <FormField label="License Number" name="licenseNumber" required={!isReadOnly} error={errors.licenseNumber}>
-  <InputField
-    name="licenseNumber"
-    type="text"
-    placeholder="Enter license number"
-    value={formData.licenseNumber || ''}
-    onChange={onChange}
-    readOnly={isReadOnly}
-  />
-</FormField>
+                <TextField 
+                  name="licenseNumber" 
+                  label="License Number" 
+                  placeholder="Enter license number" 
+                  required={!isReadOnly}
+                />
                 <DateField name="licenseExpiryDate" label="Expiry Date" required={!isReadOnly} />
                 <FileUploadField name="licenseDocument" label="License Document" required={!isReadOnly} />
               </div>
@@ -394,16 +425,11 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
                 Badge Information
               </h4>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <FormField label="Badge Number" name="badgeNumber" error={errors.badgeNumber}>
-  <InputField
-    name="badgeNumber"
-    type="text"
-    placeholder="Enter badge number"
-    value={formData.badgeNumber || ''}
-    onChange={onChange}
-    readOnly={isReadOnly}
-  />
-</FormField>
+                <TextField 
+                  name="badgeNumber" 
+                  label="Badge Number" 
+                  placeholder="Enter badge number"
+                />
                 <DateField name="badgeExpiryDate" label="Badge Expiry Date" />
                 <FileUploadField name="badgeDocument" label="Badge Document" />
               </div>
@@ -440,16 +466,11 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
                     { value: 'voter', label: 'Voter ID' }
                   ]}
                 />
-              <FormField label="ID Number" name="govtIdNumber" error={errors.govtIdNumber}>
-  <InputField
-    name="govtIdNumber"
-    type="text"
-    placeholder="Enter ID number"
-    value={formData.govtIdNumber || ''}
-    onChange={onChange}
-    readOnly={isReadOnly}
-  />
-</FormField>
+                <TextField 
+                  name="govtIdNumber" 
+                  label="ID Number" 
+                  placeholder="Enter ID number"
+                />
                 <FileUploadField name="govtIdDocument" label="ID Document" />
               </div>
             </div>

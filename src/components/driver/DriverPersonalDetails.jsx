@@ -1,24 +1,35 @@
-import React, { useState } from "react";
 import { Pencil } from "lucide-react";
-import FormField from "./FormField";
-import { logDebug } from "../utils/logger";
+import FormField from "../FormField";
+import { logDebug } from "../../utils/logger";
+import { useEffect, useState } from "react";
 
-const PersonalDetailsTab = ({formData,errors,onChange, onImageChange,onCheckboxChange, vendors = [],loading = false,}) => {
-const [name,setname ]=useState("");
+const DriverPersonalDetails = ({formData,errors,onChange, onImageChange,onCheckboxChange, vendors = [],loading = false,mode}) => {
+const [previewUrl, setPreviewUrl] = useState("");
 
- const handlInputchange =(e)=> {
-  setname(e.target.value);
-  logDebug("Input changed:", e.target.name, e.target.value);
-logDebug("driver data ", name );
-}
+useEffect(() => {
+  if (formData.profileImage instanceof File) {
+    // Local preview for uploaded file
+    const objectUrl = URL.createObjectURL(formData.profileImage);
+    setPreviewUrl(objectUrl);
+
+    // Clean up
+    return () => URL.revokeObjectURL(objectUrl);
+  } else if (formData.profileImage) {
+    // Backend image
+    setPreviewUrl(`https://api.gocab.tech/${formData.profileImage}`);
+  } else {
+    setPreviewUrl("");
+  }
+}, [formData.profileImage]);
+
   return (
     <div className="p-6 bg-white rounded-md shadow-sm border border-gray-200">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
         {/* Profile Image */}
         <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center relative mx-auto">
           {formData.profileImage ? (
-            <img
-              src={URL.createObjectURL(formData.profileImage)}
+            <img  
+              src={previewUrl}
               alt="Profile"
               className="w-full h-full object-cover rounded-lg"
             />
@@ -43,18 +54,16 @@ logDebug("driver data ", name );
         {/* Driver Name */}
         <FormField
           label="Driver Name"
-          name="driverName"
+          name="name"
           required
           error={errors.driverName}
         >
           <input
-            id="driverName"
+            id="name"
             type="text"
-            name="driverName"
-            value={formData.driverName || ""}
-            onChange={e => {
-              logDebug("Driver name changed:", e.target.value)
-            }}
+            name="name"
+            value={formData.name || ""}
+            onChange={onChange}
             placeholder="Enter driver name"
             className="w-full p-2 border border-gray-300 rounded-md"
           />
@@ -140,30 +149,35 @@ logDebug("driver data ", name );
         </FormField>
 
         {/* Password */}
-        <FormField
-          label="Password"
-          name="password"
-          required
-          error={errors.password}
-        >
-          <input
-            id="password"
-            type="password"
-            name="password"
-            value={formData.password || ""}
-            autoComplete="new-password"
-            onChange={onChange}
-            placeholder="Enter password"
-            className="w-full p-2 border border-gray-300 rounded-md"
-          />
-        </FormField>
+
+        {(mode === "create" || mode === "edit") && (
+  <FormField
+    label="Password"
+    name="password"
+    required
+    error={errors.password}
+  >
+    <input
+      id="password"
+      type="password"
+      name="password"
+      value={formData.password || ""}
+      autoComplete="new-password"
+      onChange={onChange}
+      placeholder="Enter password"
+      className="w-full p-2 border border-gray-300 rounded-md"
+    />
+  </FormField>
+)}
+
+       
 
         {/* Vendor */}
         <FormField label="Vendor" name="vendor" required error={errors.vendor}>
           <select
             id="vendor"
-            name="vendor"
-            value={formData.vendor || ""}
+            name="vendorId"
+            value={formData.vendorId || ""}
             onChange={onChange}
             className="w-full p-2 border border-gray-300 rounded-md"
             disabled={loading}
@@ -186,15 +200,15 @@ logDebug("driver data ", name );
         {/* Driver Code */}
         <FormField
           label="Driver Code"
-          name="driverId"
+          name="driver_code"
           required
-          error={errors.driverId}
+          error={errors.driver_code}
         >
           <input
-            id="driverId"
+            id="driver_code"
             type="text"
-            name="driverId"
-            value={formData.driverId || ""}
+            name="driver_code"
+            value={formData.driver_code || ""}
             onChange={onChange}
             placeholder="Enter driver code"
             className="w-full p-2 border border-gray-300 rounded-md"
@@ -276,4 +290,4 @@ logDebug("driver data ", name );
   );
 };
 
-export default PersonalDetailsTab;
+export default DriverPersonalDetails;

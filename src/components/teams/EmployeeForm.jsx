@@ -6,7 +6,7 @@ import NavigationButtons from './NavigationButtons';
 import HeaderWithAction from '../HeaderWithAction';
 import EmployeeAddressGoogleMapView from '../Map';
 import {  toast } from 'react-toastify';
-import { format, parseISO, set } from 'date-fns';
+import { format } from 'date-fns';
 import { logDebug, logError } from '../../utils/logger';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectAllTeams } from '../../redux/features/user/userSelectors';
@@ -27,9 +27,10 @@ const initialFormData = {
   latitude: null,
   longitude: null,
   distance_from_company: '',
-
-  special_need:"none",
-  office:""
+  special_need: "none",
+  special_need_start_date: null,
+  special_need_end_date: null,
+  office: ""
 };
 
 const EmployeeForm = ({ mode = 'create' }) => {
@@ -47,35 +48,38 @@ const EmployeeForm = ({ mode = 'create' }) => {
   const { depId } = useParams();
   const [dateRangeSelection, setDateRangeSelection] = useState([
     {
-      startDate: parseISO(formData.special_need_start_date || new Date().toISOString()),
-      endDate: parseISO(formData.special_need_end_date || new Date().toISOString()),
+      startDate: new Date(),
+      endDate: new Date(),
       key: 'selection',
     },
   ]);
 
    if(mode === 'view' && !state?.employee) {
-
-
+     // Handle missing employee data
    }
-
 
   const handleDateSelect = (ranges) => {
     const { startDate, endDate } = ranges.selection;
     setDateRangeSelection([ranges.selection]);
 
-    setFormData(prev => ({
-      ...prev,
-      special_need_start_date: startDate.toISOString().split('T')[0],
-    special_need_end_date: endDate.toISOString().split('T')[0],
-    }));
+    // Only update dates if special_need is not "none"
+    if (formData.special_need !== 'none') {
+      setFormData(prev => ({
+        ...prev,
+        special_need_start_date: startDate.toISOString().split('T')[0],
+        special_need_end_date: endDate.toISOString().split('T')[0],
+      }));
+    }
   };
 
   const displayDateRange = () => {
+    // Don't display date range if special_need is "none"
+    if (formData.special_need === 'none') return "";
+    
     const { startDate, endDate } = dateRangeSelection[0];
     if (!startDate || !endDate) return "";
     return `${format(startDate, "yyyy-MM-dd")} - ${format(endDate, "yyyy-MM-dd")}`;
   };
-
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -95,9 +99,6 @@ const EmployeeForm = ({ mode = 'create' }) => {
 
   useEffect(() => {
     if (mode !== 'create') {
-
-      logError(" this is the stae data " ,state);
-      
       const employee = state?.employee;
       if (employee) {
         const mappedData = {
@@ -106,20 +107,26 @@ const EmployeeForm = ({ mode = 'create' }) => {
           employee_code: employee.employee_code || '',
           email: employee.email || '',
           gender: employee.gender || '',
-          mobile_number:  employee.mobile_number || '',
+          mobile_number: employee.mobile_number || '',
           alternate_mobile_number: employee.alternate_mobile_number || '',
           special_need: employee.special_need || 'none',
-          department_id: depId  ,
+          // Handle special_need dates - set to null if special_need is "none"
+          special_need_start_date: employee.special_need === 'none' ? null : (employee.special_need_start_date || null),
+          special_need_end_date: employee.special_need === 'none' ? null : (employee.special_need_end_date || null),
+          department_id: employee.department_id || '',
           address: employee.address || '',
           landmark: employee.landmark || '',
-          latitude: employee.latitude || '',
-          longitude: employee.longitude || '',
+          latitude: employee.latitude || null,
+          longitude: employee.longitude || null,
           distance_from_company: employee.distance_from_company || '',
+          office: employee.office || '',
+          subscribe_via_email: employee.subscribe_via_email || false,
+          subscribe_via_sms: employee.subscribe_via_sms || false,
         };
         setFormData(mappedData);
         
-        // Update date range selection if dateRange exists
-        if (employee?.special_need_start_date && employee?.special_need_end_date) {
+        // Update date range selection only if special_need is not "none" and dates exist
+        if (employee?.special_need !== 'none' && employee?.special_need_start_date && employee?.special_need_end_date) {
           setDateRangeSelection([
             {
               startDate: new Date(employee.special_need_start_date),
@@ -127,22 +134,61 @@ const EmployeeForm = ({ mode = 'create' }) => {
               key: "selection"
             }
           ]);
+        } else {
+          // Reset date range to default when special_need is "none"
+          setDateRangeSelection([
+            {
+              startDate: new Date(),
+              endDate: new Date(),
+              key: "selection"
+            }
+          ]);
         }
       }
       setIsLoading(false);
     }
-  }, [mode, state, teams]);
+  }, [mode, state, teams, depId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-  logDebug('Input change:', name, value);
-    setFormData(prev => ({
-      ...prev,
-      [name]:
-        name === 'department_id' || name === 'roleId' // fields you want as integers
-          ? value === '' ? '' : parseInt(value, 10)
-          : value
-    }));
+    logDebug('Input change:', name, value);
+    
+    // Handle special_need change
+    if (name === 'special_need') {
+      if (value === 'none') {
+        // If special_need is set to "none", clear the date fields
+        setFormData(prev => ({
+          ...prev,
+          [name]: value,
+          special_need_start_date: null,
+          special_need_end_date: null
+        }));
+        
+        // Reset date range selection
+        setDateRangeSelection([
+          {
+            startDate: new Date(),
+            endDate: new Date(),
+            key: "selection"
+          }
+        ]);
+      } else {
+        // If special_need is not "none", just update the field
+        setFormData(prev => ({
+          ...prev,
+          [name]: value
+        }));
+      }
+    } else {
+      // Handle other field changes
+      setFormData(prev => ({
+        ...prev,
+        [name]:
+          name === 'department_id' || name === 'roleId' // fields you want as integers
+            ? value === '' ? '' : parseInt(value, 10)
+            : value
+      }));
+    }
   
     // Clear error when user starts typing
     if (errors[name]) {
@@ -153,11 +199,11 @@ const EmployeeForm = ({ mode = 'create' }) => {
       });
     }
   };
-  
 
   const handleCheckboxChange = (name, checked) => {
     setFormData(prev => ({ ...prev, [name]: checked }));
   };
+
   const validatePersonalInfo = (data) => {
     const errors = {};
   
@@ -189,15 +235,24 @@ const EmployeeForm = ({ mode = 'create' }) => {
     if (data.email && !emailRegex.test(data.email)) {
       errors.email = 'Please enter a valid email address';
     }
+
+    // Validate special_need dates if special_need is not "none"
+    if (data.special_need && data.special_need !== 'none') {
+      if (!data.special_need_start_date) {
+        errors.special_need_start_date = 'Start date is required when special need is selected';
+      }
+      if (!data.special_need_end_date) {
+        errors.special_need_end_date = 'End date is required when special need is selected';
+      }
+    }
   
     return errors;
   };
-  
 
   const validateAddressInfo = (data) => {
     const errors = {};
     if (!data.address.trim()) errors.address = 'Address is required';
-    if (!data.latitude || !data.latitude) {
+    if (!data.latitude || !data.longitude) {
       errors.location = 'Please select a location on the map';
     }
     return errors;
@@ -239,17 +294,76 @@ const EmployeeForm = ({ mode = 'create' }) => {
       setIsSubmitting(false);
       return;
     }
-    try {
   
+    try {
+      // Clean and format the data properly
       const submissionData = {
-        ...formData,
+        name: formData.name?.trim() || '',
+        email: formData.email?.trim() || '',
+        gender: formData.gender || '',
+        employee_code: formData.employee_code?.trim() || '',
+        mobile_number: formData.mobile_number?.trim() || '',
+        alternate_mobile_number: formData.alternate_mobile_number?.trim() || '',
+        address: formData.address?.trim() || '',
+        landmark: formData.landmark?.trim() || '',
+        latitude: formData.latitude || "",
+        longitude: formData.longitude || "",
+        office: formData.office?.trim() || '',
+        department_id: formData.department_id ? parseInt(formData.department_id, 10) : null,
       };
+
+      // Handle special_need fields
+      if (formData.special_need === 'none') {
+        // When special_need is "none", explicitly set all related fields to null
+        submissionData.special_need = null;
+        submissionData.special_need_start_date = null;
+        submissionData.special_need_end_date = null;
+      } else {
+        // When special_need is not "none", include the values
+        submissionData.special_need = formData.special_need;
+        
+        // Get dates from form data or date range selection
+        if (formData.special_need_start_date) {
+          submissionData.special_need_start_date = formData.special_need_start_date;
+        } else if (dateRangeSelection[0]?.startDate) {
+          submissionData.special_need_start_date = dateRangeSelection[0].startDate.toISOString().split('T')[0];
+        } else {
+          submissionData.special_need_start_date = null;
+        }
+        
+        if (formData.special_need_end_date) {
+          submissionData.special_need_end_date = formData.special_need_end_date;
+        } else if (dateRangeSelection[0]?.endDate) {
+          submissionData.special_need_end_date = dateRangeSelection[0].endDate.toISOString().split('T')[0];
+        } else {
+          submissionData.special_need_end_date = null;
+        }
+      }
+  
+      // Add subscription preferences if they exist in your form
+      if (formData.subscribe_via_email !== undefined) {
+        submissionData.subscribe_via_email = formData.subscribe_via_email;
+      }
+      if (formData.subscribe_via_sms !== undefined) {
+        submissionData.subscribe_via_sms = formData.subscribe_via_sms;
+      }
+  
+      // Don't remove null values - keep them as null for backend
+      // Only remove undefined and empty string values
+      Object.keys(submissionData).forEach(key => {
+        if (submissionData[key] === undefined || submissionData[key] === '') {
+          delete submissionData[key];
+        }
+      });
+  
+      // Log the data being sent for debugging
+      logDebug('Submission data:', submissionData);
+      console.log('Formatted submission data:', JSON.stringify(submissionData, null, 2));
   
       // Make the API call
-      const response =
-        mode === 'create'
-          ? await API_CLIENT.post('employees/', submissionData)
-          : await API_CLIENT.put(`/employees/${formData.employee_code}`, submissionData);
+      const response = mode === 'create'
+        ? await API_CLIENT.post('employees/', submissionData)
+        : await API_CLIENT.put(`/employees/${formData.employee_code}`, submissionData);
   
       if (response.status >= 200 && response.status < 300) {
         toast.success(`Employee ${mode === 'create' ? 'created' : 'updated'} successfully!`);
@@ -257,7 +371,14 @@ const EmployeeForm = ({ mode = 'create' }) => {
           setFormData(initialFormData);
           setCurrentStep('personalInfo');
           setCompletedSteps([]);
-   
+          // Reset date range selection
+          setDateRangeSelection([
+            {
+              startDate: new Date(),
+              endDate: new Date(),
+              key: "selection"
+            }
+          ]);
         }
       } else {
         toast.error(response.data?.detail || `Failed to ${mode === 'create' ? 'create' : 'update'} employee`);
@@ -265,25 +386,25 @@ const EmployeeForm = ({ mode = 'create' }) => {
   
     } catch (error) {
       logError('Submission error:', error);
-
+      console.error('Full error object:', error);
+      console.error('Error response:', error.response?.data);
+  
       if (error.response?.data?.errors) {
         const errorMessages = error.response.data.errors
-          .map(err => `${err.message}`) // format: "phone: Phone number must be exactly 10 digits"
-          .join('\n'); // join them with line breaks
-      
+          .map(err => `${err.message}`)
+          .join('\n');
         toast.error(errorMessages);
       } else {
         toast.error(
           error.response?.data?.message ||
+          error.message ||
           `Failed to ${mode === 'create' ? 'create' : 'update'} employee`
         );
       }
-      
     } finally {
       setIsSubmitting(false);
     }
   };
-  
 
   const isFirstStep = currentStep === 'personalInfo';
   const isLastStep = currentStep === 'address';
@@ -333,7 +454,7 @@ const EmployeeForm = ({ mode = 'create' }) => {
             </div>
             <NavigationButtons
               currentStep="complete"
-             onSubmit={()=>navigate(-1)}
+              onSubmit={()=>navigate(-1)}
               isLastStep={true}
               mode={mode}
             />
@@ -358,7 +479,7 @@ const EmployeeForm = ({ mode = 'create' }) => {
                 />
               ) : (
                 <EmployeeAddressGoogleMapView 
-                handleInputChange={handleInputChange}
+                  handleInputChange={handleInputChange}
                   formData={formData} 
                   setFormData={setFormData}
                   setErrors={setErrors}

@@ -1,173 +1,95 @@
-// import { createSlice } from "@reduxjs/toolkit";
-// import { loginUser, logoutUser } from "./authThunk";
-
-// // Initial state
-// const initialState = {
-//   user: null,
-//   isAuthenticated: false,
-//   loading: false,
-//   error: null,
-// };
-
-// // Auth slice
-// const authSlice = createSlice({
-//   name: 'auth',
-//   initialState,
-//   reducers: {
-//     setUser(state, action) {
-//       state.user = action.payload;
-//       state.isAuthenticated = !!action.payload;
-//       state.loading = false;
-//     },
-//     resetAuthState(state) {
-//       state.user = null;
-//       state.isAuthenticated = false;
-//       state.loading = false;
-//       state.error = null;
-//     },
-//   },
-//   extraReducers: (builder) => {
-//     builder
-
-//       // ✅ loginUser
-//       .addCase(loginUser.fulfilled, (state, action) => {
-//         state.user = action.payload.user || action.payload;
-//         state.isAuthenticated = true;
-//       })
-
-//       // ✅ logoutUser
-//       .addCase(logoutUser.fulfilled, (state) => {
-//         state.user = null;
-//         state.isAuthenticated = false;
-//       })
-
-//       // ✅ pending matcher
-//       .addMatcher(
-//         (action) => action.type.endsWith('/pending'),
-//         (state) => {
-//           state.loading = true;
-//           state.error = null;
-//         }
-//       )
-
-//       // ✅ fulfilled matcher
-//       .addMatcher(
-//         (action) => action.type.endsWith('/fulfilled'),
-//         (state) => {
-//           state.loading = false;
-//         }
-//       )
-
-//       // ✅ rejected matcher
-//       .addMatcher(
-//         (action) => action.type.endsWith('/rejected'),
-//         (state, action) => {
-//           state.loading = false;
-//           state.error = action.payload || action.error?.message || "Something went wrong";
-//         }
-//       );
-//   },
-// });
-
-// // ✅ Export actions
-// export const { setUser, resetAuthState } = authSlice.actions;
-
-// // ✅ Export reducer
-// export default authSlice.reducer;
-
-
-// authSlice.js
-
-
 import { createSlice } from "@reduxjs/toolkit";
-import { loginUser, logoutUser } from "./authTrunk";
+import Cookies from "js-cookie";
+import { loginUser } from "./authTrunk";
 
-// 🔰 Initial state for auth
 const initialState = {
-  user: null,
-  isAuthenticated: false,
+  token: null,
+  permissions: null, 
   loading: false,
   error: null,
+  isAuthenticated: false,
+  lastLogin: null
 };
 
-// 🔐 Auth slice
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setUser(state, action) {
-      state.user = action.payload;
-      state.isAuthenticated = !!action.payload;
-      state.loading = false;
+    resetAuthState: (state) => {
+      Object.assign(state, initialState);
     },
-    resetAuthState(state) {
-      state.user = null;
-      state.isAuthenticated = false;
-      state.loading = false;
-      state.error = null;
+    logout: (state) => {
+      // Clear all client-side storage
+      Cookies.remove('access_token');
+      Cookies.remove('refresh_token');
+      sessionStorage.removeItem('userPermissions');
+      localStorage.clear();
+      
+      // Reset state
+      Object.assign(state, initialState);
     },
+    setCredentials: (state, action) => {
+      state.token = action.payload.token;
+      state.isAuthenticated = true;
+    },
+    loadFromStorage: (state) => {
+      // Hydrate state from storage on page refresh
+      const storedData = sessionStorage.getItem('userPermissions');
+      if (storedData) {
+        const { user, permissions } = JSON.parse(storedData);
+        state.permissions = permissions;
+        state.isAuthenticated = true;
+      }
+    }
   },
   extraReducers: (builder) => {
     builder
-      // ✅ loginUser
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(loginUser.fulfilled, (state, action) => {
-        const userData = action.payload.user || action.payload;
-
-        // 🛠️ Ensure vendor_id exists (fallback to tenant_id if necessary)
-        const finalUser = {
-          ...userData,
-          vendor_id: userData.vendor_id || userData.tenant_id || null,
-        };
-
-        state.user = finalUser;
+        const { user,access_token: token, permissions } = action.payload;
+        
+        state.token = token;
+        state.permissions = permissions || [];  
         state.isAuthenticated = true;
+        state.lastLogin = new Date().toISOString();
         state.loading = false;
-
-        // ✅ Debug log
-        console.log("✅ User set in auth state:", finalUser);
+        
+     
       })
-
-      // ✅ logoutUser
-      .addCase(logoutUser.fulfilled, (state) => {
-        state.user = null;
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
         state.isAuthenticated = false;
-        state.loading = false;
-
-        console.log("🚪 Logged out successfully.");
-      })
-
-      // ⏳ Any async thunk is pending
-      .addMatcher(
-        (action) => action.type.endsWith("/pending"),
-        (state) => {
-          state.loading = true;
-          state.error = null;
-        }
-      )
-
-      // ✅ Any async thunk is fulfilled
-      .addMatcher(
-        (action) => action.type.endsWith("/fulfilled"),
-        (state) => {
-          state.loading = false;
-        }
-      )
-
-      // ❌ Any async thunk is rejected
-      .addMatcher(
-        (action) => action.type.endsWith("/rejected"),
-        (state, action) => {
-          state.loading = false;
-          state.error = action.payload || action.error?.message || "Something went wrong";
-
-          console.error("⛔ Auth error:", state.error);
-        }
-      );
-  },
+        state.error = {
+          message: action.payload?.message || 'Authentication failed',
+          status: action?.status || 500,
+          errors: action.payload?.errors || null,
+          timestamp: new Date().toISOString()
+        };
+        
+        // Clear any partial auth data
+        Cookies.remove('access_token');
+        sessionStorage.removeItem('userPermissions');
+      });
+  }
 });
 
-// 🔁 Export actions
-export const { setUser, resetAuthState } = authSlice.actions;
+// Action creators
+export const { 
+  resetAuthState, 
+  logout, 
+  setCredentials,
+  loadFromStorage 
+} = authSlice.actions;
 
-// 📦 Export reducer
+// Selectors
+export const selectAuthToken = (state) => state.auth.token;
+export const selectPermissions = (state) => state.auth.permissions;
+export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;
+export const selectAuthError = (state) => state.auth.error;
+export const selectAuthLoading = (state) => state.auth.loading;
+export const selectLastLogin = (state) => state.auth.lastLogin;
+
 export default authSlice.reducer;

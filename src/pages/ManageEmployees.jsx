@@ -56,7 +56,7 @@ const ManageEmployees = () => {
 
   const handleRowClick = (employee, e) => {
     if (e.target.type === 'checkbox') return;
-    navigate(`/department/${depId}/employees/${employee.userId}/view`);
+    navigate(`/department/${depId}/employees/${employee.employee_code}/view`);
   };
 
   const handleAddClick = () => {
@@ -64,13 +64,13 @@ const ManageEmployees = () => {
   };
 
   const handleView = (employee) => {
-    navigate(`/department/${depId}/employees/${employee.userId}/view`, {
+    navigate(`/department/${depId}/employees/${employee.employee_code}/view`, {
       state: { employee, fromChild: true },
     });
   };
 
   const handleEdit = (employee) => {
-    navigate(`/department/${depId}/employees/${employee.userId}/edit`, {
+    navigate(`/department/${depId}/employees/${employee.employee_code}/edit`, {
       state: { employee },
     });
   };
