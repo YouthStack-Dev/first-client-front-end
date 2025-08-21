@@ -12,7 +12,7 @@ const initialState = {
     allIds: []
   },
   departmentEmployees: {}, // { depId: [employeeId, employeeId...] }
-  lastFetchedDepId: null // <-- add this
+  lastFetchedDepId: null
 };
 
 // Helper functions for common operations
@@ -41,10 +41,21 @@ const userSlice = createSlice({
         })) };
       }
     },
+    
+    // Set all departments (for filtering)
+    setAllDepartments: (state, action) => {
+      const departments = action.payload;
+      departments.forEach(dept => {
+        state.teams.byId[dept.id] = dept;
+        if (!state.teams.allIds.includes(dept.id)) {
+          state.teams.allIds.push(dept.id);
+        }
+      });
+    },
+    
     setLastFetchedDepId(state, action) {
       state.lastFetchedDepId = action.payload;
-    }
-,    
+    },
     
     // Add or update a single team
     upsertTeam(state, action) {
@@ -127,6 +138,7 @@ const userSlice = createSlice({
         });
       }
     },
+    
     setDepartmentEmployees(state, action) {
       const { depId, employees } = action.payload;
       
@@ -139,11 +151,8 @@ const userSlice = createSlice({
         }
       });
       
-
       state.departmentEmployees[depId] = employees.map(emp => emp.employee_id);
-
       console.log(" this is the department slice " ,state.departmentEmployees[depId]);
-      
     },
     
     // Move employee between teams
@@ -159,18 +168,42 @@ const userSlice = createSlice({
           !state.teams.byId[toTeamId].employeeIds.includes(employeeId)) {
         state.teams.byId[toTeamId].employeeIds.push(employeeId);
       }
+    },
+
+    setAllEmployees: (state, action) => {
+      const { employees, page = 1 } = action.payload;
+      
+      // Store each employee globally
+      employees.forEach(emp => {
+        state.employees.byId[emp.employee_id] = emp;
+        
+        // Add to allIds if not already present
+        if (!state.employees.allIds.includes(emp.employee_id)) {
+          state.employees.allIds.push(emp.employee_id);
+        }
+      });
+      
+      // For pagination, you might want to track which employees are on which page
+      state.currentEmployeesPage = page;
     }
   }
 });
 
+// In your userSlice.js
+
 export const {
+  setAllEmployees,
+  
   setTeams,
+  setAllDepartments, // <-- Export the new action
   upsertTeam,
   removeTeam,
   upsertEmployee,
   addEmployeeToTeam,
   removeEmployeeFromTeam,
-  moveEmployee,  setLastFetchedDepId,setDepartmentEmployees
+  moveEmployee,
+  setLastFetchedDepId,
+  setDepartmentEmployees
 } = userSlice.actions;
 
 export default userSlice.reducer;

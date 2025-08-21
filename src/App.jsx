@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, BrowserRouter } from 'react-router-dom';
+import { BrowserRouter , Routes, Route} from 'react-router-dom';
 import {  lazy, useState } from 'react';
 
 import Layout from './components/layout/layout';
@@ -24,7 +24,7 @@ import TeamManagement from './components/teams/TeamManagement';
 import EmployeTeamManagement from './pages/EmployeTeamManagement';
 
 // ✅ Existing Lazy Loaded Components
-const Dashboard = lazy(() => import('./pages/Dashboard'));
+// const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Unauthorized = lazy(() => import('./pages/Unauthorized'));
 const ManageDrivers = lazy(() => import('./pages/ManageDrivers'));
 const RouteManagement = lazy(() => import('./pages/RouteManagement'));
@@ -105,8 +105,8 @@ function App() {
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/client_dashboard" element={<ClientDashboard />} />
             <Route path="/company-dashboard" element={<CompanyDashboard />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-
+            {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+            <Route path="/welcome" element={<h> This  will be the welcome page </h>} />
             {/* ================================ */}
             {/* 👥 USER MANAGEMENT ROUTES */}
             {/* ================================ */}

@@ -45,11 +45,12 @@ const EmployeeForm = ({ mode = 'create' }) => {
   const teams = useSelector(selectAllTeams);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { depId } = useParams();
+  const { depId , userId} = useParams();
+
   const [dateRangeSelection, setDateRangeSelection] = useState([
     {
-      startDate: new Date(),
-      endDate: new Date(),
+      startDate: null,
+      endDate: null,
       key: 'selection',
     },
   ]);
@@ -97,57 +98,59 @@ const EmployeeForm = ({ mode = 'create' }) => {
     }
   }, [dispatch, teams]);
 
-  useEffect(() => {
-    if (mode !== 'create') {
-      const employee = state?.employee;
-      if (employee) {
-        const mappedData = {
-          ...initialFormData,
-          name: employee.name || '',
-          employee_code: employee.employee_code || '',
-          email: employee.email || '',
-          gender: employee.gender || '',
-          mobile_number: employee.mobile_number || '',
-          alternate_mobile_number: employee.alternate_mobile_number || '',
-          special_need: employee.special_need || 'none',
-          // Handle special_need dates - set to null if special_need is "none"
-          special_need_start_date: employee.special_need === 'none' ? null : (employee.special_need_start_date || null),
-          special_need_end_date: employee.special_need === 'none' ? null : (employee.special_need_end_date || null),
-          department_id: employee.department_id || '',
-          address: employee.address || '',
-          landmark: employee.landmark || '',
-          latitude: employee.latitude || null,
-          longitude: employee.longitude || null,
-          distance_from_company: employee.distance_from_company || '',
-          office: employee.office || '',
-          subscribe_via_email: employee.subscribe_via_email || false,
-          subscribe_via_sms: employee.subscribe_via_sms || false,
-        };
-        setFormData(mappedData);
-        
-        // Update date range selection only if special_need is not "none" and dates exist
-        if (employee?.special_need !== 'none' && employee?.special_need_start_date && employee?.special_need_end_date) {
-          setDateRangeSelection([
-            {
-              startDate: new Date(employee.special_need_start_date),
-              endDate: new Date(employee.special_need_end_date),
-              key: "selection"
-            }
-          ]);
-        } else {
-          // Reset date range to default when special_need is "none"
-          setDateRangeSelection([
-            {
-              startDate: new Date(),
-              endDate: new Date(),
-              key: "selection"
-            }
-          ]);
+    useEffect(() => {
+      if (mode !== 'create') {
+        const employee = state?.employee;
+
+        logDebug('Employee data from state:', employee);
+        if (employee) {
+          const mappedData = {
+            ...initialFormData,
+            name: employee.name || '',
+            employee_code: employee.employee_code || '',
+            email: employee.email || '',
+            gender: employee.gender || '',
+            mobile_number: employee.mobile_number || '',
+            alternate_mobile_number: employee.alternate_mobile_number || '',
+            special_need: employee.special_need || 'none',
+            // Handle special_need dates - set to null if special_need is "none"
+            special_need_start_date: employee.special_need === 'none' ? null : (employee.special_need_start_date || null),
+            special_need_end_date: employee.special_need === 'none' ? null : (employee.special_need_end_date || null),
+            department_id: employee.department_id || '',
+            address: employee.address || '',
+            landmark: employee.landmark || '',
+            latitude: employee.latitude || null,
+            longitude: employee.longitude || null,
+            distance_from_company: employee.distance_from_company || '',
+            office: employee.office || '',
+            subscribe_via_email: employee.subscribe_via_email || false,
+            subscribe_via_sms: employee.subscribe_via_sms || false,
+          };
+          setFormData(mappedData);
+          
+          // Update date range selection only if special_need is not "none" and dates exist
+          if (employee?.special_need !== 'none' && employee?.special_need_start_date && employee?.special_need_end_date) {
+            setDateRangeSelection([
+              {
+                startDate: new Date(employee.special_need_start_date),
+                endDate: new Date(employee.special_need_end_date),
+                key: "selection"
+              }
+            ]);
+          } else {
+            // Reset date range to default when special_need is "none"
+            setDateRangeSelection([
+              {
+                startDate: null,
+                endDate: null,
+                key: "selection"
+              }
+            ]);
+          }
         }
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    }
-  }, [mode, state, teams, depId]);
+    }, [mode, state, teams, depId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -237,7 +240,7 @@ const EmployeeForm = ({ mode = 'create' }) => {
     }
 
     // Validate special_need dates if special_need is not "none"
-    if (data.special_need && data.special_need !== 'none') {
+    if (data.special_need && data.special_need !== 'none'&& data.special_need !== null) {
       if (!data.special_need_start_date) {
         errors.special_need_start_date = 'Start date is required when special need is selected';
       }
@@ -246,7 +249,7 @@ const EmployeeForm = ({ mode = 'create' }) => {
       }
     }
   
-    return errors;
+    return   errors;
   };
 
   const validateAddressInfo = (data) => {
@@ -263,7 +266,8 @@ const EmployeeForm = ({ mode = 'create' }) => {
       const validationErrors = validatePersonalInfo(formData);
       if (Object.keys(validationErrors).length > 0) {
         setErrors(validationErrors);
-        toast.error('Please fill out all required fields in Personal Information');
+        logError('Validation errors:', validationErrors);
+        toast.error(validationErrors[Object.keys(validationErrors)[0]]);
         return;
       }
     }
@@ -363,7 +367,7 @@ const EmployeeForm = ({ mode = 'create' }) => {
       // Make the API call
       const response = mode === 'create'
         ? await API_CLIENT.post('employees/', submissionData)
-        : await API_CLIENT.put(`/employees/${formData.employee_code}`, submissionData);
+        : await API_CLIENT.put(`/employees/${userId}`, submissionData);
   
       if (response.status >= 200 && response.status < 300) {
         toast.success(`Employee ${mode === 'create' ? 'created' : 'updated'} successfully!`);

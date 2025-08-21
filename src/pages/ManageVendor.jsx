@@ -32,7 +32,7 @@ const ManageVendor = () => {
   useEffect(() => {
     if (tenantId && vendors.length === 0) {
       console.log(`📢 API Call: GET /vendors?skip=0&limit=100&tenant_id=${tenantId}`);
-      dispatch(fetchVendors({ skip: 0, limit: 100, tenant_id: tenantId }));
+      dispatch(fetchVendors({ skip: 0, limit: 10, tenant_id: tenantId }));
     }
   }, [tenantId, vendors.length, dispatch]);
 

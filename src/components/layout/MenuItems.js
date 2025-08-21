@@ -1,13 +1,5 @@
-import { 
-  LayoutDashboard, 
-  User, 
-  Users2, 
-  UserCog, 
-  UserPlus, 
-  Car, 
-  CarTaxiFront, 
-  Route, 
-  Building2, 
+import { LayoutDashboard, User, Users2,  UserCog, 
+  UserPlus, Car, CarTaxiFront, Route, Building2, 
   Settings,
   Shield,
   MapPin,
@@ -18,7 +10,6 @@ import {
   Target,
   BookOpen,
   Building,
-  Users,
   Truck
 } from 'lucide-react';
 

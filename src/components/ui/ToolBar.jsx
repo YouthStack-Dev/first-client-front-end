@@ -10,6 +10,9 @@ const ToolBar = ({
   searchBar = null,
   leftElements = null,
   rightElements = null,
+  // New props for better responsiveness
+  mobileLayout = 'stacked', // 'stacked' or 'compact'
+  searchBarPriority = true, // Whether search bar takes priority on mobile
 }) => {
   return (
     <div className={`bg-white rounded-lg shadow p-4 ${className}`}>
@@ -21,35 +24,38 @@ const ToolBar = ({
         </div>
       )}
 
-      {/* Toolbar content */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+      {/* Toolbar content - Responsive layout */}
+      <div className="flex flex-col lg:flex-row items-stretch justify-between gap-4">
         {/* Left side - Search and filters */}
-        <div className="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div className={`flex-1 flex flex-col ${mobileLayout === 'stacked' ? 'gap-3' : 'sm:flex-row sm:items-center gap-2'}`}>
           {searchBar && (
-            <div className="flex-1 min-w-[200px] max-w-xl">
+            <div className={`${searchBarPriority ? 'flex-1 min-w-0' : 'w-full'} ${mobileLayout === 'compact' ? 'sm:flex-1' : ''}`}>
               {searchBar}
             </div>
           )}
+          
           {leftElements && (
-            <div className="flex flex-wrap gap-2">
+            <div className={`flex flex-wrap items-center gap-2 ${mobileLayout === 'stacked' ? 'w-full' : ''}`}>
               {leftElements}
             </div>
           )}
         </div>
 
         {/* Right side - Actions and buttons */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
           {rightElements}
           {onAddClick && (
             <button
               onClick={onAddClick}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white 
+              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white 
                 text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none 
                 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors
-                shadow-sm hover:shadow-md"
+                shadow-sm hover:shadow-md whitespace-nowrap min-w-[fit-content]"
             >
               {addButtonIcon}
-              <span>{addButtonLabel}</span>
+              {/* Hide text on very small screens, show from sm breakpoint */}
+              <span className="hidden xs:inline">{addButtonLabel}</span>
+              <span className="xs:hidden">Add</span>
             </button>
           )}
         </div>

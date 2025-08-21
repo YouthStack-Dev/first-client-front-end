@@ -1,6 +1,5 @@
 import React from 'react';
-import { Building2 } from 'lucide-react';
-import PropTypes from 'prop-types';
+import { Building2, Edit, Trash } from 'lucide-react';
 import Pagination from '../Pagination';
 
 const DepartmentList = ({
@@ -75,7 +74,7 @@ const DepartmentList = ({
                         className="bg-sidebar-accent-100 text-sidebar-accent-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-sidebar-accent-200 transition-colors"
                         onClick={() => onViewEmployees(department.id)}
                       >
-                        {department.users || 0} employees
+                        {department.users || 0} 
                       </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -84,13 +83,13 @@ const DepartmentList = ({
                           className="text-sidebar-primary-600 hover:text-sidebar-primary-700 transition-colors"
                           onClick={() => onEditDepartment(department)}
                         >
-                          Edit
+                          <Edit size={16} className="inline-block mr-1" />
                         </button>
                         <button
                           className="text-sidebar-danger-600 hover:text-sidebar-danger-700 transition-colors"
                           onClick={() => onDeleteDepartment(department.id)}
                         >
-                          Delete
+                        <Trash size={16} className="inline-block mr-1" />
                         </button>
                       </div>
                     </td>

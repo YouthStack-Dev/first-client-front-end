@@ -100,7 +100,7 @@ export const Login = () => {
       const result = await dispatch(loginUser(formData)).unwrap();
   
       if (result) {
-        navigate(location.state?.from || '/dashboard', { replace: true });
+        navigate(location.state?.from || '/welcome', { replace: true });
       }
   
     } catch (err) {
@@ -123,7 +123,7 @@ export const Login = () => {
   return (
     <div className="h-screen flex overflow-hidden bg-gradient-to-br from-sidebar-primary-50 to-sidebar-primary-100">
       {/* Left Section - Services Slider */}
-      <div className="hidden lg:flex w-3/5 bg-gradient-to-br from-sidebar-primary-500 via-sidebar-primary-500 to-sidebar-primary-500 relative overflow-hidden">
+      <div className="hidden lg:flex w-3/5 bg-gradient-to-br from-sidebar-primary-800 via-sidebar-primary-6 00 to-sidebar-primary-500 relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
@@ -230,7 +230,7 @@ export const Login = () => {
 
             {/* Footer */}
             <div className="mt-6 pt-4 border-t border-white/20">
-              <p className="text-sidebar-primary-300 text-xs text-center">
+              <p className="text-sidebar-primary-500 text-xs text-center">
                 © 2024 MLT Corporate Solution Pvt. Ltd.
               </p>
             </div>
@@ -242,11 +242,11 @@ export const Login = () => {
       <div className="flex w-full lg:w-2/5 items-center justify-center p-6 overflow-y-auto">
         <div className="w-full max-w-md">
           {/* Login Form Card */}
-          <div className="bg-sidebar-primary-400 p-8 rounded-2xl shadow-lg border border-sidebar-primary-100/30 backdrop-blur-sm">
+          <div className="bg-sidebar-primary-500 p-8 rounded-2xl shadow-lg border border-sidebar-primary-100/30 backdrop-blur-sm">
             {/* Company Logo Section */}
             <div className="text-center mb-8">
               {/* Large Company Logo with light background */}
-              <div className="mx-auto w-32 h-32 bg-gradient-to-br bg-sidebar-primary-300 rounded-3xl flex items-center justify-center mb-4 shadow-lg border border-sidebar-primary-200/50">
+              <div className="mx-auto w-32 h-32 bg-gradient-to-br bg-sidebar-primary-700 rounded-3xl flex items-center justify-center mb-4 shadow-lg border border-sidebar-primary-200/50">
                 {/* Replace with actual company logo */}
                 <img 
                   src="/company.logpng.png" 
@@ -274,12 +274,12 @@ export const Login = () => {
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Email Field */}
               <div>
-                <label className="block text-sidebar-primary-700 text-sm font-medium mb-2">
+                <label className="block text-sidebar-primary-50 text-sm font-medium mb-2">
                   Email Address
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-4 w-4 text-sidebar-primary-400" />
+                    <User className="h-4 w-4 text-sidebar-primary-700" />
                   </div>
                   <input
                     type="email"
@@ -294,12 +294,12 @@ export const Login = () => {
 
               {/* Password Field */}
               <div>
-                <label className="block text-sidebar-primary-700 text-sm font-medium mb-2">
+                <label className="block text-sidebar-primary-50 text-sm font-medium mb-2">
                   Password
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-4 w-4 text-sidebar-primary-400" />
+                    <Lock className="h-4 w-4 text-sidebar-primary-700" />
                   </div>
                   <input
                     type={showPassword ? "text" : "password"}
@@ -315,7 +315,7 @@ export const Login = () => {
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-sidebar-primary-400 hover:text-sidebar-primary-600 transition-colors" />
+                      <EyeOff className="h-4 w-4 text-sidebar-primary-800 hover:text-sidebar-primary-600 transition-colors" />
                     ) : (
                       <Eye className="h-4 w-4 text-sidebar-primary-400 hover:text-sidebar-primary-600 transition-colors" />
                     )} 
@@ -348,15 +348,7 @@ export const Login = () => {
               </button>
             </form>
 
-            {/* Additional Links */}
-            <div className="mt-6 text-center">
-              <p className="text-xs text-sidebar-primary-500">
-                Need help?{" "}
-                <a href="#" className="text-sidebar-primary-600 hover:text-sidebar-primary-700 transition-colors font-medium">
-                  Contact Support
-                </a>
-              </p>
-            </div>
+            
 
             {/* Decorative element */}
             <div className="mt-6 flex items-center justify-center">
@@ -377,3 +369,8 @@ export const Login = () => {
 };
 
 export default Login;
+
+
+
+
+
