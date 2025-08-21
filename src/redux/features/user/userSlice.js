@@ -60,7 +60,7 @@ const userSlice = createSlice({
     // Add or update a single team
     upsertTeam(state, action) {
       const team = action.payload;
-      const existingTeam = state.teams.byId[team.id];
+      // const existingTeam = state.teams.byId[team.id];
       state.teams.byId[team.id] = { ...team};
       
       logDebug("Updated team:", state.teams.byId[team.id]);
@@ -140,8 +140,7 @@ const userSlice = createSlice({
     },
     
     setDepartmentEmployees(state, action) {
-      const { depId, employees } = action.payload;
-      
+      const { department_id, employees } = action.payload;
       // Store each employee globally
       employees.forEach(emp => {
         state.employees.byId[emp.employee_id] = emp;
@@ -151,8 +150,7 @@ const userSlice = createSlice({
         }
       });
       
-      state.departmentEmployees[depId] = employees.map(emp => emp.employee_id);
-      console.log(" this is the department slice " ,state.departmentEmployees[depId]);
+      state.departmentEmployees[department_id] = employees.map(emp => emp.employee_id);
     },
     
     // Move employee between teams
@@ -170,32 +168,27 @@ const userSlice = createSlice({
       }
     },
 
-    setAllEmployees: (state, action) => {
-      const { employees, page = 1 } = action.payload;
-      
-      // Store each employee globally
-      employees.forEach(emp => {
-        state.employees.byId[emp.employee_id] = emp;
-        
-        // Add to allIds if not already present
-        if (!state.employees.allIds.includes(emp.employee_id)) {
-          state.employees.allIds.push(emp.employee_id);
-        }
+    setDepartments: (state, action) => {
+      const departments = action.payload; // array of depts
+    
+      state.teams.byId = {};
+      state.teams.allIds = [];
+    
+      departments.forEach((dept) => {
+        state.teams.byId[dept.id] = dept;
+        state.teams.allIds.push(dept.id);
       });
-      
-      // For pagination, you might want to track which employees are on which page
-      state.currentEmployeesPage = page;
-    }
+    },
+    
   }
 });
 
 // In your userSlice.js
 
 export const {
-  setAllEmployees,
-  
+  setDepartments,
   setTeams,
-  setAllDepartments, // <-- Export the new action
+  setAllDepartments, 
   upsertTeam,
   removeTeam,
   upsertEmployee,

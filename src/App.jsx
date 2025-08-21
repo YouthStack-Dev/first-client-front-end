@@ -20,8 +20,6 @@ import VehicleManagement from './pages/VehicleManagement';
 import { Login } from './pages/Login';
 import { PublicRoute } from './middleware/PublicRoute';
 import CompanyDashboard from './components/dashboards/CompanyDashboard';
-import TeamManagement from './components/teams/TeamManagement';
-import EmployeTeamManagement from './pages/EmployeTeamManagement';
 
 // ✅ Existing Lazy Loaded Components
 // const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -97,7 +95,7 @@ function App() {
         {/* ✅ Protected Routes */}
         <Route element={<ProtectedRouteAuth />}>
           <Route element={<Layout />}>
-          <Route path="/practice" element={<EmployeTeamManagement/>} />
+          <Route path="/practice" element={<ManageDepartment/>} />
             {/* ================================ */}
             {/* 📊 DASHBOARD ROUTES */}
             {/* ================================ */}
@@ -106,7 +104,7 @@ function App() {
             <Route path="/client_dashboard" element={<ClientDashboard />} />
             <Route path="/company-dashboard" element={<CompanyDashboard />} />
             {/* <Route path="/dashboard" element={<Dashboard />} /> */}
-            <Route path="/welcome" element={<h> This  will be the welcome page </h>} />
+            <Route path="/welcome" element={<h1> This  will be the welcome page </h1>} />
             {/* ================================ */}
             {/* 👥 USER MANAGEMENT ROUTES */}
             {/* ================================ */}
@@ -115,8 +113,8 @@ function App() {
             <Route path="/employees" element={<EmployeeManagement />} />
             <Route path="/employee/create-employee" element={<EmployeeForm />} />
             <Route path="/department/:depId/employees" element={<ManageEmployees />} />
-            <Route path="/department/:depId/employees/:userId/edit" element={<EmployeeForm mode="edit" />} />
-            <Route path="/department/:depId/employees/:userId/view" element={<EmployeeForm mode="view" />} />
+            <Route path="/employees/:userId/edit" element={<EmployeeForm mode="edit" />} />
+            <Route path="/employees/:userId/view" element={<EmployeeForm mode="view" />} />
 
             {/* ================================ */}
             {/* 🏢 MANAGEMENT ROUTES */}
@@ -125,7 +123,7 @@ function App() {
             <Route path="/groups" element={<GroupManagement />} />
             <Route path="/mappings" element={<MappingManagement />} />
 
-            {/* ================================ */}
+            {/* ================================ */}  
             {/* 🛡️ POLICY & SERVICE MANAGEMENT */}
             {/* ================================ */}
             <Route path="/policy-management" element={<PolicyManagement />} />

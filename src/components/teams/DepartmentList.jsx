@@ -1,6 +1,7 @@
 import React from 'react';
-import { Building2, Edit, Trash } from 'lucide-react';
+import { Building2, Edit, Trash, History, Users, UserCheck, UserX } from 'lucide-react';
 import Pagination from '../Pagination';
+import { logDebug } from '../../utils/logger';
 
 const DepartmentList = ({
   departments,
@@ -12,11 +13,14 @@ const DepartmentList = ({
   onEditDepartment,
   onDeleteDepartment,
   onViewEmployees,
+  onViewHistory, // New prop for history action
   currentPage,
   totalItems,
   itemsPerPage,
   onPageChange
 }) => {
+
+  logDebug("Rendering DepartmentList", departments)
   return (
     <>
       <div className="bg-app-surface rounded-lg border border-app-border overflow-hidden">
@@ -48,6 +52,12 @@ const DepartmentList = ({
                     Employees
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-app-text-secondary uppercase tracking-wider">
+                    Active
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-app-text-secondary uppercase tracking-wider">
+                    Inactive
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-app-text-secondary uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -71,25 +81,47 @@ const DepartmentList = ({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button
-                        className="bg-sidebar-accent-100 text-sidebar-accent-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-sidebar-accent-200 transition-colors"
+                        className="flex items-center bg-sidebar-accent-100 text-sidebar-accent-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-sidebar-accent-200 transition-colors"
                         onClick={() => onViewEmployees(department.id)}
                       >
-                        {department.users || 0} 
+                        <Users size={14} className="mr-1" />
+                        {department.users || 0}
                       </button>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center text-sm text-green-600">
+                        <UserCheck size={14} className="mr-1" />
+                        {department.activeEmployees || 0}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center text-sm text-red-600">
+                        <UserX size={14} className="mr-1" />
+                        {department.inactiveEmployees || 0}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-3">
                         <button
                           className="text-sidebar-primary-600 hover:text-sidebar-primary-700 transition-colors"
                           onClick={() => onEditDepartment(department)}
+                          title="Edit Department"
                         >
-                          <Edit size={16} className="inline-block mr-1" />
+                          <Edit size={16} />
                         </button>
                         <button
                           className="text-sidebar-danger-600 hover:text-sidebar-danger-700 transition-colors"
                           onClick={() => onDeleteDepartment(department.id)}
+                          title="Delete Department"
                         >
-                        <Trash size={16} className="inline-block mr-1" />
+                          <Trash size={16} />
+                        </button>
+                        <button
+                          className="text-sidebar-secondary-600 hover:text-sidebar-secondary-700 transition-colors"
+                          onClick={() => onViewHistory(department.id)}
+                          title="View History"
+                        >
+                          <History size={16} />
                         </button>
                       </div>
                     </td>
@@ -110,20 +142,9 @@ const DepartmentList = ({
         )}
       </div>
 
-      {/* Pagination for Departments */}
-      {!isLoading && departments.length > 0 && (
-        <div className="mt-6">
-          <Pagination
-            currentPage={currentPage}
-            totalItems={totalItems}
-            itemsPerPage={itemsPerPage}
-            onPageChange={onPageChange}
-          />
-        </div>
-      )}
+     
     </>
   );
 };
-
 
 export default DepartmentList;

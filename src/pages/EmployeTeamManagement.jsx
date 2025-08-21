@@ -37,7 +37,7 @@ if (!hasAccess) {
       </div>
 
       {/* Conditional Component Rendering */}
-      <div className="p-6">
+      <div className="p-1">
           {activeTab === "departments" && <ManageDepartment />}
           {activeTab === "employees" && <ManageEmployees />}
         </div>

@@ -15,19 +15,14 @@ import { API_CLIENT } from "../../../Api/API_Client";
 })
 
 
-
-export const fetchDepartments = async (page, limit) => {
+export const fetchDepartments = async (page = 1, limit = 20) => {
   let params = {};
 
-  // If pagination arguments are provided, add them
-  if (page && limit) {
-    params.skip = (page - 1) * limit;
-    params.limit = limit;
-  }
+  params.skip = (page - 1) * limit;
+  params.limit = limit;
 
   const { data } = await API_CLIENT.get('/departments/', { params });
 
-  // Transform the data to match your UI requirements
   return data.map(dept => ({
     id: dept.department_id,
     name: dept.department_name,

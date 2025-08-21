@@ -1,21 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import EmployeeList from "../components/teams/EmployeeList";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { API_CLIENT } from '../Api/API_Client';
 import { toast } from 'react-toastify';
 import { useSelector, useDispatch } from 'react-redux';
-import { setAllEmployees } from '../redux/features/user/userSlice';
-import { Plus, Filter } from 'lucide-react';
+import { Plus} from 'lucide-react';
 import SearchInput from '../components/ui/SearchInput';
 import { logDebug } from '../utils/logger';
 import ToolBar from '../components/ui/ToolBar';
 import Pagination from '../components/Pagination';
-import Select from '../components/ui/Select';
 import ActiveFilterToggle from '../components/ui/ActiveFilterToggle';
+import { setDepartmentEmployees } from '../redux/features/user/userSlice';
 
 const ManageEmployees = () => {
   const [loading, setLoading] = useState(true);
-  const [departmentsLoading, setDepartmentsLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,51 +23,48 @@ const ManageEmployees = () => {
   const [itemsPerPage] = useState(10);
   const [totalEmployees, setTotalEmployees] = useState(0);
   const navigate = useNavigate();
+    const { depId} = useParams();
 
-  const dispatch = useDispatch();
-  const allEmployees = useSelector(state => state.user.employees.allIds.map(id => state.user.employees.byId[id]));
-  const allDepartments = useSelector(state => state.user.teams.allIds.map(id => state.user.teams.byId[id]));
+     const dispatch = useDispatch();
 
+
+  const allEmployees = useSelector((state) => {const ids = state.user.departmentEmployees[depId] ||
+                                     [];return ids.map((id) => state.user.employees.byId[id]);});
+  
   useEffect(() => {
-    // Fetch departments if not already loaded
-    if (allDepartments.length === 0) {
-      fetchAllDepartments();
-    }
 
-    fetchAllEmployees();
-  }, [currentPage, itemsPerPage]);
 
-  const fetchAllDepartments = async () => {
-    try {
-      setDepartmentsLoading(true);
-      const response = await API_CLIENT.get('/departments');
-      dispatch(setAllDepartments(response.data));
-    } catch (err) {
-      console.error('Error fetching departments:', err);
-      toast.error('Failed to load departments');
-    } finally {
-      setDepartmentsLoading(false);
-    }
-  };
+    fetchEmployeesByDepartment();
+  }, [currentPage, itemsPerPage, depId]);
 
-  const fetchAllEmployees = async () => {
-    try {
-      setLoading(true);
-      const response = await API_CLIENT.get(`/employees/tenant?page=${currentPage}&limit=${itemsPerPage}`);
-      const { employees, total_employees, message } = response.data;
+ 
 
-      dispatch(setAllEmployees({ employees, page: currentPage }));
-      setTotalEmployees(total_employees);
+ 
+const fetchEmployeesByDepartment = async () => {
+  // 🔹 Check if employees for this department already exist
+  if (allEmployees && allEmployees.length > 0) {
+    console.log(`Employees for ${depId} already fetched, skipping API call`);
+    setLoading(false);
+    return;
+  }
 
-      toast.success(message || 'Employees loaded successfully');
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Something went wrong');
-      toast.error(err.response?.data?.detail || 'Failed to load employees');
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
 
+    logDebug("Fetching employees for department", depId); 
+    setLoading(true);
+    const response = await API_CLIENT.get(`/employees/department/${depId}`);
+    const { employees, department_id } = response.data;
+
+    dispatch(setDepartmentEmployees({ department_id, employees }));
+    toast.success('Employees loaded successfully');
+  } catch (err) {
+    logDebug("Error fetching employees by department", err);
+    setError(err.response?.data?.detail || 'Something went wrong');
+    toast.error(err.response?.data?.detail || 'Failed to load employees');
+  } finally {
+    setLoading(false);
+  }
+};
   const handleCheckboxChange = (id) => {
     setSelectedEmployeeIds((prev) =>
       prev.includes(id) ? prev.filter((eId) => eId !== id) : [...prev, id]
@@ -101,10 +96,6 @@ const ManageEmployees = () => {
     setSearchTerm(query);
   };
 
-  const handleDepartmentFilterChange = (value) => {
-    setDepartmentFilter(value);
-  };
-
   // Count active and inactive employees
   const activeEmployeesCount = useMemo(() => 
     allEmployees.filter(employee => employee.is_active).length, 
@@ -116,11 +107,6 @@ const ManageEmployees = () => {
     [allEmployees]
   );
 
-  // Prepare department options for the Select component
-  const departmentOptions = [
-    { id: 'all', name: 'All Departments' },
-    ...allDepartments
-  ];
 
   // Filter employees based on search query, department filter, and active status
   const filteredEmployees = useMemo(() => {
@@ -156,19 +142,7 @@ const ManageEmployees = () => {
     return result;
   }, [allEmployees, searchTerm, departmentFilter, viewActive]);
 
-  const hasActiveFilters = searchTerm.trim() !== '' || departmentFilter !== 'all';
 
-  // Clear all filters
-  const clearFilters = () => {
-    setSearchTerm('');
-    setDepartmentFilter('all');
-  };
-
-  logDebug("this is the employees in employee list", allEmployees);
-  logDebug("filtered employees", filteredEmployees);
-  logDebug("current search query", searchTerm);
-  logDebug("current department filter", departmentFilter);
-  logDebug("current view active status", viewActive);
 
   return (
     <div>
@@ -185,40 +159,7 @@ const ManageEmployees = () => {
         onChange={handleSearch}
         className="flex-grow"
       />
-      
-      <div className="flex gap-2 items-center flex-wrap">
-        {/* Department Filter */}
-   
-          <Select
-            options={departmentOptions}
-            value={departmentFilter}
-            onChange={handleDepartmentFilterChange}
-            placeholder="All Departments"
-            disabled={departmentsLoading}
-            loading={departmentsLoading}
-            searchable
-            clearable
-            className="min-w-[180px] pl-7"
-            emptyMessage="No departments found"
-            renderOption={(option) => (
-              <div className="flex items-center">
-                <span>{option.name}</span>
-                {option.id === 'all' && (
-                  <span className="ml-2 text-xs text-gray-500">(Show All)</span>
-                )}
-              </div>
-            )}
-          />
-        
-        {hasActiveFilters && (
-          <button
-            onClick={clearFilters}
-            className="px-3 py-2 text-sm  text-red-500 hover:text-sidebar-primary-700 transition-colors whitespace-nowrap"
-          >
-            X
-          </button>
-        )}
-      </div>
+
     </div>
   }
   rightElements={

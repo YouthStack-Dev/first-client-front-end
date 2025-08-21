@@ -7,7 +7,7 @@ export const PublicRoute = ({ children }) => {
 
   // Only redirect if user is on the login page
   if (token && location.pathname === "/") {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/welcome" replace />;
   }
 
   return children;

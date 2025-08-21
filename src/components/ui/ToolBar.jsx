@@ -10,7 +10,6 @@ const ToolBar = ({
   searchBar = null,
   leftElements = null,
   rightElements = null,
-  // New props for better responsiveness
   mobileLayout = 'stacked', // 'stacked' or 'compact'
   searchBarPriority = true, // Whether search bar takes priority on mobile
 }) => {
@@ -53,9 +52,7 @@ const ToolBar = ({
                 shadow-sm hover:shadow-md whitespace-nowrap min-w-[fit-content]"
             >
               {addButtonIcon}
-              {/* Hide text on very small screens, show from sm breakpoint */}
-              <span className="hidden xs:inline">{addButtonLabel}</span>
-              <span className="xs:hidden">Add</span>
+              <span>{addButtonLabel}</span>
             </button>
           )}
         </div>

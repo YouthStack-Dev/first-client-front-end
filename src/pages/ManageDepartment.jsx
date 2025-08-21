@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserX, Building2, Plus } from 'lucide-react';
+import { Plus, UserPlus, UsersRound } from 'lucide-react';
 import Modal from '../components/modals/Modal';
 import DepartmentForm from '../components/teams/DepartmentForm';
 import DepartmentList from '../components/teams/DepartmentList';
@@ -11,13 +11,10 @@ import {
   upsertTeam,
   removeTeam
 } from '../redux/features/user/userSlice';
-import Pagination from '../components/Pagination';
 import { logDebug, logError } from '../utils/logger';
 import { fetchDepartments } from '../redux/features/user/userTrunk';
 import ToolBar from '../components/ui/ToolBar';
 import SearchInput from '../components/ui/SearchInput';
-import ActiveFilterToggle from '../components/ui/ActiveFilterToggle';
-import Select from '../components/ui/Select';
 
 const ManageDepartment = () => {
   const navigate = useNavigate();
@@ -133,24 +130,24 @@ const ManageDepartment = () => {
   const handleFormSuccess = (teamData) => {
     logDebug(" debug data based from submission " ,teamData)
     // Transform the form data to match your Redux structure
-    const transformedData = {
-      id: teamData.department_id,
-      name: teamData.department_name,
-      description: teamData.description,
-    };
+    // const transformedData = {
+    //   id: teamData.department_id,
+    //   name: teamData.department_name,
+    //   description: teamData.description,
+    // };
 
-    if (editingTeam) {
-      // Update existing team
-      dispatch(upsertTeam(transformedData));
-    } else {
-      // Add new team
-      dispatch(upsertTeam(transformedData));
+    // if (editingTeam) {
+    //   // Update existing team
+    //   dispatch(upsertTeam(transformedData));
+    // } else {
+    //   // Add new team
+    //   dispatch(upsertTeam(transformedData));
       
-      // If we're not on the first page, go to first page to see the new item
-      if (currentPage !== 1) {
-        setCurrentPage(1);
-      }
-    }
+    //   // If we're not on the first page, go to first page to see the new item
+    //   if (currentPage !== 1) {
+    //     setCurrentPage(1);
+    //   }
+    // }
     setEditingTeam(null);
     setIsOpen(false);
   };
@@ -162,11 +159,11 @@ const ManageDepartment = () => {
   ];
 
   return (
-    <div className="p-4">
+    <div >
       <ToolBar
         onAddClick={handleAddClick}
-        addButtonLabel="Add Department"
-        addButtonIcon={<Plus size={16} />}
+        addButtonLabel=" Department"
+        addButtonIcon={<UsersRound size={16} />}
         className="p-4 bg-white border rounded shadow-sm mb-4"
         searchBar={
           <div className="flex flex-col sm:flex-row gap-3 w-full">
@@ -180,14 +177,15 @@ const ManageDepartment = () => {
    
           </div>
         }
+
         rightElements={
-          <ActiveFilterToggle
-            viewActive={viewActive}
-            setViewActive={setViewActive}
-            activeCount={teams.filter(t => t.status === 'active').length}
-            inactiveCount={teams.filter(t => t.status === 'inactive').length}
-          />
+          <button className="flex items-center gap-2 px-2  p-1 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">
+      <UserPlus size={17} />
+      Employee
+    </button>
+          
         }
+      
       />
 
       {/* Department List Component */}

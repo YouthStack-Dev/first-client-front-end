@@ -1,68 +1,67 @@
-import { X } from 'lucide-react';
+import { X } from "lucide-react";
+const RouteModal = ({ route, mode, onClose }) => {
+  if (!route) return null;
 
-const RouteModal = ({ showModal, setShowModal, route }) => {
-  if (!showModal || !route) return null;
+  // Route info as key-value pairs
+  const infoFields = [
+    { label: "Office", value: route.office || "N/A" },
+    { label: "Shift", value: `${route.shift?.date || "N/A"} ${route.shift?.time || ""}` },
+    { label: "Booking Type", value: route.bookingType || "N/A" },
+    { label: "Landmark", value: route.landmark || "N/A" },
+    { label: "Distance", value: `${route.distance || "N/A"} km` },
+    { label: "Employees", value: route.bookings?.length || 0 },
+  ];
 
-
-  
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fadeIn">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-7xl mx-4 overflow-auto max-h-[90vh]">
-        <div className="p-4 border-b flex justify-between items-center bg-gray-50">
-          <h3 className="text-lg font-semibold text-gray-800">
-            Route Employees - {route.id}
-          </h3>
-          <button
-            onClick={() => setShowModal(false)}
-            className="text-gray-500 hover:text-gray-700 transition"
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <div className="fixed inset-0 z-50 flex justify-center items-center bg-black/50">
+      <div className="bg-white w-[90%] h-[90%] rounded-lg overflow-hidden flex shadow-lg">
+        {/* Left Panel: Route Info & Actions */}
+        <div className="w-1/2 p-6 flex flex-col overflow-auto border-r">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">
+              {mode === "routing" ? "Assign Route" : "Route Details"}
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-600 hover:text-gray-800 transition"
+            >
+              <X size={24} />
+            </button>
+          </div>
+
+          {/* Route Info */}
+          <div className="space-y-2 text-sm text-gray-700">
+            {infoFields.map((field) => (
+              <p key={field.label}>
+                <strong>{field.label}:</strong> {field.value}
+              </p>
+            ))}
+
+            {/* Employee List */}
+            {route.bookings?.map((emp) => (
+              <div key={emp.id} className="flex justify-between px-2 py-1 bg-gray-100 rounded">
+                <span>{emp.name}</span>
+                <span className="text-xs text-gray-500">{emp.gender}</span>
+              </div>
+            ))}
+
+            {/* Actions */}
+            {mode === "routing" && (
+              <div className="mt-4 flex gap-2">
+                <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                  Assign Vendor
+                </button>
+                <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                  Assign Vehicle
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-        <div className="p-4">
-          <table className="min-w-full divide-y divide-gray-200 table-fixed">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pickup Location</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Drop Location</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Office</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trip Direction</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Time	</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Distance</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Extra Distance</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service Level</th>
-          
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {route.routeBookings?.map(({booking:{customer} ,booking}) => (
-                <tr key={customer.id} className="hover:bg-gray-50 transition">
-                  <td className="px-4 py-3 text-sm text-gray-900">{customer?.id}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{customer?.name}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{customer?.phoneNo}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{customer?.gender}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{booking?.pickupAddress}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{booking?.dropAddress}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{"office name "}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{booking?.bookingType}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{"start time "}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{" booking distance"}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{" extra time"}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{" calculate %"}</td>
 
-
-
-                  
-
-                 
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Right Panel: Map Placeholder */}
+        <div className="w-1/2 bg-gray-200 flex items-center justify-center text-gray-500">
+          Map Placeholder
         </div>
       </div>
     </div>

@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { API_CLIENT } from '../../Api/API_Client';
-import { logDebug, logError } from '../../utils/logger';
+import {  logError } from '../../utils/logger';
+import { fetchDepartments } from '../../redux/features/user/userTrunk';
+import { setDepartments } from '../../redux/features/user/userSlice';
+import { useDispatch } from 'react-redux';
 
 const DepartmentForm = ({ onClose, onSuccess, initialData = null }) => {
   const isEditMode = Boolean(initialData);
   const [formData, setFormData] = useState({ department_name: '', description: '' });
-
+const dispatch = useDispatch();
   useEffect(() => {
     if (isEditMode) {
       setFormData({
@@ -29,20 +32,22 @@ const DepartmentForm = ({ onClose, onSuccess, initialData = null }) => {
       const endpoint = isEditMode
         ? `/departments/${initialData.id}`
         : '/departments/';
-
+  
       const method = isEditMode ? 'put' : 'post';
       const { data } = await API_CLIENT[method](endpoint, formData);
+  
       toast.success(isEditMode ? 'Team updated successfully' : 'Team created successfully');
-
-      // Notify parent so it can update Redux
-      onSuccess(data);
-
+  
+      // Re-fetch full list of departments
+      const departments = await fetchDepartments();
+      dispatch(setDepartments(departments)); // <-- you need a reducer like this
+  
     } catch (error) {
-
-      logError(" this is the error  " ,error)
+      logError("this is the error", error);
       toast.error(error.response?.data?.detail || '');
     }
   };
+  
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
