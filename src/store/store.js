@@ -20,9 +20,12 @@ const store = configureStore({
     vendor: vendorReducer,  
      vehicle: vehicleReducer,  
   },
+  
   middleware: (getDefaultMiddleware) => getDefaultMiddleware(),
 });
 
 setupListeners(store.dispatch);
 
 export default store;
+
+

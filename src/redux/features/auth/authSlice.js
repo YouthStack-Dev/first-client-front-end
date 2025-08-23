@@ -11,15 +11,21 @@ const initialState = {
   lastLogin: null
 };
 
-const authSlice = createSlice({
+const authSlice = createSlice(
+  {
   name: "auth",
   initialState,
+
   reducers: {
     resetAuthState: (state) => {
       Object.assign(state, initialState);
     },
-    logout: (state) => {
-      // Clear all client-side storage
+
+
+
+    
+     logout: (state) => {
+      
       Cookies.remove('access_token');
       Cookies.remove('refresh_token');
       sessionStorage.removeItem('userPermissions');
@@ -74,15 +80,10 @@ const authSlice = createSlice({
         sessionStorage.removeItem('userPermissions');
       });
   }
-});
+}     );
 
 // Action creators
-export const { 
-  resetAuthState, 
-  logout, 
-  setCredentials,
-  loadFromStorage 
-} = authSlice.actions;
+export const { resetAuthState, logout, setCredentials,loadFromStorage } = authSlice.actions;
 
 // Selectors
 export const selectAuthToken = (state) => state.auth.token;

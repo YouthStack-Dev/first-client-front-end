@@ -20,6 +20,7 @@ import VehicleManagement from './pages/VehicleManagement';
 import { Login } from './pages/Login';
 import { PublicRoute } from './middleware/PublicRoute';
 import CompanyDashboard from './components/dashboards/CompanyDashboard';
+import { Provider } from 'react-redux';
 
 // ✅ Existing Lazy Loaded Components
 // const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -85,7 +86,7 @@ function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   return (
-    <BrowserRouter>
+    <BrowserRouter>      
       <ToastContainer position="top-right" autoClose={3000} />
     
       <Routes>
