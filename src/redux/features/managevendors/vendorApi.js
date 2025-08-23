@@ -7,10 +7,11 @@ export const createVendor = async (data) => {
 };
 
 // Get All Vendors with Pagination
-export const getAllVendors = async ({ skip=0, limit =100, tenant_id }) => {
-  const response = await API_CLIENT.get(`/vendors/?skip=${skip}&limit=${limit}&tenant_id=${tenant_id}`);
-  return response;
+export const getAllVendors = async ({ skip = 0, limit = 25 } = {}) => {
+    const response = await API_CLIENT.get( `/vendors/?skip=${skip}&limit=${limit}`);
+    return response.data; // return only data
 };
+
 
 // Get Single Vendor by ID
 export const getVendorById = async (id) => {
