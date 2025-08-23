@@ -6,7 +6,7 @@ import ToolBar from "../ui/ToolBar";
 function getInitialTimeState(bookings = []) {
   const timeState = {};
   bookings.forEach((b) => {
-    timeState[b.id] = { hour: 0, minute: 0 }; // default to 00:00
+    timeState[b.id] = { hour: 0, minute: 0 };
   });
   return timeState;
 }
@@ -27,7 +27,6 @@ const AssignRouteModal = ({
   // Focus trap
   useEffect(() => {
     if (!show) return;
-
     const focusableEls = modalRef.current?.querySelectorAll(
       "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])"
     );
@@ -142,10 +141,10 @@ const AssignRouteModal = ({
     []
   );
 
-  // Unified Table component
+  // Table Component
   const Table = ({ headers, data = [] }) => (
-    <div className="overflow-x-auto">
-      <table className="min-w-[1100px] divide-y divide-gray-200 text-sm">
+    <div className="p-4 max-h-[70vh] overflow-y-auto overflow-x-auto">
+      <table className="w-auto min-w-full divide-y divide-gray-200 text-sm">
         <thead className="bg-gray-50">
           <tr>
             {headers.map((h) =>
@@ -226,21 +225,9 @@ const AssignRouteModal = ({
                   </>
                 ) : (
                   <>
-                    <td className="px-2 py-2">{b.serial}</td>
-                    <td className="px-2 py-2">{b.id}</td>
-                    <td className="px-2 py-2">{b.name}</td>
-                    <td className="px-2 py-2">{b.gender}</td>
-                    <td className="px-2 py-2">{b.phone}</td>
-                    <td className="px-2 py-2">{b.pickupDropPoint}</td>
-                    <td className="px-2 py-2">{b.landmark}</td>
-                    <td className="px-2 py-2">{b.shiftDetails}</td>
-                    <td className="px-2 py-2">{b.tripDirection}</td>
-                    <td className="px-2 py-2">{b.office}</td>
-                    <td className="px-2 py-2">{b.startTime}</td>
-                    <td className="px-2 py-2">{b.reachTime}</td>
-                    <td className="px-2 py-2">{b.distance}</td>
-                    <td className="px-2 py-2">{b.extraDistance}</td>
-                    <td className="px-2 py-2">{b.serviceLevel}</td>
+                    {Object.values(b).map((val, i) => (
+                      <td key={i} className="px-2 py-2">{val}</td>
+                    ))}
                   </>
                 )}
               </tr>
@@ -260,7 +247,7 @@ const AssignRouteModal = ({
     >
       <div
         ref={modalRef}
-        className="bg-white rounded-xl shadow-2xl w-full max-w-6xl flex flex-col"
+        className="bg-white rounded-xl shadow-2xl w-auto min-w-[90%] overflow-visible flex flex-col"
         tabIndex={-1}
       >
         {/* Toolbar Header */}
@@ -356,8 +343,8 @@ const AssignRouteModal = ({
               Cancel
             </button>
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               onClick={handleSave}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               type="button"
               disabled={selectedRows.length === 0 || !assignedVendor}
             >
