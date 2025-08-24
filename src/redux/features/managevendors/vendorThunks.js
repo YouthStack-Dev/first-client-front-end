@@ -11,7 +11,6 @@ import {
 export const fetchVendors = createAsyncThunk(
   'vendors/fetchVendors',
   async ({ skip = 0, limit = 25 } = {}, { rejectWithValue }) => {
-  async ({ skip = 0, limit = 25 } = {}, { rejectWithValue }) => {
     try {
       const response = await getAllVendors({ skip, limit });
       return response.data;
@@ -20,7 +19,6 @@ export const fetchVendors = createAsyncThunk(
     }
   }
 );
-
 
 
 

@@ -1,11 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import {
-  fetchVendors,
-  addVendor,
-  editVendor,
-  removeVendor,
-  fetchVendorById,
-} from './vendorThunks';
+import { fetchVendors,addVendor,editVendor,removeVendor,fetchVendorById,} from './vendorThunks';
 
 const vendorSlice = createSlice({
   name: 'vendor',

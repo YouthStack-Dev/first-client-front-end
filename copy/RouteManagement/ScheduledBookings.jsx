@@ -95,8 +95,15 @@ const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate }) => {
       className="mb-6"
       leftElements={
         <div className="flex items-center gap-4">
-        
+          {/* Back Button (go back to date selection) */}
+          <button
+            onClick={() => toggleRouting("date")}
+            className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+            <ArrowLeft className="w-4 h-4" />
+          </button>
 
+          {/* Scheduled Bookings heading */}
+          <h1 className="text-lg font-semibold text-gray-800">Scheduled Bookings </h1>
 
           {/* Shift Type Dropdown */}
           <div className="flex items-center gap-2">
@@ -112,7 +119,12 @@ const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate }) => {
           </div>
         </div>
       }
-    
+      rightElements={
+        <div className="flex items-center gap-2 text-gray-600">
+          <CalendarDays className="w-5 h-5" />
+          <span className="font-medium">{selectedDate || ""}</span>
+        </div>
+      }
     />
   );
 
