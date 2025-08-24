@@ -16,6 +16,7 @@ const vendorSlice = createSlice({
     error: null,
     isModalOpen: false,
     selectedVendor: null,
+    hasFetched: false,  
   },
   reducers: {
     openModal: (state, action) => {
@@ -46,6 +47,7 @@ const vendorSlice = createSlice({
         state.loading = false;
         state.vendors = action.payload || [];
         state.total = action.payload?.length || 0;
+        state.hasFetched = true;
       })
       .addCase(fetchVendors.rejected, (state, action) => {
         state.loading = false;

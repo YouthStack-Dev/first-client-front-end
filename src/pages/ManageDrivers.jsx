@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector,shallowEqual  } from 'react-redux';
 import { DriverList } from '../components/driver/DriverList';
 import ToolBar from '../components/ui/ToolBar';
 import Pagination from '../components/ui/Pagination';
@@ -27,7 +27,9 @@ function ManageDrivers() {
   const verificationOptions = useSelector(selectVerificationOptions);
   const activeFilters = useSelector(selectActiveFilters);
   const counts = useSelector(selectCounts);
-   const { vendor}= useSelector(state => state.vendor.user);
+
+  const { vendor}= useSelector(state => state.vendor);
+
   // Modal and form state
   const [showModal, setShowModal] = useState(false);
   const [formMode, setFormMode] = useState('create'); // 'create', 'edit', 'view'
@@ -87,9 +89,8 @@ function ManageDrivers() {
 
   useEffect(() => {
     // Fetch vendors when component mounts
-    if (vendor.length <=0) {
-    fetchVendors().then(setVendors);
-      
+    if (vendor?.length ===0) {
+    fetchVendors().then(setVendors);    
     }
   }, [vendor]);
 
