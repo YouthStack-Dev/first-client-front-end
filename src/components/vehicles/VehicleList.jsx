@@ -14,6 +14,9 @@ const VehicleList = ({
     selectedItems = [],
     onSelectItem,
   }) => {
+
+
+
     const [selectAll, setSelectAll] = useState(false);
   
     // Add serial numbers to vehicles data
@@ -120,13 +123,7 @@ const VehicleList = ({
   
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        {/* Table Header */}
-        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-          <h3 className="text-lg font-semibold text-gray-900">Vehicle List</h3>
-          <p className="text-sm text-gray-600 mt-1">
-            Showing {vehiclesWithSerial.length} of {totalPages * 10} vehicles
-          </p>
-        </div>
+  
   
         {/* Table */}
         <div className="overflow-x-auto">
@@ -188,17 +185,17 @@ const VehicleList = ({
               ) : (
                 vehiclesWithSerial.map((vehicle) => (
                   <tr 
-                    key={vehicle.id} 
+                    key={vehicle.vehicle_id} 
                     className={`hover:bg-gray-50 transition-colors ${
-                      selectedItems.includes(vehicle.id) ? 'bg-blue-50' : ''
+                      selectedItems.includes(vehicle.vehicle_id) ? 'bg-blue-50' : ''
                     }`}
                   >
                     {/* Checkbox */}
                     <td className="px-6 py-4">
                       <input
                         type="checkbox"
-                        checked={selectedItems.includes(vehicle.id)}
-                        onChange={() => handleItemSelect(vehicle.id)}
+                        checked={selectedItems.includes(vehicle.vehicle_id)}
+                        onChange={() => handleItemSelect(vehicle.vehicle_id)}
                         className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
                     </td>
@@ -211,14 +208,14 @@ const VehicleList = ({
                     {/* Vehicle ID */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm font-medium text-gray-900">
-                        {vehicle.vehicleId}
+                        {vehicle.vehicle_code}
                       </span>
                     </td>
   
                     {/* Registration Number */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm font-semibold text-blue-600">
-                        {vehicle.registrationNo}
+                        {vehicle.reg_number}
                       </span>
                     </td>
   

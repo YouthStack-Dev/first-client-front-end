@@ -3,6 +3,7 @@ import { API_CLIENT } from '../../../Api/API_Client';
 import {
   getVehicles, createVehicle ,updateVehicleApi ,deleteVehicle
 } from './vehicleApi';
+import { logDebug } from '../../../utils/logger';
 
 
 // ✅ Clear vehicles from Redux state
@@ -16,6 +17,9 @@ export const clearVehicles = () => {
 export const fetchVehicles = createAsyncThunk(
   "vehicle/fetchVehicles",
   async ({ vendorId, status = "active", offset = 0, limit = 10 }, { rejectWithValue }) => {
+
+
+    // logDebug(" thisi the vehicle id and statuse  to fetch" , vendorId ,status)
     try {
       const response = await getVehicles(vendorId, status, offset, limit);
       return {

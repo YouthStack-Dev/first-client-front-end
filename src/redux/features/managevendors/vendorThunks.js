@@ -10,15 +10,16 @@ import {
 // 🟢 Fetch Vendors (List)
 export const fetchVendors = createAsyncThunk(
   'vendors/fetchVendors',
-  async ({ skip = 0, limit = 100, tenant_id }, { rejectWithValue }) => {
+  async ({ skip = 0, limit = 25 } = {}, { rejectWithValue }) => {
     try {
-      const response = await getAllVendors({ skip, limit, tenant_id });
-      return response.data; 
+      const response = await getAllVendors({ skip, limit });
+      return response.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.detail || 'Failed to fetch vendors');
     }
   }
 );
+
 
 
 export const fetchVendorById = createAsyncThunk(

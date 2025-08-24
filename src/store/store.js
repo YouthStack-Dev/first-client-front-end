@@ -7,7 +7,9 @@ import shiftCategoryReducer from "../redux/features/Category/shiftCategorySlice"
 import shiftReducer from "../redux/features/Shifts/shiftSlice";
 import vehicleTypeReducer from "../redux/features/managevehicletype/vehicleTypeSlice";
 import vendorReducer from "../redux/features/managevendors/vendorSlice";  
-import vehicleReducer  from "../redux/features/manageVehicles/vehicleSlice";
+
+import  vehicleReducer from "../redux/features/manageVehicles/vehicleSlice";
+
 
 const store = configureStore({
   reducer: {
@@ -17,8 +19,8 @@ const store = configureStore({
     shiftCategory: shiftCategoryReducer,
     shift: shiftReducer,
     vehicleType: vehicleTypeReducer,
-    vendor: vendorReducer,  
-     vehicle: vehicleReducer,  
+    vendor: vendorReducer, 
+    vehicle:vehicleReducer 
   },
   
   middleware: (getDefaultMiddleware) => getDefaultMiddleware(),
