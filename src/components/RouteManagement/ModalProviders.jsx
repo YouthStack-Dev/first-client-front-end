@@ -69,4 +69,3 @@ const RouteModal = ({ route, mode, onClose }) => {
 };
 
 export default RouteModal;
-

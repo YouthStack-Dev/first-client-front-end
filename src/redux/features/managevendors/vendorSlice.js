@@ -26,12 +26,26 @@ const vendorSlice = createSlice({
       state.isModalOpen = false;
       state.selectedVendor = null;
     },
-    // ✅ New reducer to instantly update active/inactive in state
+    // Optimistic update: toggle status, edit, add, or remove vendor
     updateVendorStatusLocally: (state, action) => {
-      const { id, is_active } = action.payload;
-      const vendorIndex = state.vendors.findIndex((v) => v.vendor_id === id);
-      if (vendorIndex !== -1) {
-        state.vendors[vendorIndex].is_active = is_active;
+      const { id, is_active, data, remove } = action.payload;
+
+      if (remove) {
+        // Delete vendor
+        state.vendors = state.vendors.filter((v) => v.vendor_id !== id);
+      } else if (data) {
+        if (id === 'new') {
+          // Add new vendor locally
+          state.vendors.unshift(data);
+        } else {
+          // Update existing vendor locally (edit)
+          const index = state.vendors.findIndex((v) => v.vendor_id === id);
+          if (index !== -1) state.vendors[index] = { ...state.vendors[index], ...data };
+        }
+      } else if (id && typeof is_active === 'boolean') {
+        // Toggle active/inactive
+        const index = state.vendors.findIndex((v) => v.vendor_id === id);
+        if (index !== -1) state.vendors[index].is_active = is_active;
       }
     },
   },
@@ -44,8 +58,9 @@ const vendorSlice = createSlice({
       })
       .addCase(fetchVendors.fulfilled, (state, action) => {
         state.loading = false;
-        state.vendors = action.payload || [];
-        state.total = action.payload?.length || 0;
+        state.vendors = action.payload?.vendors || action.payload || [];
+        // Use total if provided for pagination
+        state.total = action.payload?.total ?? state.vendors.length;
       })
       .addCase(fetchVendors.rejected, (state, action) => {
         state.loading = false;
@@ -70,6 +85,9 @@ const vendorSlice = createSlice({
         state.vendors.unshift(action.payload);
         state.isModalOpen = false;
       })
+      .addCase(addVendor.rejected, (state, action) => {
+        state.error = action.payload;
+      })
 
       // Edit Vendor
       .addCase(editVendor.fulfilled, (state, action) => {
@@ -80,15 +98,29 @@ const vendorSlice = createSlice({
         );
         state.isModalOpen = false;
       })
+      .addCase(editVendor.rejected, (state, action) => {
+        state.error = action.payload;
+      })
 
       // Remove Vendor
       .addCase(removeVendor.fulfilled, (state, action) => {
         state.vendors = state.vendors.filter(
           (vendor) => vendor.vendor_id !== action.payload
         );
+      })
+      .addCase(removeVendor.rejected, (state, action) => {
+        state.error = action.payload;
       });
   },
 });
+
+// Selectors for encapsulated state access
+export const selectVendors = (state) => state.vendor.vendors;
+export const selectVendorById = (state, id) =>state.vendor.vendors.find((v) => v.vendor_id === id);
+export const selectIsModalOpen = (state) => state.vendor.isModalOpen;
+export const selectSelectedVendor = (state) => state.vendor.selectedVendor;
+export const selectLoading = (state) => state.vendor.loading;
+export const selectError = (state) => state.vendor.error;
 
 export const { openModal, closeModal, updateVendorStatusLocally } = vendorSlice.actions;
 export default vendorSlice.reducer;
