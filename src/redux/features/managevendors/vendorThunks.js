@@ -20,8 +20,7 @@ export const fetchVendors = createAsyncThunk(
   }
 );
 
-
-
+// 🟢 Fetch Vendor by ID
 export const fetchVendorById = createAsyncThunk(
   "vendors/fetchVendorById",
   async (vendorId, { rejectWithValue }) => {
@@ -34,41 +33,45 @@ export const fetchVendorById = createAsyncThunk(
   }
 );
 
-
-// 🟢 Add Vendor
+// 🟢 Add Vendor → then re-fetch vendors
 export const addVendor = createAsyncThunk(
   'vendors/addVendor',
-  async (vendorData, { rejectWithValue }) => {
+  async (vendorData, { rejectWithValue, dispatch }) => {
     try {
-      const response = await createVendor(vendorData);
-      // Backend returns full list after POST
-      return response;  // response is expected to be an array
+      await createVendor(vendorData);
+      // ✅ Re-fetch full list after adding
+      const updated = await dispatch(fetchVendors({ skip: 0, limit: 25 }));
+      return updated;
     } catch (err) {
       return rejectWithValue(err.response?.data?.detail || 'Failed to add vendor');
     }
   }
 );
 
-// 🟢 Edit Vendor
+// 🟢 Edit Vendor → then re-fetch vendors
 export const editVendor = createAsyncThunk(
   'vendors/editVendor',
-  async ({ id, vendorData }, { rejectWithValue }) => {
+  async ({ id, vendorData }, { rejectWithValue, dispatch }) => {
     try {
-      const response = await updateVendor(id, vendorData);
-      return response; // single updated vendor
+      await updateVendor(id, vendorData);
+      // ✅ Re-fetch full list after editing
+      const updated = await dispatch(fetchVendors({ skip: 0, limit: 25 }));
+      return updated;
     } catch (err) {
       return rejectWithValue(err.response?.data?.detail || 'Failed to update vendor');
     }
   }
 );
 
-// 🟢 Delete Vendor
+// 🟢 Delete Vendor → then re-fetch vendors
 export const removeVendor = createAsyncThunk(
   'vendors/removeVendor',
-  async (id, { rejectWithValue }) => {
+  async (id, { rejectWithValue, dispatch }) => {
     try {
       await deleteVendor(id);
-      return id;
+      // ✅ Re-fetch full list after deleting
+      const updated = await dispatch(fetchVendors({ skip: 0, limit: 25 }));
+      return updated;
     } catch (err) {
       return rejectWithValue(err.response?.data?.detail || 'Failed to delete vendor');
     }

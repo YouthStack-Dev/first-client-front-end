@@ -1,10 +1,21 @@
 import { Pencil } from "lucide-react";
 import FormField from "../FormField";
+import { useDispatch, useSelector } from 'react-redux';
 import { logDebug } from "../../utils/logger";
 import { useEffect, useState } from "react";
+import { fetchVendors } from "../../redux/features/manageVendors/vendorThunks";
 
-const DriverPersonalDetails = ({formData,errors,onChange, onImageChange,onCheckboxChange, vendors = [],loading = false,mode}) => {
+const DriverPersonalDetails = ({formData,errors,onChange, onImageChange,onCheckboxChange,loading = false,mode}) => {
 const [previewUrl, setPreviewUrl] = useState("");
+  const dispatch = useDispatch();
+  const {vendors }  = useSelector((state)=>state.vendor)
+
+   useEffect(() => {
+      if (vendors.length === 0) {
+        console.log("fetching vendors...");
+        dispatch(fetchVendors());  
+      }
+    },[vendors,dispatch]);
 
 useEffect(() => {
   if (formData.profileImage instanceof File) {

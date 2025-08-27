@@ -10,10 +10,16 @@ import {
 } from './shiftThunks';
 
 const initialState = {
-  shifts: [],           // All fetched shift records
-  status: 'idle',       // idle | loading | succeeded | failed | saving | deleting
-  error: null,          // Stores error messages (if any)
-  editingShift: null,   // Used to pre-fill form when editing
+  shifts: [],
+  status: 'idle',
+  error: null,
+  editingShift: null,
+  isModalOpen: false,
+  pagination: {
+    skip: 0,
+    limit: 20,
+    total: 0,
+  },
 };
 
 const shiftSlice = createSlice({
@@ -22,6 +28,7 @@ const shiftSlice = createSlice({
   reducers: {
     setEditingShift: (state, action) => {
       state.editingShift = action.payload;
+      state.isModalOpen = true;
     },
     clearEditingShift: (state) => {
       state.editingShift = null;
@@ -31,11 +38,20 @@ const shiftSlice = createSlice({
       state.status = 'idle';
       state.error = null;
     },
+    openModal: (state) => {
+      state.isModalOpen = true;
+    },
+    closeModal: (state) => {
+      state.isModalOpen = false;
+      state.editingShift = null;
+    },
+    setPagination: (state, action) => {
+      state.pagination = { ...state.pagination, ...action.payload };
+    },
   },
 
   extraReducers: (builder) => {
     builder
-
       // 🚚 FETCH ALL
       .addCase(fetchAllShifts.pending, (state) => {
         state.status = 'loading';
@@ -43,13 +59,15 @@ const shiftSlice = createSlice({
       })
       .addCase(fetchAllShifts.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.shifts = action.payload;
+        state.shifts = action.payload.items || action.payload;
+        if (action.payload.total !== undefined) {
+          state.pagination.total = action.payload.total;
+        }
       })
       .addCase(fetchAllShifts.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
       })
-
 
       // 🔍 FETCH BY LOG TYPE
       .addCase(fetchShiftsByLogType.pending, (state) => {
@@ -65,48 +83,42 @@ const shiftSlice = createSlice({
         state.error = action.payload;
       })
 
-
-      // ➕ CREATE SHIFT
+      // ➕ CREATE SHIFT (fetch all after create)
       .addCase(createShift.pending, (state) => {
         state.status = 'saving';
         state.error = null;
       })
-      .addCase(createShift.fulfilled, (state, action) => {
+      .addCase(createShift.fulfilled, (state) => {
         state.status = 'succeeded';
-        state.shifts.push(action.payload);
+        state.isModalOpen = false;
       })
       .addCase(createShift.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
       })
 
-
-      // ✏️ UPDATE SHIFT
+      // ✏️ UPDATE SHIFT (fetch all after update)
       .addCase(updateShift.pending, (state) => {
         state.status = 'saving';
         state.error = null;
       })
-      .addCase(updateShift.fulfilled, (state, action) => {
+      .addCase(updateShift.fulfilled, (state) => {
         state.status = 'succeeded';
-        const index = state.shifts.findIndex((s) => s.id === action.payload.id);
-        if (index !== -1) {
-          state.shifts[index] = action.payload;
-        }
+        state.isModalOpen = false;
+        state.editingShift = null;
       })
       .addCase(updateShift.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
       })
 
-
-      // ❌ DELETE SHIFT
+      // ❌ DELETE SHIFT (fetch all after delete)
       .addCase(deleteShiftById.pending, (state) => {
         state.status = 'deleting';
         state.error = null;
       })
-      .addCase(deleteShiftById.fulfilled, (state, action) => {
+      .addCase(deleteShiftById.fulfilled, (state) => {
         state.status = 'succeeded';
-        state.shifts = state.shifts.filter((s) => s.id !== action.payload);
       })
       .addCase(deleteShiftById.rejected, (state, action) => {
         state.status = 'failed';
@@ -115,5 +127,21 @@ const shiftSlice = createSlice({
   },
 });
 
-export const { setEditingShift, clearEditingShift, clearShifts } = shiftSlice.actions;
+export const {
+  setEditingShift,
+  clearEditingShift,
+  clearShifts,
+  openModal,
+  closeModal,
+  setPagination,
+} = shiftSlice.actions;
+
+// ✅ Selectors
+export const selectShifts = (state) => state.shift.shifts;
+export const selectShiftStatus = (state) => state.shift.status;
+export const selectShiftError = (state) => state.shift.error;
+export const selectEditingShift = (state) => state.shift.editingShift;
+export const selectShiftModalOpen = (state) => state.shift.isModalOpen;
+export const selectShiftPagination = (state) => state.shift.pagination;
+
 export default shiftSlice.reducer;

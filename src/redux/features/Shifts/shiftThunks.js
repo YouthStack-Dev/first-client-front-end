@@ -7,22 +7,18 @@ import {
   deleteShift,
 } from './shiftAPI';
 
-
 // 🔄 Get All Shifts
 export const fetchAllShifts = createAsyncThunk(
   'shift/fetchAllShifts',
-  async (_, { rejectWithValue }) => {
+  async ({ skip = 0, limit = 20 } = {}, { rejectWithValue }) => {
     try {
-      const response = await getAllShifts();
+      const response = await getAllShifts(skip, limit);
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.detail || 'Failed to fetch shifts'
-      );
+      return rejectWithValue(error.response?.data?.detail || 'Failed to fetch shifts');
     }
   }
 );
-
 
 // 🔍 Get Shifts by Log Type
 export const fetchShiftsByLogType = createAsyncThunk(
@@ -32,56 +28,49 @@ export const fetchShiftsByLogType = createAsyncThunk(
       const response = await getShiftsByLogType(logType);
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.detail || 'Failed to fetch shifts by log type'
-      );
+      return rejectWithValue(error.response?.data?.detail || 'Failed to fetch shifts by log type');
     }
   }
 );
 
-// ➕ Create Shift
+// ➕ Create Shift → then fetch all shifts
 export const createShift = createAsyncThunk(
   'shift/createShift',
-  async (shiftData, { rejectWithValue }) => {
+  async (shiftData, { rejectWithValue, dispatch }) => {
     try {
-      const response = await postShift(shiftData);
-      return response.data;
+      await postShift(shiftData);
+      const updated = await dispatch(fetchAllShifts());
+      return { status: 'success', data: updated };
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.detail || 'Failed to create shift'
-      );
+      return rejectWithValue(error.response?.data?.detail || 'Failed to create shift');
     }
   }
 );
 
-
-// ✏️ Update Shift
+// ✏️ Update Shift → then fetch all shifts
 export const updateShift = createAsyncThunk(
   'shift/updateShift',
-  async (shiftData, { rejectWithValue }) => {
+  async ({ id, ...updateData }, { rejectWithValue, dispatch }) => {
     try {
-      const response = await putShift(shiftData.id, shiftData);
-      return response.data;
+      await putShift(id, updateData);
+      const updated = await dispatch(fetchAllShifts());
+      return { status: 'success', data: updated };
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.detail || 'Failed to update shift'
-      );
+      return rejectWithValue(error.response?.data?.detail || 'Failed to update shift');
     }
   }
 );
 
-
-// ❌ Delete Shift
+// ❌ Delete Shift → then fetch all shifts
 export const deleteShiftById = createAsyncThunk(
   'shift/deleteShiftById',
-  async (id, { rejectWithValue }) => {
+  async (id, { rejectWithValue, dispatch }) => {
     try {
       await deleteShift(id);
-      return id; // return deleted ID so slice can filter it
+      const updated = await dispatch(fetchAllShifts());
+      return { status: 'success', data: updated };
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.detail || 'Failed to delete shift'
-      );
+      return rejectWithValue(error.response?.data?.detail || 'Failed to delete shift');
     }
   }
 );
