@@ -73,25 +73,15 @@ function ManageDrivers() {
   };
 
   // Fetch vendors for the form
-  const fetchVendors = async () => {
-    try {
-      const response = await API_CLIENT.get('/vendors/');
-      return response.data || [];
-    } catch (err) {
-      console.error('Error fetching vendors:', err);
-      return [];
-    }
-  };
+  
 
   const [vendors, setVendors] = useState([]);
 
-  useEffect(() => {
-    // Fetch vendors when component mounts
-    if (vendor.length <=0) {
+useEffect(() => {
+  if (vendor?.length === 0) {
     fetchVendors().then(setVendors);
-      
-    }
-  }, [vendor]);
+  }
+}, [vendor]);
 
   useEffect(() => {
     // Fetch drivers if:

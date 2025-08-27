@@ -6,9 +6,8 @@ import userReducer from "../redux/features/user/userSlice";
 import shiftCategoryReducer from "../redux/features/Category/shiftCategorySlice";
 import shiftReducer from "../redux/features/Shifts/shiftSlice";
 import vehicleTypeReducer from "../redux/features/managevehicletype/vehicleTypeSlice";
-import vendorReducer from "../redux/features/manageVendors/vendorSlice";  
 import  vehicleReducer from "../redux/features/manageVehicles/vehicleSlice";
-
+import vendorReducer from "@features/manageVendors/vendorSlice";
 
 const store = configureStore({
   reducer: {

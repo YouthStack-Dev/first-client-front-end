@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
-import PermissionDenied from "../components/PermissionDenied";
 import VehicleForm from "../components/VehicleForm";
 import { fetchVendors } from "../redux/features/manageVendors/vendorThunks";
 import { fetchVehicleTypes } from "../redux/features/managevehicletype/vehicleTypeThunks";

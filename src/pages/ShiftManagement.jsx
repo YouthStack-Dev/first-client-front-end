@@ -3,8 +3,25 @@ import { useDispatch, useSelector } from 'react-redux';
 import ShiftForm from '../components/shiftForm';
 import PopupModal from '../components/PopupModal';
 import DynamicTable from '../components/DynamicTable';
-import { Trash2, Edit } from 'lucide-react';
-import {fetchShiftsByLogType, fetchAllShifts,createShift,updateShift,deleteShiftById,} from '../redux/features/Shifts/shiftThunks';
+import ToolBar from '../components/ui/ToolBar';
+import { Trash2, Edit, Plus } from 'lucide-react';
+import { toast } from 'react-toastify';
+import {
+  fetchShiftsByLogType,
+  fetchAllShifts,
+  createShift,
+  updateShift,
+  deleteShiftById,
+} from '../redux/features/Shifts/shiftThunks';
+import {
+  setEditingShift,
+  clearEditingShift,
+  openModal,
+  closeModal,
+  selectShifts,
+  selectEditingShift,
+  selectShiftModalOpen,
+} from '../redux/features/Shifts/shiftSlice';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
@@ -23,30 +40,45 @@ const TABS = [
   { key: 'logout', label: 'Logout Shifts' },
 ];
 
+const initialForm = {
+  shiftCode: '',
+  shiftType: '',
+  hours: '',
+  minutes: '',
+  days: [],
+  waitingTime: '',
+  pickOn: '',
+  gender: '',
+  isActive: true,
+};
+
+// ✅ Helper function to map a shift to formData
+const mapShiftToForm = (shift) => {
+  const [hours, minutes] = shift.shift_time.split(':');
+  return {
+    shiftCode: shift.shift_code,
+    shiftType: shift.log_type === 'in' ? 'login' : 'logout',
+    hours,
+    minutes,
+    days: Array.isArray(shift.day) ? shift.day : [shift.day],
+    waitingTime: shift.waiting_time_minutes.toString(),
+    pickOn: shift.pickup_type,
+    gender: shift.gender,
+    isActive: shift.is_active,
+  };
+};
+
 const ShiftManagement = () => {
   const dispatch = useDispatch();
-  const { shifts } = useSelector((state) => state.shift);
+  const shifts = useSelector(selectShifts);
+  const editingShift = useSelector(selectEditingShift);
+  const isModalOpen = useSelector(selectShiftModalOpen);
 
   const [activeTab, setActiveTab] = useState('all');
-  const [showPopup, setShowPopup] = useState(false);
-  const [editId, setEditId] = useState(null);
-
-  const initialForm = {
-    shiftCode: '',
-    shiftType: '',
-    hours: '',
-    minutes: '',
-    days: [],
-    waitingTime: '',
-    pickOn: '',
-    gender: '',
-    isActive: true,
-  };
-
   const [formData, setFormData] = useState(initialForm);
 
+  // 🔄 Load shifts on mount or tab change
   useEffect(() => {
-    // if (!canRead) return;
     if (shifts.length === 0) {
       if (activeTab === 'all') dispatch(fetchAllShifts());
       else if (activeTab === 'login') dispatch(fetchShiftsByLogType('in'));
@@ -54,58 +86,53 @@ const ShiftManagement = () => {
     }
   }, [dispatch, activeTab, shifts.length]);
 
-
-  const resetForm = () => {
-    setFormData(initialForm);
-    setEditId(null);
-  };
+  // 📝 Prefill form when editingShift changes
+  useEffect(() => {
+    if (editingShift) setFormData(mapShiftToForm(editingShift));
+    else setFormData(initialForm);
+  }, [editingShift]);
 
   const handleAddShift = () => {
-    resetForm();
-    setShowPopup(true);
+    dispatch(clearEditingShift());
+    dispatch(openModal());
   };
 
   const handleSave = () => {
+    const logTypeMap = { login: "in", logout: "out" };
     const payload = {
       shift_code: formData.shiftCode,
-      log_type: formData.shiftType === 'login' ? 'in' : 'out',
-      shift_time: `${formData.hours.toString().padStart(2, '0')}:${formData.minutes.toString().padStart(2, '0')}:00`,
-      day: formData.days.map(d => d.toLowerCase()),
+      log_type: logTypeMap[formData.shiftType] || formData.shiftType,
+      shift_time: `${String(formData.hours).padStart(2, "0")}:${String(formData.minutes).padStart(2, "0")}:00`,
+      day: (formData.days || []).map(d => d.toLowerCase()),
       waiting_time_minutes: Number(formData.waitingTime),
       pickup_type: formData.pickOn,
       gender: formData.gender,
       is_active: formData.isActive,
-      tenant_id: 1,
     };
-    if (editId) {
-      dispatch(updateShift({ ...payload, id: editId }));
-    } else {
-      dispatch(createShift(payload));
-    }
-    setShowPopup(false);
-    resetForm();
+
+    const action = editingShift
+      ? updateShift({ ...payload, id: editingShift.id })
+      : createShift(payload);
+
+    dispatch(action)
+      .unwrap()
+      .then(() => {
+        toast.success(`Shift "${formData.shiftCode}" ${editingShift ? 'updated' : 'added'} successfully`);
+        dispatch(closeModal()); // ✅ close only on success
+      })
+      .catch(() => toast.error(`Failed to ${editingShift ? 'update' : 'add'} shift`));
   };
 
   const handleEdit = (shift) => {
-    const [hours, minutes] = shift.shift_time.split(':');
-    setFormData({
-      shiftCode: shift.shift_code,
-      shiftType: shift.log_type === 'in' ? 'login' : 'logout',
-      hours,
-      minutes,
-      days: Array.isArray(shift.day) ? shift.day : [shift.day],
-      waitingTime: shift.waiting_time_minutes.toString(),
-      pickOn: shift.pickup_type,
-      gender: shift.gender,
-      isActive: shift.is_active,
-    });
-    setEditId(shift.id);
-    setShowPopup(true);
+    dispatch(setEditingShift(shift));
   };
 
   const handleDelete = (shift) => {
     if (window.confirm('Are you sure you want to delete this shift?')) {
-      dispatch(deleteShiftById(shift.id));
+      dispatch(deleteShiftById(shift.id))
+        .unwrap()
+        .then(() => toast.success(`Shift "${shift.shift_code}" deleted successfully`))
+        .catch(() => toast.error('Failed to delete shift'));
     }
   };
 
@@ -126,18 +153,19 @@ const ShiftManagement = () => {
 
   return (
     <div className="w-full min-h-screen bg-gray-50 px-8 py-6">
-      <div className="flex justify-between items-center mb-4">
-        <button onClick={handleAddShift} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-          + Add Shift
-        </button>
-      </div>
+      <ToolBar
+        title="Shift Management"
+        onAddClick={handleAddShift}
+        addButtonLabel="Add Shift"
+        addButtonIcon={<Plus size={16} />}
+      />
 
-      <div className="flex space-x-4 border-b mb-4">
+      <div className="flex space-x-4 border-b mb-6 mt-4">
         {TABS.map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 ${
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
               activeTab === tab.key
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-300'
@@ -148,33 +176,43 @@ const ShiftManagement = () => {
         ))}
       </div>
 
-      {showPopup && (
-        <PopupModal title="Shift Form" isOpen={true} onClose={() => setShowPopup(false)}>
+      {isModalOpen && (
+        <PopupModal title="Shift Form" isOpen={true} onClose={() => dispatch(closeModal())}>
           <ShiftForm
             formData={formData}
             setFormData={setFormData}
-            onCancel={() => setShowPopup(false)}
+            onCancel={() => dispatch(closeModal())}
             onSave={handleSave}
           />
         </PopupModal>
       )}
 
-      <div className="mt-4 bg-white rounded shadow p-4 overflow-x-auto">
-        <DynamicTable
-          headers={shiftHeaders}
-          data={transformedShifts}
-          onMenuToggle={() => {}}
-          renderActions={(row) => (
-            <div className="flex gap-2">
-              <button onClick={() => handleEdit(row)} className="text-blue-600 hover:underline">
-                <Edit size={14} />
-              </button>
-              <button onClick={() => handleDelete(row)} className="text-red-600 hover:underline">
-                <Trash2 size={14} />
-              </button>
-            </div>
-          )}
-        />
+      <div className="mt-4 bg-white rounded-xl shadow-lg border overflow-hidden">
+        <div className="overflow-x-auto">
+          <DynamicTable
+            headers={shiftHeaders}
+            data={transformedShifts}
+            onMenuToggle={() => {}}
+            renderActions={(row) => (
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => handleEdit(row)}
+                  className="p-2 rounded-full hover:bg-blue-50 text-blue-600"
+                  title="Edit"
+                >
+                  <Edit size={16} />
+                </button>
+                <button
+                  onClick={() => handleDelete(row)}
+                  className="p-2 rounded-full hover:bg-red-50 text-red-600"
+                  title="Delete"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            )}
+          />
+        </div>
       </div>
     </div>
   );
