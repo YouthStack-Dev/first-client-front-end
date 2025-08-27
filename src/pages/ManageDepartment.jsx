@@ -48,19 +48,6 @@ const ManageDepartment = () => {
     setIsOpen(true);
   };
 
-  // Handle department filter change
-  const handleDepartmentFilterChange = (option) => {
-    setDepartmentFilter(option);
-  };
-
-  // Clear all filters
-  const clearFilters = () => {
-    setSearchTerm('');
-    setDepartmentFilter(null);
-  };
-
-  // Check if any filters are active
-  const hasActiveFilters = searchTerm || departmentFilter;
 
   // Fetch teams with pagination
   useEffect(() => {
@@ -68,6 +55,7 @@ const ManageDepartment = () => {
       setIsLoading(true);
       try {
         const data = await fetchDepartments(currentPage, itemsPerPage, searchTerm);
+        logDebug('Fetched teams:', data);
         dispatch(setTeams(data));
         setTotalItems(data.length);
       } catch (error) {
@@ -152,11 +140,6 @@ const ManageDepartment = () => {
     setIsOpen(false);
   };
 
-  // Prepare department options for filter
-  const departmentOptions = [
-    { id: 'all', name: 'All Departments' },
-    ...teams.map(team => ({ id: team.id, name: team.name }))
-  ];
 
   return (
     <div >

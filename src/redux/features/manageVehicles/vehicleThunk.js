@@ -16,12 +16,12 @@ export const clearVehicles = () => {
 
 export const fetchVehicles = createAsyncThunk(
   "vehicle/fetchVehicles",
-  async ({ vendorId, status = "active", offset = 0, limit = 10 }, { rejectWithValue }) => {
+  async ({ vendorId, offset = 0, limit = 10 }, { rejectWithValue }) => {
 
 
     // logDebug(" thisi the vehicle id and statuse  to fetch" , vendorId ,status)
     try {
-      const response = await getVehicles(vendorId, status, offset, limit);
+      const response = await getVehicles(vendorId, offset, limit);
       return {
         data: response.data,           
         total: response.data.length,  

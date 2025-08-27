@@ -1,8 +1,8 @@
 import { API_CLIENT } from '../../../Api/API_Client';
 
 
-export const getVehicles = (vendorId, status = "active", offset = 0, limit = 10) =>
-  API_CLIENT.get(`/vendors/vehicles/?vendor_id=${vendorId}&status=${status}&limit=${limit}&offset=${offset}`);
+export const getVehicles = (vendorId, offset = 0, limit = 10) =>
+  API_CLIENT.get(`/vendors/vehicles/?vendor_id=${vendorId}&limit=${limit}&offset=${offset}`);
 
 
 export const createVehicle = async (vendorId, formData) => {

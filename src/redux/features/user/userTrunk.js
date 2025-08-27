@@ -27,7 +27,8 @@ export const fetchDepartments = async (page = 1, limit = 20) => {
     id: dept.department_id,
     name: dept.department_name,
     description: dept.description,
-    employeeIds: [],
-    users: dept.employee_count
+    users: dept.employee_count,
+    active:dept.active_count,
+    inactive:dept.inactive_count,
   }));
 };

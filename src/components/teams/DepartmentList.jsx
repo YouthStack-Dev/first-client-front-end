@@ -91,13 +91,13 @@ const DepartmentList = ({
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center text-sm text-green-600">
                         <UserCheck size={14} className="mr-1" />
-                        {department.activeEmployees || 0}
+                        {department.active || 0}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center text-sm text-red-600">
                         <UserX size={14} className="mr-1" />
-                        {department.inactiveEmployees || 0}
+                        {department.inactive || 0}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
