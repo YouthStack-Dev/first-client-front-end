@@ -12,7 +12,7 @@ import {
   fetchVendors,
   editVendor,
   removeVendor,
-} from "../redux/features/manageVendors/vendorThunks";
+} from "@features/manageVendors/vendorThunks";
 
 // ✅ Common mapper for Add/Edit
 const mapVendorData = (source = {}, formData = {}) => ({

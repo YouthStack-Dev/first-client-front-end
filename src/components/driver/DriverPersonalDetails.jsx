@@ -3,7 +3,7 @@ import FormField from "../FormField";
 import { useDispatch, useSelector } from 'react-redux';
 import { logDebug } from "../../utils/logger";
 import { useEffect, useState } from "react";
-import { fetchVendors } from "../../redux/features/manageVendors/vendorThunks";
+import { fetchVendors } from "@features/manageVendors/vendorThunks";
 
 const DriverPersonalDetails = ({formData,errors,onChange, onImageChange,onCheckboxChange,loading = false,mode}) => {
 const [previewUrl, setPreviewUrl] = useState("");

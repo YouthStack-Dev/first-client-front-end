@@ -7,7 +7,7 @@ import SearchInput from "../ui/SearchInput";
 import ActiveFilterToggle from "../ui/ActiveFilterToggle";
 import { useDispatch, useSelector } from "react-redux";
 import { logDebug } from "../../utils/logger";
-import { fetchVendors } from "../../redux/features/manageVendors/vendorThunks";
+import { fetchVendors } from "@features/manageVendors/vendorThunks";
 import { fetchVehicles } from "../../redux/features/manageVehicles/vehicleThunk";
 
 const ManageVehicles = () => {
