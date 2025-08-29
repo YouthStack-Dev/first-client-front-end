@@ -9,7 +9,7 @@ import ScheduledBookings from "../components/RouteManagement/ScheduledBookings";
   const [routingData, setRoutingData] = useState([]);
 
   return (
-    <div >
+    <div >  
    
       {toggle === "booking" && (
         <ScheduledBookings

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Building2, Edit, Trash, History, Users, UserCheck, UserX } from 'lucide-react';
+import { Building2, Edit, Trash, History, UserCheck, UserX } from 'lucide-react';
 import Pagination from '../Pagination';
 import { logDebug } from '../../utils/logger';
 
@@ -49,9 +49,6 @@ const DepartmentList = ({
                     Description
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-app-text-secondary uppercase tracking-wider">
-                    Employees
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-app-text-secondary uppercase tracking-wider">
                     Active
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-app-text-secondary uppercase tracking-wider">
@@ -81,24 +78,23 @@ const DepartmentList = ({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button
-                        className="flex items-center bg-sidebar-accent-100 text-sidebar-accent-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-sidebar-accent-200 transition-colors"
-                        onClick={() => onViewEmployees(department.id)}
+                        className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-green-200 transition-colors"
+                        onClick={() => onViewEmployees(department.id, true)} 
+                        title="View Active Employees"
                       >
-                        <Users size={14} className="mr-1" />
-                        {department.users || 0}
+                        <UserCheck size={14} className="mr-1" />
+                        {department.active || 0}
                       </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-green-600">
-                        <UserCheck size={14} className="mr-1" />
-                        {department.active || 0}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-red-600">
+                      <button
+                        className="flex items-center bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-red-200 transition-colors"
+                        onClick={() => onViewEmployees(department.id, false)} // for inactive
+                        title="View Inactive Employees"
+                      >
                         <UserX size={14} className="mr-1" />
                         {department.inactive || 0}
-                      </div>
+                      </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-3">

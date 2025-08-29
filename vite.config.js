@@ -12,7 +12,7 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, './src'),
       '@features': resolve(__dirname, './src/redux/features'),
-      // Add other aliases as needed
+      
     }
   }
 });

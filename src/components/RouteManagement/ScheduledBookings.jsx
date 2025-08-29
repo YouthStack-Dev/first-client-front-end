@@ -1,19 +1,18 @@
 import React, { useEffect, useState } from "react";
-import {
-  ArrowUpRight,
-  ArrowDownRight,
-  ArrowLeft,
-  CalendarDays,
-} from "lucide-react";
 import ScheduleBooks from "../../staticData/ScheduleBooks";
 import ToolBar from "../ui/ToolBar";
+import ScheduleList from "./ScheduleList";
+import { API_CLIENT } from "../../Api/API_Client";
 
-const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate }) => {
+const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate: initialSelectedDate }) => {
+  const [selectedDate, setSelectedDate] = useState(initialSelectedDate || new Date().toISOString().split('T')[0]);
   const [selectedShiftType, setSelectedShiftType] = useState("All");
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedShift, setSelectedShift] = useState(null);
   const [shiftBookings, setShiftBookings] = useState([]);
   const [selectedOption, setSelectedOption] = useState("Select option");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const [hasRoutesPermission] = useState(true);
   const [hasTripSheetsPermission] = useState(false);
@@ -28,13 +27,50 @@ const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate }) => {
     "Upload Vehicle",
   ];
 
-  // 🔹 Load shifts for the selected date
-  useEffect(() => {
-    const dateData = ScheduleBooks[selectedDate];
-    if (dateData?.TimeShifts) {
-      let shifts = dateData.TimeShifts;
+  // 🔹 Fetch shifts data from backend API
+  const fetchShiftsData = async (date) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Replace with your actual API endpoint
+      const response = await API_CLIENT.get(`/admin/shift-bookings/?date=${date}`);
+      
+     
+      
+      const {data} = await response.data
 
-      // Apply filter: In / Out
+      if (response.status === 200) {
+        // Transform the API response to match the expected format
+        
+        setShiftBookings(data.shifts || []);
+      } else {
+        throw new Error(data.message || "Failed to fetch shifts data");
+      }
+    } catch (err) {
+      console.error("Error fetching shifts data:", err);
+      setError(err.message);
+      // Fallback to static data if API fails
+      if (ScheduleBooks[selectedDate]?.TimeShifts) {
+        setShiftBookings(ScheduleBooks[selectedDate].TimeShifts);
+      } else {
+        setShiftBookings([]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔹 Load shifts when selected date changes
+  useEffect(() => {
+    fetchShiftsData(selectedDate);
+  }, [selectedDate]);
+
+  // 🔹 Apply filter: In / Out
+  useEffect(() => {
+    if (ScheduleBooks[selectedDate]?.TimeShifts) {
+      let shifts = ScheduleBooks[selectedDate].TimeShifts;
+
       if (selectedShiftType !== "All") {
         shifts = shifts.filter((shift) =>
           selectedShiftType === "In"
@@ -44,8 +80,6 @@ const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate }) => {
       }
 
       setShiftBookings(shifts);
-    } else {
-      setShiftBookings([]);
     }
   }, [selectedDate, selectedShiftType]);
 
@@ -95,16 +129,25 @@ const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate }) => {
       className="mb-6"
       leftElements={
         <div className="flex items-center gap-4">
-        
-
-
+          {/* Date Input */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600">Date</label>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-1 text-sm"
+            />
+          </div>
+          
           {/* Shift Type Dropdown */}
           <div className="flex items-center gap-2">
             <label className="text-sm text-gray-600">Shift Type</label>
             <select
               value={selectedShiftType}
               onChange={(e) => setSelectedShiftType(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-1 text-sm" >
+              className="border border-gray-300 rounded-md px-3 py-1 text-sm"
+            >
               <option value="All">All</option>
               <option value="In">LogIn</option>
               <option value="Out">LogOut</option>
@@ -112,15 +155,27 @@ const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate }) => {
           </div>
         </div>
       }
-    
     />
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto px-4 py-6">
+    <div className="bg-gray-50">
+      <div className="mx-auto px-2 py-1">
         {/* Top Toolbar */}
         {topToolbar}
+
+        {/* Loading and Error States */}
+        {loading && (
+          <div className="text-center py-4">
+            <p>Loading shifts data...</p>
+          </div>
+        )}
+        
+        {error && (
+          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+            <p>Error: {error}. Using fallback data.</p>
+          </div>
+        )}
 
         {/* Panels */}
         {visiblePanelsCount > 0 ? (
@@ -130,149 +185,21 @@ const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate }) => {
             } gap-6`}
           >
             {hasRoutesPermission && (
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-                {/* Actions toolbar */}
-                <ToolBar
-                  className="border-b"
-                  leftElements={
-                    <select
-                      value={selectedOption}
-                      onChange={(e) => setSelectedOption(e.target.value)}
-                      className="text-sm border rounded px-2 py-1 w-40"
-                    >
-                      {shiftOptions.map((opt, idx) => (
-                        <option key={idx} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
-                  }
-                  rightElements={
-                    <button
-                      className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition"
-                      onClick={() =>
-                        handleShiftOption(selectedOption, selectedShift)
-                      }
-                    >
-                      GO
-                    </button>
-                  }
-                />
-
-                {/* Shifts Table */}
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead className="bg-gray-100 text-[13px] text-black">
-                      <tr>
-                        {[
-                          "Shift Time (Type)",
-                          "Employees (Routes)",
-                          "Manage Routes",
-                          "Fleet Mix (Vehicle Occupancy)",
-                          "Vehicles/Vendors/Routes",
-                        ].map((col) => (
-                          <th
-                            key={col}
-                            className="px-4 py-3 text-left font-medium uppercase tracking-wider"
-                          >
-                            {col}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      <tr className="bg-gray-50 font-semibold">
-                        <td className="px-4 py-3">
-                          Total - Login: {totalLogin}, Logout: {totalLogout}
-                        </td>
-                        <td className="px-4 py-3">
-                          {shiftBookings.reduce(
-                            (sum, s) => sum + (s.bookings?.length || 0),
-                            0
-                          )}
-                        </td>
-                        <td className="px-4 py-3"></td>
-                        <td className="px-4 py-3">Generated</td>
-                        <td className="px-4 py-3">
-                          {`${shiftBookings.reduce(
-                            (sum, s) => sum + getVendorCount(s.routes),
-                            0
-                          )}/${shiftBookings.reduce(
-                            (sum, s) => sum + getVehicleCount(s.routes),
-                            0
-                          )}/${shiftBookings.reduce(
-                            (sum, s) => sum + (s.routes?.length || 0),
-                            0
-                          )}`}
-                        </td>
-                      </tr>
-
-                      {shiftBookings.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan={5}
-                            className="text-center py-4 text-gray-500"
-                          >
-                            No shifts available
-                          </td>
-                        </tr>
-                      ) : (
-                        shiftBookings.map((shift, idx) => (
-                          <tr
-                            key={idx}
-                            className={
-                              idx % 2 === 0 ? "bg-white" : "bg-gray-50"
-                            }
-                          >
-                            <td className="px-4 py-3 flex items-center">
-                              {shift.bookingType === "LOGIN" ? (
-                                <ArrowUpRight className="w-4 h-4 text-green-600 mr-2" />
-                              ) : (
-                                <ArrowDownRight className="w-4 h-4 text-red-600 mr-2" />
-                              )}
-                              {shift.shift} ({shift.bookingType})
-                            </td>
-                            <td className="px-4 py-3">
-                              <button
-                                onClick={() => handleButtonClick(shift)}
-                                className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition"
-                              >
-                                {shift.routes?.length === 0
-                                  ? "Schedule"
-                                  : "Routed"}{" "}
-                                {shift.bookings?.length || 0}
-                              </button>
-                            </td>
-                            <td className="px-4 py-3">
-                              <input type="checkbox" className="h-4 w-4" />
-                            </td>
-                            <td className="px-4 py-3 text-gray-600">
-                              {shift.routes
-                                ?.map(
-                                  (r) =>
-                                    `${r.vehicleType || "SEDAN"}:${
-                                      r.vehicleCount || 0
-                                    } (${r.occupancy || 0}%)`
-                                )
-                                .join(", ")}
-                            </td>
-                            <td className="px-4 py-3 text-gray-600">
-                              <button
-                                onClick={() => handleRoutingView(shift)}
-                                className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition"
-                              >
-                                {`${getVendorCount(shift.routes)}/${getVehicleCount(
-                                  shift.routes
-                                )}/${shift.routes?.length || 0}`}
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              <ScheduleList
+                shiftBookings={shiftBookings}
+                totalLogin={totalLogin}
+                totalLogout={totalLogout}
+                hasRoutesPermission={hasRoutesPermission}
+                selectedOption={selectedOption}
+                setSelectedOption={setSelectedOption}
+                shiftOptions={shiftOptions}
+                handleShiftOption={handleShiftOption}
+                handleButtonClick={handleButtonClick}
+                handleRoutingView={handleRoutingView}
+                getVendorCount={getVendorCount}
+                getVehicleCount={getVehicleCount}
+                selectedShift={selectedShift}
+              />
             )}
           </div>
         ) : (
@@ -281,7 +208,7 @@ const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate }) => {
               No Panels Available
             </h2>
             <p className="text-gray-500 mt-2">
-              You don’t have permission to view any panels.
+              You don't have permission to view any panels.
             </p>
           </div>
         )}

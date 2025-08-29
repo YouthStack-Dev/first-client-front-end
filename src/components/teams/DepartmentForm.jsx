@@ -41,7 +41,9 @@ const dispatch = useDispatch();
       // Re-fetch full list of departments
       const departments = await fetchDepartments();
       dispatch(setDepartments(departments)); // <-- you need a reducer like this
-  
+      onSuccess?.();
+      onClose?.();
+      setFormData({ department_name: '', description: '' })
     } catch (error) {
       logError("this is the error", error);
       toast.error(error.response?.data?.detail || '');

@@ -6,11 +6,7 @@ import DepartmentForm from '../components/teams/DepartmentForm';
 import DepartmentList from '../components/teams/DepartmentList';
 import { useDispatch, useSelector } from 'react-redux';
 import { API_CLIENT } from '../Api/API_Client';
-import {
-  setTeams,
-  upsertTeam,
-  removeTeam
-} from '../redux/features/user/userSlice';
+import { setTeams,upsertTeam, removeTeam} from '../redux/features/user/userSlice';
 import { logDebug, logError } from '../utils/logger';
 import { fetchDepartments } from '../redux/features/user/userTrunk';
 import ToolBar from '../components/ui/ToolBar';
@@ -34,8 +30,6 @@ const ManageDepartment = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [editingTeam, setEditingTeam] = useState(null);
-  const [viewActive, setViewActive] = useState(true);
-  const [departmentFilter, setDepartmentFilter] = useState(null);
 
   // Handle search input change
   const handleSearchChange = (e) => {
@@ -48,9 +42,14 @@ const ManageDepartment = () => {
     setIsOpen(true);
   };
 
-
   // Fetch teams with pagination
   useEffect(() => {
+
+    if (teamIds.length > 0) {
+      logDebug('Teams already fetched, skipping API call');
+      return;
+
+    }
     const fetchTeams = async () => {
       setIsLoading(true);
       try {
@@ -111,35 +110,14 @@ const ManageDepartment = () => {
     }
   };
 
-  const handleViewEmployees = (departmentId) => {
-    navigate(`/department/${departmentId}/employees`);
+  const handleViewEmployees = (departmentId, isActive) => {
+    navigate(`/department/${departmentId}/employees?active=${isActive}`);
   };
 
-  const handleFormSuccess = (teamData) => {
-    logDebug(" debug data based from submission " ,teamData)
-    // Transform the form data to match your Redux structure
-    // const transformedData = {
-    //   id: teamData.department_id,
-    //   name: teamData.department_name,
-    //   description: teamData.description,
-    // };
-
-    // if (editingTeam) {
-    //   // Update existing team
-    //   dispatch(upsertTeam(transformedData));
-    // } else {
-    //   // Add new team
-    //   dispatch(upsertTeam(transformedData));
-      
-    //   // If we're not on the first page, go to first page to see the new item
-    //   if (currentPage !== 1) {
-    //     setCurrentPage(1);
-    //   }
-    // }
+  const handleFormSuccess = () => {
     setEditingTeam(null);
     setIsOpen(false);
   };
-
 
   return (
     <div >
@@ -156,19 +134,14 @@ const ManageDepartment = () => {
               onChange={handleSearchChange}
               className="flex-grow"
             />
-            
-   
           </div>
         }
-
         rightElements={
           <button className="flex items-center gap-2 px-2  p-1 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">
-      <UserPlus size={17} />
-      Employee
-    </button>
-          
+            <UserPlus size={17} />
+            Employee
+          </button>
         }
-      
       />
 
       {/* Department List Component */}
