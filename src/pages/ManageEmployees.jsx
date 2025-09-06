@@ -112,6 +112,7 @@ const ManageEmployees = () => {
   return (
     <div>
       <ToolBar
+      title={`Employees in Department ${depId}`}
         onAddClick={handleAddClick}
         addButtonLabel="Add employee"
         addButtonIcon={<Plus size={16} />}

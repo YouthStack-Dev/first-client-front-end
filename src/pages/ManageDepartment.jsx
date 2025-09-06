@@ -110,7 +110,7 @@ const ManageDepartment = () => {
     }
   };
 
-  const handleViewEmployees = (departmentId, isActive) => {
+  const handleViewEmployees = (departmentId, isActive,depname) => {
     navigate(`/department/${departmentId}/employees?active=${isActive}`);
   };
 
