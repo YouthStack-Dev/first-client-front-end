@@ -161,7 +161,7 @@ export const CreateRoleForm = ({
             {/* Module Permissions */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Module Permissions</h3>
+                <h3 className="text-lg font-medium text-gray-900">Module Permissions ddd</h3>
                 <div className="text-sm text-gray-500">
                   {formData.permissions.length} of {availableModules.length} modules configured
                 </div>

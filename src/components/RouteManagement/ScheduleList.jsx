@@ -1,7 +1,5 @@
 import React from "react";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
-import { logDebug } from "../../utils/logger";
-
 const ScheduleList = ({
   shiftBookings,
   totalLogin,

@@ -52,7 +52,7 @@ export const pathTitleMap = {
 
   // Additional Routes
   '/manage-company': 'Manage Companies',
-  '/role-management': 'Manage Roles',
+  '/role-management': 'Role Mangement',
   '/staffs': 'Manage Staff',
   '/manage-client': 'Manage Clients',
   '/vehicle-contract': 'Vehicle Contracts',

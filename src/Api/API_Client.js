@@ -1,44 +1,46 @@
-// src/Api/API_Client.js
 import axios from "axios";
 import Cookies from "js-cookie";
 
+// Read the environment variable
 const baseURL = import.meta.env.VITE_API_URL;
 
-// Create instance
+// Create Axios instance
 export const API_CLIENT = axios.create({
-  baseURL,
+  baseURL:'https://api.gocab.tech/api',
 });
 
-// Request interceptor
+// Add request interceptor
+
 API_CLIENT.interceptors.request.use(
+  
   (config) => {
-    const token = Cookies.get("access_token"); // ✅ get token from cookies
+    const token = Cookies.get("auth_token"); // Replace with your actual cookie name
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // Log the request details
-    console.log("[API Request] 📡", {
+    console.log("🔼 Request:", {
       url: `${config.baseURL}${config.url}`,
       method: config.method,
       headers: config.headers,
-      params: config.params,
       data: config.data,
+      params: config.params,
     });
-
+    
     return config;
   },
   (error) => {
-    console.error("[API Request Error] ❌", error);
+    console.error("❌ Request Error:", error);
     return Promise.reject(error);
   }
 );
 
-// Response interceptor
+
+// Add response interceptor
 API_CLIENT.interceptors.response.use(
   (response) => {
-    console.log("[API Response] ✅", {
+    console.log("✅ Response:", {
       url: response.config.url,
       status: response.status,
       data: response.data,
@@ -46,14 +48,8 @@ API_CLIENT.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response) {
-      console.error("[API Response Error] ❌", {
-        url: error.response.config.url,
-        status: error.response.status,
-        data: error.response.data,
-      });
-    } else {
-      console.error("[API Error] 🚨", error.message);
+    if (error.message === "Network Error" || error.code === "ERR_NETWORK") {
+      window.dispatchEvent(new Event("server-down"));
     }
     return Promise.reject(error);
   }

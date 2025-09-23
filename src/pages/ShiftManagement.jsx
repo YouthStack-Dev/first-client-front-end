@@ -1,221 +1,255 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import ShiftForm from '../components/shiftForm';
-import PopupModal from '../components/PopupModal';
-import DynamicTable from '../components/DynamicTable';
-import ToolBar from '../components/ui/ToolBar';
-import { Trash2, Edit, Plus } from 'lucide-react';
-import { toast } from 'react-toastify';
-import {
-  fetchShiftsByLogType,
-  fetchAllShifts,
-  createShift,
-  updateShift,
-  deleteShiftById,
-} from '../redux/features/Shifts/shiftThunks';
-import {
-  setEditingShift,
-  clearEditingShift,
-  openModal,
-  closeModal,
-  selectShifts,
-  selectEditingShift,
-  selectShiftModalOpen,
-} from '../redux/features/Shifts/shiftSlice';
-
-const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-
-const shiftHeaders = [
-  { key: 'shift_code', label: 'Shift Code' },
-  { key: 'log_type', label: 'Type' },
-  { key: 'shift_time', label: 'Time' },
-  { key: 'pickup_type', label: 'Pickup Type' },
-  { key: 'waiting_time_minutes', label: 'Waiting Time' },
-  ...DAYS.map(day => ({ key: day, label: day.charAt(0).toUpperCase() + day.slice(1) })),
-];
-
-const TABS = [
-  { key: 'all', label: 'All Shifts' },
-  { key: 'login', label: 'Login Shifts' },
-  { key: 'logout', label: 'Logout Shifts' },
-];
-
-const initialForm = {
-  shiftCode: '',
-  shiftType: '',
-  hours: '',
-  minutes: '',
-  days: [],
-  waitingTime: '',
-  pickOn: '',
-  gender: '',
-  isActive: true,
-};
-
-// ✅ Helper function to map a shift to formData
-const mapShiftToForm = (shift) => {
-  const [hours, minutes] = shift.shift_time.split(':');
-  return {
-    shiftCode: shift.shift_code,
-    shiftType: shift.log_type === 'in' ? 'login' : 'logout',
-    hours,
-    minutes,
-    days: Array.isArray(shift.day) ? shift.day : [shift.day],
-    waitingTime: shift.waiting_time_minutes.toString(),
-    pickOn: shift.pickup_type,
-    gender: shift.gender,
-    isActive: shift.is_active,
-  };
-};
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Plus } from "lucide-react";
+import ToolBar from "../components/ui/ToolBar";
+import SearchInput from "../components/ui/SearchInput";
+import DynamicTable from "../components/DynamicTable";
+import { fetchshiftTrunk } from "../redux/features/shift/shiftTrunk";
+import Modal from "../components/modals/Modal";
+import CategoryForm from "../components/shift/CategoryForm";
+import ShiftForm from "../components/shift/ShiftForm";
 
 const ShiftManagement = () => {
   const dispatch = useDispatch();
-  const shifts = useSelector(selectShifts);
-  const editingShift = useSelector(selectEditingShift);
-  const isModalOpen = useSelector(selectShiftModalOpen);
 
-  const [activeTab, setActiveTab] = useState('all');
-  const [formData, setFormData] = useState(initialForm);
+  const {shifts,loading,error,} = useSelector((state) => state.shift);
 
-  // 🔄 Load shifts on mount or tab change
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedShifts, setSelectedShifts] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [showCategorieModal, setShowCategorieModal] = useState(false);
+  const [showShiftModal, setShowShiftModal] = useState(false);
+  const shiftCategories=[]
+
+  // Fetch shift data on mount
   useEffect(() => {
-    if (shifts.length === 0) {
-      if (activeTab === 'all') dispatch(fetchAllShifts());
-      else if (activeTab === 'login') dispatch(fetchShiftsByLogType('in'));
-      else if (activeTab === 'logout') dispatch(fetchShiftsByLogType('out'));
+    if (!shifts || shifts.length === 0) {
+      dispatch(fetchshiftTrunk());
     }
-  }, [dispatch, activeTab, shifts.length]);
+  }, [dispatch, shifts]);
 
-  // 📝 Prefill form when editingShift changes
-  useEffect(() => {
-    if (editingShift) setFormData(mapShiftToForm(editingShift));
-    else setFormData(initialForm);
-  }, [editingShift]);
+  // Extract categories from shifts data
+  const categories = useMemo(() => {
+    if (!Array.isArray(shifts)) return [];
+    return shifts.map(category => ({
+      id: category.id,
+      name: category.name,
+      description: category.description
+    }));
+  }, [shifts]);
+  
 
-  const handleAddShift = () => {
-    dispatch(clearEditingShift());
-    dispatch(openModal());
+  // Get shifts for selected category
+  const shiftsForSelectedCategory = useMemo(() => {
+    if (!selectedCategory || !shifts) return [];
+    const category = shifts.find(cat => cat.id === selectedCategory);
+    return category ? category.shifts : [];
+  }, [selectedCategory, shifts]);
+
+  // Handle search/filtering within selected category
+  const filteredShifts = useMemo(() => {
+    if (!searchTerm) return shiftsForSelectedCategory;
+    return shiftsForSelectedCategory.filter((shift) =>
+      shift.shiftType.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [shiftsForSelectedCategory, searchTerm]);
+
+  const onAddClick = () => {
+    console.log("Add Shift button clicked");
+    // Add shift logic
   };
 
-  const handleSave = () => {
-    const logTypeMap = { login: "in", logout: "out" };
-    const payload = {
-      shift_code: formData.shiftCode,
-      log_type: logTypeMap[formData.shiftType] || formData.shiftType,
-      shift_time: `${String(formData.hours).padStart(2, "0")}:${String(formData.minutes).padStart(2, "0")}:00`,
-      day: (formData.days || []).map(d => d.toLowerCase()),
-      waiting_time_minutes: Number(formData.waitingTime),
-      pickup_type: formData.pickOn,
-      gender: formData.gender,
-      is_active: formData.isActive,
-    };
-
-    const action = editingShift
-      ? updateShift({ ...payload, id: editingShift.id })
-      : createShift(payload);
-
-    dispatch(action)
-      .unwrap()
-      .then(() => {
-        toast.success(`Shift "${formData.shiftCode}" ${editingShift ? 'updated' : 'added'} successfully`);
-        dispatch(closeModal()); // ✅ close only on success
-      })
-      .catch(() => toast.error(`Failed to ${editingShift ? 'update' : 'add'} shift`));
+  const handleSearch = () => {
+    console.log("Searching for:", searchTerm);
+    // Can optionally trigger remote API search
   };
 
-  const handleEdit = (shift) => {
-    dispatch(setEditingShift(shift));
+  const handleNextPage = () => {
+    setCurrentPage((prev) => prev + 1);
   };
 
-  const handleDelete = (shift) => {
-    if (window.confirm('Are you sure you want to delete this shift?')) {
-      dispatch(deleteShiftById(shift.id))
-        .unwrap()
-        .then(() => toast.success(`Shift "${shift.shift_code}" deleted successfully`))
-        .catch(() => toast.error('Failed to delete shift'));
-    }
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
   };
 
-  const transformedShifts = shifts
-    .filter(shift => {
-      if (activeTab === 'login') return shift.log_type === 'in';
-      if (activeTab === 'logout') return shift.log_type === 'out';
-      return true;
-    })
-    .map(shift => {
-      const shiftDays = Array.isArray(shift.day) ? shift.day : [shift.day];
-      const dayColumns = DAYS.reduce((acc, day) => {
-        acc[day] = shiftDays.includes(day) ? '✅' : '';
-        return acc;
-      }, {});
-      return { ...shift, ...dayColumns };
-    });
+  const handleSelectShift = (shift, isSelected) => {
+    setSelectedShifts((prev) =>
+      isSelected
+        ? [...prev, shift]
+        : prev.filter((s) => s.id !== shift.id)
+    );
+  };
 
-  return (
-    <div className="w-full min-h-screen bg-gray-50 px-8 py-6">
-      <ToolBar
-        title="Shift Management"
-        onAddClick={handleAddShift}
-        addButtonLabel="Add Shift"
-        addButtonIcon={<Plus size={16} />}
-      />
+  const handleEditShift = (shift) => {
+    console.log("Editing shift:", shift);
+    // Edit logic
+  };
 
-      <div className="flex space-x-4 border-b mb-6 mt-4">
-        {TABS.map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
-              activeTab === tab.key
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-300'
+  const handleDeleteShift = (shift) => {
+    console.log("Deleting shift:", shift);
+    // Delete logic
+  };
+
+  const handleViewHistory = (shift) => {
+    console.log("Viewing history for shift:", shift);
+    // View history logic
+  };
+  const headers = useMemo(
+    () => [
+      { key: "shiftType", label: "Shift Type" },
+      {
+        key: "time",
+        label: "Time",
+        render: (item) =>
+          `${item.hour.toString().padStart(2, "0")}:${item.minute
+            .toString()
+            .padStart(2, "0")}`,
+      },
+      {
+        key: "status",
+        label: "Status",
+        render: (item) => (
+          <span
+            className={`px-2 py-1 rounded-full text-xs ${
+              item.isActive
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
             }`}
           >
-            {tab.label}
-          </button>
-        ))}
+            {item.isActive ? "Active" : "Inactive"}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
+  // Loading State
+  if (loading) {
+    return <div className="p-4">Loading shifts...</div>;
+  }
+
+  // Error State
+  if (error) {
+    return (
+      <div className="p-4 text-red-600">
+        Error fetching shifts: {error}
       </div>
+    );
+  }
 
-      {isModalOpen && (
-        <PopupModal title="Shift Form" isOpen={true} onClose={() => dispatch(closeModal())}>
-          <ShiftForm
-            formData={formData}
-            setFormData={setFormData}
-            onCancel={() => dispatch(closeModal())}
-            onSave={handleSave}
-          />
-        </PopupModal>
-      )}
-
-      <div className="mt-4 bg-white rounded-xl shadow-lg border overflow-hidden">
-        <div className="overflow-x-auto">
-          <DynamicTable
-            headers={shiftHeaders}
-            data={transformedShifts}
-            onMenuToggle={() => {}}
-            renderActions={(row) => (
-              <div className="flex gap-3 justify-center">
-                <button
-                  onClick={() => handleEdit(row)}
-                  className="p-2 rounded-full hover:bg-blue-50 text-blue-600"
-                  title="Edit"
-                >
-                  <Edit size={16} />
-                </button>
-                <button
-                  onClick={() => handleDelete(row)}
-                  className="p-2 rounded-full hover:bg-red-50 text-red-600"
-                  title="Delete"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
+  return (
+    <div>
+      <ToolBar
+        onAddClick={()=> setShowShiftModal(true)}
+        addButtonLabel="New Shift"
+        addButtonIcon={<Plus />}
+        leftContent={
+          <div className="flex items-center space-x-4">
+            <div className="w-64">
+              
+              <select
+                id="category-select"
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                value={selectedCategory || ""}
+                onChange={(e) => setSelectedCategory(e.target.value ? parseInt(e.target.value) : null)}
+              >
+                <option value="">-- Select a category --</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {selectedCategory && (
+              <SearchInput
+                placeholder="Search by shift type..."
+                value={searchTerm}
+                onChange={setSearchTerm}
+                onSearch={handleSearch}
+              />
             )}
+          </div>
+        }
+        rightContent={
+          <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            onClick={()=>setShowCategorieModal(true)}> 
+            Add Category
+          </button>
+        }
+        className="p-4 bg-white border rounded shadow-sm"
+      />
+
+      {selectedCategory ? (
+        <div className="mt-4">
+          <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+            <h3 className="font-medium text-lg">
+              {categories.find(c => c.id === selectedCategory)?.name}
+            </h3>
+            <p className="text-gray-600">
+              {categories.find(c => c.id === selectedCategory)?.description}
+            </p>
+          </div>
+          
+          <DynamicTable
+            headers={headers}
+            data={filteredShifts}
+            currentPage={currentPage}
+            totalPages={Math.ceil(filteredShifts.length / 10)}
+            onNext={handleNextPage}
+            onPrev={handlePrevPage}
+            onSelectItem={handleSelectShift}
+            selectedItems={selectedShifts}
+            // onEdit={handleEditShift}
+            // onDelete={handleDeleteShift}
+            // onHistory={handleViewHistory}
           />
         </div>
-      </div>
+      ) : (
+        <div className="mt-8 text-center text-gray-500">
+          Please select a shift category to view its shifts
+        </div>
+      )} 
+
+
+<Modal
+  title="Add Category"
+  isOpen={showCategorieModal}
+  onClose={() => setShowCategorieModal(false)}
+>
+  <CategoryForm
+    onSubmit={(data) => {
+      console.log("Submitted category:", data);
+      // TODO: dispatch Redux action or API call here
+      setShowCategorieModal(false);
+    }}
+    onCancel={() => setShowCategorieModal(false)}
+  />
+</Modal>
+
+
+
+<Modal
+  title="Add Shift"
+  isOpen={showShiftModal}
+  onClose={() => setShowShiftModal(false)}
+>
+  <ShiftForm
+    categories={shiftCategories} // pass array like [{id: 3, name: "Afternoon Shift"}]
+    onSubmit={(data) => {
+      console.log("Shift data submitted:", data);
+      // TODO: Dispatch Redux action or API call here
+      setShowShiftModal(false);
+    }}
+    onCancel={() => setShowShiftModal(false)}
+  />
+</Modal>
+
+      
     </div>
   );
 };
 
-export default ShiftManagement;
+export default ShiftManagement; 

@@ -9,9 +9,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { menuItems } from './MenuItems';
-import { logout } from '../../redux/features/auth/authSlice';
-import { logDebug } from '../../utils/logger';
+import { generateMenuItems } from './MenuItems';
+import { logout} from '../../redux/features/auth/authSlice';
 
 // Skeleton Loading Components
 const SkeletonMenuItem = ({ isOpen }) => (
@@ -42,43 +41,23 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
   const location = useLocation();
   const [openDropdown, setOpenDropdown] = useState({});
   const [isMobile, setIsMobile] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [userPermissions, setUserPermissions] = useState([]);
+  const [menuItems, setMenuItems] = useState([]);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  
+  // Get auth state from Redux
+  const { permissions, loading: authLoading, isAuthenticated } = useSelector((state) => state.auth);
 
-  // Load permissions from session storage
+  // Generate menu items based on permissions
   useEffect(() => {
-    const storedPermissions = sessionStorage.getItem('userPermissions');
-    if (storedPermissions) {
-      try {
-        const parsedPermissions = JSON.parse(storedPermissions);
-        setUserPermissions(parsedPermissions.permissions || []);
-      
-      } catch (error) {
-        console.error('Error parsing user permissions:', error);
-        setUserPermissions([]);
-      }
+    if (permissions && permissions.length > 0) {
+      const filteredMenuItems = generateMenuItems(permissions);
+      setMenuItems(filteredMenuItems);
     }
-  }, []);
-
-  const hasModulePermission = (moduleName, permissionType = 'read') => {
-    if (!Array.isArray(userPermissions)) return false;
-    
-    return userPermissions.some(
-      (perm) =>
-        perm?.module === moduleName &&
-        Array.isArray(perm.action) &&
-        perm.action.includes(permissionType)
-    );
-  };
+  }, [permissions]);
 
   const handleLogout = () => {
-    // Clear session storage on logout
-    sessionStorage.removeItem("userPermissions");
     dispatch(logout());
-
-    // Redirect to login
     navigate("/", { replace: true });
   };
 
@@ -94,16 +73,6 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, [setIsPinned]);
-
-  // Simulate loading state
-  useEffect(() => {
-    if (userPermissions.length > 0) {
-      const timer = setTimeout(() => {
-        setIsLoading(false);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [userPermissions]);
 
   const toggleDropdown = (menuName) => {
     setOpenDropdown((prev) => ({
@@ -140,32 +109,11 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
     }
   };
 
-  // Filter menu items based on permissions
-  const getFilteredMenuItems = () => {
-    return menuItems.filter((item) => {
-      const hasMainPermission = hasModulePermission(item.permissionModule);
-      
-      if (!hasMainPermission) return false;
-      
-      if (item.subItems) {
-        const accessibleSubItems = item.subItems.filter((subItem) =>
-          hasModulePermission(subItem.permissionModule)
-        );
-        return accessibleSubItems.length > 0;
-      }
-      
-      return true;
-    });
-  };
-
-  const getFilteredSubItems = (subItems) => {
-    return subItems.filter((subItem) =>
-      hasModulePermission(subItem.permissionModule)
-    );
-  };
-
   const sidebarWidth = isOpen ? 'w-sidebar' : 'w-sidebar-collapsed';
   const sidebarClass = `h-screen ${sidebarWidth} bg-gradient-to-b from-sidebar-primary-900 via-sidebar-primary-800 to-sidebar-primary-900 text-white flex flex-col fixed left-0 transition-all duration-300 ease-in-out z-50 shadow-sidebar border-r border-sidebar-primary-200/30`;
+
+  // Show loading state if auth is still loading or user is not authenticated
+  const isLoading = authLoading || !isAuthenticated || !permissions;
 
   return (
     <aside
@@ -204,7 +152,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
             <SkeletonMenuItem key={index} isOpen={isOpen} />
           ))
         ) : (
-          getFilteredMenuItems().map((item) => (
+          menuItems.map((item) => (
             <div key={item.path || item.name} className="relative">
               {item.subItems ? (
                 <>
@@ -239,7 +187,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
 
                   {isOpen && openDropdown[item.name] && (
                     <div className="mt-1 space-y-1 px-2 animate-fadeIn">
-                      {getFilteredSubItems(item.subItems).map((subItem) => (
+                      {item.subItems.map((subItem) => (
                         <Link
                           key={subItem.path}
                           to={subItem.path}

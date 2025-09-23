@@ -14,21 +14,23 @@ import { API_CLIENT } from "../../../Api/API_Client";
     }
 })
 
-
 export const fetchDepartments = async (page = 1, limit = 20) => {
-  let params = {};
-
-  params.skip = (page - 1) * limit;
-  params.limit = limit;
-
-  const { data } = await API_CLIENT.get('/departments/', { params });
-
-  return data.map(dept => ({
-    id: dept.department_id,
-    name: dept.department_name,
-    description: dept.description,
-    users: dept.employee_count,
-    active:dept.active_count,
-    inactive:dept.inactive_count,
-  }));
-};
+    const params = {
+      skip: (page - 1) * limit,
+      limit,
+    };
+  
+    const { data } = await API_CLIENT.get("api/users/company-departments/", { params });
+  
+    // Ensure we only map if departments exist
+    return (data.departments || []).map(dept => ({
+      id: dept.id,
+      name: dept.name,
+      description: dept.description,
+      users: dept.totalUsers,
+      active: dept.activeUsers,
+      inactive: dept.inactiveUsers,
+      companyId: dept.companyId,
+    }));
+  };
+  

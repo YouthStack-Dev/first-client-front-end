@@ -1,162 +1,114 @@
-import React, { useState } from 'react';
+import React from 'react';
 /** @typedef {import('./types').RoleCardProps} RoleCardProps */
-import { Edit, Trash2, Copy, ChevronDown, ChevronUp, Shield } from 'lucide-react';
-import { getPermissionPercentage, getModulePermissionStatus } from './utils';
-import ConfirmDialog from './ConfirmDialog';
+import { Eye, Edit, Trash2, Users, UserPlus } from 'lucide-react';
 
 /**
- * Renders a card displaying role details with expandable permissions and action buttons.
- * @param {RoleCardProps} props - The component props.
- * @returns {JSX.Element} The rendered component.
+ * Renders a simple role card with header, description, and color-coded footer actions.
+ * @param {RoleCardProps} props
+ * @returns {JSX.Element}
  */
-function RoleCard({ role, onEdit, onDelete, onDuplicate }) {
-  const [expanded, setExpanded] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const permissionPercentage = getPermissionPercentage(role.permissions);
-
-  const toggleExpand = () => {
-    setExpanded(!expanded);
-  };
-
-  const handleDelete = () => {
-    setShowDeleteConfirm(true);
-  };
-
-  const confirmDelete = () => {
-    onDelete(role.id);
-    setShowDeleteConfirm(false);
-  };
-
-  const cancelDelete = () => {
-    setShowDeleteConfirm(false);
+function RoleCard({ 
+  role, 
+  onEdit, 
+  onDelete, 
+  onDuplicate, 
+  onAssignUsers, 
+  onViewAssignedUsers 
+}) {
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString();
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
-      <div className="p-4">
-        <div className="flex justify-between items-start">
-          <div className="flex items-start space-x-3">
-            <div className="p-2 bg-indigo-100 rounded-lg">
-              <Shield className="h-5 w-5 text-indigo-600" />
+    <div className="border border-gray-200 rounded-lg p-6 hover:border-gray-300 transition-colors bg-white shadow-sm flex flex-col justify-between h-full">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <h3 className="text-lg font-medium text-gray-900 mb-1">{role.name}</h3>
+          <p className="text-sm text-gray-500">{role.description || 'No description'}</p>
+          
+          {/* Role Metadata */}
+          <div className="mt-2 space-y-1">
+            <div className="flex items-center text-xs text-gray-500">
+              <span className="font-medium">Created:</span>
+              <span className="ml-1">{formatDate(role.createdAt)}</span>
             </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">{role.name}</h3>
-              <p className="text-sm text-gray-500">{role.description}</p>
+            <div className="flex items-center text-xs text-gray-500">
+              <span className="font-medium">Updated:</span>
+              <span className="ml-1">{formatDate(role.updatedAt)}</span>
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => onEdit(role)}
-              className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
-              aria-label="Edit role"
-            >
-              <Edit className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => onDuplicate(role)}
-              className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
-              aria-label="Duplicate role"
-            >
-              <Copy className="h-4 w-4" />
-            </button>
-            <button
-              onClick={handleDelete}
-              className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-              aria-label="Delete role"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            {role.isSystemLevel && (
+              <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                System Role
+              </span>
+            )}
+            {!role.isAssignable && (
+              <span className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
+                Not Assignable
+              </span>
+            )}
           </div>
         </div>
-
-        <div className="mt-4 flex items-center">
-          <div className="flex-1">
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full ${
-                  permissionPercentage > 66 
-                    ? 'bg-indigo-600' 
-                    : permissionPercentage > 33 
-                    ? 'bg-amber-500' 
-                    : 'bg-rose-500'
-                }`}
-                style={{ width: `${permissionPercentage}%` }}
-              />
-            </div>
-          </div>
-          <span className="ml-2 text-xs font-medium text-gray-500">
-            {permissionPercentage}% Access
-          </span>
-        </div>
-
-        <button
-          onClick={toggleExpand}
-          className="mt-3 w-full flex items-center justify-center p-1.5 text-sm text-gray-500 hover:text-indigo-600 rounded transition-colors"
-        >
-          {expanded ? (
-            <>
-              <span className="mr-1">Hide details</span>
-              <ChevronUp className="h-4 w-4" />
-            </>
-          ) : (
-            <>
-              <span className="mr-1">Show details</span>
-              <ChevronDown className="h-4 w-4" />
-            </>
-          )}
-        </button>
       </div>
 
-      {expanded && (
-        <div className="bg-gray-50 px-4 py-3 border-t border-gray-200">
-          {Object.entries(role.permissions).map(([module, permissions]) => {
-            const status = getModulePermissionStatus(role.permissions, module);
-            return (
-              <div key={module} className="py-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-700">{module}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    status === 'all' 
-                      ? 'bg-emerald-100 text-emerald-800' 
-                      : status === 'some' 
-                      ? 'bg-amber-100 text-amber-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {status === 'all' 
-                      ? 'Full access' 
-                      : status === 'some' 
-                      ? 'Partial access' 
-                      : 'No access'}
-                  </span>
-                </div>
-                <div className="mt-1 flex flex-wrap gap-1.5">
-                  {Object.entries(permissions).map(([action, enabled]) => (
-                    <span
-                      key={action}
-                      className={`text-xs px-2 py-0.5 rounded-full ${
-                        enabled 
-                          ? 'bg-indigo-100 text-indigo-800' 
-                          : 'bg-gray-100 text-gray-600'
-                      }`}
-                    >
-                      {action}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {/* Footer */}
+      <div className="flex items-center justify-between pt-3 border-t border-gray-200 mt-auto">
+        <div className="flex items-center space-x-2">
+          {/* View Assigned Users Button */}
+          <button
+            onClick={() => onViewAssignedUsers(role)}
+            className="flex items-center justify-center p-2 rounded-md bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors"
+            title="View assigned users"
+          >
+            <Users className="w-4 h-4" />
+          </button>
 
-      <ConfirmDialog
-        isOpen={showDeleteConfirm}
-        title="Delete Role"
-        message={`Are you sure you want to delete the role "${role.name}"? This action cannot be undone.`}
-        confirmText="Delete"
-        onConfirm={confirmDelete}
-        onCancel={cancelDelete}
-      />
+          {/* Assign Users Button - Only show if role is assignable */}
+          {role.isAssignable && (
+            <button
+              onClick={() => onAssignUsers(role)}
+              className="flex items-center justify-center p-2 rounded-md bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
+              title="Assign users to this role"
+            >
+              <UserPlus className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Action Buttons - Hide for system-level roles */}
+        {!role.isSystemLevel && (
+          <div className="flex items-center space-x-2">
+            {/* View Button */}
+            <button
+              onClick={() => onEdit(role)}
+              className="flex items-center justify-center p-2 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+              title="View details"
+            >
+              <Eye className="w-3 h-3" />
+            </button>
+
+            {/* Edit Button */}
+            <button
+              onClick={() => onEdit(role)}
+              className="flex items-center justify-center p-2 rounded-md bg-yellow-50 text-yellow-600 hover:bg-yellow-100 transition-colors"
+              title="Edit role"
+            >
+              <Edit className="w-3 h-3" />
+            </button>
+
+            {/* Delete Button */}
+            <button
+              onClick={() => onDelete(role)}
+              className="flex items-center justify-center p-2 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+              title="Delete role"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

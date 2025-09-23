@@ -1,32 +1,42 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { API_CLIENT } from "../../../Api/API_Client";
-import Cookies from "js-cookie";
-import { logDebug, logError } from "../../../utils/logger";
+import { API_CLIENT } from "../../../Api/API_Client"; 
+import { logDebug } from "../../../utils/logger";
+
+
 export const loginUser = createAsyncThunk(
   'auth/login',
-  async (credentials, { rejectWithValue }) => {
+  async ({ formData, endpoint }, { rejectWithValue }) => {
+    console.log("Login endpoint:", endpoint, formData);
+
     try {
-      const response = await API_CLIENT.post('/auth/login', credentials);
-      const { access_token, permissions, ...userData } = response.data;
+      // Send login request
+      const response = await API_CLIENT.post(endpoint, formData);
+      logDebug("Login response data:", response.data.data);
 
-      // Store token and user data
-      Cookies.set('access_token', access_token, { 
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
-      });
+      // Destructure tokens and user
+      const { access_token:token, refresh_token, user } = response.data.data;
 
-      // Store permissions and user data in session storage
-      sessionStorage.setItem('userPermissions', JSON.stringify({
-        permissions,
-      }));
+      // Extract permissions from user
+      const allowedModules = user?.permissions || [];
 
-      return { user: userData, access_token, permissions };
+      logDebug("Extracted token:", token);
+      logDebug("Allowed modules:", allowedModules);
+
+   
+      return {
+        user,
+        token,
+        refresh_token,
+        allowedModules
+      };
     } catch (error) {
-      logError(" this is the erros ", error);
-      // Clear storage on error
-      Cookies.remove('access_token');
-      sessionStorage.removeItem('userPermissions');
-      return rejectWithValue(error.response?.data || 'Login failed');
+      logDebug("Login error details:", error);
+
+      return rejectWithValue(
+        error.response?.data?.message ||
+        error.response?.data ||
+        'Login failed'
+      );
     }
   }
 );

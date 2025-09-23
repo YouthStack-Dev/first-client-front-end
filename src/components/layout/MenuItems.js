@@ -1,28 +1,17 @@
-import { LayoutDashboard, User, Users2,  UserCog, 
+import {
+  LayoutDashboard, User, Users2, UserCog, 
   UserPlus, Car, CarTaxiFront, Route, Building2, 
-  Settings,
-  Shield,
-  MapPin,
-  Briefcase,
-  Clock,
-  FileText,
-  Layers,
-  Target,
-  BookOpen,
-  Building,
-  Truck
+  Settings, Shield, MapPin, Briefcase, Clock,
+  FileText, Layers, Target, BookOpen, Building,
+  Truck, Key, Calendar
 } from 'lucide-react';
 
-export const menuItems = [
+// Define all menu items with their permission requirements
+export const MenuItems = [
   // ================================
   // 📊 DASHBOARD SECTION
   // ================================
-  { 
-    path: '/admin_dashboard', 
-    name: 'Admin Dashboard', 
-    icon: LayoutDashboard, 
-    permissionModule: 'admin_dashboard' 
-  },
+  
   { 
     path: '/company-dashboard', 
     name: 'Company Dashboard', 
@@ -159,13 +148,13 @@ export const menuItems = [
   { 
     name: 'Operations', 
     icon: Route, 
-    permissionModule: 'routing_management',
+    permissionModule: 'routing',
     subItems: [
       { 
         path: '/routing', 
         name: 'Routing Management', 
         icon: Route, 
-        permissionModule: 'routing_management' 
+        permissionModule: 'routing' 
       },
       { 
         path: '/tracking', 
@@ -202,12 +191,72 @@ export const menuItems = [
         icon: Layers, 
         permissionModule: 'shift_category' 
       },
-      { 
-        path: '/cutoff-settings', 
-        name: 'Cutoff Settings', 
-        icon: Target, 
-        permissionModule: 'cutoff' 
-      }
+      
     ]
+  },
+
+  { 
+
+    path: '/cutoff-settings', 
+    name: 'Cutoff Settings', 
+    icon: Target, 
+    permissionModule: 'cutoff_management' 
+  },
+  // ================================
+  // 🔐 ROLE MANAGEMENT (Additional)
+  // ================================
+  { 
+    path: '/role-management', 
+    name: 'Role Management', 
+    icon: Key, 
+    permissionModule: 'role_management' 
+  },
+
+  // ================================
+  // 📅 SCHEDULING MANAGEMENT (Additional)
+  // ================================
+  { 
+    path: '/scheduling', 
+    name: 'Scheduling', 
+    icon: Calendar, 
+    permissionModule: 'scheduling_management' 
   }
 ];
+
+// Function to generate menu items based on permissions
+export const generateMenuItems = (permissions) => {
+  if (!permissions || !Array.isArray(permissions)) {
+    console.warn("No valid permissions provided, showing minimal menu");
+    return [];
+  }
+
+  // Create a lookup map for faster permission checking
+  const permissionMap = {};
+  permissions.forEach(perm => {
+    permissionMap[perm.moduleKey] = perm.canRead;
+  });
+
+  // Filter menu items based on permissions
+  const filteredMenuItems = MenuItems.filter(item => {
+    // Check if user has permission for this module
+    const hasPermission = permissionMap[item.permissionModule];
+    
+    if (item.subItems) {
+      // For items with submenus, filter the subitems first
+      const filteredSubItems = item.subItems.filter(subItem => 
+        permissionMap[subItem.permissionModule]
+      );
+      
+      // Only keep the parent menu if there are visible subitems
+      if (filteredSubItems.length > 0) {
+        item.subItems = filteredSubItems;
+        return true;
+      }
+      return false;
+    }
+    
+    return hasPermission;
+  });
+
+  return filteredMenuItems;
+};

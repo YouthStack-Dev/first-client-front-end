@@ -1,11 +1,11 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback, memo } from 'react';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import MapContent from './MapContent';
 
 const fixedPoint = { lat: 12.9716, lng: 77.5946 }; // Company location (Bangalore)
 const MAX_DISTANCE_KM = 20;
 
-const Modal = ({ show, title, message, onClose }) => {
+const Modal = memo(({ show, title, message, onClose }) => {
   if (!show) return null;
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
@@ -21,15 +21,27 @@ const Modal = ({ show, title, message, onClose }) => {
       </div>
     </div>
   );
-};
+});
 
-const EmployeeAddressGoogleMapView = ({ formData, setFormData, setErrors, isReadOnly }) => {
+Modal.displayName = 'Modal';
+
+const EmployeeAddressGoogleMapView = memo(({ 
+  formData, 
+  setFormData, 
+  setErrors, 
+  isReadOnly = false, 
+  handleInputChange 
+}) => {
   const API_KEY = import.meta.env.VITE_GOOGLE_API || '';
-  const [homePosition, setHomePosition] = useState(
-    formData.latitude && formData.longitude
-      ? { lat: parseFloat(formData.latitude), lng: parseFloat(formData.longitude) }
-      : null
-  );
+  
+  // Handle field mapping - support both lat/lng and latitude/longitude
+  const getCoordinates = () => {
+    const lat = formData.lat || formData.latitude;
+    const lng = formData.lng || formData.longitude;
+    return lat && lng ? { lat: parseFloat(lat), lng: parseFloat(lng) } : null;
+  };
+
+  const [homePosition, setHomePosition] = useState(getCoordinates());
   const [distance, setDistance] = useState(formData.distance_from_company || null);
   const [distanceError, setDistanceError] = useState('');
   const [showDistanceModal, setShowDistanceModal] = useState(false);
@@ -48,141 +60,119 @@ const EmployeeAddressGoogleMapView = ({ formData, setFormData, setErrors, isRead
     return R * c;
   }, []);
 
+  // Update coordinates when formData changes
+  useEffect(() => {
+    const coords = getCoordinates();
+    if (coords && (!homePosition || 
+        homePosition.lat !== coords.lat || 
+        homePosition.lng !== coords.lng)) {
+      setHomePosition(coords);
+    }
+  }, [formData.lat, formData.lng, formData.latitude, formData.longitude, homePosition]);
+
   useEffect(() => {
     const dist = calculateDistance(fixedPoint, homePosition);
     setDistance(dist);
-    if (!isReadOnly) {
+    
+    if (!isReadOnly && setFormData) {
       setFormData((prev) => ({
         ...prev,
         distance_from_company: dist ? Number(dist.toFixed(2)) : null,
       }));
+      
       if (dist !== null && dist > MAX_DISTANCE_KM) {
-        setDistanceError(`Home location is too far! (Max ${MAX_DISTANCE_KM} km)`);
+        const errorMessage = `Home location is too far! (Max ${MAX_DISTANCE_KM} km)`;
+        setDistanceError(errorMessage);
         setShowDistanceModal(true);
-        setErrors((prev) => ({ ...prev, location: `Home location is too far! (Max ${MAX_DISTANCE_KM} km)` }));
+        if (setErrors) {
+          setErrors((prev) => ({ ...prev, location: errorMessage }));
+        }
       } else {
         setDistanceError('');
         setShowDistanceModal(false);
-        setErrors((prev) => {
-          const newErrors = { ...prev };
-          delete newErrors.location;
-          return newErrors;
-        });
+        if (setErrors) {
+          setErrors((prev) => {
+            const newErrors = { ...prev };
+            delete newErrors.location;
+            return newErrors;
+          });
+        }
       }
     }
   }, [homePosition, calculateDistance, setFormData, setErrors, isReadOnly]);
 
-  const handleInputChange = (e) => {
-    if (isReadOnly) return;
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => {
-      const newErrors = { ...prev };
-      delete newErrors[name];
-      return newErrors;
-    });
-  };
-
-  const handlePositionChange = (position) => {
-    if (isReadOnly) return;
+  const handlePositionChange = useCallback((position) => {
+    if (isReadOnly || !setFormData) return;
+    
     setHomePosition(position);
     setFormData((prev) => ({
       ...prev,
+      // Update both field formats for compatibility
+      lat: position ? String(position.lat) : '',
+      lng: position ? String(position.lng) : '',
       latitude: position ? String(position.lat) : '',
       longitude: position ? String(position.lng) : '',
     }));
-  };
+  }, [isReadOnly, setFormData]);
+
+  const handleAddressChange = useCallback((value) => {
+    if (!isReadOnly && setFormData) {
+      setFormData((prev) => ({ ...prev, address: value }));
+    }
+  }, [isReadOnly, setFormData]);
+
+  const handleLandmarkChange = useCallback((value) => {
+    if (!isReadOnly && setFormData) {
+      setFormData((prev) => ({ ...prev, landmark: value }));
+    }
+  }, [isReadOnly, setFormData]);
+
+  // Handle manual coordinate input
+  const handleCoordinateChange = useCallback((e) => {
+    if (isReadOnly) return;
+    
+    const { name, value } = e.target;
+    const numValue = parseFloat(value) || 0;
+    
+    if (handleInputChange) {
+      handleInputChange(e);
+    }
+    
+    // Update position when coordinates change
+    if (name === 'lat' || name === 'latitude') {
+      const lng = formData.lng || formData.longitude || 0;
+      setHomePosition({ lat: numValue, lng: parseFloat(lng) });
+    } else if (name === 'lng' || name === 'longitude') {
+      const lat = formData.lat || formData.latitude || 0;
+      setHomePosition({ lat: parseFloat(lat), lng: numValue });
+    }
+  }, [isReadOnly, handleInputChange, formData.lat, formData.lng, formData.latitude, formData.longitude]);
 
   return (
     <div className="animate-fadeIn grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="relative bg-gray-100 rounded-lg overflow-hidden min-h-[450px]">
         <APIProvider apiKey={API_KEY} libraries={['places']}>
-        <MapContent
-  homePosition={homePosition}
-  setHomePosition={handlePositionChange}
-  setAddress={(value) => !isReadOnly && setFormData((prev) => ({ ...prev, address: value }))}
-  landmarkInputRef={landmarkInputRef}
-  setLandmark={(value) => !isReadOnly && setFormData((prev) => ({ ...prev, landmark: value }))}
-  isReadOnly={isReadOnly}
-/>
+          <MapContent
+            homePosition={homePosition}
+            setHomePosition={handlePositionChange}
+            setAddress={handleAddressChange}
+            landmarkInputRef={landmarkInputRef}
+            setLandmark={handleLandmarkChange}
+            isReadOnly={isReadOnly}
+          />
         </APIProvider>
       </div>
-      <div className="flex flex-col gap-4 bg-white p-4 rounded shadow">
-        <label className="flex flex-col">
-          <span className="text-gray-700 mb-1">Address <span className="text-red-500">*</span></span>
-          <input
-            type="text"
-            name="address"
-            value={formData.address}
-            onChange={handleInputChange}
-            placeholder="Enter address"
-            className={`border p-2 rounded ${formData.address ? 'border-gray-300' : 'border-red-500 bg-red-50'} ${
-              isReadOnly ? 'bg-gray-100 cursor-not-allowed' : ''
-            }`}
-            disabled={isReadOnly}
-          />
-          {formData.address === '' && !isReadOnly && (
-            <p className="mt-1 text-sm text-red-500">Address is required</p>
-          )}
-        </label>
-        <label className="flex flex-col">
-          <span className="text-gray-700 mb-1">Latitude</span>
-          <input
-            type="text"
-            name="latitude"
-            value={formData.latitude}
-            onChange={(e) => {
-              if (isReadOnly) return;
-              handleInputChange(e);
-              setHomePosition((prev) => ({
-                lat: parseFloat(e.target.value) || 0,
-                lng: prev ? prev.lng : parseFloat(formData.longitude) || 0,
-              }));
-            }}
-            placeholder="Latitude"
-            className={`border p-2 rounded ${isReadOnly ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-            disabled={isReadOnly}
-          />
-        </label>
-        <label className="flex flex-col">
-          <span className="text-gray-700 mb-1">Longitude</span>
-          <input
-            type="text"
-            name="longitude"
-            value={formData.longitude}
-            onChange={(e) => {
-              if (isReadOnly) return;
-              handleInputChange(e);
-              setHomePosition((prev) => ({
-                lat: prev ? prev.lat : parseFloat(formData.latitude) || 0,
-                lng: parseFloat(e.target.value) || 0,
-              }));
-            }}
-            placeholder="Longitude"
-            className={`border p-2 rounded ${isReadOnly ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-            disabled={isReadOnly}
-          />
-        </label>
-        {distance !== null && (
-          <p className="text-gray-700">
-            {/* Distance from company: <strong>{distance.toFixed(2)} km</strong> */}
-          </p>
-        )}
-        {distanceError && !isReadOnly && <p className="text-red-500 text-sm">{distanceError}</p>}
-        <label className="flex flex-col">
-          <span className="text-gray-700 mb-1">Landmark</span>
-          <input
-            ref={landmarkInputRef}
-            type="text"
-            name="landmark"
-            value={formData.landmark}
-            onChange={handleInputChange}
-            placeholder="Nearby landmark"
-            className={`border p-2 rounded ${isReadOnly ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-            disabled={isReadOnly}
-          />
-        </label>
-      </div>
+      
+      <AddressInputPanel 
+        formData={formData}
+        handleInputChange={handleInputChange}
+        handleCoordinateChange={handleCoordinateChange}
+        landmarkInputRef={landmarkInputRef}
+        distance={distance}
+        distanceError={distanceError}
+        isReadOnly={isReadOnly}
+      />
+      
       <Modal
         show={showDistanceModal}
         title="Distance Warning"
@@ -191,6 +181,130 @@ const EmployeeAddressGoogleMapView = ({ formData, setFormData, setErrors, isRead
       />
     </div>
   );
-};
+});
+
+// Separate component for address input panel
+const AddressInputPanel = memo(({
+  formData,
+  handleInputChange,
+  handleCoordinateChange,
+  landmarkInputRef,
+  distance,
+  distanceError,
+  isReadOnly
+}) => {
+  const getInputClasses = (hasError = false) => 
+    `border p-2 rounded ${hasError ? 'border-red-500 bg-red-50' : 'border-gray-300'} ${
+      isReadOnly ? 'bg-gray-100 cursor-not-allowed' : ''
+    }`;
+
+  return (
+    <div className="flex flex-col gap-4 bg-white p-4 rounded shadow">
+      <AddressField 
+        value={formData.address || ''}
+        onChange={handleInputChange}
+        isReadOnly={isReadOnly}
+        className={getInputClasses(!formData.address)}
+      />
+      
+      <CoordinateField 
+        label="Latitude"
+        name="latitude"
+        value={formData.latitude || formData.lat || ''}
+        onChange={handleCoordinateChange}
+        isReadOnly={isReadOnly}
+        className={getInputClasses()}
+      />
+      
+      <CoordinateField 
+        label="Longitude" 
+        name="longitude"
+        value={formData.longitude || formData.lng || ''}
+        onChange={handleCoordinateChange}
+        isReadOnly={isReadOnly}
+        className={getInputClasses()}
+      />
+      
+      {distance !== null && (
+        <div className="text-gray-700">
+          <span className="text-sm">Distance from company: </span>
+          <strong>{distance.toFixed(2)} km</strong>
+        </div>
+      )}
+      
+      {distanceError && !isReadOnly && (
+        <p className="text-red-500 text-sm">{distanceError}</p>
+      )}
+      
+      <LandmarkField 
+        ref={landmarkInputRef}
+        value={formData.landmark || ''}
+        onChange={handleInputChange}
+        isReadOnly={isReadOnly}
+        className={getInputClasses()}
+      />
+    </div>
+  );
+});
+
+// Individual field components for better reusability
+const AddressField = memo(({ value, onChange, isReadOnly, className }) => (
+  <label className="flex flex-col">
+    <span className="text-gray-700 mb-1">
+      Address <span className="text-red-500">*</span>
+    </span>
+    <input
+      type="text"
+      name="address"
+      value={value}
+      onChange={onChange}
+      placeholder="Enter address"
+      className={className}
+      disabled={isReadOnly}
+    />
+    {!value && !isReadOnly && (
+      <p className="mt-1 text-sm text-red-500">Address is required</p>
+    )}
+  </label>
+));
+
+const CoordinateField = memo(({ label, name, value, onChange, isReadOnly, className }) => (
+  <label className="flex flex-col">
+    <span className="text-gray-700 mb-1">{label}</span>
+    <input
+      type="number"
+      name={name}
+      value={value}
+      onChange={onChange}
+      placeholder={label}
+      className={className}
+      disabled={isReadOnly}
+      step="any"
+    />
+  </label>
+));
+
+const LandmarkField = React.forwardRef(({ value, onChange, isReadOnly, className }, ref) => (
+  <label className="flex flex-col">
+    <span className="text-gray-700 mb-1">Landmark</span>
+    <input
+      ref={ref}
+      type="text"
+      name="landmark"
+      value={value}
+      onChange={onChange}
+      placeholder="Nearby landmark"
+      className={className}
+      disabled={isReadOnly}
+    />
+  </label>
+));
+
+// Display names for debugging
+EmployeeAddressGoogleMapView.displayName = 'EmployeeAddressGoogleMapView';
+AddressInputPanel.displayName = 'AddressInputPanel';
+AddressField.displayName = 'AddressField';
+CoordinateField.displayName = 'CoordinateField';
+LandmarkField.displayName = 'LandmarkField';
 
 export default EmployeeAddressGoogleMapView;

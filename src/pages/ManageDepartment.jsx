@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, UserPlus, UsersRound } from 'lucide-react';
-import Modal from '../components/modals/Modal';
-import DepartmentForm from '../components/teams/DepartmentForm';
-import DepartmentList from '../components/teams/DepartmentList';
+import { UserPlus, UsersRound, History } from 'lucide-react';
+import DepartmentForm from '../components/departments/DepartmentForm';
+import DepartmentList from '../components/departments/DepartmentList';
 import { useDispatch, useSelector } from 'react-redux';
 import { API_CLIENT } from '../Api/API_Client';
-import { setTeams,upsertTeam, removeTeam} from '../redux/features/user/userSlice';
+import { setTeams, removeTeam } from '../redux/features/user/userSlice';
 import { logDebug, logError } from '../utils/logger';
 import { fetchDepartments } from '../redux/features/user/userTrunk';
 import ToolBar from '../components/ui/ToolBar';
 import SearchInput from '../components/ui/SearchInput';
+import AuditLogModal from '../components/departments/AuditLogModal';
+import Modal from '../components/modals/Modal';
+import { toast } from 'react-toastify';
 
 const ManageDepartment = () => {
   const navigate = useNavigate();
@@ -23,11 +25,43 @@ const ManageDepartment = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Modal states
+  const [isDepartmentModalOpen, setIsDepartmentModalOpen] = useState(false);
+  const [isAuditLogModalOpen, setIsAuditLogModalOpen] = useState(false);
+  
+  // Audit log state
+  const [auditLogs, setAuditLogs] = useState([
+    {
+      id: 1,
+      action: "CREATE",
+      action_description: "Created new employee",
+      changes: ["name: John Doe", "email: john@example.com"],
+      changed_by: "Admin",
+      changed_at: "2025-09-09T10:30:00Z",
+    },
+    {
+      id: 2,
+      action: "UPDATE",
+      action_description: "Updated employee details",
+      changes: ["phone: 1234567890 → 9876543210"],
+      changed_by: "HR Manager",
+      changed_at: "2025-09-09T11:00:00Z",
+    },
+    {
+      id: 3,
+      action: "DELETE",
+      action_description: "Removed inactive user",
+      changes: ["userId: EMP005"],
+      changed_by: "System",
+      changed_at: "2025-09-08T17:45:00Z",
+    },
+  ]);
+  const [isAuditLogLoading, setIsAuditLogLoading] = useState(false);
+
   // Pull teams from Redux slice
   const teamsById = useSelector((state) => state.user.teams.byId);
   const teamIds = useSelector((state) => state.user.teams.allIds);
   const teams = teamIds.map((id) => teamsById[id]);
-  const [isOpen, setIsOpen] = useState(false);
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [editingTeam, setEditingTeam] = useState(null);
 
@@ -39,17 +73,16 @@ const ManageDepartment = () => {
   // Handle add button click
   const handleAddClick = () => {
     setEditingTeam(null);
-    setIsOpen(true);
+    setIsDepartmentModalOpen(true);
   };
 
   // Fetch teams with pagination
   useEffect(() => {
-
     if (teamIds.length > 0) {
       logDebug('Teams already fetched, skipping API call');
       return;
-
     }
+    
     const fetchTeams = async () => {
       setIsLoading(true);
       try {
@@ -66,6 +99,33 @@ const ManageDepartment = () => {
 
     fetchTeams();
   }, [dispatch, currentPage, itemsPerPage, searchTerm]);
+
+  // Fetch audit logs when modal opens
+  const fetchAuditLogs = async () => {
+    setIsAuditLogLoading(true);
+    try {
+      // Adjust the API endpoint according to your backend
+      const response = await API_CLIENT.get('api/audit/departmentsLogs');
+      setAuditLogs(response.data.data || []);
+    } catch (error) {
+      logError('Error fetching audit logs:', error);
+      logError('Error fetching audit logs:', error.status);
+      if (error.status===404) {
+        setAuditLogs([]);
+        logError(" message in if ")
+        toast.info(" No Logs Found")
+      }
+      
+    } finally {
+      setIsAuditLogLoading(false);
+    }
+  };
+
+  // Handle history button click
+  const handleHistoryClick = async () => {
+    setIsAuditLogModalOpen(true);
+    await fetchAuditLogs();
+  };
 
   // Handle department selection
   const handleSelectDepartment = (departmentId, isSelected) => {
@@ -90,7 +150,7 @@ const ManageDepartment = () => {
       department_name: team.name
     };
     setEditingTeam(teamToEdit);
-    setIsOpen(true);
+    setIsDepartmentModalOpen(true);
   };
 
   const handleDelete = async (teamId) => {
@@ -110,17 +170,19 @@ const ManageDepartment = () => {
     }
   };
 
-  const handleViewEmployees = (departmentId, isActive,depname) => {
+  const handleViewEmployees = (departmentId, isActive, depname) => {
     navigate(`/department/${departmentId}/employees?active=${isActive}`);
   };
 
   const handleFormSuccess = () => {
     setEditingTeam(null);
-    setIsOpen(false);
+    setIsDepartmentModalOpen(false);
   };
-
+const handleDepartemtSpecificLog=()=>{
+  logDebug(" departemnt spcific log function invoked ")
+}
   return (
-    <div >
+    <div>
       <ToolBar
         onAddClick={handleAddClick}
         addButtonLabel=" Department"
@@ -137,10 +199,24 @@ const ManageDepartment = () => {
           </div>
         }
         rightElements={
-          <button className="flex items-center gap-2 px-2  p-1 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">
-            <UserPlus size={17} />
-            Employee
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleHistoryClick}
+              className="flex items-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg shadow hover:bg-gray-700 transition"
+              title="View Audit History"
+            >
+              <History size={17} />
+              History
+            </button>
+
+            <button
+              className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+              onClick={() => navigate('/employees/create')} // Adjust the path as needed
+            >
+              <UserPlus size={17} />
+              Employee
+            </button>
+          </div>
         }
       />
 
@@ -159,13 +235,14 @@ const ManageDepartment = () => {
         totalItems={totalItems}
         itemsPerPage={itemsPerPage}
         onPageChange={setCurrentPage}
+        onViewHistory={handleDepartemtSpecificLog}
       />
 
-      {/* Modal */}
+      {/* Department Form Modal */}
       <Modal
-        isOpen={isOpen}
+        isOpen={isDepartmentModalOpen}
         onClose={() => {
-          setIsOpen(false);
+          setIsDepartmentModalOpen(false);
           setEditingTeam(null);
         }}
         title={editingTeam ? 'Edit Department' : 'Create Department'}
@@ -173,11 +250,24 @@ const ManageDepartment = () => {
       >
         <DepartmentForm
           onClose={() => {
-            setIsOpen(false);
+            setIsDepartmentModalOpen(false);
             setEditingTeam(null);
           }}
           onSuccess={handleFormSuccess}
           initialData={editingTeam}
+        />
+      </Modal>
+
+      {/* Audit Log Modal */}
+      <Modal
+        isOpen={isAuditLogModalOpen}
+        onClose={() => setIsAuditLogModalOpen(false)}
+        title="Department Audit History"
+        size="lg" // Use larger size for the audit log table
+      >
+        <AuditLogModal 
+          logs={auditLogs} 
+          isLoading={isAuditLogLoading} 
         />
       </Modal>
     </div>

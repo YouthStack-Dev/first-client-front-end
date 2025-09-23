@@ -3,8 +3,11 @@ import AdminDashboard from "./AdminDashboard";
 import VendorDashboard from "./VendorDashboard";
 import ClientDashboard from "./ClientDashboard";
 import SuperAdminDashboard from "./SuperAdminDashboard";
+import { ModulePermissionContext } from "../../context/ModulePermissionContext";
+import { useContext } from "react";
 
 const DashboardRouter = () => {
+  const { modulePermissions, loading } = useContext(ModulePermissionContext);
 
 
 

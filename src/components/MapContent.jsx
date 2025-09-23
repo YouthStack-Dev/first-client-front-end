@@ -1,6 +1,5 @@
 import { Map, Marker, useMap } from '@vis.gl/react-google-maps';
 import React, { useRef, useEffect, useState } from 'react';
-import { logDebug } from '../utils/logger';
 
 const fixedPoint = { lat: 12.9716, lng: 77.5946 };
 
@@ -17,8 +16,6 @@ const MapContent = ({ homePosition, setHomePosition, setAddress, landmarkInputRe
       console.error('Map instance not available yet.');
     }
   };
-
-  logDebug(" this is the home position " ,homePosition)
 
   // Effect for Landmark Autocomplete
   useEffect(() => {
@@ -124,31 +121,21 @@ const MapContent = ({ homePosition, setHomePosition, setAddress, landmarkInputRe
 )}
 
         {homePosition && (
-          
           <Marker
-          position={homePosition}
-          title="Home"
-          draggable
-          onDragEnd={(e) => {
-            const newPosition = {
-              lat: e.latLng.lat(),
-              lng: e.latLng.lng(),
-            };
-            setHomePosition(newPosition);
-            // Call reverse geocoding to get the address for the new position
-            if (window.google && window.google.maps) {
-              const geocoder = new window.google.maps.Geocoder();
-              geocoder.geocode({ location: newPosition }, (results, status) => {
-                if (status === 'OK' && results[0]) {
-                  setAddress(results[0].formatted_address);
-                }
-              });
-            }
-            if (map) {
-              map.panTo(newPosition);
-            }
-          }}
-        />
+            position={homePosition}
+            title="Home"
+            draggable
+            onDragEnd={(e) => {
+              const newPosition = {
+                lat: e.latLng.lat(),
+                lng: e.latLng.lng(),
+              };
+              setHomePosition(newPosition);
+              if (map) {
+                map.panTo(newPosition);
+              }
+            }}
+          />
         )}
       </Map>
 
