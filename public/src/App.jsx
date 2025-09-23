@@ -1,0 +1,159 @@
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Login } from "./pages/Login";
+import { PublicRoute } from "./middleware/PublicRoute";
+import Layout from "./components/layout/layout";
+import EmployeeForm from "./components/departments/EmployeeForm";
+import ProtectedRouteAuth from "./middleware/ProtectedRouteAuth";
+import ManageDepartment from "./pages/ManageDepartment";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import ManageEmployees from "./pages/ManageEmployees";
+import VendorManagement from "./pages/VendorManagement";
+import VehicleManagement from "./pages/VehicleManagement";
+import ShiftManagement from "./pages/ShiftManagement";
+import DriverManagement from "./pages/DriverManagement";
+import Practice from "./pages/Practice";
+import SuperAdminLayout from "./superadmin/SuperAdminLayout";
+import VendorLayout from "./vendor/VendorLayout";
+import { useDispatch } from "react-redux";
+import { initializeAuth } from "./redux/features/auth/authSlice";
+import CompanyManagement from "./pages/CompanyManagement";
+import SuperAdminDashboard from "./superadmin/SuperAdminDashboard";
+
+function App() {
+
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(initializeAuth());
+  }, [dispatch]);
+
+
+
+
+
+  return (
+    <BrowserRouter>
+      <ToastContainer position="top-right" autoClose={3000} />
+
+      <Routes>
+        {/* ================= PRACTICE ROUTE ================= */}
+        <Route path="/practice" element={<Practice/>} />
+
+        {/* ================= PUBLIC LOGIN ROUTES ================= */}
+        {/* Company Login */}
+        <Route 
+          path="/" 
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          } 
+        />
+
+        {/* Vendor Login - EXACT PATH */}
+        <Route 
+          path="/vendor" 
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          } 
+        />
+
+        {/* SuperAdmin Login - EXACT PATH */}
+        <Route 
+          path="/superadmin" 
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          } 
+        />
+
+        {/* ================= SUPER ADMIN ROUTES ================= */}
+        <Route 
+          path="/superadmin/*" 
+          element={ 
+            <ProtectedRouteAuth 
+            type="admin"
+              redirectPath="/superadmin" 
+              authRedirectPath="/superadmin/dashboard" 
+            />
+          }
+        >
+          <Route element={<SuperAdminLayout />}>
+            <Route path="dashboard" element={<SuperAdminDashboard/>} />
+            <Route path="manage-companies" element={ <CompanyManagement />} />
+            <Route path="manage-vendors" element={ <VendorManagement/>} />
+         
+          </Route>
+        </Route>
+
+        {/* ================= VENDOR ROUTES ================= */}
+        <Route 
+          path="/vendor/*" 
+          element={
+            <ProtectedRouteAuth 
+            type="Vendor"
+              redirectPath="/vendor" 
+              authRedirectPath="/vendor/dashboard" 
+            />
+          } 
+        >
+          <Route element={<VendorLayout />}>
+            <Route path="dashboard" element={<h1>Vendor Dashboard</h1>} />
+            <Route path="employees" element={<ManageEmployees />} />
+            <Route path="employees/create" element={<EmployeeForm />} />
+            <Route path="employees/:userId/edit" element={<EmployeeForm mode="edit" />} />
+            <Route path="employees/:userId/view" element={<EmployeeForm mode="view" />} />
+            <Route path="reports" element={<h1>Vendor Reports</h1>} />
+          </Route>
+        </Route>
+
+        {/* ================= COMPANY ROUTES ================= */}
+        <Route 
+          element={
+            <ProtectedRouteAuth 
+            type="COMPANY"
+              redirectPath="/" 
+              authRedirectPath="/dashboard" 
+            />
+          } 
+        >
+          <Route element={<Layout />}>
+            <Route path="/dashboard" element={<h1>This is the dashboard</h1>} />
+            <Route path="/manage-team" element={<ManageDepartment />} />
+            <Route path="/shift-categories" element={<ManageDepartment />} />
+            <Route path="/role-management" element={<h1>This is the role Management View</h1>} />
+            <Route path="/manage-drivers" element={<DriverManagement/>} />
+            <Route path="/manage-company" element={<ManageDepartment />} />
+            <Route path="/manage-shift" element={<ShiftManagement />} />
+            <Route path="/manage-vendors" element={<VendorManagement />} />
+            <Route path="/manage-vehicles" element={<VehicleManagement />} />
+            <Route path="/employee/create-employee" element={<EmployeeForm />} />
+            <Route path="/department/:depId/employees" element={<ManageEmployees />} />
+            <Route path="/department/:depId/employees/:userId/edit" element={<EmployeeForm mode="edit" />} />
+            <Route path="/department/:depId/employees/:userId/view" element={<EmployeeForm mode="view" />} />
+            <Route path="/tracking" element={<h1> This is the screen of Tracking </h1>} />
+            <Route path="/routing" element={<h1> This is the screen of Routing </h1>} />
+            <Route path="/audit-report" element={<h1> This is the screen of audit-report </h1>} />
+          </Route>
+        </Route>
+
+        {/* ================= 404 ROUTE ================= */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;
+
+const NotFound = () => (
+  <div className="flex justify-center items-center h-screen">
+    <h1 className="text-3xl font-bold text-red-600">404 - Page Not Found</h1>
+  </div>
+);
