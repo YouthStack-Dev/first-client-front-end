@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Search, Building2 } from "lucide-react";
 import CompanyCard from "./CompanyCard";
@@ -16,12 +15,10 @@ const CompanyList = ({ companies, vendors = [], onEditCompany }) => {
       (company.email &&
         company.email.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    // 👇 Map backend isActive to UI status
-    const companyStatus = company.status
-      ? company.status
-      : company.isActive
-      ? "Active"
-      : "Suspended";
+    // Map backend isActive or status to UI-friendly status
+    const companyStatus =
+      company.status ??
+      (company.isActive === true ? "Active" : "Suspended");
 
     const matchesStatus =
       statusFilter === "all" || companyStatus === statusFilter;
@@ -70,10 +67,10 @@ const CompanyList = ({ companies, vendors = [], onEditCompany }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
           {filteredCompanies.map((company) => (
             <CompanyCard
-              key={company.id}
+              key={company.id || company.name} // fallback to name if id missing
               company={company}
-              vendors={vendors} // ✅ real vendors now passed
-              onEditCompany={onEditCompany} // ✅ edit works
+              vendors={vendors}
+              onEditCompany={onEditCompany}
             />
           ))}
         </div>

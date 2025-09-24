@@ -4,7 +4,7 @@ import {
   fetchVendorsThunk, 
   createVendorThunk, 
   updateVendorThunk 
-} from "../vendors/vendorThunk";
+} from "./vendorThunk";
 
 const initialState = {
   data: [],          // list of vendors

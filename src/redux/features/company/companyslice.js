@@ -36,18 +36,23 @@ const companySlice = createSlice({
 
     // Create company
     builder
-      .addCase(createCompanyThunk.pending, (state) => {
-        state.creating = true;
-        state.error = null;
-      })
-      .addCase(createCompanyThunk.fulfilled, (state, action) => {
-        state.creating = false;
-        if (action.payload) state.data.push(action.payload);
-      })
-      .addCase(createCompanyThunk.rejected, (state, action) => {
-        state.creating = false;
-        state.error = action.payload;
-      });
+    .addCase(createCompanyThunk.pending, (state) => {
+      state.creating = true;
+      state.error = null;
+    })
+    .addCase(createCompanyThunk.fulfilled, (state, action) => {
+      state.creating = false;
+      if (!action.payload) {
+        // console.warn("[Slice] createCompany fulfilled but payload is empty");
+        return;
+      }
+      // console.log("[Slice] createCompany fulfilled payload:", action.payload);
+      state.data = [...state.data, action.payload];
+    })
+    .addCase(createCompanyThunk.rejected, (state, action) => {
+      state.creating = false;
+      state.error = action.payload;
+    });
 
     // Update company
     builder

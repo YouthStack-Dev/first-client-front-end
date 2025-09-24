@@ -5,7 +5,7 @@ import shiftReducer from "./features/shift/shiftSlice";
 import vendorReducer from "./features/vendors/vendorSlice";
 import driverReducer from "./features/drivers/driverSlice";
 import companyReducer from "./features/company/companyslice";
-import moduleReducer from "./features/Permissions/permisssionsSlice";
+import permissionsReducer from "./features/Permissions/permisssionsSlice";
 import companyVendorReducer from  "./features/companyVendor/companyVendorSlice"
 
 const store = configureStore({
@@ -16,7 +16,7 @@ const store = configureStore({
     vendor: vendorReducer,
     driver: driverReducer,
     company: companyReducer, 
-    modules: moduleReducer,
+    permissions: permissionsReducer,
     companyVendor:companyVendorReducer
   },
 });
