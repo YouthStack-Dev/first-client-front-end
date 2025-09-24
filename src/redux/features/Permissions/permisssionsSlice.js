@@ -1,32 +1,33 @@
-// src/redux/features/modules/moduleSlice.js
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchModulesThunk } from "../Permissions/permissionsThunk";
+import { fetchPermissionsThunk } from "./permissionsThunk";
 
-const moduleSlice = createSlice({
-  name: "modules",
+const permissionsSlice = createSlice({
+  name: "permissions",
   initialState: {
-    modules: [],
+    permissions: [],
     loading: false,
     error: null,
+    fetched: false, 
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Fetch
-      .addCase(fetchModulesThunk.pending, (state) => {
+      .addCase(fetchPermissionsThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchModulesThunk.fulfilled, (state, action) => {
+      .addCase(fetchPermissionsThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.modules = action.payload;
+        state.permissions = action.payload;
+        state.fetched = true; // set fetched true
       })
-      .addCase(fetchModulesThunk.rejected, (state, action) => {
+      .addCase(fetchPermissionsThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
-
   },
 });
 
-export default moduleSlice.reducer;
+
+export const { resetPermissions } = permissionsSlice.actions; 
+export default permissionsSlice.reducer;

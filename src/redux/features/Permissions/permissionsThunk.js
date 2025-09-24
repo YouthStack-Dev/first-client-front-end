@@ -1,17 +1,15 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { fetchModulesApi } from "../Permissions/permissionsApi";
+import { fetchPermissionsApi } from "../Permissions/permissionsApi"; 
 
-export const fetchModulesThunk = createAsyncThunk(
-  "permissions/fetchModules",
+
+export const fetchPermissionsThunk = createAsyncThunk(
+  "permissions/fetchPermissions",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetchModulesApi();
-      console.log("Fetched modules:", response);
-      return response.modules || []; // ensure an array is returned
+      const response = await fetchPermissionsApi();
+      return response.data.items; // ✅ API returns { data: { items: [] } }
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch modules"
-      );
+      return rejectWithValue(error.response?.data || error.message);
     }
   }
 );

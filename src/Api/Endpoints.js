@@ -6,6 +6,4 @@
     getEmployesByDepartment:"api/users/department-employees",
     getTenants:"/v1/tenants",
 }
-
-
 export default endpoint

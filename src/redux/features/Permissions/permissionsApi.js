@@ -1,7 +1,7 @@
 import { API_CLIENT } from '../../../Api/API_Client';
 
-// Fetch all modules
-export const fetchModulesApi = async () => {
-  const response = await API_CLIENT.get("/api/modules");
+// Fetch all permissions
+export const fetchPermissionsApi = async () => {
+  const response = await API_CLIENT.get("/v1/iam/permissions/?skip=0&limit=100");
   return response.data;
 };
