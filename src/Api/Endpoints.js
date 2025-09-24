@@ -1,5 +1,5 @@
  const endpoint ={
-    login:"api/auth/login",
+    login:"/v1/auth/employee/login",
     superAdminLogin:"/v1/auth/admin/login",
     vendorLogin:"api/auth/vendor/login",
     getDepartments:"api/users/company-departments",

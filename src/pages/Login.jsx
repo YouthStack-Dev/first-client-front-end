@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock, Shield, Truck, User, Users } from "lucide-react";
+import { Lock, Shield, Truck, User, Users, Key } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import { resetAuthState, setAuthCredentials } from "../redux/features/auth/authSlice";
@@ -12,6 +12,7 @@ export const Login = () => {
   const [credentials, setCredentials] = useState({
     username: "",
     password: "",
+    tenant_id: "" // New field for company/vendor ID
   });
   const [validationError, setValidationError] = useState("");
   const location = useLocation();
@@ -35,6 +36,12 @@ export const Login = () => {
     }
   
     return '/dashboard'; // Default for company login
+  };
+
+  // Check if ID field is required based on login type
+  const requiresIdField = () => {
+    const path = location.pathname.toLowerCase();
+    return path === '/' || path === '' || path.includes('/vendor');
   };
 
   // Redirect if already authenticated
@@ -61,6 +68,12 @@ export const Login = () => {
       return;
     }
 
+    // ID validation for company/vendor login
+    if (requiresIdField() && !credentials.tenant_id) {
+      setValidationError("Please fill in your Company/Vendor ID.");
+      return;
+    }
+
     // username format validation
     const usernameRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!usernameRegex.test(credentials.username)) {
@@ -73,7 +86,8 @@ export const Login = () => {
         formData: credentials,
         endpoint: getLoginEndpoint()
       })).unwrap();
-       logDebug("Login successful, ",result);
+      
+      logDebug("Login successful, ",result);
       
       dispatch(setAuthCredentials(result));
       
@@ -83,13 +97,11 @@ export const Login = () => {
         sameSite: 'strict'
       });
       
-        
       // Navigate to appropriate dashboard
       navigate(getDashboardPath(), { replace: true });
 
     } catch (err) {
       console.error('Login error:', err);
-     
     }
   };
 
@@ -99,25 +111,33 @@ export const Login = () => {
       return {
         title: "Company Login",
         subtitle: "Access your company dashboard",
-        icon: <Users className="w-8 h-8 text-blue-600" />
+        icon: <Users className="w-8 h-8 text-blue-600" />,
+        idLabel: "Company ID",
+        idPlaceholder: "Enter your company ID"
       };
     } else if (path.includes('/superadmin')) {
       return {
         title: "Superadmin",
         subtitle: "System administration access",
-        icon: <Shield className="w-8 h-8 text-red-600" />
+        icon: <Shield className="w-8 h-8 text-red-600" />,
+        idLabel: "",
+        idPlaceholder: ""
       };
     } else if (path.includes('/vendor')) {
       return {
         title: "Vendor Login",
         subtitle: "Vendor portal access",
-        icon: <Truck className="w-8 h-8 text-green-600" />
+        icon: <Truck className="w-8 h-8 text-green-600" />,
+        idLabel: "Vendor ID",
+        idPlaceholder: "Enter your vendor ID"
       };
     } else {
       return {
         title: "Login",
         subtitle: "Welcome back",
-        icon: <User className="w-8 h-8 text-gray-600" />
+        icon: <User className="w-8 h-8 text-gray-600" />,
+        idLabel: "ID",
+        idPlaceholder: "Enter your ID"
       };
     }
   };
@@ -134,7 +154,8 @@ export const Login = () => {
     return endpoint.login; // Default endpoint
   };
 
-  const { title, subtitle, icon } = getLoginTitle();
+  const { title, subtitle, icon, idLabel, idPlaceholder } = getLoginTitle();
+  const showIdField = requiresIdField();
 
   return (
     <div className="min-h-screen bg-gradient-to-tr from-blue-50 to-blue-200 flex items-center justify-center p-4">
@@ -162,6 +183,25 @@ export const Login = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* ID Field (only for company/vendor login) */}
+          {showIdField && (
+            <div className="space-y-1">
+              <label className="block text-gray-600 font-medium">{idLabel}</label>
+              <div className="relative">
+                <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  name="tenant_id"
+                  value={credentials.tenant_id}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder={idPlaceholder}
+                  autoComplete="organization"
+                />
+              </div>
+            </div>
+          )}
+
           {/* username Field */}
           <div className="space-y-1">
             <label className="block text-gray-600 font-medium">username</label>

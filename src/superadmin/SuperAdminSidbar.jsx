@@ -4,6 +4,8 @@ import { BarChart3, Crown, Eye, Link2, Building2, Truck, Users, Settings, Monito
 import SidebarHeader from "./SidebarHeader";
 import SidebarMenuItem from "./SidebarMenuItem";
 import SidebarFooter from "./SidebarFooter";
+import { useDispatch } from "react-redux";
+import { logout } from "../redux/features/auth/authSlice";
 
 // Import your constants (move these to a separate file if needed)
 const superAdminData = {
@@ -40,7 +42,7 @@ const SuperAdminSidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
   const location = useLocation();
   const [openDropdown, setOpenDropdown] = useState({});
   const [isMobile, setIsMobile] = useState(false);
-
+const dispatch = useDispatch()
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024);
@@ -80,13 +82,19 @@ const SuperAdminSidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
       setIsOpen(!isPinned);
     }
   };
-
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to logout from Super Admin?")) {
+      // Dispatch logout first
+      dispatch(logout());
+  
+      // Optional alert for user feedback
       alert("Logging out from Super Admin...");
+  
+      // Redirect after logout
       window.location.href = '/superadmin';
     }
   };
+  
 
   const sidebarWidth = isOpen ? "w-sidebar" : "w-sidebar-collapsed";
   const sidebarClass = `h-screen ${sidebarWidth} bg-gradient-to-b from-sidebar-primary-900 via-sidebar-primary-800 to-sidebar-primary-900 text-white flex flex-col fixed left-0 transition-all duration-400 ease-in-out z-50 border-r border-sidebar-primary-700 shadow-sidebar`;

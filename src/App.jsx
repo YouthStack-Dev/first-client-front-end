@@ -24,6 +24,7 @@ import RoleManagement from "./pages/RoleManagement";
 import RouteManagement from "./pages/RouteManagement";
 import Schedulemanagement from "./pages/Schedulemanagement";
 import ScheduledBookingsCopy from "./components/RouteManagement/ScheduledBookingsCopy";
+import { PermissionPanel } from "./components/PermissionPanel";
 
 function App() {
 
@@ -44,7 +45,7 @@ function App() {
 
       <Routes>
         {/* ================= PRACTICE ROUTE ================= */}
-        <Route path="/practice" element={<Practice/>} />
+        <Route path="/practice" element={<RoleManagement/>} />
 
         {/* ================= PUBLIC LOGIN ROUTES ================= */}
         {/* Company Login */}
@@ -122,7 +123,7 @@ function App() {
         <Route 
           element={
             <ProtectedRouteAuth 
-            type="COMPANY"
+            type="employee"
               redirectPath="/" 
               authRedirectPath="/dashboard" 
             />
