@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Truck, Users, Phone, Mail, MapPin, Building2 } from 'lucide-react';
 import AssignEntityModal from '../layout/AssignEntityModal';
 import { fetchCompaniesThunk } from '../../redux/features/company/companyThunks';
-import { fetchCompaniesByVendorThunk, assignCompaniesToVendorThunk } from '../../redux/features/companyVendor/companyVendorThunks';
+import { assignCompaniesToVendorThunk } from '../../redux/features/companyVendor/companyVendorThunks';
 
 const VendorCard = ({ vendor = {}, onEdit }) => {
   const dispatch = useDispatch();
@@ -16,33 +16,21 @@ const VendorCard = ({ vendor = {}, onEdit }) => {
   const allCompanies = useMemo(() => companyState.data || [], [companyState.data]);
 
   // Companies assigned to this vendor
-  const assignedCompanies = useMemo(() => 
-    companyVendorState.companiesByVendor?.[vendor.id] || [], 
-    [companyVendorState.companiesByVendor, vendor.id]
-  );
-
-  // Check if this vendor's companies are already loaded
-  const companiesLoaded = useMemo(() => 
-    vendor.id in companyVendorState.companiesByVendor,
-    [companyVendorState.companiesByVendor, vendor.id]
+  const assignedCompanies = useMemo(
+    () => companyVendorState.companiesByVendor?.[vendor.vendor_id] || [],
+    [companyVendorState.companiesByVendor, vendor.vendor_id]
   );
 
   // Check if this vendor's companies are currently loading
-  const companiesLoading = useMemo(() => 
-    companyVendorState.loadingVendors?.[vendor.id] || false,
-    [companyVendorState.loadingVendors, vendor.id]
+  const companiesLoading = useMemo(
+    () => companyVendorState.loadingVendors?.[vendor.vendor_id] || false,
+    [companyVendorState.loadingVendors, vendor.vendor_id]
   );
 
   const vendorCompaniesError = companyVendorState.error || null;
   const assigning = companyVendorState.assigning || false;
 
   const [isAssignOpen, setAssignOpen] = useState(false);
-  const [hasFetched, setHasFetched] = useState(false);
-
-  // Reset hasFetched when vendor changes
-  useEffect(() => {
-    setHasFetched(false);
-  }, [vendor.id]);
 
   // Open assignment modal & fetch all companies if not loaded
   const handleOpenAssign = () => {
@@ -54,9 +42,18 @@ const VendorCard = ({ vendor = {}, onEdit }) => {
 
   // Save assigned companies
   const handleAssignSave = (selectedCompanyIds) => {
-    dispatch(assignCompaniesToVendorThunk({ vendorId: vendor.id, companyIds: selectedCompanyIds }));
+    dispatch(assignCompaniesToVendorThunk({ vendorId: vendor.vendor_id, companyIds: selectedCompanyIds }));
     setAssignOpen(false);
   };
+
+  // Determine status for badge
+  const statusText = vendor.is_active ? 'Active' : 'Inactive';
+  const statusColor = vendor.is_active ? 'bg-green-800 text-white' : 'bg-red-600 text-white';
+
+  // Format onboarded date safely
+  const onboardedDate = vendor.created_at
+    ? new Date(vendor.created_at).toLocaleDateString()
+    : 'N/A';
 
   return (
     <>
@@ -68,12 +65,8 @@ const VendorCard = ({ vendor = {}, onEdit }) => {
               <Truck className="w-6 h-6" />
               <h3 className="text-lg font-semibold truncate">{vendor.name || 'N/A'}</h3>
             </div>
-            <span
-              className={`px-2 py-1 text-xs rounded-full ${
-                vendor.isActive ? 'bg-green-800 text-white' : 'bg-red-600 text-white'
-              }`}
-            >
-              {vendor.isActive ? 'Active' : 'Inactive'}
+            <span className={`px-2 py-1 text-xs rounded-full ${statusColor}`}>
+              {statusText}
             </span>
           </div>
         </div>
@@ -146,7 +139,7 @@ const VendorCard = ({ vendor = {}, onEdit }) => {
         {/* Footer Actions */}
         <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center flex-shrink-0">
           <span className="text-xs text-gray-500 whitespace-nowrap">
-            Since: {vendor.onboardedAt ? new Date(vendor.onboardedAt).toLocaleDateString() : 'N/A'}
+            Since: {onboardedDate}
           </span>
           <div className="flex space-x-2">
             <button
@@ -155,12 +148,13 @@ const VendorCard = ({ vendor = {}, onEdit }) => {
             >
               Edit
             </button>
-            <button
+            {/* Uncomment to allow assigning companies */}
+            {/* <button
               onClick={handleOpenAssign}
               className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
             >
               Assign Company
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
@@ -169,7 +163,7 @@ const VendorCard = ({ vendor = {}, onEdit }) => {
       <AssignEntityModal
         isOpen={isAssignOpen}
         onClose={() => setAssignOpen(false)}
-        sourceEntity={{ id: vendor.id, name: vendor.name, type: 'vendor' }}
+        sourceEntity={{ id: vendor.vendor_id, name: vendor.name, type: 'vendor' }}
         targetEntities={allCompanies}
         assignedIds={assignedCompanies.map(c => c.id)}
         renderItem={(company, isSelected) => (
