@@ -1,21 +1,32 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { fetchVendorsApi, createVendorApi, updateVendorApi } from "./vendorApi";
+import { API_CLIENT } from "../../../Api/API_Client";
 
 /**
  * Fetch all vendors
  */
 export const fetchVendorsThunk = createAsyncThunk(
   "vendor/fetchVendors",
-  async (_, { rejectWithValue }) => {
+  async (params = {}, { rejectWithValue }) => {
     try {
-      const response = await fetchVendorsApi();
-      // If API returns { success: true, data: [...] }
-      return response.data || []; 
+      const { skip = 0, limit = 100, name = "", code = "" } = params;
+
+      const response = await API_CLIENT.get("/v1/vendors/", {
+        params: { skip, limit, name, code },
+      });
+
+      // Extract items array
+      const vendors = response.data?.data?.items || [];
+
+      return vendors;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch vendors");
+      console.error("[Thunk] Failed to fetch vendors:", error);
+      const message =
+        error.response?.data?.message || error.message || "Failed to fetch vendors";
+      return rejectWithValue(message);
     }
   }
 );
+
 
 /**
  * Create a new vendor

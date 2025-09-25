@@ -39,14 +39,6 @@ const VendorCard = ({ vendor = {}, onEdit }) => {
   const [isAssignOpen, setAssignOpen] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
 
-  // Fetch companies assigned to this vendor if not cached
-  useEffect(() => {
-    if (vendor.id && !companiesLoaded && !companiesLoading && !hasFetched) {
-      dispatch(fetchCompaniesByVendorThunk(vendor.id));
-      setHasFetched(true);
-    }
-  }, [vendor.id, companiesLoaded, companiesLoading, hasFetched, dispatch]);
-
   // Reset hasFetched when vendor changes
   useEffect(() => {
     setHasFetched(false);

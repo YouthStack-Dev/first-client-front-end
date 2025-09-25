@@ -11,7 +11,6 @@ const VendorList = ({ onEditVendor }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-
 useEffect(() => {
   if (vendors.length === 0) {
     dispatch(fetchVendorsThunk());
@@ -27,6 +26,14 @@ useEffect(() => {
     return matchesSearch && matchesStatus;
   });
 
+  // Safely render error messages
+  const renderError = err => {
+    if (!err) return null;
+    if (typeof err === 'string') return err;
+    if (err.message) return err.message;
+    return JSON.stringify(err);
+  };
+
   return (
     <div className="space-y-6">
       {/* Filters */}
@@ -37,13 +44,13 @@ useEffect(() => {
             type="text"
             placeholder="Search vendors..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
           />
         </div>
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={e => setStatusFilter(e.target.value)}
           className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
         >
           <option value="all">All Status</option>
@@ -55,7 +62,7 @@ useEffect(() => {
 
       {/* Loading/Error */}
       {loading && <p>Loading vendors...</p>}
-      {error && <p className="text-red-500">Error: {error}</p>}
+      {error && <p className="text-red-500">Error: {renderError(error)}</p>}
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -92,11 +99,11 @@ useEffect(() => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
-          {filteredVendors.map(vendor => (
+          {filteredVendors.map((vendor, index) => (
             <VendorCard
-              key={vendor.id}
+              key={vendor._id || vendor.id || index} // Use _id or id from API, fallback to index
               vendor={vendor}
-              onEdit={() => onEditVendor?.(vendor)} // ✅ pass edit handler
+              onEdit={() => onEditVendor?.(vendor)}
             />
           ))}
         </div>

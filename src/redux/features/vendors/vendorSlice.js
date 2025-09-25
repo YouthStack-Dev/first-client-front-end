@@ -1,23 +1,28 @@
 // src/redux/features/vendors/vendorSlice.js
 import { createSlice } from "@reduxjs/toolkit";
-import { 
-  fetchVendorsThunk, 
-  createVendorThunk, 
-  updateVendorThunk 
-} from "./vendorThunk";
+import { fetchVendorsThunk, createVendorThunk, updateVendorThunk } from "./vendorThunk";
 
 const initialState = {
-  data: [],          // list of vendors
-  loading: false,    // for fetching vendors
-  creating: false,   // for creating a vendor
-  updating: false,   // for updating a vendor
-  error: null,
+  data: [],             // list of vendors
+  loading: false,       // fetching vendors
+  creating: false,      // creating a vendor
+  updating: false,      // updating a vendor
+  deleting: false,      // deleting a vendor
+  selectedVendor: null, // for edit/view
+  error: null,          // general error
 };
 
 const vendorSlice = createSlice({
   name: "vendor",
   initialState,
-  reducers: {},
+  reducers: {
+    setSelectedVendor(state, action) {
+      state.selectedVendor = action.payload;
+    },
+    clearSelectedVendor(state) {
+      state.selectedVendor = null;
+    },
+  },
   extraReducers: (builder) => {
     // Fetch vendors
     builder
@@ -27,7 +32,7 @@ const vendorSlice = createSlice({
       })
       .addCase(fetchVendorsThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload;
+        state.data = action.payload || [];
       })
       .addCase(fetchVendorsThunk.rejected, (state, action) => {
         state.loading = false;
@@ -64,7 +69,10 @@ const vendorSlice = createSlice({
         state.updating = false;
         state.error = action.payload;
       });
+
+  
   },
 });
 
+export const { setSelectedVendor, clearSelectedVendor } = vendorSlice.actions;
 export default vendorSlice.reducer;

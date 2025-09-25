@@ -1,59 +1,47 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Building2, Truck, Mail, Phone, MapPin, Link2 } from "lucide-react";
 import AssignEntityModal from "../components/layout/AssignEntityModal";
-import { fetchVendorsThunk } from "../redux/features/vendors/vendorThunk";
-import {
-  fetchVendorsByCompanyThunk,
-  assignVendorsToCompanyThunk,
-} from "../redux/features/companyVendor/companyVendorThunks";
+import { assignVendorsToCompanyThunk } from "../redux/features/companyVendor/companyVendorThunks";
 
 const CompanyCard = ({ company, onEditCompany }) => {
   const dispatch = useDispatch();
 
-  // Redux slices
   const vendorState = useSelector((state) => state.vendor || {});
   const companyVendorState = useSelector((state) => state.companyVendor || {});
 
-  // All vendors (for assignment modal)
   const allVendors = useMemo(() => vendorState.data || [], [vendorState.data]);
 
-  // Vendors assigned to this company
   const companyVendorsList = useMemo(() => {
-    const vendors = companyVendorState.vendorsByCompany?.[company.id];
+    const vendors = companyVendorState.vendorsByCompany?.[company.tenant_id];
     return Array.isArray(vendors) ? vendors : [];
-  }, [companyVendorState.vendorsByCompany, company.id]);
+  }, [companyVendorState.vendorsByCompany, company.tenant_id]);
 
-  const vendorsLoading = vendorState.loading || false;
   const companyVendorsLoading = companyVendorState.loading || false;
   const companyVendorsError = companyVendorState.error || null;
   const assigning = companyVendorState.assigning || false;
 
   const [isAssignOpen, setAssignOpen] = useState(false);
 
+  const handleOpenAssign = () => setAssignOpen(true);
 
-  // Fetch assigned vendors if not already loaded
-useEffect(() => {
-  if (company?.id && !companyVendorState.vendorsByCompany[company.id]) {
-    dispatch(fetchVendorsByCompanyThunk(company.id));
-  }
-}, [company?.id, dispatch]); 
-
-
-  // Open modal and ensure all vendors loaded
-  const handleOpenAssign = () => {
-    if (allVendors.length === 0) {
-      dispatch(fetchVendorsThunk());
-    }
-    setAssignOpen(true);
+  const handleAssignSave = (selectedVendorIds) => {
+    dispatch(
+      assignVendorsToCompanyThunk({
+        companyId: company.tenant_id,
+        vendorIds: selectedVendorIds,
+      })
+    );
+    setAssignOpen(false);
   };
 
-  // Save assigned vendors
-const handleAssignSave = (selectedVendorIds) => {
-  dispatch(assignVendorsToCompanyThunk({ companyId: company.id, vendorIds: selectedVendorIds }));
-  setAssignOpen(false);
-};
-
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return isNaN(date.getTime())
+      ? "N/A"
+      : date.toLocaleDateString() + " " + date.toLocaleTimeString();
+  };
 
   return (
     <>
@@ -67,10 +55,10 @@ const handleAssignSave = (selectedVendorIds) => {
             </div>
             <span
               className={`px-2 py-1 text-xs rounded-full ${
-                company.isActive ? "bg-blue-800 text-white" : "bg-gray-400 text-white"
+                company.is_active ? "bg-green-600 text-white" : "bg-red-400 text-white"
               }`}
             >
-              {company.isActive ? "Active" : "Inactive"}
+              {company.is_active ? "Active" : "Inactive"}
             </span>
           </div>
         </div>
@@ -155,7 +143,7 @@ const handleAssignSave = (selectedVendorIds) => {
         {/* Footer Actions */}
         <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center flex-shrink-0">
           <span className="text-xs text-gray-500 whitespace-nowrap">
-            Created: {company.createdAt ? new Date(company.createdAt).toLocaleDateString() : "N/A"}
+            Created: {formatDate(company.created_at)}
           </span>
           <div className="flex space-x-2">
             <button
@@ -178,7 +166,7 @@ const handleAssignSave = (selectedVendorIds) => {
       <AssignEntityModal
         isOpen={isAssignOpen}
         onClose={() => setAssignOpen(false)}
-        sourceEntity={{ id: company.id, name: company.name, type: "company" }}
+        sourceEntity={{ id: company.tenant_id, name: company.name, type: "company" }}
         targetEntities={allVendors}
         assignedIds={companyVendorsList.map((v) => v.id)}
         onSave={handleAssignSave}
