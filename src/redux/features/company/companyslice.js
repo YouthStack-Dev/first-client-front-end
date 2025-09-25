@@ -1,38 +1,123 @@
+// // src/redux/features/companies/companySlice.js
+// import { createSlice } from "@reduxjs/toolkit";
+// import {
+//   fetchCompaniesThunk,
+//   createCompanyThunk,
+//   updateCompanyThunk,
+// } from "./companyThunks";
+
+// const initialState = {
+//   entities: {},        // normalized companies by id
+//   ids: [],             // ordered list of company ids
+//   loading: false,      // fetching companies
+//   creating: false,     // creating a company
+//   updating: false,     // updating a company
+//   error: null,         // last error message
+// };
+
+// const companySlice = createSlice({
+//   name: "company",
+//   initialState,
+//   reducers: {
+//     clearError: (state) => {
+//       state.error = null;
+//     },
+//     resetCompanies: (state) => {
+//       state.entities = {};
+//       state.ids = [];
+//       state.loading = false;
+//       state.creating = false;
+//       state.updating = false;
+//       state.error = null;
+//     },
+//   },
+//   extraReducers: (builder) => {
+//     // FETCH COMPANIES
+//     builder
+//       .addCase(fetchCompaniesThunk.pending, (state) => {
+//         state.loading = true;
+//         state.error = null;
+//       })
+//       .addCase(fetchCompaniesThunk.fulfilled, (state, action) => {
+//         state.loading = false;
+//         const companies = action.payload || [];
+//         state.entities = {};
+//         state.ids = [];
+//         companies.forEach((company) => {
+//           state.entities[company.id] = company;
+//           state.ids.push(company.id);
+//         });
+//       })
+//       .addCase(fetchCompaniesThunk.rejected, (state, action) => {
+//         state.loading = false;
+//         state.error = action.payload || action.error?.message || "Failed to fetch companies";
+//       });
+
+//     // CREATE COMPANY
+//     builder
+//       .addCase(createCompanyThunk.pending, (state) => {
+//         state.creating = true;
+//         state.error = null;
+//       })
+//       .addCase(createCompanyThunk.fulfilled, (state, action) => {
+//         state.creating = false;
+//         if (!action.payload?.id) return;
+//         const company = action.payload;
+//         state.entities[company.id] = company;
+//         state.ids.push(company.id);
+//       })
+//       .addCase(createCompanyThunk.rejected, (state, action) => {
+//         state.creating = false;
+//         state.error = action.payload || action.error?.message || "Failed to create company";
+//       });
+
+//     // UPDATE COMPANY
+//     builder
+//       .addCase(updateCompanyThunk.pending, (state) => {
+//         state.updating = true;
+//         state.error = null;
+//       })
+//       .addCase(updateCompanyThunk.fulfilled, (state, action) => {
+//         state.updating = false;
+//         const company = action.payload;
+//         if (company?.id && state.entities[company.id]) {
+//           state.entities[company.id] = company;
+//         }
+//       })
+//       .addCase(updateCompanyThunk.rejected, (state, action) => {
+//         state.updating = false;
+//         state.error = action.payload || action.error?.message || "Failed to update company";
+//       });
+//   },
+// });
+
+// export const { clearError, resetCompanies } = companySlice.actions;
+// export default companySlice.reducer;
+
+
+
 // src/redux/features/companies/companySlice.js
 import { createSlice } from "@reduxjs/toolkit";
-import {
-  fetchCompaniesThunk,
-  createCompanyThunk,
-  updateCompanyThunk,
+import { 
+  fetchCompaniesThunk, 
+  createCompanyThunk, 
+  updateCompanyThunk 
 } from "./companyThunks";
 
 const initialState = {
-  entities: {},        // normalized companies by id
-  ids: [],             // ordered list of company ids
-  loading: false,      // fetching companies
-  creating: false,     // creating a company
-  updating: false,     // updating a company
-  error: null,         // last error message
+  data: [],          // list of companies
+  loading: false,    // for fetching companies
+  creating: false,   // for creating a company
+  updating: false,   // for updating a company
+  error: null,
 };
 
 const companySlice = createSlice({
   name: "company",
   initialState,
-  reducers: {
-    clearError: (state) => {
-      state.error = null;
-    },
-    resetCompanies: (state) => {
-      state.entities = {};
-      state.ids = [];
-      state.loading = false;
-      state.creating = false;
-      state.updating = false;
-      state.error = null;
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
-    // FETCH COMPANIES
+    // Fetch companies
     builder
       .addCase(fetchCompaniesThunk.pending, (state) => {
         state.loading = true;
@@ -40,56 +125,49 @@ const companySlice = createSlice({
       })
       .addCase(fetchCompaniesThunk.fulfilled, (state, action) => {
         state.loading = false;
-        const companies = action.payload || [];
-        state.entities = {};
-        state.ids = [];
-        companies.forEach((company) => {
-          state.entities[company.id] = company;
-          state.ids.push(company.id);
-        });
+        state.data = action.payload;
       })
       .addCase(fetchCompaniesThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || action.error?.message || "Failed to fetch companies";
+        state.error = action.payload;
       });
 
-    // CREATE COMPANY
+    // Create company
     builder
-      .addCase(createCompanyThunk.pending, (state) => {
-        state.creating = true;
-        state.error = null;
-      })
-      .addCase(createCompanyThunk.fulfilled, (state, action) => {
-        state.creating = false;
-        if (!action.payload?.id) return;
-        const company = action.payload;
-        state.entities[company.id] = company;
-        state.ids.push(company.id);
-      })
-      .addCase(createCompanyThunk.rejected, (state, action) => {
-        state.creating = false;
-        state.error = action.payload || action.error?.message || "Failed to create company";
-      });
+    .addCase(createCompanyThunk.pending, (state) => {
+      state.creating = true;
+      state.error = null;
+    })
+    .addCase(createCompanyThunk.fulfilled, (state, action) => {
+      state.creating = false;
+      if (!action.payload) {
+        // console.warn("[Slice] createCompany fulfilled but payload is empty");
+        return;
+      }
+      // console.log("[Slice] createCompany fulfilled payload:", action.payload);
+      state.data = [...state.data, action.payload];
+    })
+    .addCase(createCompanyThunk.rejected, (state, action) => {
+      state.creating = false;
+      state.error = action.payload;
+    });
 
-    // UPDATE COMPANY
+    // Update company
     builder
       .addCase(updateCompanyThunk.pending, (state) => {
         state.updating = true;
         state.error = null;
       })
-      .addCase(updateCompanyThunk.fulfilled, (state, action) => {
-        state.updating = false;
-        const company = action.payload;
-        if (company?.id && state.entities[company.id]) {
-          state.entities[company.id] = company;
-        }
-      })
+     .addCase(updateCompanyThunk.fulfilled, (state, action) => {
+    state.updating = false;
+    const index = state.data.findIndex(c => c.id === action.payload.id);
+    if (index !== -1) state.data[index] = action.payload;
+  })
       .addCase(updateCompanyThunk.rejected, (state, action) => {
         state.updating = false;
-        state.error = action.payload || action.error?.message || "Failed to update company";
+        state.error = action.payload;
       });
   },
 });
 
-export const { clearError, resetCompanies } = companySlice.actions;
-export default companySlice.reducer;
+export default companySlice.reducer; 
