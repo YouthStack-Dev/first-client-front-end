@@ -4,66 +4,61 @@ import { API_CLIENT } from "../../../Api/API_Client";
 /**
  * Fetch all companies
  */
-
 export const fetchCompaniesThunk = createAsyncThunk(
   "company/fetchCompanies",
   async (_, { rejectWithValue }) => {
     try {
-      // Make the request to fetch tenants
       const response = await API_CLIENT.get("/v1/tenants/");
-      // Log the full response for debugging
-      // console.log("Full response:", response.data);
-      // Extract tenants from response
-      const tenants = response.data?.data?.items || [];
-      // console.log("Fetched companies (tenants):", tenants);
-      return tenants; // return only the array of tenants
+      // Ensure we always return an array
+      const tenants = Array.isArray(response.data?.data?.items)
+        ? response.data.data.items
+        : [];
+      return tenants;
     } catch (error) {
-      console.error("[Thunk] Failed to fetch companies:", error);
-      // Return meaningful error message
       const message =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to fetch companies";
+        error.response?.data?.message || error.message || "Failed to fetch companies";
       return rejectWithValue(message);
     }
   }
 );
 
+/**
+ * Create a new company
+ */
 export const createCompanyThunk = createAsyncThunk(
   "company/createCompany",
   async (formData, { rejectWithValue, dispatch }) => {
     try {
-      const payload = { ...formData };
-      // console.group("[Thunk] Create Company");
-      // console.log("Payload sent to API:", payload);
-      // console.groupEnd();
-      const response = await API_CLIENT.post("/v1/tenants/", payload);
+      const response = await API_CLIENT.post("/v1/tenants/", formData);
+      const newCompany = response.data;
 
-      // console.log("[Thunk] API Response:", response.data);
-      // Refresh companies list
+      // Optionally refresh list if needed
       dispatch(fetchCompaniesThunk());
-      return response.data; // Let caller handle extraction
+
+      return newCompany;
     } catch (error) {
-      console.error("[Thunk] Failed to create company:", error);
-      const message = error.response?.data?.message || error.message ||"Failed to create company";
+      const message =
+        error.response?.data?.message || error.message || "Failed to create company";
       return rejectWithValue(message);
     }
   }
 );
 
-
+/**
+ * Update an existing company
+ */
 export const updateCompanyThunk = createAsyncThunk(
   "company/updateCompany",
   async ({ companyId, formData }, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.put(`/tenants/${companyId}`, formData);
-      console.log("Updated company:", response.data);
-      return response.data; // ✅ return only the updated company object
+      const response = await API_CLIENT.put(`/v1/tenants/${companyId}`, formData);
+      const updatedCompany = response.data;
+
+      return updatedCompany;
     } catch (error) {
-      console.error("[Thunk] Failed to update company:", error);
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to update company"
-      );
+      const message =
+        error.response?.data?.message || error.message || "Failed to update company";
+      return rejectWithValue(message);
     }
   }
 );

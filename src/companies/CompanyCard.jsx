@@ -4,6 +4,63 @@ import { Building2, Truck, Mail, Phone, MapPin, Link2 } from "lucide-react";
 import AssignEntityModal from "../components/layout/AssignEntityModal";
 import { assignVendorsToCompanyThunk } from "../redux/features/companyVendor/companyVendorThunks";
 
+// Separate component for vendor list
+const CompanyVendorsList = ({ vendors, loading, error }) => {
+  if (loading) {
+    return (
+      <div className="text-center py-4 text-gray-400 text-sm flex-1 flex items-center justify-center">
+        Loading vendors...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-4 text-red-400 text-sm flex-1 flex items-center justify-center">
+        Error loading vendors
+      </div>
+    );
+  }
+
+  if (!vendors.length) {
+    return (
+      <div className="text-center py-4 text-gray-400 text-sm flex-1 flex items-center justify-center">
+        <div>
+          <Truck className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          No vendors assigned yet
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 overflow-y-auto px-4 pb-2">
+      <div className="space-y-2">
+        {vendors.map((vendor) => (
+          <div
+            key={vendor.id}
+            className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+          >
+            <div className="flex items-center space-x-2 min-w-0 flex-1">
+              <Truck className="w-4 h-4 text-green-600 flex-shrink-0" />
+              <span className="text-sm font-medium text-gray-800 truncate">
+                {vendor.name}
+              </span>
+            </div>
+            <span
+              className={`px-2 py-1 text-xs rounded-full ml-2 flex-shrink-0 ${
+                vendor.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+              }`}
+            >
+              {vendor.is_active ? "Active" : "Inactive"}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const CompanyCard = ({ company, onEditCompany }) => {
   const dispatch = useDispatch();
 
@@ -23,24 +80,29 @@ const CompanyCard = ({ company, onEditCompany }) => {
 
   const [isAssignOpen, setAssignOpen] = useState(false);
 
+  // Open modal
   const handleOpenAssign = () => setAssignOpen(true);
 
-  const handleAssignSave = (selectedVendorIds) => {
-    dispatch(
-      assignVendorsToCompanyThunk({
-        companyId: company.tenant_id,
-        vendorIds: selectedVendorIds,
-      })
-    );
-    setAssignOpen(false);
+  // Assign vendors with async-safe handling
+  const handleAssignSave = async (selectedVendorIds) => {
+    try {
+      await dispatch(
+        assignVendorsToCompanyThunk({
+          companyId: company.tenant_id,
+          vendorIds: selectedVendorIds,
+        })
+      ).unwrap();
+      setAssignOpen(false); // close only on success
+    } catch (err) {
+      console.error("Assign vendor failed:", err);
+      // Optional: show toast notification here
+    }
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return isNaN(date.getTime())
-      ? "N/A"
-      : date.toLocaleDateString() + " " + date.toLocaleTimeString();
+    return isNaN(date.getTime()) ? "N/A" : date.toLocaleDateString();
   };
 
   return (
@@ -97,47 +159,11 @@ const CompanyCard = ({ company, onEditCompany }) => {
             </span>
           </div>
 
-          {companyVendorsLoading ? (
-            <div className="text-center py-4 text-gray-400 text-sm flex-1 flex items-center justify-center">
-              Loading vendors...
-            </div>
-          ) : companyVendorsError ? (
-            <div className="text-center py-4 text-red-400 text-sm flex-1 flex items-center justify-center">
-              Error loading vendors
-            </div>
-          ) : companyVendorsList.length === 0 ? (
-            <div className="text-center py-4 text-gray-400 text-sm flex-1 flex items-center justify-center">
-              <div>
-                <Truck className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                No vendors assigned yet
-              </div>
-            </div>
-          ) : (
-            <div className="flex-1 overflow-y-auto px-4 pb-2">
-              <div className="space-y-2">
-                {companyVendorsList.map((vendor) => (
-                  <div
-                    key={vendor.id}
-                    className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
-                  >
-                    <div className="flex items-center space-x-2 min-w-0 flex-1">
-                      <Truck className="w-4 h-4 text-green-600 flex-shrink-0" />
-                      <span className="text-sm font-medium text-gray-800 truncate">
-                        {vendor.name}
-                      </span>
-                    </div>
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ml-2 flex-shrink-0 ${
-                        vendor.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {vendor.isActive ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <CompanyVendorsList
+            vendors={companyVendorsList}
+            loading={companyVendorsLoading}
+            error={companyVendorsError}
+          />
         </div>
 
         {/* Footer Actions */}
@@ -155,6 +181,8 @@ const CompanyCard = ({ company, onEditCompany }) => {
             <button
               onClick={handleOpenAssign}
               className="px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
+              disabled={companyVendorsLoading || assigning}
+              aria-label="Assign vendor to company"
             >
               Assign Vendor
             </button>
@@ -166,7 +194,12 @@ const CompanyCard = ({ company, onEditCompany }) => {
       <AssignEntityModal
         isOpen={isAssignOpen}
         onClose={() => setAssignOpen(false)}
-        sourceEntity={{ id: company.tenant_id, name: company.name, type: "company" }}
+        sourceEntity={{
+          id: company.tenant_id,
+          name: company.name,
+          type: "company",
+          tenant_id: company.tenant_id,
+        }}
         targetEntities={allVendors}
         assignedIds={companyVendorsList.map((v) => v.id)}
         onSave={handleAssignSave}

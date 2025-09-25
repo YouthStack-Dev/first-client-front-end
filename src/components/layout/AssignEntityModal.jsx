@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { X } from "lucide-react";
 
-const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSave }) => {
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const phoneRegex = /^[\d+\-()\s]{7,20}$/;
+
+const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSave, saving = false }) => {
   const initialFormData = {
     tenant_id: "",
     admin_email: "",
@@ -17,27 +20,40 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSave }) => {
 
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
+  const modalRef = useRef(null);
 
-  // Update tenant_id automatically when sourceEntity changes
-  useEffect(() => {
-    if (sourceEntity?.tenant_id && formData.tenant_id !== sourceEntity.tenant_id) {
-      if (process.env.NODE_ENV === "development") {
-        console.log("AssignEntityModal - setting tenant_id:", sourceEntity.tenant_id);
-      }
-      setFormData((prev) => ({
-        ...prev,
-        tenant_id: sourceEntity.tenant_id,
-      }));
-    }
-  }, [sourceEntity?.tenant_id]);
+  const fields = useMemo(
+    () => [
+      { label: "Vendor Name", name: "name", type: "text" },
+      { label: "Vendor Email", name: "email", type: "email" },
+      { label: "Vendor Phone", name: "phone", type: "text" },
+      { label: "Vendor Code", name: "vendor_code", type: "text" },
+      { label: "Admin Name", name: "admin_name", type: "text" },
+      { label: "Admin Email", name: "admin_email", type: "email" },
+      { label: "Admin Phone", name: "admin_phone", type: "text" },
+      { label: "Admin Password", name: "admin_password", type: "password" },
+    ],
+    []
+  );
 
-  // Reset form on modal close
+  // Reset form and set tenant_id when modal opens
   useEffect(() => {
-    if (!isOpen) {
-      setFormData(initialFormData);
+    if (isOpen && sourceEntity) {
+      setFormData({ ...initialFormData, tenant_id: sourceEntity.tenant_id || "" });
       setErrors({});
+      // Focus on the first input when modal opens
+      setTimeout(() => modalRef.current?.querySelector("input:not([readonly])")?.focus(), 0);
     }
-  }, [isOpen]);
+  }, [isOpen, sourceEntity]);
+
+  // Close modal on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -52,8 +68,6 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSave }) => {
 
   const validate = () => {
     const newErrors = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^[\d+\-()\s]{7,20}$/;
 
     if (!formData.name) newErrors.name = "Vendor name is required";
     if (!emailRegex.test(formData.email)) newErrors.email = "Invalid vendor email";
@@ -69,20 +83,25 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSave }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
-    onSave(formData);
+    await onSave(formData);
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-lg p-6">
+    <div
+      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+      role="dialog"
+      aria-modal="true"
+      ref={modalRef}
+    >
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-lg p-6 relative">
         {/* Header */}
         <div className="flex justify-between items-center border-b pb-3 mb-4">
           <h2 className="text-lg font-semibold">
             Assign Vendor to Company: {sourceEntity?.name || "N/A"}
           </h2>
-          <button onClick={onClose}>
+          <button onClick={onClose} aria-label="Close modal">
             <X className="w-5 h-5 text-gray-500 hover:text-gray-700" />
           </button>
         </div>
@@ -99,20 +118,10 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSave }) => {
               readOnly
               className="w-full border rounded-lg px-3 py-2 text-sm bg-gray-100 cursor-not-allowed"
             />
-            <input type="hidden" name="tenant_id" value={formData.tenant_id} />
           </div>
 
           {/* Vendor & Admin fields */}
-          {[
-            { label: "Vendor Name", name: "name", type: "text" },
-            { label: "Vendor Email", name: "email", type: "email" },
-            { label: "Vendor Phone", name: "phone", type: "text" },
-            { label: "Vendor Code", name: "vendor_code", type: "text" },
-            { label: "Admin Name", name: "admin_name", type: "text" },
-            { label: "Admin Email", name: "admin_email", type: "email" },
-            { label: "Admin Phone", name: "admin_phone", type: "text" },
-            { label: "Admin Password", name: "admin_password", type: "password" },
-          ].map((field) => (
+          {fields.map((field) => (
             <div key={field.name}>
               <label className="block text-sm font-medium text-gray-700">{field.label}</label>
               <input
@@ -148,14 +157,16 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSave }) => {
           <button
             onClick={onClose}
             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            disabled={saving}
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            disabled={saving}
           >
-            Assign Vendor
+            {saving ? "Assigning..." : "Assign Vendor"}
           </button>
         </div>
       </div>

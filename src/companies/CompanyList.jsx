@@ -1,30 +1,37 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { useSelector } from "react-redux";
 import { Search, Building2 } from "lucide-react";
 import CompanyCard from "./CompanyCard";
 
-const CompanyList = ({ companies, vendors = [], onEditCompany }) => {
-  // Ensure companies is always an array
-  const safeCompanies = Array.isArray(companies) ? companies : [];
+const CompanyList = ({ vendors = [], onEditCompany }) => {
+  // Get normalized companies from Redux
+  const companiesState = useSelector((state) => state.company || {});
+  const companies = useMemo(() => {
+    const ids = companiesState.ids || [];
+    const entities = companiesState.entities || {};
+    return ids.map((id) => entities[id]).filter(Boolean);
+  }, [companiesState.ids, companiesState.entities]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const filteredCompanies = safeCompanies.filter((company) => {
-    const matchesSearch =
-      company.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (company.email &&
-        company.email.toLowerCase().includes(searchTerm.toLowerCase()));
+  // Filtered & memoized companies
+  const filteredCompanies = useMemo(() => {
+    return companies.filter((company) => {
+      const matchesSearch =
+        company.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (company.email?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
 
-    // Map backend isActive or status to UI-friendly status
-    const companyStatus =
-      company.status ??
-      (company.isActive === true ? "Active" : "Suspended");
+      const companyStatus =
+        company.status ??
+        (company.is_active === true ? "Active" : "Suspended");
 
-    const matchesStatus =
-      statusFilter === "all" || companyStatus === statusFilter;
+      const matchesStatus =
+        statusFilter === "all" || companyStatus === statusFilter;
 
-    return matchesSearch && matchesStatus;
-  });
+      return matchesSearch && matchesStatus;
+    });
+  }, [companies, searchTerm, statusFilter]);
 
   return (
     <div className="space-y-6">
@@ -38,12 +45,14 @@ const CompanyList = ({ companies, vendors = [], onEditCompany }) => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            aria-label="Search companies"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          aria-label="Filter by status"
         >
           <option value="all">All Status</option>
           <option value="Active">Active</option>
@@ -67,7 +76,7 @@ const CompanyList = ({ companies, vendors = [], onEditCompany }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
           {filteredCompanies.map((company) => (
             <CompanyCard
-              key={company.id || company.name} // fallback to name if id missing
+              key={company.id ?? `${company.name}-${company.email}-${Math.random()}`} // ensure uniqueness
               company={company}
               vendors={vendors}
               onEditCompany={onEditCompany}

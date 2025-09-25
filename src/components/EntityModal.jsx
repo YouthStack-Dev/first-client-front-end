@@ -1,8 +1,8 @@
 // src/components/EntityModal.jsx
 import React, { useState, useEffect } from 'react';
 import { X, Building2, Lock, Save } from 'lucide-react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchPermissionsThunk } from '../redux/features/Permissions/permissionsThunk';
+import { useSelector } from 'react-redux';
+import { selectPermissions } from '../redux/features/auth/authSlice';
 
 const initialFormState = {
   company: { tenant_id: '', name: '', address: '', is_active: true },
@@ -13,21 +13,31 @@ const initialFormState = {
 };
 
 const EntityModal = ({ isOpen, onClose, entityType = 'company', entityData, onSubmit, mode = 'create' }) => {
-  const dispatch = useDispatch();
-  const { permissions, loading, fetched } = useSelector(state => state.permissions);
-
+  const storedPermissionsRedux = useSelector(selectPermissions);
   const [formData, setFormData] = useState(initialFormState);
   const [errors, setErrors] = useState({});
 
-  // Fetch permissions if not already fetched
-  useEffect(() => {
-    if (isOpen && !fetched) dispatch(fetchPermissionsThunk());
-  }, [isOpen, fetched, dispatch]);
+  // Fetch permissions from Redux or fallback to sessionStorage
+  const getPermissions = () => {
+    if (storedPermissionsRedux && storedPermissionsRedux.length > 0) return storedPermissionsRedux;
+
+    const storedData = sessionStorage.getItem('userPermissions');
+    if (!storedData) return [];
+    try {
+      const parsed = JSON.parse(storedData);
+      return parsed.permissions || [];
+    } catch (err) {
+      console.error('Failed to parse session permissions:', err);
+      return [];
+    }
+  };
 
   // Reset or prefill form when modal opens
   useEffect(() => {
-    if (!isOpen || permissions.length === 0) 
-      return;
+    if (!isOpen) return;
+
+    const permissions = getPermissions();
+    if (!permissions.length) return;
 
     const groupedPermissions = {};
     permissions.forEach(p => {
@@ -59,9 +69,9 @@ const EntityModal = ({ isOpen, onClose, entityType = 'company', entityData, onSu
     } else {
       setFormData({ ...initialFormState, permissions: groupedPermissions });
     }
-  }, [entityData, permissions, isOpen, mode]);
+  }, [isOpen, entityData, mode, storedPermissionsRedux]);
 
-  // ✅ Always reset when modal closes (fixes the "stale data" bug)
+  // Reset when modal closes
   useEffect(() => {
     if (!isOpen) {
       setFormData(initialFormState);
@@ -93,21 +103,17 @@ const EntityModal = ({ isOpen, onClose, entityType = 'company', entityData, onSu
   const validateForm = () => {
     const newErrors = {};
 
-    // Validate company fields
     Object.entries(formData.company).forEach(([key, value]) => {
       if (!value && key !== 'is_active') newErrors[key] = `${key} is required`;
     });
 
-    // Validate employee fields
     ['employee_email', 'employee_phone'].forEach(key => {
       if (!formData[key]) newErrors[key] = `${key} is required`;
     });
 
-    // Password validation
     if (mode === 'create') {
       const password = formData.employee_password;
-      const passwordRegex =
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
       if (!password) newErrors.employee_password = 'Password is required';
       else if (!passwordRegex.test(password))
         newErrors.employee_password =
@@ -118,36 +124,35 @@ const EntityModal = ({ isOpen, onClose, entityType = 'company', entityData, onSu
     return Object.keys(newErrors).length === 0;
   };
 
-const preparePayload = () => {
-  const permission_ids = [];
-  Object.values(formData.permissions).forEach(module => {
-    Object.values(module).forEach(action => {
-      if (action.is_active && action.permission_id) permission_ids.push(action.permission_id);
+  const preparePayload = () => {
+    const permission_ids = [];
+    Object.values(formData.permissions).forEach(module => {
+      Object.values(module).forEach(action => {
+        if (action.is_active && action.permission_id) permission_ids.push(action.permission_id);
+      });
     });
-  });
 
-  return {
-    tenant_id: formData.company.tenant_id,
-    name: formData.company.name,
-    address: formData.company.address,
-    is_active: formData.company.is_active,
-    employee_email: formData.employee_email,
-    employee_phone: formData.employee_phone,
-    employee_password: formData.employee_password,
-    permission_ids: [...new Set(permission_ids)]
+    return {
+      tenant_id: formData.company.tenant_id,
+      name: formData.company.name,
+      address: formData.company.address,
+      is_active: formData.company.is_active,
+      employee_email: formData.employee_email,
+      employee_phone: formData.employee_phone,
+      employee_password: formData.employee_password,
+      permission_ids: [...new Set(permission_ids)]
+    };
   };
-};
-
 
   const handleSubmit = e => {
     e.preventDefault();
     if (!validateForm()) return;
-    const payload = preparePayload();
-    console.log('[EntityModal] Submitting payload:', payload);
-    onSubmit(payload);
+    onSubmit(preparePayload());
   };
 
   if (!isOpen) return null;
+
+  const permissions = getPermissions();
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -167,6 +172,7 @@ const preparePayload = () => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Company & Employee Fields */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {['tenant_id', 'name', 'address'].map(field => (
               <div key={field}>
@@ -210,20 +216,20 @@ const preparePayload = () => {
           </div>
 
           {/* Permissions */}
+
           {permissions.length > 0 && (
             <div>
               <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center">
                 <Lock className="w-5 h-5 mr-2" /> Permissions
               </h3>
-              {loading ? (
-                <p>Loading permissions...</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {Object.entries(formData.permissions).map(([module, actions]) => (
-                    <div key={module} className="bg-gray-50 rounded-lg p-3">
-                      <label className="block font-medium text-gray-800 mb-2">{module}</label>
-                      <div className="space-y-2">
-                        {Object.entries(actions).map(([action, data]) => (
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {Object.entries(formData.permissions).map(([module, actions]) => (
+                  <div key={module} className="bg-gray-50 rounded-lg p-3">
+                    <label className="block font-medium text-gray-800 mb-2">{module}</label>
+                    <div className="space-y-2">
+                      {['create', 'read', 'update', 'delete'].map(action => {
+                        const data = actions[action] || {};
+                        return (
                           <label key={action} className="flex items-center">
                             <input
                               type="checkbox"
@@ -235,14 +241,15 @@ const preparePayload = () => {
                               {action.charAt(0).toUpperCase() + action.slice(1)}
                             </span>
                           </label>
-                        ))}
-                      </div>
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
+
 
           {/* Footer */}
           <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
