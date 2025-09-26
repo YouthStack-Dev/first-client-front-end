@@ -56,7 +56,7 @@ useEffect(() => {
     try {
       if (modalMode === 'create') {
         const result = await dispatch(createCompanyThunk(formData)).unwrap();
-        console.log('Created company:', result);
+        // console.log('Created company:', result);
       } else if (modalMode === 'edit' && selectedEntity) {
         const result = await dispatch(
           updateCompanyThunk({ companyId: selectedEntity.id, formData })

@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { X } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { createVendorThunk, updateVendorThunk } from "../../redux/features/vendors/vendorThunk"; // make sure update thunk exists
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phoneRegex = /^[\d+\-()\s]{7,20}$/;
 
-const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSave, saving = false }) => {
+const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSaveSuccess }) => {
+  const dispatch = useDispatch();
+  const creating = useSelector((state) => state.vendor.creating);
+
   const initialFormData = {
     tenant_id: "",
     admin_email: "",
@@ -22,6 +27,8 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSave, saving = fal
   const [errors, setErrors] = useState({});
   const modalRef = useRef(null);
 
+  const isEditMode = !!sourceEntity?.vendor_id; // determine edit vs add
+
   const fields = useMemo(
     () => [
       { label: "Vendor Name", name: "name", type: "text" },
@@ -36,13 +43,26 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSave, saving = fal
     []
   );
 
-  // Reset form and set tenant_id when modal opens
+  // Prefill form when modal opens
   useEffect(() => {
-    if (isOpen && sourceEntity) {
-      setFormData({ ...initialFormData, tenant_id: sourceEntity.tenant_id || "" });
+    if (isOpen) {
+      setFormData({
+        tenant_id: sourceEntity?.tenant_id || "",
+        name: sourceEntity?.name || "",
+        email: sourceEntity?.email || "",
+        phone: sourceEntity?.phone || "",
+        vendor_code: sourceEntity?.vendor_code || "",
+        is_active: sourceEntity?.is_active ?? true,
+        admin_name: sourceEntity?.admin_name || "",
+        admin_email: sourceEntity?.admin_email || "",
+        admin_phone: sourceEntity?.admin_phone || "",
+        admin_password: "", // always empty for security
+      });
       setErrors({});
-      // Focus on the first input when modal opens
-      setTimeout(() => modalRef.current?.querySelector("input:not([readonly])")?.focus(), 0);
+      setTimeout(() =>
+        modalRef.current?.querySelector("input:not([readonly])")?.focus(),
+        0
+      );
     }
   }, [isOpen, sourceEntity]);
 
@@ -68,7 +88,6 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSave, saving = fal
 
   const validate = () => {
     const newErrors = {};
-
     if (!formData.name) newErrors.name = "Vendor name is required";
     if (!emailRegex.test(formData.email)) newErrors.email = "Invalid vendor email";
     if (!emailRegex.test(formData.admin_email)) newErrors.admin_email = "Invalid admin email";
@@ -77,7 +96,7 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSave, saving = fal
     }
     if (!phoneRegex.test(formData.phone)) newErrors.phone = "Invalid vendor phone";
     if (!phoneRegex.test(formData.admin_phone)) newErrors.admin_phone = "Invalid admin phone";
-    if (!formData.admin_password) newErrors.admin_password = "Admin password is required";
+    if (!isEditMode && !formData.admin_password) newErrors.admin_password = "Admin password is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -85,7 +104,23 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSave, saving = fal
 
   const handleSubmit = async () => {
     if (!validate()) return;
-    await onSave(formData);
+
+    try {
+      let result;
+      if (isEditMode) {
+        result = await dispatch(updateVendorThunk({ vendor_id: sourceEntity.vendor_id, ...formData })).unwrap();
+      } else {
+        result = await dispatch(createVendorThunk(formData)).unwrap();
+      }
+
+      // Immediately update parent component vendor list
+      if (onSaveSuccess) onSaveSuccess(result);
+
+      onClose();
+      setFormData(initialFormData);
+    } catch (err) {
+      console.error("Failed to save vendor:", err);
+    }
   };
 
   return (
@@ -99,7 +134,7 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSave, saving = fal
         {/* Header */}
         <div className="flex justify-between items-center border-b pb-3 mb-4">
           <h2 className="text-lg font-semibold">
-            Assign Vendor to Company: {sourceEntity?.name || "N/A"}
+            {isEditMode ? "Update Vendor" : "Assign Vendor"}: {sourceEntity?.name || "N/A"}
           </h2>
           <button onClick={onClose} aria-label="Close modal">
             <X className="w-5 h-5 text-gray-500 hover:text-gray-700" />
@@ -108,7 +143,6 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSave, saving = fal
 
         {/* Form */}
         <div className="space-y-3 max-h-[70vh] overflow-y-auto">
-          {/* Tenant ID (read-only) */}
           <div>
             <label className="block text-sm font-medium text-gray-700">Tenant ID</label>
             <input
@@ -120,7 +154,6 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSave, saving = fal
             />
           </div>
 
-          {/* Vendor & Admin fields */}
           {fields.map((field) => (
             <div key={field.name}>
               <label className="block text-sm font-medium text-gray-700">{field.label}</label>
@@ -139,7 +172,6 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSave, saving = fal
             </div>
           ))}
 
-          {/* Active Checkbox */}
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
@@ -157,16 +189,16 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSave, saving = fal
           <button
             onClick={onClose}
             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-            disabled={saving}
+            disabled={creating}
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            disabled={saving}
+            disabled={creating}
           >
-            {saving ? "Assigning..." : "Assign Vendor"}
+            {isEditMode ? "Update Vendor" : "Assign Vendor"}
           </button>
         </div>
       </div>

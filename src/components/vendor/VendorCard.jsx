@@ -55,7 +55,7 @@ const AssignedCompaniesList = ({ companies, loading, error }) => {
   );
 };
 
-const VendorCard = ({ vendor = {}, onEdit }) => {
+const VendorCard = ({ vendor = {} }) => {
   const dispatch = useDispatch();
 
   const companyState = useSelector((state) => state.company || {});
@@ -163,19 +163,11 @@ const VendorCard = ({ vendor = {}, onEdit }) => {
           <span className="text-xs text-gray-500 whitespace-nowrap">Since: {onboardedDate}</span>
           <div className="flex space-x-2">
             <button
-              onClick={() => onEdit?.(vendor)}
+              onClick={handleOpenAssign}   // 👈 opens AssignEntityModal
               className="px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
             >
               Edit
             </button>
-            {/* <button
-              onClick={handleOpenAssign}
-              className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
-              disabled={companiesLoading || assigning}
-              aria-label="Assign company to vendor"
-            >
-              Assign Company
-            </button> */}
           </div>
         </div>
       </div>

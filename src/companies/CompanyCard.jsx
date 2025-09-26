@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Building2, Truck, Mail, Phone, MapPin, Link2 } from "lucide-react";
 import AssignEntityModal from "../components/layout/AssignEntityModal";
-import { assignVendorsToCompanyThunk } from "../redux/features/companyVendor/companyVendorThunks";
+// import { createVendorThunk } from "../redux/features/vendor/vendorThunks";
 
-// Separate component for vendor list
+// Vendor list component
 const CompanyVendorsList = ({ vendors, loading, error }) => {
   if (loading) {
     return (
@@ -33,12 +33,17 @@ const CompanyVendorsList = ({ vendors, loading, error }) => {
     );
   }
 
+  // Remove duplicate vendors by vendor_id
+  const uniqueVendors = Array.from(
+    new Map(vendors.map(v => [v.vendor_id || v.name, v])).values()
+  );
+
   return (
     <div className="flex-1 overflow-y-auto px-4 pb-2">
       <div className="space-y-2">
-        {vendors.map((vendor) => (
+        {uniqueVendors.map((vendor, index) => (
           <div
-            key={vendor.id}
+            key={vendor.vendor_id || `${vendor.name}-${index}`} // fallback key
             className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
           >
             <div className="flex items-center space-x-2 min-w-0 flex-1">
@@ -49,7 +54,9 @@ const CompanyVendorsList = ({ vendors, loading, error }) => {
             </div>
             <span
               className={`px-2 py-1 text-xs rounded-full ml-2 flex-shrink-0 ${
-                vendor.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                vendor.is_active
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
               }`}
             >
               {vendor.is_active ? "Active" : "Inactive"}
@@ -63,39 +70,45 @@ const CompanyVendorsList = ({ vendors, loading, error }) => {
 
 const CompanyCard = ({ company, onEditCompany }) => {
   const dispatch = useDispatch();
-
   const vendorState = useSelector((state) => state.vendor || {});
-  const companyVendorState = useSelector((state) => state.companyVendor || {});
-
   const allVendors = useMemo(() => vendorState.data || [], [vendorState.data]);
 
-  const companyVendorsList = useMemo(() => {
-    const vendors = companyVendorState.vendorsByCompany?.[company.tenant_id];
-    return Array.isArray(vendors) ? vendors : [];
-  }, [companyVendorState.vendorsByCompany, company.tenant_id]);
-
-  const companyVendorsLoading = companyVendorState.loading || false;
-  const companyVendorsError = companyVendorState.error || null;
-  const assigning = companyVendorState.assigning || false;
-
+  const [companyVendorsListState, setCompanyVendorsListState] = useState([]);
   const [isAssignOpen, setAssignOpen] = useState(false);
 
-  // Open modal
+  const companyVendorsList = useMemo(() => {
+    return allVendors.filter((v) => v.tenant_id === company.tenant_id);
+  }, [allVendors, company.tenant_id]);
+
+  const companyVendorsLoading = vendorState.loading || false;
+  const companyVendorsError = vendorState.error || null;
+
+  // Sync local state with Redux vendor list
+  useEffect(() => {
+    setCompanyVendorsListState(companyVendorsList);
+  }, [companyVendorsList]);
+
   const handleOpenAssign = () => setAssignOpen(true);
 
-  // Assign vendors with async-safe handling
-  const handleAssignSave = async (selectedVendorIds) => {
+  const handleAssignSave = async (vendorData) => {
     try {
-      await dispatch(
-        assignVendorsToCompanyThunk({
-          companyId: company.tenant_id,
-          vendorIds: selectedVendorIds,
+      // Dispatch createVendorThunk (adjust import if needed)
+      const newVendor = await dispatch(
+        createVendorThunk({
+          ...vendorData,
+          tenant_id: company.tenant_id,
         })
       ).unwrap();
-      setAssignOpen(false); // close only on success
+
+      // Prevent duplicates
+      setCompanyVendorsListState((prev) => {
+        if (prev.some((v) => v.vendor_id === newVendor.vendor_id)) return prev;
+        return [...prev, newVendor];
+      });
+
+      setAssignOpen(false);
     } catch (err) {
-      console.error("Assign vendor failed:", err);
-      // Optional: show toast notification here
+      console.error("Create vendor failed:", err);
     }
   };
 
@@ -155,12 +168,12 @@ const CompanyCard = ({ company, onEditCompany }) => {
               Assigned Vendors
             </div>
             <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-              {companyVendorsList.length} vendors
+              {companyVendorsListState.length} vendors
             </span>
           </div>
 
           <CompanyVendorsList
-            vendors={companyVendorsList}
+            vendors={companyVendorsListState}
             loading={companyVendorsLoading}
             error={companyVendorsError}
           />
@@ -181,7 +194,7 @@ const CompanyCard = ({ company, onEditCompany }) => {
             <button
               onClick={handleOpenAssign}
               className="px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
-              disabled={companyVendorsLoading || assigning}
+              disabled={companyVendorsLoading}
               aria-label="Assign vendor to company"
             >
               Assign Vendor
@@ -201,9 +214,14 @@ const CompanyCard = ({ company, onEditCompany }) => {
           tenant_id: company.tenant_id,
         }}
         targetEntities={allVendors}
-        assignedIds={companyVendorsList.map((v) => v.id)}
+        assignedIds={companyVendorsListState.map((v) => v.vendor_id)}
         onSave={handleAssignSave}
-        loading={assigning}
+        onSaveSuccess={(newVendor) => {
+          setCompanyVendorsListState((prev) => {
+            if (prev.some((v) => v.vendor_id === newVendor.vendor_id)) return prev;
+            return [...prev, newVendor];
+          });
+        }}
       />
     </>
   );

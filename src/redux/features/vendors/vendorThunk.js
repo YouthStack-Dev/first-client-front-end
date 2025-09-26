@@ -8,10 +8,10 @@ export const fetchVendorsThunk = createAsyncThunk(
   "vendor/fetchVendors",
   async (params = {}, { rejectWithValue }) => {
     try {
-      const { skip = 0, limit = 100, name = "", code = "" } = params;
+      const { skip = 0, limit = 100, name = "", code = "", tenant_id="" } = params;
 
       const response = await API_CLIENT.get("/v1/vendors/", {
-        params: { skip, limit, name, code },
+        params: { skip, limit, name, code, tenant_id  },
       });
 
       // Extract items array
@@ -35,17 +35,18 @@ export const createVendorThunk = createAsyncThunk(
   "vendor/createVendor",
   async (formData, { rejectWithValue, dispatch }) => {
     try {
-      const response = await createVendorApi(formData);
-      console.log("Created vendor:", response.data);
+      // Call API to create vendor
+      const response = await API_CLIENT.post("/v1/vendors/", formData);
+      console.log("[Thunk] Created vendor:", response.data);
 
-      // Refresh vendor list
+      // Refresh vendor list after creation
       dispatch(fetchVendorsThunk());
 
-      return response.data; // newly created vendor
+      return response.data; // newly created vendor object
     } catch (error) {
       console.error("[Thunk] Failed to create vendor:", error);
       return rejectWithValue(
-        error.response?.data?.message || "Failed to create vendor"
+        error.response?.data?.message || error.message || "Failed to create vendor"
       );
     }
   }
