@@ -1,24 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Search, Building2 } from "lucide-react";
 import CompanyCard from "./CompanyCard";
+import { fetchVendorsThunk } from "../redux/features/vendors/vendorThunk";
 
-const CompanyList = ({ companies, vendors = [], onEditCompany }) => {
-  // Ensure companies is always an array
-  const safeCompanies = Array.isArray(companies) ? companies : [];
+const CompanyList = ({ companies = [], onEditCompany }) => {
+  const dispatch = useDispatch();
 
+  // Redux vendor state
+  const { data: vendors = [], loading: vendorsLoading, error: vendorsError } =
+    useSelector((state) => state.vendor);
+
+  // Fetch vendors once if not already fetched
+  useEffect(() => {
+    if (vendors.length === 0) {
+      dispatch(fetchVendorsThunk());
+    }
+  }, [dispatch]);
+
+  // Local filters
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const filteredCompanies = safeCompanies.filter((company) => {
+  // Filter companies based on search & status
+  const filteredCompanies = companies.filter((company) => {
     const matchesSearch =
       company.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (company.email &&
         company.email.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    // Map backend isActive or status to UI-friendly status
     const companyStatus =
-      company.status ??
-      (company.isActive === true ? "Active" : "Suspended");
+      company.status ?? (company.isActive ? "Active" : "Suspended");
 
     const matchesStatus =
       statusFilter === "all" || companyStatus === statusFilter;
@@ -67,9 +79,11 @@ const CompanyList = ({ companies, vendors = [], onEditCompany }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
           {filteredCompanies.map((company) => (
             <CompanyCard
-              key={company.id || company.name} // fallback to name if id missing
+              key={company.id || company.name}
               company={company}
-              vendors={vendors}
+              vendors={vendors} // pass full vendor list; CompanyCard filters by tenant_id
+              vendorsLoading={vendorsLoading}
+              vendorsError={vendorsError}
               onEditCompany={onEditCompany}
             />
           ))}

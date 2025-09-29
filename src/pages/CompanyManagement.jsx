@@ -4,11 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Plus } from 'lucide-react';
 import EntityModal from '../components/EntityModal';
 import CompanyList from '../companies/CompanyList';
-import { 
-  fetchCompaniesThunk, 
-  createCompanyThunk, 
-  updateCompanyThunk 
-} from '../redux/features/company/companyThunks';
+import {  fetchCompaniesThunk,  createCompanyThunk,  updateCompanyThunk } from '../redux/features/company/companyThunks';
 
 const CompanyManagement = () => {
   const dispatch = useDispatch();
