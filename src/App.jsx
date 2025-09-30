@@ -2,7 +2,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Login } from "./pages/Login";
 import { PublicRoute } from "./middleware/PublicRoute";
-import Layout from "./components/layout/layout";
+import Layout from "./companies/layout/layout";
 import EmployeeForm from "./components/departments/EmployeeForm";
 import ProtectedRouteAuth from "./middleware/ProtectedRouteAuth";
 import ManageDepartment from "./pages/ManageDepartment";
@@ -103,7 +103,7 @@ function App() {
           path="/vendor/*" 
           element={
             <ProtectedRouteAuth 
-            type="VENDOR"
+            type="vendor"
               redirectPath="/vendor" 
               authRedirectPath="/dashboard" 
             />
@@ -112,7 +112,7 @@ function App() {
           <Route element={<VendorLayout />}>
             <Route path="dashboard" element={<h1>Vendor Dashboard</h1>} />
             <Route path="employees" element={<ManageEmployees />} />
-            <Route path="employees/create" element={<EmployeeForm />} />
+           
             <Route path="employees/:userId/edit" element={<EmployeeForm mode="edit" />} />
             <Route path="employees/:userId/view" element={<EmployeeForm mode="view" />} />
             <Route path="reports" element={<h1>Vendor Reports</h1>} />
@@ -137,6 +137,7 @@ function App() {
             <Route path="/manage-drivers" element={<DriverManagement/>} />
             <Route path="/manage-company" element={<ManageDepartment />} />
             <Route path="/scheduling" element={<Schedulemanagement/>} />
+            <Route path="employees/create" element={<EmployeeForm />} />
             <Route path="/cutoff-settings" element={<h1> this is the cutoff window</h1>} />
             <Route path="/manage-vendors" element={<VendorManagement />} />
             <Route path="/manage-vehicles" element={<VehicleManagement />} />
@@ -145,6 +146,7 @@ function App() {
             <Route path="/department/:depId/employees/:userId/edit" element={<EmployeeForm mode="edit" />} />
             <Route path="/department/:depId/employees/:userId/view" element={<EmployeeForm mode="view" />} />
             <Route path="/tracking" element={<h1> This is the screen of Tracking </h1>} />
+            <Route path="/bookings" element={<h1> This is the screen of Booking </h1>} />
             <Route path="/routing" element={<RouteManagement/>} />
             <Route path="/pra" element={<ScheduledBookingsCopy/>} />
             <Route path="/audit-report" element={<h1> This is the screen of audit-report </h1>} />

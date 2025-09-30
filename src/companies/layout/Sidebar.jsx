@@ -9,8 +9,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { generateMenuItems } from './MenuItems';
-import { logout} from '../../redux/features/auth/authSlice';
+import { getFilteredSidebar } from './sidebarConfig'; // You'll need to create this
+import { logout } from '../../redux/features/auth/authSlice';
+import { logDebug } from '../../utils/logger';
 
 // Skeleton Loading Components
 const SkeletonMenuItem = ({ isOpen }) => (
@@ -41,18 +42,20 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
   const location = useLocation();
   const [openDropdown, setOpenDropdown] = useState({});
   const [isMobile, setIsMobile] = useState(false);
-  const [menuItems, setMenuItems] = useState([]);
+  const [sidebarConfig, setSidebarConfig] = useState([]);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   
   // Get auth state from Redux
   const { permissions, loading: authLoading, isAuthenticated } = useSelector((state) => state.auth);
-
-  // Generate menu items based on permissions
+  let user = sessionStorage.getItem("userPermissions");
+  // const permissions = user ? JSON.parse(user) : [];
+  logDebug(" This are the permission in the Sidebar",permissions );
+  // Generate filtered sidebar based on permissions
   useEffect(() => {
-    if (permissions && permissions.length > 0) {
-      const filteredMenuItems = generateMenuItems(permissions);
-      setMenuItems(filteredMenuItems);
+    if (permissions && permissions?.length > 0) {
+      const filteredConfig = getFilteredSidebar(permissions);
+      setSidebarConfig(filteredConfig);
     }
   }, [permissions]);
 
@@ -152,93 +155,107 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
             <SkeletonMenuItem key={index} isOpen={isOpen} />
           ))
         ) : (
-          menuItems.map((item) => (
-            <div key={item.path || item.name} className="relative">
-              {item.subItems ? (
-                <>
-                  <button
-                    onClick={() => toggleDropdown(item.name)}
-                    className={`flex items-center w-full px-4 py-2.5 rounded-sidebar transition-all duration-200 group ${
-                      openDropdown[item.name]
-                        ? 'bg-gradient-to-r from-sidebar-primary-600 to-sidebar-primary-400 text-white shadow-sidebar-item-hover'
-                        : 'hover:bg-sidebar-primary-700/50 hover:shadow-sidebar-item'
-                    }`}
-                  >
-                    <item.icon className={`w-5 h-5 min-w-[1.25rem] transition-colors ${
-                      openDropdown[item.name] ? 'text-white' : 'text-sidebar-primary-200 group-hover:text-white'
-                    }`} />
-                    {isOpen && (
-                      <>
-                        <span className={`ml-3 text-sm flex-1 font-medium ${
-                          openDropdown[item.name] ? 'text-white' : 'text-sidebar-primary-100'
-                        }`}>
-                          {item.name}
-                        </span>
-                        <ChevronDown
-                          className={`w-5 h-5 transition-all duration-200 ${
-                            openDropdown[item.name] 
-                              ? 'rotate-180 text-white' 
-                              : 'text-sidebar-primary-300 group-hover:text-white'
-                          }`}
-                        />
-                      </>
-                    )}
-                  </button>
-
-                  {isOpen && openDropdown[item.name] && (
-                    <div className="mt-1 space-y-1 px-2 animate-fadeIn">
-                      {item.subItems.map((subItem) => (
-                        <Link
-                          key={subItem.path}
-                          to={subItem.path}
-                          onClick={handleMenuItemClick}
-                          className={`flex items-center px-4 py-2 text-sm rounded-sidebar transition-all duration-200 group relative ${
-                            location.pathname === subItem.path
-                              ? 'bg-gradient-to-r from-sidebar-accent-500 to-sidebar-accent-600 text-white shadow-sidebar-item'
-                              : 'text-sidebar-primary-200 hover:bg-sidebar-primary-700/50 hover:text-white hover:shadow-sm'
-                          }`}
-                        >
-                          {location.pathname === subItem.path && (
-                            <div className="absolute left-0 w-1 h-full bg-white rounded-r-full"></div>
-                          )}
-                          <subItem.icon className={`w-4 h-4 transition-colors ${
-                            location.pathname === subItem.path 
-                              ? 'text-white' 
-                              : 'text-sidebar-primary-300 group-hover:text-white'
-                          }`} />
-                          <span className="ml-2 font-medium">{subItem.name}</span>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <Link
-                  to={item.path}
-                  onClick={handleMenuItemClick}
-                  className={`flex items-center px-4 py-2.5 rounded-sidebar transition-all duration-200 group relative ${
-                    location.pathname === item.path
-                      ? 'bg-gradient-to-r from-sidebar-primary-600 to-sidebar-primary-400 text-white shadow-sidebar-item-hover'
-                      : 'hover:bg-sidebar-primary-700/50 hover:shadow-sidebar-item'
-                  }`}
-                >
-                  {location.pathname === item.path && (
-                    <div className="absolute left-0 w-1 h-full bg-white rounded-r-full"></div>
-                  )}
-                  <item.icon className={`w-5 h-5 min-w-[1.25rem] transition-colors ${
-                    location.pathname === item.path 
-                      ? 'text-white' 
-                      : 'text-sidebar-primary-200 group-hover:text-white'
-                  }`} />
-                  {isOpen && (
-                    <span className={`ml-3 text-sm font-medium ${
-                      location.pathname === item.path ? 'text-white' : 'text-sidebar-primary-100'
-                    }`}>
-                      {item.name}
-                    </span>
-                  )}
-                </Link>
+          sidebarConfig.map((group) => (
+            <div key={group.title} className="mb-4">
+              {/* Group Title */}
+              {isOpen && group.items.length > 0 && (
+                <div className="px-4 py-2 text-xs font-semibold text-sidebar-primary-300 uppercase tracking-wider">
+                  {group.title}
+                </div>
               )}
+              
+              {/* Group Items */}
+              {group.items.map((item) => (
+                <div key={item.title} className="relative">
+                  {item.subItems && item.subItems.length > 0 ? (
+                    <>
+                      <button
+                        onClick={() => toggleDropdown(item.title)}
+                        className={`flex items-center w-full px-4 py-2.5 rounded-sidebar transition-all duration-200 group ${
+                          openDropdown[item.title]
+                            ? 'bg-gradient-to-r from-sidebar-primary-600 to-sidebar-primary-400 text-white shadow-sidebar-item-hover'
+                            : 'hover:bg-sidebar-primary-700/50 hover:shadow-sidebar-item'
+                        }`}
+                      >
+                        <item.icon className={`w-5 h-5 min-w-[1.25rem] transition-colors ${
+                          openDropdown[item.title] ? 'text-white' : 'text-sidebar-primary-200 group-hover:text-white'
+                        }`} />
+                        {isOpen && (
+                          <>
+                            <span className={`ml-3 text-sm flex-1 font-medium ${
+                              openDropdown[item.title] ? 'text-white' : 'text-sidebar-primary-100'
+                            }`}>
+                              {item.title}
+                            </span>
+                            <ChevronDown
+                              className={`w-5 h-5 transition-all duration-200 ${
+                                openDropdown[item.title] 
+                                  ? 'rotate-180 text-white' 
+                                  : 'text-sidebar-primary-300 group-hover:text-white'
+                              }`}
+                            />
+                          </>
+                        )}
+                      </button>
+
+                      {isOpen && openDropdown[item.title] && (
+                        <div className="mt-1 space-y-1 px-2 animate-fadeIn">
+                          {item.subItems.map((subItem) => (
+                            <Link
+                              key={subItem.path}
+                              to={subItem.path}
+                              onClick={handleMenuItemClick}
+                              className={`flex items-center px-4 py-2 text-sm rounded-sidebar transition-all duration-200 group relative ${
+                                location.pathname === subItem.path
+                                  ? 'bg-gradient-to-r from-sidebar-accent-500 to-sidebar-accent-600 text-white shadow-sidebar-item'
+                                  : 'text-sidebar-primary-200 hover:bg-sidebar-primary-700/50 hover:text-white hover:shadow-sm'
+                              }`}
+                            >
+                              {location.pathname === subItem.path && (
+                                <div className="absolute left-0 w-1 h-full bg-white rounded-r-full"></div>
+                              )}
+                              <subItem.icon className={`w-4 h-4 transition-colors ${
+                                location.pathname === subItem.path 
+                                  ? 'text-white' 
+                                  : 'text-sidebar-primary-300 group-hover:text-white'
+                              }`} />
+                              <span className="ml-2 font-medium">{subItem.title}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    item.path && (
+                      <Link
+                        to={item.path}
+                        onClick={handleMenuItemClick}
+                        className={`flex items-center px-4 py-2.5 rounded-sidebar transition-all duration-200 group relative ${
+                          location.pathname === item.path
+                            ? 'bg-gradient-to-r from-sidebar-primary-600 to-sidebar-primary-400 text-white shadow-sidebar-item-hover'
+                            : 'hover:bg-sidebar-primary-700/50 hover:shadow-sidebar-item'
+                        }`}
+                      >
+                        {location.pathname === item.path && (
+                          <div className="absolute left-0 w-1 h-full bg-white rounded-r-full"></div>
+                        )}
+                        <item.icon className={`w-5 h-5 min-w-[1.25rem] transition-colors ${
+                          location.pathname === item.path 
+                            ? 'text-white' 
+                            : 'text-sidebar-primary-200 group-hover:text-white'
+                        }`} />
+                        {isOpen && (
+                          <span className={`ml-3 text-sm font-medium ${
+                            location.pathname === item.path ? 'text-white' : 'text-sidebar-primary-100'
+                          }`}>
+                            {item.title}
+                          </span>
+                        )}
+                      </Link>
+                    )
+                  )}
+                </div>
+              ))}
             </div>
           ))
         )}

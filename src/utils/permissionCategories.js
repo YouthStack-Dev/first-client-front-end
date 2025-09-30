@@ -1,6 +1,566 @@
 // utils/permissionCategories.js
-
-export const categorizePermissions = (permissions) => {
+export const  permissionModules = [
+  {  "module": "booking","action": "create", "description": "Create booking","is_active": true,"permission_id": 1,"created_at": "2025-09-23T14:28:51.098110", "updated_at": "2025-09-23T14:28:51.098110"},
+  { "module": "booking","action": "read","description": "Read booking", "is_active": true,"permission_id": 2,"created_at": "2025-09-23T14:28:51.098110","updated_at": "2025-09-23T14:28:51.098110"},
+  { "module": "booking",
+      "action": "update",
+      "description": "Update booking",
+      "is_active": true,
+      "permission_id": 3,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "booking",
+      "action": "delete",
+      "description": "Delete booking",
+      "is_active": true,
+      "permission_id": 4,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "driver",
+      "action": "create",
+      "description": "Create driver",
+      "is_active": true,
+      "permission_id": 5,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "driver",
+      "action": "read",
+      "description": "Read driver",
+      "is_active": true,
+      "permission_id": 6,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "driver",
+      "action": "update",
+      "description": "Update driver",
+      "is_active": true,
+      "permission_id": 7,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "driver",
+      "action": "delete",
+      "description": "Delete driver",
+      "is_active": true,
+      "permission_id": 8,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "employee",
+      "action": "create",
+      "description": "Create employee",
+      "is_active": true,
+      "permission_id": 9,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "employee",
+      "action": "read",
+      "description": "Read employee",
+      "is_active": true,
+      "permission_id": 10,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "employee",
+      "action": "update",
+      "description": "Update employee",
+      "is_active": true,
+      "permission_id": 11,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "employee",
+      "action": "delete",
+      "description": "Delete employee",
+      "is_active": true,
+      "permission_id": 12,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "route-booking",
+      "action": "create",
+      "description": "Create route-booking",
+      "is_active": true,
+      "permission_id": 13,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "route-booking",
+      "action": "read",
+      "description": "Read route-booking",
+      "is_active": true,
+      "permission_id": 14,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "route-booking",
+      "action": "update",
+      "description": "Update route-booking",
+      "is_active": true,
+      "permission_id": 15,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "route-booking",
+      "action": "delete",
+      "description": "Delete route-booking",
+      "is_active": true,
+      "permission_id": 16,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "route",
+      "action": "create",
+      "description": "Create route",
+      "is_active": true,
+      "permission_id": 17,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "route",
+      "action": "read",
+      "description": "Read route",
+      "is_active": true,
+      "permission_id": 18,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "route",
+      "action": "update",
+      "description": "Update route",
+      "is_active": true,
+      "permission_id": 19,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "route",
+      "action": "delete",
+      "description": "Delete route",
+      "is_active": true,
+      "permission_id": 20,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "shift",
+      "action": "create",
+      "description": "Create shift",
+      "is_active": true,
+      "permission_id": 21,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "shift",
+      "action": "read",
+      "description": "Read shift",
+      "is_active": true,
+      "permission_id": 22,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "shift",
+      "action": "update",
+      "description": "Update shift",
+      "is_active": true,
+      "permission_id": 23,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "shift",
+      "action": "delete",
+      "description": "Delete shift",
+      "is_active": true,
+      "permission_id": 24,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "team",
+      "action": "create",
+      "description": "Create team",
+      "is_active": true,
+      "permission_id": 25,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "team",
+      "action": "read",
+      "description": "Read team",
+      "is_active": true,
+      "permission_id": 26,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "team",
+      "action": "update",
+      "description": "Update team",
+      "is_active": true,
+      "permission_id": 27,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "team",
+      "action": "delete",
+      "description": "Delete team",
+      "is_active": true,
+      "permission_id": 28,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "admin.tenant",
+      "action": "create",
+      "description": "Create admin.tenant",
+      "is_active": true,
+      "permission_id": 29,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "admin.tenant",
+      "action": "read",
+      "description": "Read admin.tenant",
+      "is_active": true,
+      "permission_id": 30,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "admin.tenant",
+      "action": "update",
+      "description": "Update admin.tenant",
+      "is_active": true,
+      "permission_id": 31,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "admin.tenant",
+      "action": "delete",
+      "description": "Delete admin.tenant",
+      "is_active": true,
+      "permission_id": 32,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "vehicle",
+      "action": "create",
+      "description": "Create vehicle",
+      "is_active": true,
+      "permission_id": 33,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "vehicle",
+      "action": "read",
+      "description": "Read vehicle",
+      "is_active": true,
+      "permission_id": 34,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "vehicle",
+      "action": "update",
+      "description": "Update vehicle",
+      "is_active": true,
+      "permission_id": 35,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "vehicle",
+      "action": "delete",
+      "description": "Delete vehicle",
+      "is_active": true,
+      "permission_id": 36,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "vehicle-type",
+      "action": "create",
+      "description": "Create vehicle-type",
+      "is_active": true,
+      "permission_id": 37,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "vehicle-type",
+      "action": "read",
+      "description": "Read vehicle-type",
+      "is_active": true,
+      "permission_id": 38,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "vehicle-type",
+      "action": "update",
+      "description": "Update vehicle-type",
+      "is_active": true,
+      "permission_id": 39,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "vehicle-type",
+      "action": "delete",
+      "description": "Delete vehicle-type",
+      "is_active": true,
+      "permission_id": 40,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "vendor",
+      "action": "create",
+      "description": "Create vendor",
+      "is_active": true,
+      "permission_id": 41,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "vendor",
+      "action": "read",
+      "description": "Read vendor",
+      "is_active": true,
+      "permission_id": 42,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "vendor",
+      "action": "update",
+      "description": "Update vendor",
+      "is_active": true,
+      "permission_id": 43,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "vendor",
+      "action": "delete",
+      "description": "Delete vendor",
+      "is_active": true,
+      "permission_id": 44,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "vendor-user",
+      "action": "create",
+      "description": "Create vendor-user",
+      "is_active": true,
+      "permission_id": 45,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "vendor-user",
+      "action": "read",
+      "description": "Read vendor-user",
+      "is_active": true,
+      "permission_id": 46,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "vendor-user",
+      "action": "update",
+      "description": "Update vendor-user",
+      "is_active": true,
+      "permission_id": 47,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "vendor-user",
+      "action": "delete",
+      "description": "Delete vendor-user",
+      "is_active": true,
+      "permission_id": 48,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "weekoff-config",
+      "action": "create",
+      "description": "Create weekoff-config",
+      "is_active": true,
+      "permission_id": 49,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "weekoff-config",
+      "action": "read",
+      "description": "Read weekoff-config",
+      "is_active": true,
+      "permission_id": 50,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "weekoff-config",
+      "action": "update",
+      "description": "Update weekoff-config",
+      "is_active": true,
+      "permission_id": 51,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "weekoff-config",
+      "action": "delete",
+      "description": "Delete weekoff-config",
+      "is_active": true,
+      "permission_id": 52,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "permissions",
+      "action": "create",
+      "description": "Create permissions",
+      "is_active": true,
+      "permission_id": 53,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "permissions",
+      "action": "read",
+      "description": "Read permissions",
+      "is_active": true,
+      "permission_id": 54,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "permissions",
+      "action": "update",
+      "description": "Update permissions",
+      "is_active": true,
+      "permission_id": 55,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "permissions",
+      "action": "delete",
+      "description": "Delete permissions",
+      "is_active": true,
+      "permission_id": 56,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "policy",
+      "action": "create",
+      "description": "Create policy",
+      "is_active": true,
+      "permission_id": 57,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "policy",
+      "action": "read",
+      "description": "Read policy",
+      "is_active": true,
+      "permission_id": 58,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "policy",
+      "action": "update",
+      "description": "Update policy",
+      "is_active": true,
+      "permission_id": 59,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "policy",
+      "action": "delete",
+      "description": "Delete policy",
+      "is_active": true,
+      "permission_id": 60,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "role",
+      "action": "create",
+      "description": "Create role",
+      "is_active": true,
+      "permission_id": 61,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "role",
+      "action": "read",
+      "description": "Read role",
+      "is_active": true,
+      "permission_id": 62,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "role",
+      "action": "update",
+      "description": "Update role",
+      "is_active": true,
+      "permission_id": 63,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "role",
+      "action": "delete",
+      "description": "Delete role",
+      "is_active": true,
+      "permission_id": 64,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  }
+]
+export const categorizePermissions = (permissions=permissionModules) => {
     const categories = {
       // Core Operations
       operations: {
@@ -234,581 +794,68 @@ export const categorizePermissions = (permissions) => {
   };
 
 
-  export const  permissionModules = [
+
+   export const sidebarConfig = [
     {
-        "module": "booking",
-        "action": "create",
-        "description": "Create booking",
-        "is_active": true,
-        "permission_id": 1,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
+      title: 'Operations',
+      items: [
+        {
+          title: 'Bookings',
+          icon: 'booking',
+          subItems: [
+            { title: 'View Bookings', path: '/bookings', permission: 'booking.read' },
+            { title: 'Create Booking', path: '/bookings/create', permission: 'booking.create' }
+          ]
+        },
+        {
+          title: 'Drivers',
+          icon: 'driver',
+          subItems: [
+            { title: 'Driver List', path: '/drivers', permission: 'driver.read' },
+            { title: 'Add Driver', path: '/drivers/add', permission: 'driver.create' }
+          ]
+        }
+      ]
     },
     {
-        "module": "booking",
-        "action": "read",
-        "description": "Read booking",
-        "is_active": true,
-        "permission_id": 2,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
+      title: 'Management',
+      items: [
+        {
+          title: 'Employees',
+          icon: 'employee',
+          subItems: [
+            { title: 'All Employees', path: '/employees', permission: 'employee.read' },
+            { title: 'Add Employee', path: '/employees/add', permission: 'employee.create' }
+          ]
+        },
+        {
+          title: 'Vehicles',
+          icon: 'vehicle',
+          subItems: [
+            { title: 'Vehicle List', path: '/vehicles', permission: 'vehicle.read' },
+            { title: 'Add Vehicle', path: '/vehicles/add', permission: 'vehicle.create' }
+          ]
+        },
+        {
+          title: 'Routes',
+          icon: 'route',
+          subItems: [
+            { title: 'Route Management', path: '/routes', permission: 'route.read' }
+          ]
+        }
+      ]
     },
     {
-        "module": "booking",
-        "action": "update",
-        "description": "Update booking",
-        "is_active": true,
-        "permission_id": 3,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "booking",
-        "action": "delete",
-        "description": "Delete booking",
-        "is_active": true,
-        "permission_id": 4,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "driver",
-        "action": "create",
-        "description": "Create driver",
-        "is_active": true,
-        "permission_id": 5,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "driver",
-        "action": "read",
-        "description": "Read driver",
-        "is_active": true,
-        "permission_id": 6,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "driver",
-        "action": "update",
-        "description": "Update driver",
-        "is_active": true,
-        "permission_id": 7,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "driver",
-        "action": "delete",
-        "description": "Delete driver",
-        "is_active": true,
-        "permission_id": 8,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "employee",
-        "action": "create",
-        "description": "Create employee",
-        "is_active": true,
-        "permission_id": 9,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "employee",
-        "action": "read",
-        "description": "Read employee",
-        "is_active": true,
-        "permission_id": 10,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "employee",
-        "action": "update",
-        "description": "Update employee",
-        "is_active": true,
-        "permission_id": 11,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "employee",
-        "action": "delete",
-        "description": "Delete employee",
-        "is_active": true,
-        "permission_id": 12,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "route-booking",
-        "action": "create",
-        "description": "Create route-booking",
-        "is_active": true,
-        "permission_id": 13,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "route-booking",
-        "action": "read",
-        "description": "Read route-booking",
-        "is_active": true,
-        "permission_id": 14,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "route-booking",
-        "action": "update",
-        "description": "Update route-booking",
-        "is_active": true,
-        "permission_id": 15,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "route-booking",
-        "action": "delete",
-        "description": "Delete route-booking",
-        "is_active": true,
-        "permission_id": 16,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "route",
-        "action": "create",
-        "description": "Create route",
-        "is_active": true,
-        "permission_id": 17,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "route",
-        "action": "read",
-        "description": "Read route",
-        "is_active": true,
-        "permission_id": 18,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "route",
-        "action": "update",
-        "description": "Update route",
-        "is_active": true,
-        "permission_id": 19,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "route",
-        "action": "delete",
-        "description": "Delete route",
-        "is_active": true,
-        "permission_id": 20,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "shift",
-        "action": "create",
-        "description": "Create shift",
-        "is_active": true,
-        "permission_id": 21,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "shift",
-        "action": "read",
-        "description": "Read shift",
-        "is_active": true,
-        "permission_id": 22,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "shift",
-        "action": "update",
-        "description": "Update shift",
-        "is_active": true,
-        "permission_id": 23,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "shift",
-        "action": "delete",
-        "description": "Delete shift",
-        "is_active": true,
-        "permission_id": 24,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "team",
-        "action": "create",
-        "description": "Create team",
-        "is_active": true,
-        "permission_id": 25,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "team",
-        "action": "read",
-        "description": "Read team",
-        "is_active": true,
-        "permission_id": 26,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "team",
-        "action": "update",
-        "description": "Update team",
-        "is_active": true,
-        "permission_id": 27,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "team",
-        "action": "delete",
-        "description": "Delete team",
-        "is_active": true,
-        "permission_id": 28,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "admin.tenant",
-        "action": "create",
-        "description": "Create admin.tenant",
-        "is_active": true,
-        "permission_id": 29,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "admin.tenant",
-        "action": "read",
-        "description": "Read admin.tenant",
-        "is_active": true,
-        "permission_id": 30,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "admin.tenant",
-        "action": "update",
-        "description": "Update admin.tenant",
-        "is_active": true,
-        "permission_id": 31,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "admin.tenant",
-        "action": "delete",
-        "description": "Delete admin.tenant",
-        "is_active": true,
-        "permission_id": 32,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "vehicle",
-        "action": "create",
-        "description": "Create vehicle",
-        "is_active": true,
-        "permission_id": 33,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "vehicle",
-        "action": "read",
-        "description": "Read vehicle",
-        "is_active": true,
-        "permission_id": 34,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "vehicle",
-        "action": "update",
-        "description": "Update vehicle",
-        "is_active": true,
-        "permission_id": 35,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "vehicle",
-        "action": "delete",
-        "description": "Delete vehicle",
-        "is_active": true,
-        "permission_id": 36,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "vehicle-type",
-        "action": "create",
-        "description": "Create vehicle-type",
-        "is_active": true,
-        "permission_id": 37,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "vehicle-type",
-        "action": "read",
-        "description": "Read vehicle-type",
-        "is_active": true,
-        "permission_id": 38,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "vehicle-type",
-        "action": "update",
-        "description": "Update vehicle-type",
-        "is_active": true,
-        "permission_id": 39,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "vehicle-type",
-        "action": "delete",
-        "description": "Delete vehicle-type",
-        "is_active": true,
-        "permission_id": 40,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "vendor",
-        "action": "create",
-        "description": "Create vendor",
-        "is_active": true,
-        "permission_id": 41,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "vendor",
-        "action": "read",
-        "description": "Read vendor",
-        "is_active": true,
-        "permission_id": 42,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "vendor",
-        "action": "update",
-        "description": "Update vendor",
-        "is_active": true,
-        "permission_id": 43,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "vendor",
-        "action": "delete",
-        "description": "Delete vendor",
-        "is_active": true,
-        "permission_id": 44,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "vendor-user",
-        "action": "create",
-        "description": "Create vendor-user",
-        "is_active": true,
-        "permission_id": 45,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "vendor-user",
-        "action": "read",
-        "description": "Read vendor-user",
-        "is_active": true,
-        "permission_id": 46,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "vendor-user",
-        "action": "update",
-        "description": "Update vendor-user",
-        "is_active": true,
-        "permission_id": 47,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "vendor-user",
-        "action": "delete",
-        "description": "Delete vendor-user",
-        "is_active": true,
-        "permission_id": 48,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "weekoff-config",
-        "action": "create",
-        "description": "Create weekoff-config",
-        "is_active": true,
-        "permission_id": 49,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "weekoff-config",
-        "action": "read",
-        "description": "Read weekoff-config",
-        "is_active": true,
-        "permission_id": 50,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "weekoff-config",
-        "action": "update",
-        "description": "Update weekoff-config",
-        "is_active": true,
-        "permission_id": 51,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "weekoff-config",
-        "action": "delete",
-        "description": "Delete weekoff-config",
-        "is_active": true,
-        "permission_id": 52,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "permissions",
-        "action": "create",
-        "description": "Create permissions",
-        "is_active": true,
-        "permission_id": 53,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "permissions",
-        "action": "read",
-        "description": "Read permissions",
-        "is_active": true,
-        "permission_id": 54,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "permissions",
-        "action": "update",
-        "description": "Update permissions",
-        "is_active": true,
-        "permission_id": 55,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "permissions",
-        "action": "delete",
-        "description": "Delete permissions",
-        "is_active": true,
-        "permission_id": 56,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "policy",
-        "action": "create",
-        "description": "Create policy",
-        "is_active": true,
-        "permission_id": 57,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "policy",
-        "action": "read",
-        "description": "Read policy",
-        "is_active": true,
-        "permission_id": 58,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "policy",
-        "action": "update",
-        "description": "Update policy",
-        "is_active": true,
-        "permission_id": 59,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "policy",
-        "action": "delete",
-        "description": "Delete policy",
-        "is_active": true,
-        "permission_id": 60,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "role",
-        "action": "create",
-        "description": "Create role",
-        "is_active": true,
-        "permission_id": 61,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "role",
-        "action": "read",
-        "description": "Read role",
-        "is_active": true,
-        "permission_id": 62,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "role",
-        "action": "update",
-        "description": "Update role",
-        "is_active": true,
-        "permission_id": 63,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
-    },
-    {
-        "module": "role",
-        "action": "delete",
-        "description": "Delete role",
-        "is_active": true,
-        "permission_id": 64,
-        "created_at": "2025-09-23T14:28:51.098110",
-        "updated_at": "2025-09-23T14:28:51.098110"
+      title: 'Administration',
+      items: [
+        {
+          title: 'System Settings',
+          icon: 'settings',
+          subItems: [
+            { title: 'User Management', path: '/admin/users', permission: 'admin.tenant.read' },
+            { title: 'Permissions', path: '/admin/permissions', permission: 'permissions.read' }
+          ]
+        }
+      ]
     }
-]
+  ];

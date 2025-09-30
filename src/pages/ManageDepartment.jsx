@@ -30,38 +30,16 @@ const ManageDepartment = () => {
   const [isAuditLogModalOpen, setIsAuditLogModalOpen] = useState(false);
   
   // Audit log state
-  const [auditLogs, setAuditLogs] = useState([
-    {
-      id: 1,
-      action: "CREATE",
-      action_description: "Created new employee",
-      changes: ["name: John Doe", "email: john@example.com"],
-      changed_by: "Admin",
-      changed_at: "2025-09-09T10:30:00Z",
-    },
-    {
-      id: 2,
-      action: "UPDATE",
-      action_description: "Updated employee details",
-      changes: ["phone: 1234567890 → 9876543210"],
-      changed_by: "HR Manager",
-      changed_at: "2025-09-09T11:00:00Z",
-    },
-    {
-      id: 3,
-      action: "DELETE",
-      action_description: "Removed inactive user",
-      changes: ["userId: EMP005"],
-      changed_by: "System",
-      changed_at: "2025-09-08T17:45:00Z",
-    },
-  ]);
+  const [auditLogs, setAuditLogs] = useState([]);
   const [isAuditLogLoading, setIsAuditLogLoading] = useState(false);
 
   // Pull teams from Redux slice
   const teamsById = useSelector((state) => state.user.teams.byId);
   const teamIds = useSelector((state) => state.user.teams.allIds);
-  const teams = teamIds.map((id) => teamsById[id]);
+  
+  // Fixed teams mapping - added return statement
+  const teams = teamIds?.map((id) => teamsById[id]) || [];
+  
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [editingTeam, setEditingTeam] = useState(null);
 
@@ -78,44 +56,41 @@ const ManageDepartment = () => {
 
   // Fetch teams with pagination
   useEffect(() => {
-    if (teamIds.length > 0) {
-      logDebug('Teams already fetched, skipping API call');
-      return;
-    }
-    
     const fetchTeams = async () => {
       setIsLoading(true);
       try {
-        const data = await fetchDepartments(currentPage, itemsPerPage, searchTerm);
-        logDebug('Fetched teams:', data);
-        dispatch(setTeams(data));
-        setTotalItems(data.length);
+        // Check if we need to fetch or use cached data
+        if (teamIds.length === 0 || searchTerm) {
+          const data = await fetchDepartments(currentPage, itemsPerPage, searchTerm);
+          logDebug('Fetched teams:', data);
+          dispatch(setTeams(data));
+          setTotalItems(data.length || data.totalCount || 0);
+        }
       } catch (error) {
         logError('Error fetching teams:', error);
+        toast.error('Failed to fetch departments');
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchTeams();
-  }, [dispatch, currentPage, itemsPerPage, searchTerm]);
+  }, [dispatch, currentPage, itemsPerPage, searchTerm, teamIds.length]);
 
   // Fetch audit logs when modal opens
   const fetchAuditLogs = async () => {
     setIsAuditLogLoading(true);
     try {
-      // Adjust the API endpoint according to your backend
-      const response = await API_CLIENT.get('api/audit/departmentsLogs');
-      setAuditLogs(response.data.data || []);
+      const response = await API_CLIENT.get('/api/audit/departmentsLogs');
+      setAuditLogs(response.data.data || response.data || []);
     } catch (error) {
       logError('Error fetching audit logs:', error);
-      logError('Error fetching audit logs:', error.status);
-      if (error.status===404) {
+      if (error.response?.status === 404) {
         setAuditLogs([]);
-        logError(" message in if ")
-        toast.info(" No Logs Found")
+        toast.info("No audit logs found");
+      } else {
+        toast.error('Failed to fetch audit logs');
       }
-      
     } finally {
       setIsAuditLogLoading(false);
     }
@@ -147,7 +122,7 @@ const ManageDepartment = () => {
     const teamToEdit = {
       ...team,
       department_id: team.id,
-      department_name: team.name
+      name: team.name
     };
     setEditingTeam(teamToEdit);
     setIsDepartmentModalOpen(true);
@@ -164,8 +139,10 @@ const ManageDepartment = () => {
         if (teams.length === 1 && currentPage > 1) {
           setCurrentPage(currentPage - 1);
         }
+        toast.success('Department deleted successfully');
       } catch (error) {
         console.error('Error deleting department:', error);
+        toast.error('Failed to delete department');
       }
     }
   };
@@ -178,24 +155,27 @@ const ManageDepartment = () => {
     setEditingTeam(null);
     setIsDepartmentModalOpen(false);
   };
-const handleDepartemtSpecificLog=()=>{
-  logDebug(" departemnt spcific log function invoked ")
-}
+
+  const handleDepartmentSpecificLog = (departmentId) => {
+    logDebug("Department specific log function invoked for:", departmentId);
+    // Implement department-specific log functionality here
+  };
+
   return (
     <div>
       <ToolBar
         onAddClick={handleAddClick}
-        addButtonLabel=" Department"
+        addButtonLabel="Department"
         addButtonIcon={<UsersRound size={16} />}
         className="p-4 bg-white border rounded shadow-sm mb-4"
         searchBar={
           <div className="flex flex-col sm:flex-row gap-3 w-full">
-            <SearchInput
-              placeholder="Search departments..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className="flex-grow"
-            />
+       <SearchInput
+  placeholder="Search departments..."
+  value={searchTerm}
+  onChange={handleSearchChange}
+  className="flex-grow"
+/>
           </div>
         }
         rightElements={
@@ -211,7 +191,7 @@ const handleDepartemtSpecificLog=()=>{
 
             <button
               className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
-              onClick={() => navigate('/employees/create')} // Adjust the path as needed
+              onClick={() => navigate('/employees/create')}
             >
               <UserPlus size={17} />
               Employee
@@ -235,7 +215,7 @@ const handleDepartemtSpecificLog=()=>{
         totalItems={totalItems}
         itemsPerPage={itemsPerPage}
         onPageChange={setCurrentPage}
-        onViewHistory={handleDepartemtSpecificLog}
+        onViewHistory={handleDepartmentSpecificLog}
       />
 
       {/* Department Form Modal */}
@@ -263,7 +243,7 @@ const handleDepartemtSpecificLog=()=>{
         isOpen={isAuditLogModalOpen}
         onClose={() => setIsAuditLogModalOpen(false)}
         title="Department Audit History"
-        size="lg" // Use larger size for the audit log table
+        size="lg"
       >
         <AuditLogModal 
           logs={auditLogs} 

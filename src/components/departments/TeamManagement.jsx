@@ -7,11 +7,11 @@ import EmployeeList from '../teams/EmployeeList';
 import { useDispatch, useSelector } from 'react-redux';
 import { API_CLIENT } from '../../Api/API_Client';
 import {
-  setDepartments,
   upsertTeam,
   removeTeam,
   setDepartmentEmployees,
-  setLastFetchedDepId
+  setLastFetchedDepId,
+  setTeams
 } from '../../redux/features/user/userSlice';
 
 import { fetchDepartments } from '../../redux/features/user/userTrunk';
@@ -72,7 +72,7 @@ const TeamManagement = () => {
       setIsLoading(true);
       try {
         const data = await fetchDepartments(currentPage, itemsPerPage);
-        dispatch(setDepartments(data));
+        dispatch(setTeams(data));
         setTotalItems(data.length);
       } catch (error) {
         logError('Error fetching teams:', error);
@@ -143,8 +143,7 @@ const TeamManagement = () => {
   const handleEdit = (team) => {
     const teamToEdit = {
       ...team,
-      department_id: team.id,
-      department_name: team.name
+    
     };
     setEditingTeam(teamToEdit);
     setIsOpen(true);

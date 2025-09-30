@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Building2, Truck, Mail, Phone, MapPin, Link2 } from "lucide-react";
-import AssignEntityModal from "../components/layout/AssignEntityModal";
+import AssignEntityModal from "../components/modals/AssignEntityModal";
 import { fetchVendorsThunk } from "../redux/features/vendors/vendorThunk";
 import {
   fetchVendorsByCompanyThunk,

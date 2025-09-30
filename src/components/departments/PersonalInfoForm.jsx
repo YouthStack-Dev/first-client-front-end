@@ -18,7 +18,8 @@ const PersonalInfoForm = ({
   loadingTeams = false
 }) => {
   const datePickerRef = useRef(null);
-logDebug('this is the teams', teams);
+  logDebug('this is the teams', teams);
+  
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (datePickerRef.current && !datePickerRef.current.contains(event.target)) {
@@ -63,22 +64,22 @@ logDebug('this is the teams', teams);
           )}
         </div>
 
-        {/* Employee ID */}
+        {/* Employee ID - Changed from userId to employee_code */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Employee ID <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
-            name="userId"
-            value={formData.userId || ''}
+            name="employee_code"
+            value={formData.employee_code || ''}
             onChange={onChange}
-            className={getInputClasses(errors.userId)}
+            className={getInputClasses(errors.employee_code)}
             placeholder="Enter employee ID"
             disabled={isReadOnly}
           />
-          {errors.userId && (
-            <p className="mt-1 text-sm text-red-500">{errors.userId}</p>
+          {errors.employee_code && (
+            <p className="mt-1 text-sm text-red-500">{errors.employee_code}</p>
           )}
         </div>
 
@@ -114,72 +115,72 @@ logDebug('this is the teams', teams);
             disabled={isReadOnly}
           >
             <option value="">Select gender</option>
-            <option value="MALE">MALE</option>
-            <option value="FEMALE">FEMALE</option>
-            <option value="OTHERS">OTHER</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
           </select>
           {errors.gender && (
             <p className="mt-1 text-sm text-red-500">{errors.gender}</p>
           )}
         </div>
 
-        {/* Mobile Number */}
+        {/* Mobile Number - Changed from phone to mobile_number */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Mobile Number  <span className="text-red-500">*</span>
+            Mobile Number <span className="text-red-500">*</span>
           </label>
           <input
             type="tel"
             name="phone"
             value={formData.phone || ''}
             onChange={onChange}
-            className={getInputClasses(false)}
+            className={getInputClasses(errors.phone)}
             placeholder="Enter mobile number"
             disabled={isReadOnly}
-
           />
-           {errors.phone && (
+          {errors.phone && (
             <p className="mt-1 text-sm text-red-500">{errors.phone}</p>
           )}
         </div>
 
-        {/* Alternate Mobile Number */}
+        {/* Alternate Mobile Number - Changed from alternativePhone to alternate_phone */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Alternate Mobile Number
           </label>
           <input
             type="tel"
-            name="alternativePhone"
-            value={formData.alternativePhone || ''}
+            name="alternate_phone"
+            value={formData.alternate_phone || ''}
             onChange={onChange}
-            className={getInputClasses(errors.alternativePhone)}
+            className={getInputClasses(errors.alternate_phone)}
             placeholder="Enter alternate mobile number"
             disabled={isReadOnly}
           />
-          {errors.alternativePhone && (
-            <p className="mt-1 text-sm text-red-500">{errors.alternativePhone}</p>
+          {errors.alternate_phone && (
+            <p className="mt-1 text-sm text-red-500">{errors.alternate_phone}</p>
           )}
         </div>
 
-        {/* Special Need */}
+        {/* Special Need - Changed from specialNeed to special_needs */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Special Need
           </label>
           <select
-            name="specialNeed"
-            value={formData.specialNeed || 'none'}
+            name="special_needs"
+            value={formData.special_needs || 'none'}
             onChange={onChange}
             className={getSelectClasses(false)}
             disabled={isReadOnly}
           >
             <option value="none">None</option>
-            <option value="PREGNANT">Pregnancy</option>
+            <option value="Wheelchair">Wheelchair</option>
+            <option value="Pregnancy">Pregnancy</option>
           </select>
         </div>
 
-        {/* Date Range */}
+        {/* Date Range - Changed field names to special_needs_start_date and special_needs_end_date */}
         <div className="relative" ref={datePickerRef}>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Date Range
@@ -208,7 +209,7 @@ logDebug('this is the teams', teams);
           )}
         </div>
 
-        {/* Department */}
+        {/* Department - Changed from departmentId to department_id */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Department <span className="text-red-500">*</span>
@@ -221,22 +222,22 @@ logDebug('this is the teams', teams);
             </p>
           ) : (
             <select
-              name="departmentId"
-              value={formData.departmentId || ''}
+              name="team_id"
+              value={formData.team_id || ''}
               onChange={onChange}
-              className={getSelectClasses(errors.departmentId)}
+              className={getSelectClasses(errors.team_id)}
               disabled={isReadOnly}
             >
               <option value="">Select Department</option>
               {teams.map((dept) => (
-                <option key={dept.id} value={dept.id}>
+                <option key={dept.team_id} value={dept.team_id}>
                   {dept.name}
                 </option>
               ))}
             </select>
           )}
-          {errors.departmentId && (
-            <p className="mt-1 text-sm text-red-500">{errors.departmentId}</p>
+          {errors.team_id && (
+            <p className="mt-1 text-sm text-red-500">{errors.team_id}</p>
           )}
         </div>
       </div>

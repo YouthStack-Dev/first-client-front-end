@@ -34,10 +34,10 @@ const EmployeeAddressGoogleMapView = memo(({
 }) => {
   const API_KEY = import.meta.env.VITE_GOOGLE_API || '';
   
-  // Handle field mapping - support both lat/lng and latitude/longitude
+  // Use only latitude/longitude (backend field names)
   const getCoordinates = () => {
-    const lat = formData.lat || formData.latitude;
-    const lng = formData.lng || formData.longitude;
+    const lat = formData.latitude;
+    const lng = formData.longitude;
     return lat && lng ? { lat: parseFloat(lat), lng: parseFloat(lng) } : null;
   };
 
@@ -68,7 +68,7 @@ const EmployeeAddressGoogleMapView = memo(({
         homePosition.lng !== coords.lng)) {
       setHomePosition(coords);
     }
-  }, [formData.lat, formData.lng, formData.latitude, formData.longitude, homePosition]);
+  }, [formData.latitude, formData.longitude]);
 
   useEffect(() => {
     const dist = calculateDistance(fixedPoint, homePosition);
@@ -107,9 +107,7 @@ const EmployeeAddressGoogleMapView = memo(({
     setHomePosition(position);
     setFormData((prev) => ({
       ...prev,
-      // Update both field formats for compatibility
-      lat: position ? String(position.lat) : '',
-      lng: position ? String(position.lng) : '',
+      // Use only backend field names
       latitude: position ? String(position.lat) : '',
       longitude: position ? String(position.lng) : '',
     }));
@@ -139,14 +137,14 @@ const EmployeeAddressGoogleMapView = memo(({
     }
     
     // Update position when coordinates change
-    if (name === 'lat' || name === 'latitude') {
-      const lng = formData.lng || formData.longitude || 0;
+    if (name === 'latitude') {
+      const lng = formData.longitude || 0;
       setHomePosition({ lat: numValue, lng: parseFloat(lng) });
-    } else if (name === 'lng' || name === 'longitude') {
-      const lat = formData.lat || formData.latitude || 0;
+    } else if (name === 'longitude') {
+      const lat = formData.latitude || 0;
       setHomePosition({ lat: parseFloat(lat), lng: numValue });
     }
-  }, [isReadOnly, handleInputChange, formData.lat, formData.lng, formData.latitude, formData.longitude]);
+  }, [isReadOnly, handleInputChange, formData.latitude, formData.longitude]);
 
   return (
     <div className="animate-fadeIn grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -210,7 +208,7 @@ const AddressInputPanel = memo(({
       <CoordinateField 
         label="Latitude"
         name="latitude"
-        value={formData.latitude || formData.lat || ''}
+        value={formData.latitude || ''}
         onChange={handleCoordinateChange}
         isReadOnly={isReadOnly}
         className={getInputClasses()}
@@ -219,7 +217,7 @@ const AddressInputPanel = memo(({
       <CoordinateField 
         label="Longitude" 
         name="longitude"
-        value={formData.longitude || formData.lng || ''}
+        value={formData.longitude || ''}
         onChange={handleCoordinateChange}
         isReadOnly={isReadOnly}
         className={getInputClasses()}

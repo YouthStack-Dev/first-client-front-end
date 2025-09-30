@@ -1,51 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { format } from 'date-fns';
-import { toast } from 'react-toastify';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-
-// Components
 import FormSteps from './FormSteps';
 import PersonalInfoForm from './PersonalInfoForm';
 import NavigationButtons from './NavigationButtons';
 import HeaderWithAction from '../HeaderWithAction';
 import EmployeeAddressGoogleMapView from '../Map';
-
-// Utils & Services
+import { toast } from 'react-toastify';
+import { format } from 'date-fns';
 import { logDebug, logError } from '../../utils/logger';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectAllTeams } from '../../redux/features/user/userSelectors';
-import { setDepartments } from '../../redux/features/user/userSlice';
+import { addEmployeeToTeam, setTeams } from '../../redux/features/user/userSlice';
 import { API_CLIENT } from '../../Api/API_Client';
+import { useNavigate } from 'react-router-dom';
 import { fetchDepartments } from '../../redux/features/user/userTrunk';
-
-// Validation
 import { 
   validatePersonalInfo, 
-  validateAddressInfo,
-  validateEmployeeForm,
+  validateAddressInfo, 
   formatFormDataForValidation 
-} from './validationUtils';
+} from './employeeSchema';
+import endpoint from '../../Api/Endpoints';
 
 const initialFormData = {
   name: '',
   email: '',
   gender: '',
-  userId: '',
+  employee_code: "",
   phone: '',
-  alternativePhone: '',
+  alternate_phone: '',
   address: '',
   landmark: '',
   latitude: null,
   longitude: null,
-  specialNeed: null,
-  specialNeedStart: null,
-  specialNeedEnd: null,
-  bloodGroup: '',
-  emergencyPhone: '',
-  emergencyContact: '',
-  departmentId: '',
-  roleId: '',
+  distance_from_company: '',
+  special_needs: "none",
+  special_needs_start_date: null,
+  special_needs_end_date: null,
+  office: "",
+  team_id: "",
+  subscribe_via_email: false,
+  subscribe_via_sms: false
 };
 
 const EmployeeForm = ({ mode = 'create' }) => {
@@ -57,35 +51,39 @@ const EmployeeForm = ({ mode = 'create' }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(mode !== 'create');
   const [showDatePicker, setShowDatePicker] = useState(false);
-  
   const teams = useSelector(selectAllTeams);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { depId, userId } = useParams();
+  const { userId } = useParams();
 
   const [dateRangeSelection, setDateRangeSelection] = useState([
-    { startDate: null, endDate: null, key: 'selection' },
+    {
+      startDate: null,
+      endDate: null,
+      key: 'selection',
+    },
   ]);
 
   if (mode === 'view' && !state?.employee) {
-    // Handle missing employee data
+    toast.error('Employee data not found');
+    navigate(-1);
   }
 
   const handleDateSelect = (ranges) => {
     const { startDate, endDate } = ranges.selection;
     setDateRangeSelection([ranges.selection]);
 
-    if (formData.specialNeed !== 'none') {
+    if (formData.special_needs !== 'none') {
       setFormData(prev => ({
         ...prev,
-        specialNeedStart: startDate.toISOString().split('T')[0],
-        specialNeedEnd: endDate.toISOString().split('T')[0],
+        special_needs_start_date: startDate.toISOString().split('T')[0],
+        special_needs_end_date: endDate.toISOString().split('T')[0],
       }));
     }
   };
 
   const displayDateRange = () => {
-    if (formData.specialNeed === 'none') return "";
+    if (formData.special_needs === 'none') return "";
     
     const { startDate, endDate } = dateRangeSelection[0];
     if (!startDate || !endDate) return "";
@@ -93,10 +91,10 @@ const EmployeeForm = ({ mode = 'create' }) => {
   };
 
   useEffect(() => {
-    const fetchTeams = async () => {
+    const fetchTeamsData = async () => {
       try {
         const response = await fetchDepartments();
-        dispatch(setDepartments(response));
+        dispatch(setTeams(response));
       } catch (error) {
         logError('Error fetching teams:', error);
         toast.error('Failed to load departments');
@@ -104,7 +102,7 @@ const EmployeeForm = ({ mode = 'create' }) => {
     };
 
     if (!teams || teams.length === 0) {
-      fetchTeams();
+      fetchTeamsData();
     }
   }, [dispatch, teams]);
 
@@ -117,31 +115,31 @@ const EmployeeForm = ({ mode = 'create' }) => {
         const mappedData = {
           ...initialFormData,
           name: employee.name || '',
-          userId: employee.userId || '',
+          employee_code: employee.employee_code || '',
           email: employee.email || '',
           gender: employee.gender || '',
           phone: employee.phone || '',
-          alternativePhone: employee.alternativePhone || '',
-          specialNeed: employee.specialNeed || 'none',
-          specialNeedStart: employee.specialNeed === 'none' ? null : (employee.specialNeedStart || null),
-          specialNeedEnd: employee.specialNeed === 'none' ? null : (employee.specialNeedEnd || null),
-          departmentId: employee.departmentId || '',
-          roleId: employee.role?.id || '',
+          alternate_phone: employee.alternate_phone || '',
+          special_needs: employee.special_needs || 'none',
+          special_needs_start_date: employee.special_needs === 'none' ? null : (employee.special_needs_start_date || null),
+          special_needs_end_date: employee.special_needs === 'none' ? null : (employee.special_needs_end_date || null),
+          team_id: employee.team_id || '',
           address: employee.address || '',
           landmark: employee.landmark || '',
-          latitude: employee.lat || null,
-          longitude: employee.lng || null,
-          bloodGroup: employee.additionalInfo?.bloodGroup || '',
-          emergencyPhone: employee.additionalInfo?.emergencyPhone || '',
-          emergencyContact: employee.additionalInfo?.emergencyContact || '',
+          latitude: employee.latitude || null,
+          longitude: employee.longitude || null,
+          distance_from_company: employee.distance_from_company || '',
+          office: employee.office || '',
+          subscribe_via_email: employee.subscribe_via_email || false,
+          subscribe_via_sms: employee.subscribe_via_sms || false,
         };
         setFormData(mappedData);
         
-        if (employee?.specialNeed !== 'none' && employee?.specialNeedStart && employee?.specialNeedEnd) {
+        if (employee?.special_needs !== 'none' && employee?.special_needs_start_date && employee?.special_needs_end_date) {
           setDateRangeSelection([
             {
-              startDate: new Date(employee.specialNeedStart),
-              endDate: new Date(employee.specialNeedEnd),
+              startDate: new Date(employee.special_needs_start_date),
+              endDate: new Date(employee.special_needs_end_date),
               key: "selection"
             }
           ]);
@@ -157,19 +155,27 @@ const EmployeeForm = ({ mode = 'create' }) => {
       }
       setIsLoading(false);
     }
-  }, [mode, state, teams, depId]);
+  }, [mode, state]);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     logDebug('Input change:', name, value);
     
-    if (name === 'specialNeed') {
+    if (type === 'checkbox') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: checked
+      }));
+      return;
+    }
+
+    if (name === 'special_needs') {
       if (value === 'none') {
         setFormData(prev => ({
           ...prev,
           [name]: value,
-          specialNeedStart: null,
-          specialNeedEnd: null
+          special_needs_start_date: null,
+          special_needs_end_date: null
         }));
         
         setDateRangeSelection([
@@ -189,7 +195,7 @@ const EmployeeForm = ({ mode = 'create' }) => {
       setFormData(prev => ({
         ...prev,
         [name]:
-          name === 'departmentId' || name === 'roleId'
+          name === 'team_id'
             ? value === '' ? '' : parseInt(value, 10)
             : value
       }));
@@ -213,7 +219,7 @@ const EmployeeForm = ({ mode = 'create' }) => {
       const formattedData = formatFormDataForValidation(formData);
       const validationResult = validatePersonalInfo(formattedData);
       
-      if (!validationResult.success) {
+      if (!validationResult.isValid) {
         setErrors(validationResult.errors);
         logError('Validation errors:', validationResult.errors);
         
@@ -238,11 +244,17 @@ const EmployeeForm = ({ mode = 'create' }) => {
     setIsSubmitting(true);
   
     const formattedData = formatFormDataForValidation(formData);
-    const validationResult = validateEmployeeForm(formattedData);
+    const personalValidation = validatePersonalInfo(formattedData);
+    const addressValidation = validateAddressInfo(formattedData);
     
-    if (!validationResult.success) {
-      setErrors(validationResult.errors);
-      logDebug('Form submission errors:', validationResult.errors);
+    const allErrors = { 
+      ...personalValidation.errors, 
+      ...addressValidation.errors 
+    };
+  
+    if (Object.keys(allErrors).length > 0) {
+      setErrors(allErrors);
+      logDebug('Form submission errors:', allErrors);
       toast.error('Please fix all errors before submitting');
       setIsSubmitting(false);
       return;
@@ -253,50 +265,39 @@ const EmployeeForm = ({ mode = 'create' }) => {
         name: formData.name?.trim() || '',
         email: formData.email?.trim() || '',
         gender: formData.gender || '',
-        userId: formData.userId?.trim() || '',
+        employee_code: formData.employee_code?.trim() || '',
         phone: formData.phone?.trim() || '',
-        alternativePhone: formData.alternativePhone?.trim() || '',
+        alternate_phone: formData.alternate_phone?.trim() || '',
         address: formData.address?.trim() || '',
         landmark: formData.landmark?.trim() || '',
-        lat: formData.latitude || "",
-        lng: formData.longitude || "",
-        departmentId: formData.departmentId ? parseInt(formData.departmentId, 10) : null,
-        roleId: formData.roleId ? parseInt(formData.roleId, 10) : null,
-        additionalInfo: {
-          bloodGroup: formData.bloodGroup?.trim() || '',
-          emergencyPhone: formData.emergencyPhone?.trim() || '',
-          emergencyContact: formData.emergencyContact?.trim() || '',
-        }
+        // Convert coordinates to numbers
+        latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+        longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+        team_id: formData.team_id ? parseInt(formData.team_id, 10) : null,
       };
 
-      if (formData.specialNeed === 'none') {
-        submissionData.specialNeed = null;
-        submissionData.specialNeedStart = null;
-        submissionData.specialNeedEnd = null;
+      if (formData.special_needs === 'none') {
+        submissionData.special_needs = null;
+        submissionData.special_needs_start_date = null;
+        submissionData.special_needs_end_date = null;
       } else {
-        submissionData.specialNeed = formData.specialNeed;
+        submissionData.special_needs = formData.special_needs;
         
-        if (formData.specialNeedStart) {
-          submissionData.specialNeedStart = formData.specialNeedStart;
+        if (formData.special_needs_start_date) {
+          submissionData.special_needs_start_date = formData.special_needs_start_date;
         } else if (dateRangeSelection[0]?.startDate) {
-          submissionData.specialNeedStart = dateRangeSelection[0].startDate.toISOString().split('T')[0];
+          submissionData.special_needs_start_date = dateRangeSelection[0].startDate.toISOString().split('T')[0];
+        } else {
+          submissionData.special_needs_start_date = null;
         }
         
-        if (formData.specialNeedEnd) {
-          submissionData.specialNeedEnd = formData.specialNeedEnd;
+        if (formData.special_needs_end_date) {
+          submissionData.special_needs_end_date = formData.special_needs_end_date;
         } else if (dateRangeSelection[0]?.endDate) {
-          submissionData.specialNeedEnd = dateRangeSelection[0].endDate.toISOString().split('T')[0];
+          submissionData.special_needs_end_date = dateRangeSelection[0].endDate.toISOString().split('T')[0];
+        } else {
+          submissionData.special_needs_end_date = null;
         }
-      }
-  
-      Object.keys(submissionData.additionalInfo).forEach(key => {
-        if (submissionData.additionalInfo[key] === '') {
-          delete submissionData.additionalInfo[key];
-        }
-      });
-
-      if (Object.keys(submissionData.additionalInfo).length === 0) {
-        delete submissionData.additionalInfo;
       }
   
       Object.keys(submissionData).forEach(key => {
@@ -306,27 +307,82 @@ const EmployeeForm = ({ mode = 'create' }) => {
       });
   
       logDebug('Submission data:', submissionData);
-
+      console.log('Formatted submission data:', JSON.stringify(submissionData, null, 2));
+      
+      const datawithpassword = {...submissionData, password: "Password@123"}
       const response = mode === 'create'
-        ? await API_CLIENT.post('employees/', submissionData)
+        ? await API_CLIENT.post(endpoint.createEmployee, datawithpassword)
         : await API_CLIENT.put(`/employees/${userId}`, submissionData);
   
       if (response.status >= 200 && response.status < 300) {
+        const employeeData = response.data; // Assuming API returns the created/updated employee
+        
         toast.success(`Employee ${mode === 'create' ? 'created' : 'updated'} successfully!`);
+        
+        // Dispatch to Redux store only for create mode and if team_id exists
+        if (mode === 'create' && formData.team_id) {
+          // Assuming you have access to dispatch via useDispatch hook
+          dispatch(addEmployeeToTeam({
+            teamId: formData.team_id,
+            employee: {
+              ...employeeData,
+              employee_code: formData.employee_code?.trim() // Ensure employee_code is included
+            }
+          }));
+        }
+        
         if (mode === 'create') {
           setFormData(initialFormData);
           setCurrentStep('personalInfo');
           setCompletedSteps([]);
-          setDateRangeSelection([{ startDate: null, endDate: null, key: "selection" }]);
+          setDateRangeSelection([
+            {
+              startDate: null,
+              endDate: null,
+              key: "selection"
+            }
+          ]);
         }
+        navigate(-1);
       } else {
         toast.error(response.data?.detail || `Failed to ${mode === 'create' ? 'create' : 'update'} employee`);
       }
   
     } catch (error) {
       logError('Submission error:', error);
-      
-      if (error.response?.data?.errors) {
+      console.error('Full error object:', error);
+      console.error('Error response:', error.response?.data);
+
+      // Handle the specific error structure from your API
+      if (error.response?.data?.detail) {
+        const errorDetail = error.response.data.detail;
+        
+        // Handle array of error objects (like in your example)
+        if (Array.isArray(errorDetail)) {
+          const errorMessages = errorDetail.map(err => {
+            // Extract field name and error message
+            const field = err.loc?.[err.loc.length - 1] || 'field';
+            const message = err.msg || 'Validation error';
+            
+            // Format for display: "Password: Value error, Password must have min 8 chars..."
+            return `${field.charAt(0).toUpperCase() + field.slice(1)}: ${message}`;
+          });
+          
+          // Show all error messages
+          errorMessages.forEach(msg => toast.error(msg));
+        } 
+        // Handle string error message
+        else if (typeof errorDetail === 'string') {
+          toast.error(errorDetail);
+        }
+        // Handle single error object
+        else if (errorDetail.msg) {
+          const field = errorDetail.loc?.[errorDetail.loc.length - 1] || 'field';
+          toast.error(`${field.charAt(0).toUpperCase() + field.slice(1)}: ${errorDetail.msg}`);
+        }
+      } 
+      // Fallback to existing error handling
+      else if (error.response?.data?.errors) {
         const errorMessages = error.response.data.errors
           .map(err => `${err.message}`)
           .join('\n');
