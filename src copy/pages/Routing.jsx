@@ -8,7 +8,7 @@ import {
   ArrowLeftRight,
   Heart,
 } from "lucide-react";
-import AssignRouteModal from "../components/modals/AssignRouteModal";
+import AssignRouteModal from "@components/modals/AssignRouteModal";
 
 // ---------------- Dummy Data ----------------
 const generateDummyRoutes = () =>

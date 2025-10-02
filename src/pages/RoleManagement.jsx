@@ -1,13 +1,13 @@
 // import React, { useState, useEffect } from "react";
-// import RoleToolbar from "../components/RoleManagement/RoleToolbar";
-// import RoleList from "../components/RoleManagement/RoleList";
-// import RoleForm from "../components/RoleManagement/RoleForm";
+// import RoleToolbar from "@components/RoleManagement/RoleToolbar";
+// import RoleList from "@components/RoleManagement/RoleList";
+// import RoleForm from "@components/RoleManagement/RoleForm";
 // import { API_CLIENT } from "../Api/API_Client";
 // import { useSelector } from "react-redux";
 // import { selectPermissions } from "../redux/features/auth/authSlice";
 // import { logDebug } from "../utils/logger";
-// import UserAssignmentModal from "../components/RoleManagement/UserAssignmentModal";
-// import { AssignedUsersModal } from "../components/RoleManagement/AssignedUsersModal";
+// import UserAssignmentModal from "@components/RoleManagement/UserAssignmentModal";
+// import { AssignedUsersModal } from "@components/RoleManagement/AssignedUsersModal";
 
 // const RoleManagement = () => {
 //   const [roles, setRoles] = useState([]);
@@ -195,9 +195,9 @@
 
 // pages/RoleManagement.jsx
 import { useState } from "react";
-import { PermissionPanel } from "../components/PermissionPanel";
+import { PermissionPanel } from "@components/PermissionPanel";
 import { permissionModules } from "../utils/permissionCategories";
-// import { PermissionPanel } from "../components/PermissionPanel";
+// import { PermissionPanel } from "@components/PermissionPanel";
 // import { permissionModules } from "../data/permissionModules";
 
 const RoleManagement = () => {

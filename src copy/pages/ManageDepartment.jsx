@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, UserPlus, UsersRound } from 'lucide-react';
-import Modal from '../components/modals/Modal';
-import DepartmentForm from '../components/teams/DepartmentForm';
-import DepartmentList from '../components/teams/DepartmentList';
+import Modal from '@components/modals/Modal';
+import DepartmentForm from '@components/teams/DepartmentForm';
+import DepartmentList from '@components/teams/DepartmentList';
 import { useDispatch, useSelector } from 'react-redux';
 import { API_CLIENT } from '../Api/API_Client';
 import { setTeams,upsertTeam, removeTeam} from '../redux/features/user/userSlice';
 import { logDebug, logError } from '../utils/logger';
 import { fetchDepartments } from '../redux/features/user/userTrunk';
-import ToolBar from '../components/ui/ToolBar';
-import SearchInput from '../components/ui/SearchInput';
+import ToolBar from '@components/ui/ToolBar';
+import SearchInput from '@components/ui/SearchInput';
 
 const ManageDepartment = () => {
   const navigate = useNavigate();

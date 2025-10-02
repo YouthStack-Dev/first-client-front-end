@@ -2,7 +2,7 @@ import { Plus, Users, Shield, Building2, Search, Filter, MoreVertical, Edit, Tra
 
 import { MODULES } from "../staticData/Modules";
 import { useState } from "react";
-import { CreateClientForm } from '../components/modals/CreateClientForm';
+import { CreateClientForm } from '@components/modals/CreateClientForm';
 import { log } from '../utils/logger';
 
 const TableHeader = ({ title }) => (

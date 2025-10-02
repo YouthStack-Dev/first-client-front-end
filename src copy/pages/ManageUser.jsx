@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Edit, MoreVertical, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import HeaderWithAction from '../components/HeaderWithAction';
+import HeaderWithAction from '@components/HeaderWithAction';
 
 const UserList = React.memo(({ users, menuOpen, onNext, onPrev, currentPage, totalPages, isLoading }) => (
   <div className="rounded-lg overflow-hidden shadow-sm mt-2">

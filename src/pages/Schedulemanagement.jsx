@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import ShiftManagement from "../components/Schedulemanagement/ShiftManagement";
-import ShiftCategoryManagement from "../components/Schedulemanagement/ShiftCategoryManagement";
+import ShiftManagement from "@components/Schedulemanagement/ShiftManagement";
+import ShiftCategoryManagement from "@components/Schedulemanagement/ShiftCategoryManagement";
 import { useDispatch } from "react-redux";
 import { API_CLIENT } from "../Api/API_Client";
 import { logDebug } from "../utils/logger";

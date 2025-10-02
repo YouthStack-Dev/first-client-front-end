@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import DriverFormUI from '../components/driver/DriverForm';
-import ToolBar from '../components/ui/ToolBar';
-import { DriverListUI } from '../components/driver/DriverListUI';
-import BulkUploadButton from '../components/ui/BulkUploadButton';
-import SearchInput from '../components/SearchInput';
+import DriverFormUI from '@components/driver/DriverForm';
+import ToolBar from '@components/ui/ToolBar';
+import { DriverListUI } from '@components/driver/DriverListUI';
+import BulkUploadButton from '@components/ui/BulkUploadButton';
+import SearchInput from '@components/SearchInput';
 import { API_CLIENT } from '../Api/API_Client';
-import Modal from '../components/modals/Modal';
+import Modal from '@components/modals/Modal';
 
 const DriverManagement = () => {
   // Data states

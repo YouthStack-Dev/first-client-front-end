@@ -2,9 +2,9 @@
 import React, { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import AddVendorModal from "../components/modals/AddVendorModal";
-import DynamicTable from "../components/DynamicTable";
-import ToolBar from "../components/ui/ToolBar";
+import AddVendorModal from "@components/modals/AddVendorModal";
+import DynamicTable from "@components/DynamicTable";
+import ToolBar from "@components/ui/ToolBar";
 import { closeModal, openModal } from "@features/manageVendors/vendorSlice";
 
 import {

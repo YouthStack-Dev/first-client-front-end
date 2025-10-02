@@ -4,14 +4,14 @@ import { API_CLIENT } from '../Api/API_Client';
 import { toast } from 'react-toastify';
 import { useSelector, useDispatch } from 'react-redux';
 import { Plus } from 'lucide-react';
-import SearchInput from '../components/ui/SearchInput';
+import SearchInput from '@components/ui/SearchInput';
 import { logDebug } from '../utils/logger';
-import ToolBar from '../components/ui/ToolBar';
+import ToolBar from '@components/ui/ToolBar';
 import { setDepartmentEmployees, updateEmployeeStatus } from '../redux/features/user/userSlice';
-import EmployeeList from '../components/departments/EmployeeList';
+import EmployeeList from '@components/departments/EmployeeList';
 import endpoint from '../Api/Endpoints';
-import Modal from '../components/modals/Modal';
-import AuditLogModal from '../components/departments/AuditLogModal';
+import Modal from '@components/modals/Modal';
+import AuditLogModal from '@components/departments/AuditLogModal';
 
 const ManageEmployees = () => {
   const [loading, setLoading] = useState(true);

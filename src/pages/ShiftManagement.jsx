@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Plus } from "lucide-react";
-import ToolBar from "../components/ui/ToolBar";
-import SearchInput from "../components/ui/SearchInput";
-import DynamicTable from "../components/DynamicTable";
+import ToolBar from "@components/ui/ToolBar";
+import SearchInput from "@components/ui/SearchInput";
+import DynamicTable from "@components/DynamicTable";
 import { fetchshiftTrunk } from "../redux/features/shift/shiftTrunk";
-import Modal from "../components/modals/Modal";
-import CategoryForm from "../components/shift/CategoryForm";
-import ShiftForm from "../components/shift/ShiftForm";
+import Modal from "@components/modals/Modal";
+import CategoryForm from "@components/shift/CategoryForm";
+import ShiftForm from "@components/shift/ShiftForm";
 
 const ShiftManagement = () => {
   const dispatch = useDispatch();

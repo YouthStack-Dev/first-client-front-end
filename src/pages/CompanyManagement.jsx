@@ -2,13 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Plus } from 'lucide-react';
-import EntityModal from '../components/EntityModal';
+import EntityModal from '@components/EntityModal';
 import CompanyList from '../companies/CompanyList';
-import { 
-  fetchCompaniesThunk, 
-  createCompanyThunk, 
-  updateCompanyThunk 
-} from '../redux/features/company/companyThunks';
+import {  fetchCompaniesThunk,  createCompanyThunk,  updateCompanyThunk } from '../redux/features/company/companyThunks';
 
 const CompanyManagement = () => {
   const dispatch = useDispatch();
@@ -56,7 +52,7 @@ useEffect(() => {
     try {
       if (modalMode === 'create') {
         const result = await dispatch(createCompanyThunk(formData)).unwrap();
-        console.log('Created company:', result);
+        // console.log('Created company:', result);
       } else if (modalMode === 'edit' && selectedEntity) {
         const result = await dispatch(
           updateCompanyThunk({ companyId: selectedEntity.id, formData })

@@ -4,7 +4,7 @@ import {
   VehicleTableheaders,
 } from "../staticData/VehicleTableData";
 import DynamicTable from "./DynamicTable";
-import VehicleContractModal from "../components/modals/VehicleContractModal";
+import VehicleContractModal from "@components/modals/VehicleContractModal";
 import { Upload, Download, Edit, Trash2, Clock } from "lucide-react";
 
 // SHIFT VEHICLE CONTRACTS Component

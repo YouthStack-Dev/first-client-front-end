@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CreateRoleForm } from "../components/modals/CreateRoleForm"
+import { CreateRoleForm } from "@components/modals/CreateRoleForm"
 import { Plus, Users, Shield, Search, MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
 import { MODULES } from "../staticData/Modules";
 

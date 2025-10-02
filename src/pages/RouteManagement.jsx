@@ -1,7 +1,7 @@
 
 
 import { useState } from "react";
-import ScheduledBookings from "../components/RouteManagement/ScheduledBookings";
+import ScheduledBookings from "@components/RouteManagement/ScheduledBookings";
   const RouteManagement = () => {
 
   return (

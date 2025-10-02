@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserPlus, UsersRound, History } from 'lucide-react';
-import DepartmentForm from '../components/departments/DepartmentForm';
-import DepartmentList from '../components/departments/DepartmentList';
+import DepartmentForm from '@components/departments/DepartmentForm';
+import DepartmentList from '@components/departments/DepartmentList';
 import { useDispatch, useSelector } from 'react-redux';
 import { API_CLIENT } from '../Api/API_Client';
 import { setTeams, removeTeam } from '../redux/features/user/userSlice';
 import { logDebug, logError } from '../utils/logger';
 import { fetchDepartments } from '../redux/features/user/userTrunk';
-import ToolBar from '../components/ui/ToolBar';
-import SearchInput from '../components/ui/SearchInput';
-import AuditLogModal from '../components/departments/AuditLogModal';
-import Modal from '../components/modals/Modal';
+import ToolBar from '@components/ui/ToolBar';
+import SearchInput from '@components/ui/SearchInput';
+import AuditLogModal from '@components/departments/AuditLogModal';
+import Modal from '@components/modals/Modal';
 import { toast } from 'react-toastify';
 
 const ManageDepartment = () => {

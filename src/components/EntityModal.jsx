@@ -1,4 +1,3 @@
-// src/components/EntityModal.jsx
 import React, { useState, useEffect } from 'react';
 import { X, Building2, Lock, Save } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -143,7 +142,7 @@ const preparePayload = () => {
     e.preventDefault();
     if (!validateForm()) return;
     const payload = preparePayload();
-    console.log('[EntityModal] Submitting payload:', payload);
+    // console.log('[EntityModal] Submitting payload:', payload);
     onSubmit(payload);
   };
 

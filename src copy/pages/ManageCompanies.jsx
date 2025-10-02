@@ -1,6 +1,6 @@
 import { Plus, Eye, Edit, Trash2 } from "lucide-react";
-import ToolBar from "../components/ui/ToolBar";
-import { CreateCompanyForm } from "../components/modals/CreateCompanyForm";
+import ToolBar from "@components/ui/ToolBar";
+import { CreateCompanyForm } from "@components/modals/CreateCompanyForm";
 import { useState } from "react";
 import { MODULES } from "../staticData/Modules";
 

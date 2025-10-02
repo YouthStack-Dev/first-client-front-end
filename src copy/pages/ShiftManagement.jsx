@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import ShiftForm from '../components/shiftForm';
-import PopupModal from '../components/PopupModal';
-import DynamicTable from '../components/DynamicTable';
-import ToolBar from '../components/ui/ToolBar';
+import ShiftForm from '@components/shiftForm';
+import PopupModal from '@components/PopupModal';
+import DynamicTable from '@components/DynamicTable';
+import ToolBar from '@components/ui/ToolBar';
 import { Trash2, Edit, Plus } from 'lucide-react';
 import { toast } from 'react-toastify';
 import {

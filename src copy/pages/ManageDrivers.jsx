@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { DriverList } from '../components/driver/DriverList';
-import ToolBar from '../components/ui/ToolBar';
-import Pagination from '../components/ui/Pagination';
-import FilterBadges from '../components/ui/FilterBadges';
-import StatusIndicator from '../components/ui/StatusIndicator';
+import { DriverList } from '@components/driver/DriverList';
+import ToolBar from '@components/ui/ToolBar';
+import Pagination from '@components/ui/Pagination';
+import FilterBadges from '@components/ui/FilterBadges';
+import StatusIndicator from '@components/ui/StatusIndicator';
 import { API_CLIENT } from '../Api/API_Client';
 import {  
   setSearchTerm, setVendorFilter, setStatusFilter, setVerificationFilter, resetFilters,
@@ -13,9 +13,9 @@ import {
   selectPaginatedDrivers, selectLoading, selectError, selectVendorOptions, selectStatusOptions,
   selectVerificationOptions, selectActiveFilters, selectCounts, selectFilteredDrivers
 } from '../redux/features/manageDriver/driverSlice';
-import DriverForm from '../components/driver/DriverForm';
-import Modal from '../components/modals/Modal';
-import ConfirmationModal from '../components/modals/ConfirmationModal';
+import DriverForm from '@components/driver/DriverForm';
+import Modal from '@components/modals/Modal';
+import ConfirmationModal from '@components/modals/ConfirmationModal';
 
 function ManageDrivers() {
   const dispatch = useDispatch();

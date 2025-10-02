@@ -1,31 +1,50 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Search, Truck } from 'lucide-react';
-import VendorCard from './VendorCard';
-import { fetchVendorsThunk } from '../../redux/features/vendors/vendorThunk';
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Search, Truck } from "lucide-react";
+import VendorCard from "./VendorCard";
+import { fetchVendorsThunk } from "../../redux/features/vendors/vendorThunk";
+import { fetchCompaniesThunk } from "../../redux/features/company/companyThunks";
 
-const VendorList = ({ onEditVendor }) => {
+const VendorList = ({ onAssignEntity }) => {
   const dispatch = useDispatch();
-  const { data: vendors = [], loading, error } = useSelector(state => state.vendor);
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  // Redux state
+  const { data: vendors = [], loading: vendorLoading, error: vendorError } =
+    useSelector((state) => state.vendor || {});
+  const { data: companies = [], loading: companyLoading, error: companyError } =
+    useSelector((state) => state.company || {});
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
-useEffect(() => {
-  if (vendors.length === 0) {
-    dispatch(fetchVendorsThunk());
-  }
-}, [dispatch]);
+  // Fetch vendors and companies
+  useEffect(() => {
+    if (!vendors.length) dispatch(fetchVendorsThunk());
+    if (!companies.length) dispatch(fetchCompaniesThunk());
+  }, [dispatch]);
 
-  // Filter vendors by search term and status
-  const filteredVendors = vendors.filter(vendor => {
+  // Filter vendors by search and status
+  const filteredVendors = vendors.filter((vendor) => {
     const matchesSearch =
       vendor.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vendor.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || vendor.status === statusFilter;
+
+    let matchesStatus = true;
+    if (statusFilter === "Active") matchesStatus = vendor.is_active === true;
+    else if (statusFilter === "Inactive") matchesStatus = vendor.is_active === false;
+    else if (statusFilter === "Pending") matchesStatus = vendor.status === "Pending";
+    else if (statusFilter === "Suspended") matchesStatus = vendor.status === "Suspended";
+
     return matchesSearch && matchesStatus;
   });
+
+  // Safely render error messages
+  const renderError = (err) => {
+    if (!err) return null;
+    if (typeof err === "string") return err;
+    if (err.message) return err.message;
+    return JSON.stringify(err);
+  };
 
   return (
     <div className="space-y-6">
@@ -48,14 +67,19 @@ useEffect(() => {
         >
           <option value="all">All Status</option>
           <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
           <option value="Pending">Pending</option>
           <option value="Suspended">Suspended</option>
         </select>
       </div>
 
       {/* Loading/Error */}
-      {loading && <p>Loading vendors...</p>}
-      {error && <p className="text-red-500">Error: {error}</p>}
+      {(vendorLoading || companyLoading) && <p>Loading data...</p>}
+      {(vendorError || companyError) && (
+        <p className="text-red-500">
+          Error: {renderError(vendorError) || renderError(companyError)}
+        </p>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -65,38 +89,40 @@ useEffect(() => {
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="text-2xl font-bold text-blue-600">
-            {vendors.filter(v => v.status === 'Active').length}
+            {vendors.filter((v) => v.is_active === true).length}
           </div>
           <div className="text-sm text-gray-600">Active</div>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="text-2xl font-bold text-yellow-600">
-            {vendors.filter(v => v.status === 'Pending').length}
+            {vendors.filter((v) => v.status === "Pending").length}
           </div>
           <div className="text-sm text-gray-600">Pending</div>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="text-2xl font-bold text-red-600">
-            {vendors.filter(v => v.status === 'Suspended').length}
+            {vendors.filter((v) => v.status === "Suspended").length}
           </div>
           <div className="text-sm text-gray-600">Suspended</div>
         </div>
       </div>
 
       {/* Vendors Grid */}
-      {filteredVendors.length === 0 && !loading ? (
+      {filteredVendors.length === 0 && !(vendorLoading || companyLoading) ? (
         <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
           <Truck className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-600">No vendors found</h3>
-          <p className="text-gray-500">Try adjusting your search or filter criteria</p>
+          <p className="text-gray-500">
+            Try adjusting your search or filter criteria
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
-          {filteredVendors.map(vendor => (
+          {filteredVendors.map((vendor, index) => (
             <VendorCard
-              key={vendor.id}
+              key={vendor._id || vendor.id || index}
               vendor={vendor}
-              onEdit={() => onEditVendor?.(vendor)} // ✅ pass edit handler
+              onAssignEntity={() => onAssignEntity?.(vendor)}
             />
           ))}
         </div>
