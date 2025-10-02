@@ -19,7 +19,6 @@ const DepartmentList = ({
   onPageChange
 }) => {
 
-  logDebug("Rendering DepartmentList", departments);
   
   return (
     <>

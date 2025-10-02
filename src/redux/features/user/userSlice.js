@@ -11,7 +11,7 @@ const initialState = {
     byId: {},
     allIds: []
   },
-  departmentEmployees: {}, 
+  departmentEmployees: {}, // Structure: { [departmentId]: { active: [], inactive: [] } }
   lastFetchedDepId: null
 };
 
@@ -21,6 +21,11 @@ const normalizeArrayToObject = (array, key) => {
     acc[item[key]] = item;
     return acc;
   }, {});
+};
+
+// Helper to generate cache key for department + active status
+const getDepartmentCacheKey = (departmentId, isActive) => {
+  return `${departmentId}_${isActive ? 'active' : 'inactive'}`;
 };
 
 const userSlice = createSlice({
@@ -33,8 +38,6 @@ const userSlice = createSlice({
         const teams = action.payload;
         state.teams.byId = normalizeArrayToObject(teams, 'team_id');
         state.teams.allIds = teams.map(team => team.team_id);
-       
-        
       },
       prepare(teams) {
         return { payload: teams.map(team => ({ 
@@ -43,8 +46,6 @@ const userSlice = createSlice({
         })) };
       }
     },
-    
-  
     
     setLastFetchedDepId(state, action) {
       state.lastFetchedDepId = action.payload;
@@ -77,9 +78,12 @@ const userSlice = createSlice({
         });
       }
       
-      // Remove team
+      // Remove team and its cached employees
       delete state.teams.byId[teamId];
       state.teams.allIds = state.teams.allIds.filter(id => id !== teamId);
+      
+      // Remove cached department employees
+      delete state.departmentEmployees[teamId];
     },
     
     // Add or update an employee
@@ -134,11 +138,24 @@ const userSlice = createSlice({
         Object.values(state.teams.byId).forEach(team => {
           team.employeeIds = team.employeeIds.filter(id => id !== employee_code);
         });
+        
+        // Remove from all department caches
+        Object.keys(state.departmentEmployees).forEach(deptId => {
+          if (state.departmentEmployees[deptId]?.active) {
+            state.departmentEmployees[deptId].active = 
+              state.departmentEmployees[deptId].active.filter(id => id !== employee_code);
+          }
+          if (state.departmentEmployees[deptId]?.inactive) {
+            state.departmentEmployees[deptId].inactive = 
+              state.departmentEmployees[deptId].inactive.filter(id => id !== employee_code);
+          }
+        });
       }
     },
     
+    // Set department employees with active/inactive separation
     setDepartmentEmployees(state, action) {
-      const { departmentId, employees } = action.payload;
+      const { departmentId, employees, isActive } = action.payload;
       
       // Store each employee globally
       employees.forEach(emp => {
@@ -148,8 +165,21 @@ const userSlice = createSlice({
         }
       });
       
-      // Store the employee_codes for this department
-      state.departmentEmployees[departmentId] = employees.map(emp => emp.employee_code);
+      // Initialize department structure if not exists
+      if (!state.departmentEmployees[departmentId]) {
+        state.departmentEmployees[departmentId] = { active: [], inactive: [] };
+      }
+      
+      // Store employee codes based on active status
+      const employeeCodes = employees.map(emp => emp.employee_code);
+      
+      if (isActive === true) {
+        state.departmentEmployees[departmentId].active = employeeCodes;
+      } else if (isActive === false) {
+        state.departmentEmployees[departmentId].inactive = employeeCodes;
+      }
+      
+      logDebug(`Cached ${employeeCodes.length} ${isActive ? 'active' : 'inactive'} employees for department ${departmentId}`);
     },
     
     // Move employee between teams
@@ -178,12 +208,46 @@ const userSlice = createSlice({
         state.teams.allIds.push(dept.team_id);
       });
     },
+    
     updateEmployeeStatus: (state, action) => {
       const { employeeId, isActive } = action.payload;
       if (state.employees.byId[employeeId]) {
-        state.employees.byId[employeeId].isActive = isActive;
+        state.employees.byId[employeeId].is_active = isActive;
+        
+        // Update cached department lists
+        Object.keys(state.departmentEmployees).forEach(deptId => {
+          const deptCache = state.departmentEmployees[deptId];
+          
+          if (isActive) {
+            // Move from inactive to active
+            if (deptCache.inactive.includes(employeeId)) {
+              deptCache.inactive = deptCache.inactive.filter(id => id !== employeeId);
+              if (!deptCache.active.includes(employeeId)) {
+                deptCache.active.push(employeeId);
+              }
+            }
+          } else {
+            // Move from active to inactive
+            if (deptCache.active.includes(employeeId)) {
+              deptCache.active = deptCache.active.filter(id => id !== employeeId);
+              if (!deptCache.inactive.includes(employeeId)) {
+                deptCache.inactive.push(employeeId);
+              }
+            }
+          }
+        });
       }
     },
+    
+    // Clear department cache (optional, for cleanup)
+    clearDepartmentCache(state, action) {
+      const { departmentId } = action.payload;
+      if (departmentId) {
+        delete state.departmentEmployees[departmentId];
+      } else {
+        state.departmentEmployees = {};
+      }
+    }
   }
 });
 
@@ -198,7 +262,8 @@ export const {
   moveEmployee,
   setLastFetchedDepId,
   setDepartmentEmployees,
-  updateEmployeeStatus
+  updateEmployeeStatus,
+  clearDepartmentCache
 } = userSlice.actions;
 
 export default userSlice.reducer;

@@ -13,9 +13,6 @@ import endpoint from '../Api/Endpoints';
 import Modal from '../components/modals/Modal';
 import AuditLogModal from '../components/departments/AuditLogModal';
 
-// ✅ Import modal + audit log component
-
-
 const ManageEmployees = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -32,31 +29,65 @@ const ManageEmployees = () => {
   const dispatch = useDispatch();
 
   const isActive = searchParams.get("active");
+  const targetIsActive = isActive === 'true';
 
+  // Get department cache and employees from Redux store
+  const departmentCache = useSelector((state) => state.user.departmentEmployees[depId]);
+  
+  // Get employees based on active status
   const allEmployees = useSelector((state) => {
-    const ids = state.user.departmentEmployees[depId] || [];
-    return ids.map((id) => state.user.employees.byId[id]);
+    if (!departmentCache) return [];
+    
+    const employeeIds = targetIsActive ? 
+      (departmentCache.active || []) : 
+      (departmentCache.inactive || []);
+    
+    return employeeIds.map((id) => state.user.employees.byId[id]).filter(Boolean);
   });
 
+  // Check if we need to refetch - only if we don't have cached data for this department + active status
+  const shouldRefetch = useMemo(() => {
+    if (!departmentCache) return true;
+    
+    const cachedIds = targetIsActive ? 
+      (departmentCache.active || []) : 
+      (departmentCache.inactive || []);
+    
+    return cachedIds.length === 0;
+  }, [departmentCache, targetIsActive]);
+
   useEffect(() => {
-    fetchEmployeesByDepartment();
-  }, [depId]);
+    if (shouldRefetch) {
+      fetchEmployeesByDepartment();
+    } else {
+      setLoading(false);
+      logDebug(`Using cached ${targetIsActive ? 'active' : 'inactive'} employees for department ${depId}`);
+    }
+  }, [depId, targetIsActive, shouldRefetch]);
 
   const fetchEmployeesByDepartment = async () => {
-    if (allEmployees && allEmployees.length > 0) {
-      console.log(`Employees for ${depId} already fetched, skipping API call`);
-      setLoading(false);
-      return;
-    }
-
     try {
+      const query = new URLSearchParams({
+        skip: 0,
+        limit: 100,
+        team_id: depId,
+        is_active: targetIsActive
+      }).toString();
+      
       setLoading(true);
-      const response = await API_CLIENT.get(`${endpoint.getEmployesByDepartment}/${depId}?isActive=${isActive}`);
-      const { employees, departmentId } = response.data;
-      logDebug("Fetched employees:", employees ,departmentId);
+      const response = await API_CLIENT.get(`${endpoint.getEmployesByDepartment}?${query}`);
+      
+      const employees = response.data.data.items;
+      
+      logDebug(`Fetched ${employees.length} ${targetIsActive ? 'active' : 'inactive'} employees for department:`, depId);
 
-      dispatch(setDepartmentEmployees({ departmentId, employees }));
-      toast.success('Employees loaded successfully');
+      dispatch(setDepartmentEmployees({ 
+        departmentId: depId, 
+        employees,
+        isActive: targetIsActive 
+      }));
+      
+      toast.success(`${targetIsActive ? 'Active' : 'Inactive'} employees loaded successfully`);
     } catch (err) {
       logDebug("Error fetching employees by department", err);
       setError(err.response?.data?.detail || 'Something went wrong');
@@ -92,33 +123,41 @@ const ManageEmployees = () => {
       state: { employee },
     });
   };
-
-  const handleSearch = (query) => {
-    setSearchTerm(query);
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
   };
+  
 
+  // Filter employees based on search term (active status is already handled by cache)
   const filteredEmployees = useMemo(() => {
     if (!allEmployees || allEmployees.length === 0) return [];
 
     let result = allEmployees;
+    
+    // Filter by search term only (active status is already handled by cache)
     if (searchTerm.trim()) {
       const query = searchTerm.toLowerCase().trim();
       result = result.filter(employee => {
         const nameMatch = employee.name?.toLowerCase().includes(query);
         const mobileMatch = employee.phone?.toString().includes(query);
         const emailMatch = employee.email?.toLowerCase().includes(query);
-        const codeMatch = employee.userId?.toLowerCase().includes(query);
-        return nameMatch || mobileMatch || emailMatch || codeMatch;
+        const employeeCodeMatch = employee.employee_code?.toLowerCase().includes(query);
+        return nameMatch || mobileMatch || emailMatch || employeeCodeMatch;
       });
     }
+    
     return result;
   }, [allEmployees, searchTerm]);
 
   const handleStatusChange = async (employeeId, newIsActive) => {
     try {
-      await API_CLIENT.patch(`api/users/status-update/${employeeId}`, null, { params: { isActive: newIsActive } });
+      await API_CLIENT.patch(`api/users/status-update/${employeeId}`, null, { 
+        params: { isActive: newIsActive } 
+      });
       dispatch(updateEmployeeStatus({ employeeId, isActive: newIsActive }));
       toast.success(`Employee ${newIsActive ? "activated" : "deactivated"} successfully`);
+      
+      // No need to refetch - Redux cache is automatically updated
     } catch (error) {
       console.error("Failed to update status:", error);
       toast.error("Failed to update status");
@@ -126,13 +165,13 @@ const ManageEmployees = () => {
     }
   };
 
-  // 🔹 Open Audit Log Modal
   const handleEmployeeLog = async (employee) => {
     setIsAuditLogLoading(true);
     setIsAuditLogModalOpen(true);
 
     try {
-      // Later replace with API call: await API_CLIENT.get(`/api/users/${employee.userId}/logs`);
+      // TODO: Replace with actual API call
+      // await API_CLIENT.get(`/api/users/${employee.userId}/logs`);
       const dummyLogs = [
         {
           id: 1,
@@ -162,7 +201,7 @@ const ManageEmployees = () => {
   return (
     <div>
       <ToolBar
-        title={`Employees in Department ${depId}`}
+        title={`${targetIsActive ? 'Active' : 'Inactive'} Employees in Department ${depId}`}
         onAddClick={handleAddClick}
         addButtonLabel="Add employee"
         addButtonIcon={<Plus size={16} />}
@@ -192,7 +231,6 @@ const ManageEmployees = () => {
         onHistory={handleEmployeeLog} 
       />
 
-      {/* 🔹 Employee Audit Log Modal */}
       <Modal
         isOpen={isAuditLogModalOpen}
         onClose={() => setIsAuditLogModalOpen(false)}

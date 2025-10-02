@@ -4,12 +4,11 @@ import { Search } from 'lucide-react';
 const SearchInput = ({
   placeholder = 'Search...',
   value,
-  onChange,
-  onSearch
+  onChange
 }) => {
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && onSearch) {
-      onSearch();
+    if (e.key === 'Enter' && onChange) {
+      onChange();
     }
   };
 

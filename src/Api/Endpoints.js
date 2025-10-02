@@ -3,7 +3,7 @@
     superAdminLogin:"/v1/auth/admin/login",
     vendorLogin:"/v1/auth/vendor/login",
     getDepartments:"/v1/teams/",
-    getEmployesByDepartment:"api/users/department-employees",
+    getEmployesByDepartment:"/v1/employees/",
     getTenants:"/v1/tenants",
     createEmployee:'/v1/employees/',
     createTeam:'/v1/teams/',
