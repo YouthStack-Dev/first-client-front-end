@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
-import { loginUser } from "./authTrunk";
+import { fetchUserFromToken, loginUser } from "./authTrunk";
 import { logDebug } from "../../../utils/logger";
 import { API_CLIENT } from "../../../Api/API_Client";
 
@@ -21,34 +21,7 @@ const getTokenExpiration = (token) => {
   }
 };
 
-// Async thunk to fetch user data based on token
-export const fetchUserFromToken = createAsyncThunk(
-  "auth/fetchUserFromToken",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await API_CLIENT.get("/api/role-permissions/permissions", {
-        withCredentials: true, // send cookies if needed
-      });
 
-      return response.data; // Axios automatically parses JSON
-    } catch (error) {
-      let message = "Something went wrong";
-
-      if (error.response) {
-        // Server responded with a status other than 2xx
-        message = error.response.data?.message || "Token verification failed";
-      } else if (error.request) {
-        // No response received
-        message = "No response from server";
-      } else {
-        // Request setup error
-        message = error.message;
-      }
-
-      return rejectWithValue(message);
-    }
-  }
-);
 
 const initialState = {
   user: null,
@@ -157,8 +130,8 @@ const authSlice = createSlice({
         state.loading = true;
       })
       .addCase(fetchUserFromToken.fulfilled, (state, action) => {
-        const { user, allowedModules } = action.payload;
-        logDebug(" this is the refresh payload " , allowedModules)
+        const { user, permissions:allowedModules } = action.payload;
+        logDebug(" this is the refresh payload user " , action.payload)
         state.user = user;
         state.permissions = allowedModules;
         state.isAuthenticated = true;
@@ -205,7 +178,6 @@ export const selectAuthError = (state) => state.auth.error;
 export const selectAuthLoading = (state) => state.auth.loading;
 export const selectLastLogin = (state) => state.auth.lastLogin;
 
-var tt="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMSIsInRlbmFudF9pZCI6bnVsbCwib3BhcXVlX3Rva2VuIjoiYjMzYTM2YzU4MjFmYjhlMWI3YTNlOTFkYjk2NTM3ZTYiLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwidXNlcl90eXBlIjoiYWRtaW4iLCJ2ZW5kb3JfaWQiOm51bGwsImV4cCI6MTc1ODcyMDM1MSwiaWF0IjoxNzU4NjMzOTUxfQ.NkDecjti9b2oNrYbgwQRIPuv5Tr8sVtwayTOZZbzh4g"
 // Utility function to initialize auth state
 export const initializeAuth = () => async (dispatch) => {
   const token = Cookies.get("auth_token")||"";
