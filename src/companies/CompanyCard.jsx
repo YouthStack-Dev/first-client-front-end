@@ -2,7 +2,6 @@
   import { useDispatch, useSelector } from "react-redux";
   import { Building2, Truck, Mail, Phone, MapPin, Link2 } from "lucide-react";
   import AssignEntityModal from "../components/layout/AssignEntityModal";
-  // import { createVendorThunk } from "../redux/features/vendor/vendorThunks";
 
   // Vendor list component
   const CompanyVendorsList = ({ vendors, loading, error }) => {
