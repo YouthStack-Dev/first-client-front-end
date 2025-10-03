@@ -52,6 +52,23 @@ export const createCompanyThunk = createAsyncThunk(
 );
 
 
+export const fetchCompanyByIdThunk = createAsyncThunk(
+  "company/fetchCompanyById",
+  async (tenantId, { rejectWithValue }) => {
+    try {
+      const response = await API_CLIENT.get(`/v1/tenants/${tenantId}`);
+      // Return the tenant + admin_policy
+      return response.data?.data;
+    } catch (error) {
+      console.error("[Thunk] Failed to fetch company by ID:", error);
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch company details"
+      );
+    }
+  }
+);
+
+
 export const updateCompanyThunk = createAsyncThunk(
   "company/updateCompany",
   async ({ companyId, formData }, { rejectWithValue }) => {

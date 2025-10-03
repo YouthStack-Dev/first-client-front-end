@@ -3,21 +3,28 @@ import { createSlice } from "@reduxjs/toolkit";
 import { 
   fetchCompaniesThunk, 
   createCompanyThunk, 
-  updateCompanyThunk 
+  updateCompanyThunk,
+  fetchCompanyByIdThunk
 } from "./companyThunks";
 
 const initialState = {
-  data: [],          // list of companies
-  loading: false,    // for fetching companies
-  creating: false,   // for creating a company
-  updating: false,   // for updating a company
+  data: [],              // list of companies
+  loading: false,        // fetching all companies
+  creating: false,       // creating a company
+  updating: false,       // updating a company
   error: null,
+  selectedCompany: null, // for edit modal
+  fetchingSingle: false, // fetching single company
 };
 
 const companySlice = createSlice({
   name: "company",
   initialState,
-  reducers: {},
+  reducers: {
+    clearSelectedCompany: (state) => {
+      state.selectedCompany = null;
+    },
+  },
   extraReducers: (builder) => {
     // Fetch companies
     builder
@@ -36,23 +43,18 @@ const companySlice = createSlice({
 
     // Create company
     builder
-    .addCase(createCompanyThunk.pending, (state) => {
-      state.creating = true;
-      state.error = null;
-    })
-    .addCase(createCompanyThunk.fulfilled, (state, action) => {
-      state.creating = false;
-      if (!action.payload) {
-        // console.warn("[Slice] createCompany fulfilled but payload is empty");
-        return;
-      }
-      // console.log("[Slice] createCompany fulfilled payload:", action.payload);
-      state.data = [...state.data, action.payload];
-    })
-    .addCase(createCompanyThunk.rejected, (state, action) => {
-      state.creating = false;
-      state.error = action.payload;
-    });
+      .addCase(createCompanyThunk.pending, (state) => {
+        state.creating = true;
+        state.error = null;
+      })
+      .addCase(createCompanyThunk.fulfilled, (state, action) => {
+        state.creating = false;
+        if (action.payload) state.data.push(action.payload);
+      })
+      .addCase(createCompanyThunk.rejected, (state, action) => {
+        state.creating = false;
+        state.error = action.payload;
+      });
 
     // Update company
     builder
@@ -60,16 +62,38 @@ const companySlice = createSlice({
         state.updating = true;
         state.error = null;
       })
-     .addCase(updateCompanyThunk.fulfilled, (state, action) => {
-    state.updating = false;
-    const index = state.data.findIndex(c => c.id === action.payload.id);
-    if (index !== -1) state.data[index] = action.payload;
-  })
+      .addCase(updateCompanyThunk.fulfilled, (state, action) => {
+        state.updating = false;
+        const updatedTenantId = action.payload?.data?.tenant?.tenant_id;
+        if (!updatedTenantId) return;
+
+        const index = state.data.findIndex(c => c.tenant_id === updatedTenantId);
+        if (index !== -1) {
+          state.data[index] = action.payload.data.tenant; // update tenant only
+        }
+      })
       .addCase(updateCompanyThunk.rejected, (state, action) => {
         state.updating = false;
+        state.error = action.payload;
+      });
+
+    // Fetch single company
+    builder
+      .addCase(fetchCompanyByIdThunk.pending, (state) => {
+        state.fetchingSingle = true;
+        state.error = null;
+      })
+      .addCase(fetchCompanyByIdThunk.fulfilled, (state, action) => {
+        state.fetchingSingle = false;
+        state.selectedCompany = action.payload; // includes tenant + admin_policy
+      })
+      .addCase(fetchCompanyByIdThunk.rejected, (state, action) => {
+        state.fetchingSingle = false;
         state.error = action.payload;
       });
   },
 });
 
-export default companySlice.reducer; 
+export const { clearSelectedCompany } = companySlice.actions;
+
+export default companySlice.reducer;

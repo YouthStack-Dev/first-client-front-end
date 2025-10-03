@@ -11,7 +11,14 @@ const initialFormState = {
   permissions: {}
 };
 
-const EntityModal = ({ isOpen, onClose, entityType = 'company', entityData, onSubmit, mode = 'create' }) => {
+const EntityModal = ({
+  isOpen,
+  onClose,
+  entityType = 'company',
+  entityData,
+  onSubmit,
+  mode = 'create'
+}) => {
   const dispatch = useDispatch();
   const { permissions, loading, fetched } = useSelector(state => state.permissions);
 
@@ -23,10 +30,9 @@ const EntityModal = ({ isOpen, onClose, entityType = 'company', entityData, onSu
     if (isOpen && !fetched) dispatch(fetchPermissionsThunk());
   }, [isOpen, fetched, dispatch]);
 
-  // Reset or prefill form when modal opens
+  // Prefill form when editing or reset on create
   useEffect(() => {
-    if (!isOpen || permissions.length === 0) 
-      return;
+    if (!isOpen || permissions.length === 0) return;
 
     const groupedPermissions = {};
     permissions.forEach(p => {
@@ -35,7 +41,7 @@ const EntityModal = ({ isOpen, onClose, entityType = 'company', entityData, onSu
         ...p,
         is_active:
           mode === 'edit' && entityData?.permissions
-            ? !!entityData.permissions.find(
+            ? entityData.permissions.some(
                 ep => ep.module === p.module && ep.action === p.action
               )
             : false
@@ -60,7 +66,7 @@ const EntityModal = ({ isOpen, onClose, entityType = 'company', entityData, onSu
     }
   }, [entityData, permissions, isOpen, mode]);
 
-  // ✅ Always reset when modal closes (fixes the "stale data" bug)
+  // Reset form when modal closes
   useEffect(() => {
     if (!isOpen) {
       setFormData(initialFormState);
@@ -92,12 +98,12 @@ const EntityModal = ({ isOpen, onClose, entityType = 'company', entityData, onSu
   const validateForm = () => {
     const newErrors = {};
 
-    // Validate company fields
+    // Company validation
     Object.entries(formData.company).forEach(([key, value]) => {
       if (!value && key !== 'is_active') newErrors[key] = `${key} is required`;
     });
 
-    // Validate employee fields
+    // Employee validation
     ['employee_email', 'employee_phone'].forEach(key => {
       if (!formData[key]) newErrors[key] = `${key} is required`;
     });
@@ -117,32 +123,30 @@ const EntityModal = ({ isOpen, onClose, entityType = 'company', entityData, onSu
     return Object.keys(newErrors).length === 0;
   };
 
-const preparePayload = () => {
-  const permission_ids = [];
-  Object.values(formData.permissions).forEach(module => {
-    Object.values(module).forEach(action => {
-      if (action.is_active && action.permission_id) permission_ids.push(action.permission_id);
+  const preparePayload = () => {
+    const permission_ids = [];
+    Object.values(formData.permissions).forEach(module => {
+      Object.values(module).forEach(action => {
+        if (action.is_active && action.permission_id) permission_ids.push(action.permission_id);
+      });
     });
-  });
 
-  return {
-    tenant_id: formData.company.tenant_id,
-    name: formData.company.name,
-    address: formData.company.address,
-    is_active: formData.company.is_active,
-    employee_email: formData.employee_email,
-    employee_phone: formData.employee_phone,
-    employee_password: formData.employee_password,
-    permission_ids: [...new Set(permission_ids)]
+    return {
+      tenant_id: formData.company.tenant_id,
+      name: formData.company.name,
+      address: formData.company.address,
+      is_active: formData.company.is_active,
+      employee_email: formData.employee_email,
+      employee_phone: formData.employee_phone,
+      employee_password: formData.employee_password,
+      permission_ids: [...new Set(permission_ids)]
+    };
   };
-};
-
 
   const handleSubmit = e => {
     e.preventDefault();
     if (!validateForm()) return;
     const payload = preparePayload();
-    // console.log('[EntityModal] Submitting payload:', payload);
     onSubmit(payload);
   };
 

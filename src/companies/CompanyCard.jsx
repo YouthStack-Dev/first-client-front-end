@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Building2, Truck, Mail, Phone, MapPin, Link2, Edit2 } from "lucide-react";
 import AssignEntityModal from "@components/modals/AssignEntityModal";
-// import { createVendorThunk } from "../redux/features/vendor/vendorThunks";
+
 
 const CompanyVendorsList = ({ vendors, loading, error }) => {
   if (loading) {
@@ -65,6 +65,7 @@ const CompanyVendorsList = ({ vendors, loading, error }) => {
     </div>
   );
 };
+
 
 const CompanyCard = ({ company, onEditCompany }) => {
   const dispatch = useDispatch();
@@ -184,8 +185,7 @@ const CompanyCard = ({ company, onEditCompany }) => {
             <button
               onClick={() => onEditCompany?.(company)}
               className="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-              title="Edit Company"
-            >
+              title="Edit Company" >
               <Edit2 className="w-4 h-4" />
             </button>
 

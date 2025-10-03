@@ -8,6 +8,7 @@ import {
   fetchCompaniesThunk,
   createCompanyThunk,
   updateCompanyThunk,
+  fetchCompanyByIdThunk, // fetch full tenant details including permissions
 } from "../redux/features/company/companyThunks";
 
 const CompanyManagement = () => {
@@ -19,13 +20,15 @@ const CompanyManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create"); // 'create' or 'edit'
   const [selectedEntity, setSelectedEntity] = useState(null);
+  const [loadingTenant, setLoadingTenant] = useState(false);
+  const [tenantCache, setTenantCache] = useState({}); // cache for fetched tenants
 
   // Fetch companies once on component mount
   useEffect(() => {
     if (companies.length === 0) {
       dispatch(fetchCompaniesThunk());
     }
-  }, [dispatch]);
+  }, [dispatch, companies.length]);
 
   // Open modal in create mode
   const handleCreate = () => {
@@ -34,23 +37,45 @@ const CompanyManagement = () => {
     setIsModalOpen(true);
   };
 
-  // Open modal in edit mode with prefilled data
-  const handleEdit = (company) => {
+  // Open modal in edit mode with full tenant data including permissions
+  const handleEdit = async (company) => {
     setModalMode("edit");
-    setSelectedEntity({
-      id: company.id, // ensure ID is stored for update
-      company: {
-        tenant_id: company.tenant_id,
-        name: company.name,
-        address: company.address,
-        is_active: company.is_active ?? true,
-      },
-      employee_email: company.employee?.email || "",
-      employee_phone: company.employee?.phone || "",
-      // Permissions for modal prefill
-      permissions: company.admin_policy?.permissions || [],
-    });
-    setIsModalOpen(true);
+
+    // If tenant already cached, use it
+    if (tenantCache[company.tenant_id]) {
+      setSelectedEntity(tenantCache[company.tenant_id]);
+      setIsModalOpen(true);
+      return;
+    }
+
+    setLoadingTenant(true);
+
+    try {
+      const response = await dispatch(fetchCompanyByIdThunk(company.tenant_id)).unwrap();
+
+      const entity = {
+        id: company.id,
+        company: {
+          tenant_id: response.tenant.tenant_id,
+          name: response.tenant.name,
+          address: response.tenant.address,
+          is_active: response.tenant.is_active,
+        },
+        employee_email: response.tenant.employee?.email || "",
+        employee_phone: response.tenant.employee?.phone || "",
+        permissions: response.admin_policy?.permissions || [],
+      };
+
+      // Cache the tenant for future edits
+      setTenantCache((prev) => ({ ...prev, [company.tenant_id]: entity }));
+
+      setSelectedEntity(entity);
+      setIsModalOpen(true);
+    } catch (err) {
+      console.error("Failed to fetch tenant details:", err);
+    } finally {
+      setLoadingTenant(false);
+    }
   };
 
   // Handle form submission from modal
@@ -62,6 +87,15 @@ const CompanyManagement = () => {
         await dispatch(
           updateCompanyThunk({ companyId: selectedEntity.id, formData })
         ).unwrap();
+
+        // Update cached tenant if edited
+        setTenantCache((prev) => ({
+          ...prev,
+          [selectedEntity.company.tenant_id]: {
+            ...prev[selectedEntity.company.tenant_id],
+            company: { ...prev[selectedEntity.company.tenant_id].company, ...formData },
+          },
+        }));
       }
       setIsModalOpen(false);
     } catch (err) {
@@ -108,6 +142,7 @@ const CompanyManagement = () => {
           entityData={selectedEntity}
           onSubmit={handleSubmit}
           mode={modalMode}
+          loading={loadingTenant} 
         />
       </div>
     </div>
