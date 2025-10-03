@@ -1,6 +1,6 @@
 import { useState } from "react";
-import ManageVehicleTypes from "../components/vehicles/ManageVehicleTypes";
-import ManageVehicles from "../components/vehicles/ManageVehicles";
+import ManageVehicleTypes from "@components/vehicles/ManageVehicleTypes";
+import ManageVehicles from "@components/vehicles/ManageVehicles";
 
 const VehicleManagement = () => {
   const [activeTab, setActiveTab] = useState("list"); // default tab

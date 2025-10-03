@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import SuperAdminSidebar from "./SuperAdminSidbar";
-import Header from "../components/Header";
+import Header from "@components/Header";
 
 // Static title mapping for super admin routes
 const superAdminPathTitleMap = {

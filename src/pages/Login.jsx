@@ -62,11 +62,11 @@ export const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Client-side validation
-    if (!credentials.username || !credentials.password) {
-      setValidationError("Please fill in both username and password.");
-      return;
-    }
+    // // Client-side validation
+    // if (!credentials.username || !credentials.password) {
+    //   setValidationError("Please fill in both username and password.");
+    //   return;
+    // }
 
     // ID validation for company/vendor login
     if (requiresIdField() && !credentials.tenant_id) {

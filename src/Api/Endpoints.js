@@ -1,9 +1,11 @@
  const endpoint ={
     login:"/v1/auth/employee/login",
     superAdminLogin:"/v1/auth/admin/login",
-    vendorLogin:"api/auth/vendor/login",
-    getDepartments:"api/users/company-departments",
-    getEmployesByDepartment:"api/users/department-employees",
+    vendorLogin:"/v1/auth/vendor/login",
+    getDepartments:"/v1/teams/",
+    getEmployesByDepartment:"/v1/employees/",
     getTenants:"/v1/tenants",
+    createEmployee:'/v1/employees/',
+    createTeam:'/v1/teams/',
 }
 export default endpoint

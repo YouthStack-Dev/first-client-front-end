@@ -8,8 +8,8 @@ import {
   Search,
 } from "lucide-react";
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
-import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
-import VehicleForm from "../components/VehicleForm";
+import HeaderWithActionNoRoute from "@components/HeaderWithActionNoRoute";
+import VehicleForm from "@components/VehicleForm";
 import { fetchVendors } from "@features/manageVendors/vendorThunks";
 import { fetchVehicleTypes } from "../redux/features/managevehicletype/vehicleTypeThunks";
 import {fetchVehicles,deleteVehicleThunk,} from "../redux/features/manageVehicles/vehicleThunk";

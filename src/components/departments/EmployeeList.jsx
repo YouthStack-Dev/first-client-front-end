@@ -20,15 +20,16 @@ const EmployeeList = ({
   const [pendingStatusChange, setPendingStatusChange] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleStatusToggle = (employeeId, currentIsActive) => {
-    const newIsActive = !currentIsActive;
-    const employee = employees.find(emp => emp.id === employeeId);
-    
+  const handleStatusToggle = (employeeId, currentis_active) => {
+    logDebug("handleStatusToggle  employeeId is ",employeeId)
+    const newis_active = !currentis_active;
+    const employee = employees.find(emp => emp.employee_code === employeeId);
+  logDebug("handleStatusToggle ",employee)
     setPendingStatusChange({
       employeeId,
-      currentIsActive,
-      newIsActive,
-      employeeName: employee?.name || 'this employee'
+      currentis_active,
+      newis_active,
+      name: employee?.name || 'this employee'
     });
     setShowConfirmation(true);
   };
@@ -38,7 +39,7 @@ const EmployeeList = ({
     
     setIsProcessing(true);
     try {
-      await onStatusChange?.(pendingStatusChange.employeeId, pendingStatusChange.newIsActive);
+      await onStatusChange?.(pendingStatusChange.employeeId, pendingStatusChange.newis_active);
       setShowConfirmation(false);
       setPendingStatusChange(null);
     } catch (error) {
@@ -63,7 +64,7 @@ const EmployeeList = ({
         title="Confirm Status Change"
         message={
           pendingStatusChange 
-            ? `Are you sure you want to ${pendingStatusChange.newIsActive ? 'activate' : 'deactivate'} ${pendingStatusChange.employeeName}?`
+            ? `Are you sure you want to ${pendingStatusChange.newis_active ? 'activate' : 'deactivate'} ${pendingStatusChange.name}?`
             : ''
         }
         onConfirm={handleConfirmStatusChange}
@@ -83,7 +84,7 @@ const EmployeeList = ({
               <th className="p-4">Mobile Number</th>
               <th className="p-4">Gender</th>
               <th className="p-4">Status</th>
-              <th className="p-4 text-center">Actions</th> {/* Added text-center */}
+              <th className="p-4 text-center">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -121,23 +122,24 @@ const EmployeeList = ({
             ) : (
               employees.map((employee) => (
                 <tr
-                  key={employee.id}
+                  key={employee.employee_code}
                   className="hover:bg-gray-50 cursor-pointer transition-colors"
                   onClick={(e) => onRowClick?.(employee, e)}
                 >
                   <td className="p-4" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
-                      checked={selectedEmployeeIds.includes(employee.id)}
+                      checked={selectedEmployeeIds.includes(employee.employee_code)}
                       onChange={(e) => {
+                        logDebug(" this is the employee if " ,employee.employee_code)
                         e.stopPropagation();
-                        onCheckboxChange?.(employee.id);
+                        onCheckboxChange?.(employee.employee_code);
                       }}
                       className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
                   </td>
                   <td className="p-4 font-medium text-gray-900">{employee.name}</td>
-                  <td className="p-4 text-gray-600">{employee.userId}</td>
+                  <td className="p-4 text-gray-600">{employee.employee_code}</td>
                   <td className="p-4 text-gray-600">{employee.email}</td>
                   <td className="p-4 text-gray-600">{employee.phone}</td>
                   <td className="p-4">
@@ -156,25 +158,25 @@ const EmployeeList = ({
                       <input 
                         type="checkbox" 
                         className="sr-only peer" 
-                        checked={employee.isActive === true}
+                        checked={employee.is_active === true}
                         onChange={(e) => {
                           e.stopPropagation();
-                          handleStatusToggle(employee.userId, employee.isActive);
+                          handleStatusToggle(employee.employee_code, employee.is_active);
                         }}
                         disabled={isProcessing}
                       />
                       <div className={`w-11 h-6 rounded-full peer ${
-                        employee.isActive === true
+                        employee.is_active === true
                           ? 'bg-blue-600' 
                           : 'bg-gray-300'
                       } peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all`}></div>
                       <span className="ml-2 text-sm font-medium text-gray-900">
-                        {employee.isActive === true ? 'Active' : 'Inactive'}
+                        {employee.is_active === true ? 'Active' : 'Inactive'}
                       </span>
                     </label>
                   </td>
                   <td className="p-4" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex justify-center space-x-1"> {/* Changed to space-x-1 and justify-center */}
+                    <div className="flex justify-center space-x-1">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -185,7 +187,6 @@ const EmployeeList = ({
                       >
                         <Eye size={16} />
                       </button>
-
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -196,11 +197,10 @@ const EmployeeList = ({
                       >
                         <Edit size={16} />
                       </button>
-                      
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          onHistory?.(employee); // Use the new onHistory prop
+                          onHistory?.(employee);
                         }}
                         className="p-2 rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-800 transition-colors duration-200"
                         title="View History"

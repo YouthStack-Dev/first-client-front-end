@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { BookingHistory } from '../components/BookingHistory';
-import BookingForm from '../components/BookingForm';
-import HeaderWithActionNoRoute from '../components/HeaderWithActionNoRoute';
+import { BookingHistory } from '@components/BookingHistory';
+import BookingForm from '@components/BookingForm';
+import HeaderWithActionNoRoute from '@components/HeaderWithActionNoRoute';
 
 // Mock data - Replace with actual API calls
 const mockEmployees = [

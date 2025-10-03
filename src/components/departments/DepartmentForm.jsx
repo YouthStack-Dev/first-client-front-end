@@ -5,15 +5,16 @@ import {  logError } from '../../utils/logger';
 import { fetchDepartments } from '../../redux/features/user/userTrunk';
 import { setDepartments } from '../../redux/features/user/userSlice';
 import { useDispatch } from 'react-redux';
+import endpoint from '../../Api/Endpoints';
 
 const DepartmentForm = ({ onClose, onSuccess, initialData = null }) => {
   const isEditMode = Boolean(initialData);
-  const [formData, setFormData] = useState({ department_name: '', description: '' });
+  const [formData, setFormData] = useState({ name: '', description: '' });
 const dispatch = useDispatch();
   useEffect(() => {
     if (isEditMode) {
       setFormData({
-        department_name: initialData.department_name || '',
+        name: initialData.name || '',
         description: initialData.description || ''
       });
     }
@@ -29,12 +30,12 @@ const dispatch = useDispatch();
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const endpoint = isEditMode
+      const urlpoint = isEditMode
         ? `/departments/${initialData.id}`
-        : '/departments/';
+        : endpoint.createTeam;
   
       const method = isEditMode ? 'put' : 'post';
-      const { data } = await API_CLIENT[method](endpoint, formData);
+      const { data } = await API_CLIENT[method](urlpoint, formData);
   
       toast.success(isEditMode ? 'Team updated successfully' : 'Team created successfully');
   
@@ -43,7 +44,7 @@ const dispatch = useDispatch();
       dispatch(setDepartments(departments)); // <-- you need a reducer like this
       onSuccess?.();
       onClose?.();
-      setFormData({ department_name: '', description: '' })
+      setFormData({ name: '', description: '' })
     } catch (error) {
       logError("this is the error", error);
       toast.error(error.response?.data?.detail || '');
@@ -58,8 +59,8 @@ const dispatch = useDispatch();
         <label className="block text-sm font-medium text-gray-700">Team Name</label>
         <input
           type="text"
-          name="department_name"
-          value={formData.department_name}
+          name="name"
+          value={formData.name}
           onChange={handleChange}
           required
           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"

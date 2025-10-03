@@ -1,8 +1,8 @@
 
 
 import { useState } from "react";
-import Routing from "../components/RouteManagement/Routing";
-import ScheduledBookings from "../components/RouteManagement/ScheduledBookings";
+import Routing from "@components/RouteManagement/Routing";
+import ScheduledBookings from "@components/RouteManagement/ScheduledBookings";
   const RouteManagement = () => {
   const [toggle, setToggle] = useState("booking");
   const [selectedDate, setSelectedDate] = useState(null);

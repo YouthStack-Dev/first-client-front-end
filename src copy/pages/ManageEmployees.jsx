@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import EmployeeList from "../components/teams/EmployeeList";
+import EmployeeList from "@components/teams/EmployeeList";
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { API_CLIENT } from '../Api/API_Client';
 import { toast } from 'react-toastify';
 import { useSelector, useDispatch } from 'react-redux';
 import { Plus } from 'lucide-react';
-import SearchInput from '../components/ui/SearchInput';
+import SearchInput from '@components/ui/SearchInput';
 import { logDebug } from '../utils/logger';
-import ToolBar from '../components/ui/ToolBar';
+import ToolBar from '@components/ui/ToolBar';
 import { setDepartmentEmployees } from '../redux/features/user/userSlice';
 
 const ManageEmployees = () => {

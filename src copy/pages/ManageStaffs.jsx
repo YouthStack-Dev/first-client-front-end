@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Edit, MoreVertical, Plus, Search, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { InputField, Modal } from '../components/SmallComponents';
+import { InputField, Modal } from '@components/SmallComponents';
 
 // Memoized Staff List Component
 const StaffList = React.memo(({ staffs, menuOpen, onNext, onPrev, currentPage, totalPages, isLoading }) => (

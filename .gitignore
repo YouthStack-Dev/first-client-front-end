@@ -13,7 +13,8 @@ dist-ssr
 *.local
 vps.txt
 
-
+cypress
+cypress.config.js
 .env
 
 

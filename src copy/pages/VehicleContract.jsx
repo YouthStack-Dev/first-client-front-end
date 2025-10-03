@@ -1,6 +1,6 @@
 import { useState } from "react";
-import VehicleContractModal from "../components/modals/VehicleContractModal";
-import VehicleContractsToolbar from "../components/VehicleContractsToolbar";
+import VehicleContractModal from "@components/modals/VehicleContractModal";
+import VehicleContractsToolbar from "@components/VehicleContractsToolbar";
 
 const VehicleContract = () => {
   const [contractModal, setContractModal] = useState(false);

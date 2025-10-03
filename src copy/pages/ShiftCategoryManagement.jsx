@@ -1,6 +1,6 @@
 // import React, { useState } from "react";
 // import axios from 'axios';
-// import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
+// import HeaderWithActionNoRoute from "@components/HeaderWithActionNoRoute";
 
 // const ShiftCategoryManagement = () => {
 //   const [bookingCutOffEmployee, setBookingCutOffEmployee] = useState(0);
@@ -119,7 +119,7 @@
 
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import HeaderWithActionNoRoute from "../components/HeaderWithActionNoRoute";
+import HeaderWithActionNoRoute from "@components/HeaderWithActionNoRoute";
 import {
   fetchCutoffData,
   saveCutoffData,

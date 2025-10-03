@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 // import SearchBox from './SearchBox';
-import TrackingVehicleDetails from '../components/TrackingVehicleDetails';
-// import MapView from '../components/MapView';
-import SearchBox from '../components/ui/SearchBox';
-import MapView from '../components/MapView';
+import TrackingVehicleDetails from '@components/TrackingVehicleDetails';
+// import MapView from '@components/MapView';
+import SearchBox from '@components/ui/SearchBox';
+import MapView from '@components/MapView';
 
 const TrackingScreen = () => {
   const [selectedVehicle, setSelectedVehicle] = useState(null);

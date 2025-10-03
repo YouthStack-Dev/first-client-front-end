@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useSelector } from "react-redux";
-import { Truck, Users, Phone, Mail, MapPin, Building2 } from "lucide-react";
+import { Truck, Users, Phone, Mail, MapPin, Building2, Pencil } from "lucide-react"; // ✅ Added Pencil for edit icon
 
 // List component for showing vendor's company/tenant
 const AssignedCompaniesList = ({ companies, loading, error }) => {
@@ -62,7 +62,8 @@ const VendorCard = ({ vendor = {}, onAssignEntity }) => {
   const tenantCompany = useMemo(
     () =>
       vendor.tenant_id
-        ? allCompanies.filter((c) => c.tenant_id === vendor.tenant_id): [],
+        ? allCompanies.filter((c) => c.tenant_id === vendor.tenant_id)
+        : [],
     [allCompanies, vendor.tenant_id]
   );
 
@@ -70,10 +71,13 @@ const VendorCard = ({ vendor = {}, onAssignEntity }) => {
   const vendorCompaniesError = companyState.error;
 
   const statusText = vendor.is_active ? "Active" : "Inactive";
-  const statusColor = vendor.is_active  ? "bg-green-800 text-white"  : "bg-red-600 text-white";
+  const statusColor = vendor.is_active
+    ? "bg-green-800 text-white"
+    : "bg-red-600 text-white";
 
   const onboardedDate = vendor.created_at
-    ? new Date(vendor.created_at).toLocaleDateString() : "N/A";
+    ? new Date(vendor.created_at).toLocaleDateString()
+    : "N/A";
 
   return (
     <div className="bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col h-[420px]">
@@ -131,16 +135,20 @@ const VendorCard = ({ vendor = {}, onAssignEntity }) => {
         />
       </div>
 
-      {/* Footer with Edit */}
+      {/* Footer */}
       <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center flex-shrink-0">
-        <span className="text-xs text-gray-500 whitespace-nowrap">
-          Since: {onboardedDate}
+        {/* ✅ Date in bold, no "Since:" */}
+        <span className="text-sm font-semibold text-gray-700">
+          {onboardedDate}
         </span>
+
+        {/* ✅ Replaced button with icon */}
         <button
-           onClick={() => onAssignEntity?.(vendor)}// ✅ Open AssignEntityModal with vendor data
-          className="px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
+          onClick={() => onAssignEntity?.(vendor)}
+          className="p-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition-colors"
+          title="Edit Vendor"
         >
-          Edit
+          <Pencil className="w-4 h-4" />
         </button>
       </div>
     </div>

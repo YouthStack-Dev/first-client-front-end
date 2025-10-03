@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import HeaderWithActionNoRoute from '../components/HeaderWithActionNoRoute';
-import { Modal, InputField } from '../components/SmallComponents';
-import DynamicTable from '../components/DynamicTable';
+import HeaderWithActionNoRoute from '@components/HeaderWithActionNoRoute';
+import { Modal, InputField } from '@components/SmallComponents';
+import DynamicTable from '@components/DynamicTable';
 import { Edit, Trash2 } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify'; 
 import 'react-toastify/dist/ReactToastify.css';

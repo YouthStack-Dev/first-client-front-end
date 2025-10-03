@@ -25,7 +25,7 @@ const ProtectedRouteAuth = ({ type, redirectPath, authRedirectPath }) => {
   if (user?.type && user?.type !== type) {
     if (user?.type === "employee") return <Navigate to="/dashboard" replace />;
     if (user?.type === "admin") return <Navigate to="/superadmin/dashboard" replace />;
-    if (user?.type === "VENDOR") return <Navigate to="/vendor/dashboard" replace />;
+    if (user?.type === "vendor") return <Navigate to="/vendor/dashboard" replace />;
   }
 
   // 🚨 Redirect only if exactly on login path

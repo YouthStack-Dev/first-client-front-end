@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Plus } from "lucide-react";
 import { useDispatch } from "react-redux";
-import EntityModal from "../components/EntityModal";
-import AssignEntityModal from "../components/layout/AssignEntityModal";
-import VendorList from "../components/vendor/VendorList";
+import EntityModal from "@components/EntityModal";
+import AssignEntityModal from "@components/modals/AssignEntityModal";
+import VendorList from "@components/vendor/VendorList";
 import {
   createVendorThunk,
   updateVendorThunk,

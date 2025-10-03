@@ -32,8 +32,6 @@ const VendorList = ({ onAssignEntity }) => {
     let matchesStatus = true;
     if (statusFilter === "Active") matchesStatus = vendor.is_active === true;
     else if (statusFilter === "Inactive") matchesStatus = vendor.is_active === false;
-    else if (statusFilter === "Pending") matchesStatus = vendor.status === "Pending";
-    else if (statusFilter === "Suspended") matchesStatus = vendor.status === "Suspended";
 
     return matchesSearch && matchesStatus;
   });
@@ -68,8 +66,6 @@ const VendorList = ({ onAssignEntity }) => {
           <option value="all">All Status</option>
           <option value="Active">Active</option>
           <option value="Inactive">Inactive</option>
-          <option value="Pending">Pending</option>
-          <option value="Suspended">Suspended</option>
         </select>
       </div>
 
@@ -82,7 +78,7 @@ const VendorList = ({ onAssignEntity }) => {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="text-2xl font-bold text-green-600">{vendors.length}</div>
           <div className="text-sm text-gray-600">Total Vendors</div>
@@ -94,16 +90,10 @@ const VendorList = ({ onAssignEntity }) => {
           <div className="text-sm text-gray-600">Active</div>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-2xl font-bold text-yellow-600">
-            {vendors.filter((v) => v.status === "Pending").length}
-          </div>
-          <div className="text-sm text-gray-600">Pending</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="text-2xl font-bold text-red-600">
-            {vendors.filter((v) => v.status === "Suspended").length}
+            {vendors.filter((v) => v.is_active === false).length}
           </div>
-          <div className="text-sm text-gray-600">Suspended</div>
+          <div className="text-sm text-gray-600">Inactive</div>
         </div>
       </div>
 

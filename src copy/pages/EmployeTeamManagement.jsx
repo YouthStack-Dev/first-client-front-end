@@ -3,7 +3,7 @@ import ManageDepartment from "../pages/ManageDepartment";
 import ManageEmployees from "./ManageEmployees";
 import { logDebug } from "../utils/logger";
 import { useModulePermissions } from "../hooks/usePermissions";
-import PermissionDenied from "../components/PermissionDenied";
+import PermissionDenied from "@components/PermissionDenied";
 
 // default tab
 
