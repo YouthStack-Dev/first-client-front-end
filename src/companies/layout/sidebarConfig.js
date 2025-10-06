@@ -57,8 +57,8 @@ import {
           title: 'Vehicles',
           icon: Car,
           subItems: [
-            { title: 'Vehicle List', path: '/vehicles', permission: 'vehicle.read', icon: Car },
-            { title: 'Add Vehicle', path: '/vehicles/add', permission: 'vehicle.create', icon: Car }
+            { title: 'Vehicles', path: '/vehicles', permission: 'vehicle.read', icon: Car },
+            // { title: 'Add Vehicle', path: '/vehicles/add', permission: 'vehicle.create', icon: Car }
           ]
         },
         {

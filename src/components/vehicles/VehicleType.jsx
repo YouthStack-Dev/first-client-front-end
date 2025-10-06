@@ -40,16 +40,15 @@ const ManageVehicleTypes = () => {
     }
   };
 
-  if (!canRead) {
-    return <PermissionDenied />;
-  }
+  // if (!canRead) {
+  //   return <PermissionDenied />;
+  // }
 
   const headers = [
     { label: 'Vehicle Type Name', key: 'name' },
     { label: 'Description', key: 'description' },
     { label: 'Capacity', key: 'capacity' },
     { label: 'Fuel Type', key: 'fuel' },
-    // { label: 'Company ID', key: 'companyId' } // Add if needed
   ];
 
   const formFields = [

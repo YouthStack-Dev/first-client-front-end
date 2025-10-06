@@ -1,13 +1,11 @@
 import { createSlice, createSelector } from "@reduxjs/toolkit";
 import { fetchShiftTrunk, createShiftTrunk, toggleShiftStatus } from "./shiftTrunk";
 
-// --- Helper to normalize data ---
-const normalizeShiftsData = (apiResponse) => {
+// --- Helper to normalize data from API (expects array of shifts) ---
+const normalizeShiftsData = (shiftArray) => {
   const shifts = {};
   const shiftCategories = {};
   const shiftIds = [];
-
-  const shiftArray = apiResponse?.data?.items || [];
 
   shiftArray.forEach((shift) => {
     const { shiftCategory, ...shiftWithoutCategory } = shift;
@@ -95,7 +93,7 @@ const shiftSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // --- Fetch All ---
+      // --- Fetch Shifts ---
       .addCase(fetchShiftTrunk.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -106,16 +104,14 @@ const shiftSlice = createSlice({
         state.shifts.byId = normalizedData.shifts;
         state.shifts.allIds = normalizedData.shiftIds;
         state.shiftCategories.byId = normalizedData.shiftCategories;
-        state.shiftCategories.allIds = Object.keys(
-          normalizedData.shiftCategories
-        );
+        state.shiftCategories.allIds = Object.keys(normalizedData.shiftCategories);
       })
       .addCase(fetchShiftTrunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to fetch shifts";
       })
 
-      // --- ✅ Create Shift ---
+      // --- Create Shift ---
       .addCase(createShiftTrunk.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -135,7 +131,7 @@ const shiftSlice = createSlice({
         state.error = action.payload || "Failed to create shift";
       })
 
-      // --- 🔄 Toggle Shift Status ---
+      // --- Toggle Shift Status ---
       .addCase(toggleShiftStatus.pending, (state) => {
         state.loading = true;
         state.error = null;

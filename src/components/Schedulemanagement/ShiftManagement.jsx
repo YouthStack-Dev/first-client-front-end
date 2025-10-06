@@ -9,8 +9,7 @@ import {
   selectAllShifts,
   selectLoading,
 } from "../../redux/features/shift/shiftSlice";
-import { fetchShiftTrunk, createShiftTrunk,toggleShiftStatus } from "../../redux/features/shift/shiftTrunk";
-
+import { fetchShiftTrunk, createShiftTrunk, toggleShiftStatus } from "../../redux/features/shift/shiftTrunk";
 import { toast } from "react-toastify";
 
 const ShiftManagement = () => {
@@ -21,23 +20,19 @@ const ShiftManagement = () => {
   const loading = useSelector(selectLoading);
 
   const [activeTab, setActiveTab] = useState("all");
-  const [isActiveFilter, setIsActiveFilter] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingShift, setEditingShift] = useState(null);
   const [shiftToDelete, setShiftToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedShifts, setSelectedShifts] = useState([]);
-  const [localShifts, setLocalShifts] = useState([]);
 
-  // Initialize localShifts from Redux on load
+  // Fetch shifts on load
   useEffect(() => {
     if (!shifts || shifts.length === 0) {
-      dispatch(fetchShiftTrunk({ is_active: isActiveFilter }));
-    } else {
-      setLocalShifts(shifts);
+      dispatch(fetchShiftTrunk());
     }
-  }, [dispatch, shifts, isActiveFilter]);
+  }, [dispatch, shifts.length]);
 
   // Handlers
   const handleAddClick = () => {
@@ -55,34 +50,15 @@ const ShiftManagement = () => {
     setIsDeleteModalOpen(true);
   };
 
-  // ✅ Updated toggle to hit API
   const handleStatusToggle = async (shift) => {
-    // Optimistic UI update
-    setLocalShifts((prev) =>
-      prev.map((s) =>
-        s.shift_id === shift.shift_id ? { ...s, is_active: !s.is_active } : s
-      )
-    );
-
     try {
       const result = await dispatch(toggleShiftStatus(shift.shift_id));
       if (toggleShiftStatus.fulfilled.match(result)) {
         toast.success(`Shift "${shift.shift_code}" status updated!`);
       } else {
-        // Revert UI on failure
-        setLocalShifts((prev) =>
-          prev.map((s) =>
-            s.shift_id === shift.shift_id ? { ...s, is_active: shift.is_active } : s
-          )
-        );
         toast.error(result.payload || "Failed to toggle shift status");
       }
     } catch (error) {
-      setLocalShifts((prev) =>
-        prev.map((s) =>
-          s.shift_id === shift.shift_id ? { ...s, is_active: shift.is_active } : s
-        )
-      );
       toast.error("Something went wrong while updating shift status");
     }
   };
@@ -94,7 +70,7 @@ const ShiftManagement = () => {
         toast.success("Shift saved successfully!");
         setIsModalOpen(false);
         setEditingShift(null);
-        dispatch(fetchShiftTrunk({ is_active: isActiveFilter }));
+        dispatch(fetchShiftTrunk());
       } else {
         toast.error(result.payload || "Failed to save shift");
       }
@@ -110,6 +86,7 @@ const ShiftManagement = () => {
   };
 
   const handleSearchChange = (e) => setSearchTerm(e.target.value);
+
   const formatTime = (shift_time) => shift_time?.slice(0, 5) || "N/A";
 
   // Selection handlers
@@ -136,7 +113,7 @@ const ShiftManagement = () => {
   ];
 
   // Filtering
-  const filteredByTab = localShifts.filter((shift) => {
+  const filteredByTab = shifts.filter((shift) => {
     if (activeTab === "login") return shift.log_type?.toLowerCase() === "in";
     if (activeTab === "logout") return shift.log_type?.toLowerCase() === "out";
     return true;
@@ -209,24 +186,12 @@ const ShiftManagement = () => {
                       className="h-4 w-4 text-blue-600 rounded"
                     />
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Shift Code
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Log Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Shift Time
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Pickup Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
-                    Active
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift Code</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Log Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift Time</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pickup Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Active</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">

@@ -139,7 +139,6 @@ function App() {
             <Route path="departments" element={<ManageDepartment />} />
             <Route path="/shift-categories" element={<ManageDepartment />} />
             <Route path="/shifts" element={<Schedulemanagement />} />
-            {/* <Route path="/shifts/create" element={<ShiftForm />} /> */}
             <Route path="/shifts/:id/edit" element={<ShiftForm mode="edit" />} />
             <Route path="/role-management" element={<RoleManagement/>} />
             <Route path="/manage-drivers" element={<DriverManagement/>} />
@@ -148,7 +147,7 @@ function App() {
             <Route path="employees/create" element={<EmployeeForm />} />
             <Route path="/cutoff-settings" element={<h1> this is the cutoff window</h1>} />
             <Route path="/manage-vendors" element={<VendorManagement />} />
-            <Route path="/manage-vehicles" element={<VehicleManagement />} />
+            <Route path="/vehicles" element={<VehicleManagement />} />
             <Route path="/employee/create-employee" element={<EmployeeForm />} />
             <Route path="/department/:depId/employees" element={<ManageEmployees />} />
             <Route path="/department/:depId/employees/:userId/edit" element={<EmployeeForm mode="edit" />} />
