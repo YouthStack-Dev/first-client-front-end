@@ -87,7 +87,7 @@ import {
           icon: Clock,
           subItems: [
             { title: 'Shift Schedule', path: '/shifts', permission: 'shift.read', icon: Clock },
-            { title: 'Create Shift', path: '/shifts/create', permission: 'shift.create', icon: Clock }
+            // { title: 'Create Shift', path: '/shifts/create', permission: 'shift.create', icon: Clock }
           ]
         },
         {

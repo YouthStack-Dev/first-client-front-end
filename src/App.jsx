@@ -23,6 +23,8 @@ import CompanyDashboard from "./companies/CompanyDashboard";
 import RoleManagement from "./pages/RoleManagement";
 import RouteManagement from "./pages/RouteManagement";
 import Schedulemanagement from "./pages/Schedulemanagement";
+import ShiftManagement from "./components/Schedulemanagement/ShiftManagement";
+import ShiftForm from "./components/Schedulemanagement/ShiftForm";
 import ScheduledBookingsCopy from "./components/RouteManagement/ScheduledBookingsCopy";
 import { PermissionPanel } from "./components/PermissionPanel";
 import axios from "axios";
@@ -136,6 +138,9 @@ function App() {
             <Route path="/dashboard" element={<CompanyDashboard/>} />
             <Route path="departments" element={<ManageDepartment />} />
             <Route path="/shift-categories" element={<ManageDepartment />} />
+            <Route path="/shifts" element={<Schedulemanagement />} />
+            {/* <Route path="/shifts/create" element={<ShiftForm />} /> */}
+            <Route path="/shifts/:id/edit" element={<ShiftForm mode="edit" />} />
             <Route path="/role-management" element={<RoleManagement/>} />
             <Route path="/manage-drivers" element={<DriverManagement/>} />
             <Route path="/manage-company" element={<ManageDepartment />} />

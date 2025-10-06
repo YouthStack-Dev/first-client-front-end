@@ -646,7 +646,7 @@ export const categorizePermissions = (permissions=permissionModules) => {
             requiredPermissions: ["shift.read"],
             subItems: [
               { name: "Shift Schedule", path: "/shifts", permission: "shift.read" },
-              { name: "Create Shift", path: "/shifts/create", permission: "shift.create" },
+              // { name: "Create Shift", path: "/shifts/create", permission: "shift.create" },
             ]
           }
         ]
