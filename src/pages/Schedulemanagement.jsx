@@ -1,13 +1,13 @@
 import { useState } from "react";
 import ShiftManagement from "@components/Schedulemanagement/ShiftManagement";
-import ShiftCategoryManagement from "@components/Schedulemanagement/ShiftCategoryManagement";
+// import ShiftCategoryManagement from "@components/Schedulemanagement/ShiftCategoryManagement";
 
 const ScheduleManagement = () => {
   const [activeTab, setActiveTab] = useState("shift");
 
   const tabs = [
     { key: "shift", label: "Shift Management" },
-    { key: "shiftCategory", label: "Shift Category Management" },
+    // { key: "shiftCategory", label: "Shift Category Management" },
   ];
 
   return (
@@ -36,7 +36,7 @@ const ScheduleManagement = () => {
       {/* Conditional Component Rendering */}
       <div className="bg-white p-6 rounded-xl shadow-lg">
         {activeTab === "shift" && <ShiftManagement />}
-        {activeTab === "shiftCategory" && <ShiftCategoryManagement />}
+        {/* {activeTab === "shiftCategory" && <ShiftCategoryManagement />} */}
       </div>
     </div>
   );

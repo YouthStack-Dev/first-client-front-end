@@ -3,28 +3,38 @@ import ManageVehicleTypes from "@components/vehicles/VehicleType";
 import ManageVehicles from "@components/vehicles/Vehicles";
 
 const VehicleManagement = () => {
-  const [activeTab, setActiveTab] = useState("types"); // default tab
+  const [activeTab, setActiveTab] = useState("types");
+
+  const tabs = [
+    { key: "types", label: "Vehicle Types" },
+    { key: "list", label: "Vehicles" },
+  ];
 
   return (
-    <div>
-      {/* Top Navigation */}
-      <div className="flex  border-b p-1">
-        <button
-          className={`px-4 py-2 ${activeTab === "types" ? "border-b-2 border-blue-500 font-bold" : ""}`}
-          onClick={() => setActiveTab("types")}
-        >
-          Manage Vehicle Types
-        </button>
-        <button
-          className={`px-4 py-2 ${activeTab === "list" ? "border-b-2 border-blue-500 font-bold" : ""}`}
-          onClick={() => setActiveTab("list")}
-        >
-          Vehicle List
-        </button>
+    <div className="w-full min-h-screen bg-gray-50 p-6">
+      {/* Top Tabs */}
+      <div className="relative flex border-b border-gray-200 mb-6">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`relative flex-1 text-center py-3 text-sm font-semibold transition-all duration-300
+              ${
+                activeTab === tab.key
+                  ? "text-blue-600"
+                  : "text-gray-500 hover:text-blue-600"
+              }`}
+          >
+            {tab.label}
+            {activeTab === tab.key && (
+              <span className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 rounded-t-lg"></span>
+            )}
+          </button>
+        ))}
       </div>
 
-      {/* Conditional Component Rendering */}
-      <div className="p-1">
+      {/* Content Area */}
+      <div className="bg-white p-6 rounded-xl shadow-lg">
         {activeTab === "types" && <ManageVehicleTypes />}
         {activeTab === "list" && <ManageVehicles />}
       </div>
