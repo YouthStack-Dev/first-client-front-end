@@ -18,7 +18,7 @@ const ShiftCategoryManagement = () => {
 
 
   const fetchcompanyShiftCategory = async () => {
-    const response = await API_CLIENT.get('api/shifts/categories');
+    const response = await API_CLIENT.get('/shifts/categories');
     setCategories(response.data.data.categories);
   };
   
