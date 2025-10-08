@@ -13,10 +13,8 @@ export const fetchVendorsThunk = createAsyncThunk(
       const response = await API_CLIENT.get("/v1/vendors/", {
         params: { skip, limit, name, code, tenant_id  },
       });
-
       // Extract items array
       const vendors = response.data?.data?.items || [];
-
       return vendors;
     } catch (error) {
       console.error("[Thunk] Failed to fetch vendors:", error);
@@ -57,15 +55,43 @@ export const createVendorThunk = createAsyncThunk(
  */
 export const updateVendorThunk = createAsyncThunk(
   "vendor/updateVendor",
-  async ({ vendorId, formData }, { rejectWithValue }) => {
+  async ({ vendorId, formData }, { rejectWithValue, dispatch }) => {
     try {
-      const response = await updateVendorApi(vendorId, formData);
-      console.log("Updated vendor:", response.data);
-      return response.data; // updated vendor object
+      const response = await API_CLIENT.put(`/v1/vendors/${vendorId}`, formData);
+
+      // Refresh vendor list after update
+      dispatch(fetchVendorsThunk({ tenant_id: formData.tenant_id }));
+
+      return response.data; 
     } catch (error) {
-      console.error("[Thunk] Failed to update vendor:", error);
       return rejectWithValue(
-        error.response?.data?.message || "Failed to update vendor"
+        error.response?.data?.message || error.message || "Failed to update vendor"
+      );
+    }
+  }
+);
+
+/**
+ * Toggle vendor status
+ * API: /v1/vendors/:vendor_id/toggle-status?tenant_id=TST001
+ */
+export const toggleVendorStatusThunk = createAsyncThunk(
+  "vendor/toggleVendorStatus",
+  async ({ vendorId, tenant_id }, { rejectWithValue, dispatch }) => {
+    try {
+      const response = await API_CLIENT.patch(
+        `/v1/vendors/${vendorId}/toggle-status`,
+        null, // ✅ Use null instead of {} for empty body
+        { params: { tenant_id } }
+      );
+
+      // ✅ Optionally re-fetch all vendors
+      await dispatch(fetchVendorsThunk({ tenant_id }));
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to toggle vendor status"
       );
     }
   }

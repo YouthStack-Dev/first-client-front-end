@@ -2,7 +2,7 @@
 // import axios from 'axios';
 // import HeaderWithActionNoRoute from "@components/HeaderWithActionNoRoute";
 
-// const ShiftCategoryManagement = () => {
+// const CutoffManagement = () => {
 //   const [bookingCutOffEmployee, setBookingCutOffEmployee] = useState(0);
 //   const [cancellationCutOffEmployee, setCancellationCutOffEmployee] = useState(0);
 
@@ -115,7 +115,7 @@
 //   );
 // };
 
-// export default ShiftCategoryManagement;
+// export default CutoffManagement;
 
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -129,7 +129,7 @@ import {
   resetForm,
 } from "../redux/features/Category/shiftCategorySlice";
 
-const ShiftCategoryManagement = () => {
+const CutoffManagement = () => {
   const dispatch = useDispatch();
 
   const {
@@ -241,4 +241,4 @@ const ShiftCategoryManagement = () => {
   );
 };
 
-export default ShiftCategoryManagement;
+export default CutoffManagement;

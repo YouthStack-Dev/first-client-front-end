@@ -90,7 +90,11 @@ import {
             // { title: 'Create Shift', path: '/shifts/create', permission: 'shift.create', icon: Clock }
           ]
         },
-        
+        {
+          title: 'Cutoff Management',
+          icon: Clock, // replace with your preferred icon
+          path: '/cutoff',permission: 'cutoff.read',icon: Clock,
+        },
         {
           title: 'Teams',
           icon: Users2,
