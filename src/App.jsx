@@ -12,7 +12,6 @@ import ManageEmployees from "./pages/ManageEmployees";
 import VendorManagement from "./pages/VendorManagement";
 import VehicleManagement from "./pages/VehicleManagement";
 import DriverManagement from "./pages/DriverManagement";
-import Practice from "./pages/Practice";
 import SuperAdminLayout from "./superadmin/SuperAdminLayout";
 import VendorLayout from "./vendor/VendorLayout";
 import { useDispatch } from "react-redux";
@@ -23,12 +22,8 @@ import CompanyDashboard from "./companies/CompanyDashboard";
 import RoleManagement from "./pages/RoleManagement";
 import RouteManagement from "./pages/RouteManagement";
 import Schedulemanagement from "./pages/Schedulemanagement";
-import ShiftManagement from "./components/Schedulemanagement/ShiftManagement";
 import ShiftForm from "./components/Schedulemanagement/ShiftForm";
 import ScheduledBookingsCopy from "./components/RouteManagement/ScheduledBookingsCopy";
-import { PermissionPanel } from "./components/PermissionPanel";
-import axios from "axios";
-import { API_CLIENT } from "./Api/API_Client";
 
 function App() {
 
