@@ -22,12 +22,12 @@ const CutoffManagement = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    console.log(`Input changed: ${name} = ${value}`);
+    // console.log(`Input changed: ${name} = ${value}`);
     dispatch(updateFormField({ name, value }));
   };
 
   const handleSave = () => {
-    console.log("Saving cutoff with formData:", formData);
+    // console.log("Saving cutoff with formData:", formData);
     const bookingVal = parseFloat(booking);
     const cancellationVal = parseFloat(cancellation);
 

@@ -26,7 +26,7 @@ export const saveCutoffThunk = createAsyncThunk(
       const bookingCutoff = `${Math.floor(booking)}:00`;
       const cancelCutoff = `${Math.floor(cancellation)}:00`;
 
-      const response = await axios.put(BASE_URL, {
+      const response = await API_CLIENT.put("/v1/cutoffs/", {
         booking_cutoff: bookingCutoff,
         cancel_cutoff: cancelCutoff,
       });

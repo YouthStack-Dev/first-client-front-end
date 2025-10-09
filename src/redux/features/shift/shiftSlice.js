@@ -1,5 +1,5 @@
 import { createSlice, createSelector } from "@reduxjs/toolkit";
-import { fetchShiftTrunk, createShiftTrunk, toggleShiftStatus } from "./shiftTrunk";
+import { fetchShiftTrunk, createShiftTrunk, toggleShiftStatus,  updateShiftTrunk } from "./shiftTrunk";
 
 // --- Helper to normalize data from API (expects array of shifts) ---
 const normalizeShiftsData = (shiftArray) => {
@@ -152,7 +152,27 @@ const shiftSlice = createSlice({
         .addCase(toggleShiftStatus.rejected, (state, action) => {
           state.loading = false;
           state.error = action.payload || "Failed to toggle shift status";
-        });
+        })
+          // --- Update Shift ---
+      .addCase(updateShiftTrunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateShiftTrunk.fulfilled, (state, action) => {
+        state.loading = false;
+        const updatedShift = action.payload;
+        if (updatedShift && state.shifts.byId[updatedShift.shift_id]) {
+          state.shifts.byId[updatedShift.shift_id] = {
+            ...state.shifts.byId[updatedShift.shift_id],
+            ...updatedShift,
+            shiftCategoryId: updatedShift.shiftCategoryId || null,
+          };
+        }
+      })
+      .addCase(updateShiftTrunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to update shift";
+      });
   },
 });
 
