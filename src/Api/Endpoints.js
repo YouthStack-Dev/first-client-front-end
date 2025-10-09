@@ -7,5 +7,8 @@
     getTenants:"/v1/tenants",
     createEmployee:'/v1/employees/',
     createTeam:'/v1/teams/',
+    updateEmployee:'/v1/employees/',
+    getWeekOff:'/v1/weekoff-configs/',
+    updateWeekOff:'/v1/weekoff-configs/',
 }
 export default endpoint

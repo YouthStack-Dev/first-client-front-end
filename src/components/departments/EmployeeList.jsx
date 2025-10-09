@@ -1,7 +1,9 @@
+// components/EmployeeList.jsx
 import { useEffect, useState } from 'react';
-import { Edit, Eye, HistoryIcon } from 'lucide-react';
+import { Edit, Eye, HistoryIcon, Calendar } from 'lucide-react';
 import { logDebug } from '../../utils/logger';
 import ConfirmationModal from '../modals/ConfirmationModal';
+import WeekOffModal from './WeekOffModal';
 
 const EmployeeList = ({
   employees = [],
@@ -13,18 +15,23 @@ const EmployeeList = ({
   onEdit,
   onView,
   onStatusChange,
-  onHistory, // Add this new prop for history action
+  onHistory,
+  onWeekOffUpdate, // New prop for week off updates
   hasActiveSearch = false
 }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [pendingStatusChange, setPendingStatusChange] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Week off modal states
+  const [showWeekOffModal, setShowWeekOffModal] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const handleStatusToggle = (employeeId, currentis_active) => {
-    logDebug("handleStatusToggle  employeeId is ",employeeId)
+    logDebug("handleStatusToggle employeeId is ", employeeId);
     const newis_active = !currentis_active;
-    const employee = employees.find(emp => emp.employee_code === employeeId);
-  logDebug("handleStatusToggle ",employee)
+    const employee = employees.find(emp => emp.employee_id === employeeId);
+    logDebug("handleStatusToggle ", employee);
     setPendingStatusChange({
       employeeId,
       currentis_active,
@@ -54,11 +61,46 @@ const EmployeeList = ({
     setPendingStatusChange(null);
   };
 
+  // Week off handlers
+  const handleWeekOffClick = (employee) => {
+    logDebug("Opening week off modal for employee:", employee);
+    setSelectedEmployee(employee);
+    setShowWeekOffModal(true);
+  };
+
+  const handleWeekOffUpdate = async (updateData) => {
+    setIsProcessing(true);
+    try {
+      // Call the parent component's handler if provided
+      if (onWeekOffUpdate) {
+        await onWeekOffUpdate(updateData);
+      } else {
+        // Fallback simulation
+        logDebug('Week off update data:', updateData);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.log(`Week off updated for ${updateData.employeeName} at ${updateData.updateLevel} level:`, updateData.weekOffData);
+      }
+      
+      setShowWeekOffModal(false);
+      setSelectedEmployee(null);
+    } catch (error) {
+      console.error('Failed to update week off:', error);
+      throw error; // Re-throw to let the modal handle the error state
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleCloseWeekOffModal = () => {
+    setShowWeekOffModal(false);
+    setSelectedEmployee(null);
+  };
+
   logDebug("pendingStatusChange is ", pendingStatusChange);
 
   return (
     <div className="space-y-4">
-      {/* Confirmation Modal */}
+      {/* Status Change Confirmation Modal */}
       <ConfirmationModal
         show={showConfirmation}
         title="Confirm Status Change"
@@ -71,6 +113,16 @@ const EmployeeList = ({
         onCancel={handleCancelStatusChange}
       />
 
+      {/* Reusable Week Off Modal */}
+      <WeekOffModal
+        show={showWeekOffModal}
+        employee={selectedEmployee}
+        onUpdate={handleWeekOffUpdate}
+        onClose={handleCloseWeekOffModal}
+        isLoading={isProcessing}
+      />
+
+      {/* Employee Table */}
       <div className="overflow-x-auto border rounded-xl">
         <table className="w-full text-left border-collapse min-w-[900px]">
           <thead className="bg-gray-100 text-gray-700 uppercase text-sm font-medium">
@@ -122,18 +174,18 @@ const EmployeeList = ({
             ) : (
               employees.map((employee) => (
                 <tr
-                  key={employee.employee_code}
+                  key={employee.employee_id}
                   className="hover:bg-gray-50 cursor-pointer transition-colors"
                   onClick={(e) => onRowClick?.(employee, e)}
                 >
                   <td className="p-4" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
-                      checked={selectedEmployeeIds.includes(employee.employee_code)}
+                      checked={selectedEmployeeIds.includes(employee.employee_id)}
                       onChange={(e) => {
-                        logDebug(" this is the employee if " ,employee.employee_code)
+                        logDebug(" this is the employee code and id " ,employee.employee_code ,employee.employee_id)
                         e.stopPropagation();
-                        onCheckboxChange?.(employee.employee_code);
+                        onCheckboxChange?.(employee.id);
                       }}
                       className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
@@ -161,7 +213,7 @@ const EmployeeList = ({
                         checked={employee.is_active === true}
                         onChange={(e) => {
                           e.stopPropagation();
-                          handleStatusToggle(employee.employee_code, employee.is_active);
+                          handleStatusToggle(employee.employee_id, employee.is_active);
                         }}
                         disabled={isProcessing}
                       />
@@ -206,6 +258,17 @@ const EmployeeList = ({
                         title="View History"
                       >
                         <HistoryIcon size={16} />
+                      </button>
+                      {/* Week Off Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleWeekOffClick(employee);
+                        }}
+                        className="p-2 rounded-full bg-purple-50 text-purple-600 hover:bg-purple-100 hover:text-purple-800 transition-colors duration-200"
+                        title="Set Week Off"
+                      >
+                        <Calendar size={16} />
                       </button>
                     </div>
                   </td>
