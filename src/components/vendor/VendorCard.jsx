@@ -12,7 +12,7 @@ import {
   Power,
   PowerOff,
 } from "lucide-react";
-import { toggleVendorStatusThunk } from "../../redux/features/vendors/vendorThunk"; // ✅ adjust path if needed
+import { toggleVendorStatusThunk } from "../../redux/features/vendors/vendorThunk"; 
 
 const AssignedCompaniesList = ({ companies, loading, error }) => {
   if (loading && !companies.length) {

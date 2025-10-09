@@ -81,13 +81,10 @@ export const toggleVendorStatusThunk = createAsyncThunk(
     try {
       const response = await API_CLIENT.patch(
         `/v1/vendors/${vendorId}/toggle-status`,
-        null, // ✅ Use null instead of {} for empty body
+        null, 
         { params: { tenant_id } }
       );
-
-      // ✅ Optionally re-fetch all vendors
-      await dispatch(fetchVendorsThunk({ tenant_id }));
-
+      // await dispatch(fetchVendorsThunk({ tenant_id }));
       return response.data;
     } catch (error) {
       return rejectWithValue(
