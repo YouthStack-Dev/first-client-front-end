@@ -1,159 +1,33 @@
-// import React, { useState } from "react";
-// import axios from 'axios';
-// import HeaderWithActionNoRoute from "@components/HeaderWithActionNoRoute";
-
-// const CutoffManagement = () => {
-//   const [bookingCutOffEmployee, setBookingCutOffEmployee] = useState(0);
-//   const [cancellationCutOffEmployee, setCancellationCutOffEmployee] = useState(0);
-
-//   const [formValues, setFormValues] = useState({
-//     booking: "0",
-//     cancellation: "0",
-//   });
-
-//   const [errors, setErrors] = useState({});
-
-//   const handleChange = (e) => {
-//     const { name, value } = e.target;
-//     setFormValues((prev) => ({ ...prev, [name]: value }));
-
-//     // Live validation
-//     if (name === "booking" && parseFloat(value) > parseFloat(formValues.cancellation)) {
-//       setErrors((prev) => ({
-//         ...prev,
-//         booking: "Booking cutoff must be <= cancellation cutoff",
-//       }));
-//     } else if (name === "cancellation" && parseFloat(value) < parseFloat(formValues.booking)) {
-//       setErrors((prev) => ({
-//         ...prev,
-//         cancellation: "Cancellation cutoff must be >= booking cutoff",
-//       }));
-//     } else {
-//       setErrors((prev) => ({ ...prev, [name]: "" }));
-//     }
-//   };
-
-//   const handleSave = () => {
-//     const b = parseFloat(formValues.booking);
-//     const c = parseFloat(formValues.cancellation);
-
-//     const newErrors = {};
-//     if (isNaN(b) || b < 0) newErrors.booking = "Enter a valid non-negative number";
-//     if (isNaN(c) || c < 0) newErrors.cancellation = "Enter a valid non-negative number";
-//     if (b > c) {
-//       newErrors.booking = "Booking cutoff must be <= cancellation cutoff";
-//       newErrors.cancellation = "Cancellation cutoff must be >= booking cutoff";
-//     }
-
-//     setErrors(newErrors);
-//     if (Object.keys(newErrors).length > 0) return;
-
-//     setBookingCutOffEmployee(b);
-//     setCancellationCutOffEmployee(c);
-//     alert("Cutoffs saved!");
-//   };
-
-//   return (
-//     <div className="space-y-6 p-4 w-full">
-//       <HeaderWithActionNoRoute title="Cutoff Management" extraButtons={[]} />
-
-//       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-//         <div className="bg-white rounded-lg shadow p-4 border">
-//           <h3 className="text-blue-600 font-semibold mb-2">Booking Cutoff</h3>
-//           <div className="space-y-2">
-//             <input
-//               type="number"
-//               name="booking"
-//               min="0"
-//               step="0.5"
-//               value={formValues.booking}
-//               onChange={handleChange}
-//               className="w-full border border-gray-300 rounded px-3 py-2"
-//               placeholder="Enter booking cutoff in hours"
-//             />
-//             {errors.booking && (
-//               <p className="text-sm text-red-600">{errors.booking}</p>
-//             )}
-//             <p className="text-sm text-gray-500">
-//               Current: <strong>{bookingCutOffEmployee}</strong> hours
-//             </p>
-//           </div>
-//         </div>
-
-//         <div className="bg-white rounded-lg shadow p-4 border">
-//           <h3 className="text-blue-600 font-semibold mb-2">Cancellation Cutoff</h3>
-//           <div className="space-y-2">
-//             <input
-//               type="number"
-//               name="cancellation"
-//               min="0"
-//               step="0.5"
-//               value={formValues.cancellation}
-//               onChange={handleChange}
-//               className="w-full border border-gray-300 rounded px-3 py-2"
-//               placeholder="Enter cancellation cutoff in hours"
-//             />
-//             {errors.cancellation && (
-//               <p className="text-sm text-red-600">{errors.cancellation}</p>
-//             )}
-//             <p className="text-sm text-gray-500">
-//               Current: <strong>{cancellationCutOffEmployee}</strong> hours
-//             </p>
-//           </div>
-//         </div>
-//       </div>
-
-//       <div className="flex justify-end mt-4">
-//         <button
-//           onClick={handleSave}
-//           className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-//         >
-//           Save Cutoffs
-//         </button>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default CutoffManagement;
-
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import HeaderWithActionNoRoute from "@components/HeaderWithActionNoRoute";
 import {
-  fetchCutoffData,
-  saveCutoffData,
-} from "../redux/features/Category/shiftCategoryThunks";
-import {
   updateFormField,
   resetForm,
-} from "../redux/features/Category/shiftCategorySlice";
+} from "../../redux/features/cutoff/cutoffSlice";
+import { fetchCutoffsThunk, saveCutoffThunk } from "../../redux/features/cutoff/cutofftrunk";
 
 const CutoffManagement = () => {
   const dispatch = useDispatch();
-
-  const {
-    formData,
-    editingId,
-    status,
-    error,
-    data,
-  } = useSelector((state) => state.shiftCategory);
-
+  const { formData, status, error, data } = useSelector((state) => state.cutoff);
   const { booking, cancellation } = formData;
 
+  // Fetch cutoff on mount
   useEffect(() => {
-    if (!data?.id) {
-      dispatch(fetchCutoffData());
-    }
-  }, [dispatch]);
+    // console.log("CutoffManagement mounted, data:", data);
+    if (!data) dispatch(fetchCutoffsThunk());
+  }, [dispatch, data]);
+
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    console.log(`Input changed: ${name} = ${value}`);
     dispatch(updateFormField({ name, value }));
   };
 
   const handleSave = () => {
+    console.log("Saving cutoff with formData:", formData);
     const bookingVal = parseFloat(booking);
     const cancellationVal = parseFloat(cancellation);
 
@@ -161,30 +35,38 @@ const CutoffManagement = () => {
       alert("Please enter valid numeric values.");
       return;
     }
-
     if (bookingVal > cancellationVal) {
       alert("Booking cutoff must be less than or equal to cancellation cutoff.");
       return;
     }
 
-    dispatch(
-      saveCutoffData({
-        id: editingId,
-        booking_cutoff: bookingVal,
-        cancellation_cutoff: cancellationVal,
-      })
-    );
+    dispatch(saveCutoffThunk({ booking: bookingVal, cancellation: cancellationVal }));
   };
+
+  const handleReset = () => {
+    console.log("Resetting form");
+    dispatch(resetForm());
+  };
+
+  // Display numeric values for saved data
+  const displayBooking = data?.booking_cutoff
+    ? parseFloat(data.booking_cutoff.split(":")[0])
+    : 0;
+  const displayCancellation = data?.cancel_cutoff
+    ? parseFloat(data.cancel_cutoff.split(":")[0])
+    : 0;
 
   return (
     <div className="space-y-6 p-4 w-full">
       <HeaderWithActionNoRoute title="Cutoff Management" extraButtons={[]} />
 
-      {!data?.id ? (
-        <p className="text-gray-600">Loading cutoff data...</p>
-      ) : (
+      {status === "loading" && <p className="text-gray-600">Loading...</p>}
+      {status === "failed" && <p className="text-red-600">Error: {error}</p>}
+
+      {data && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Booking Cutoff */}
             <div className="bg-white rounded-lg shadow p-4 border">
               <h3 className="text-blue-600 font-semibold mb-2">Booking Cutoff</h3>
               <div className="space-y-2">
@@ -199,11 +81,12 @@ const CutoffManagement = () => {
                   placeholder="Enter booking cutoff in hours"
                 />
                 <p className="text-sm text-gray-500">
-                  Saved: <strong>{formData.booking}</strong> hours
+                  Saved: <strong>{displayBooking}</strong> hours
                 </p>
               </div>
             </div>
 
+            {/* Cancellation Cutoff */}
             <div className="bg-white rounded-lg shadow p-4 border">
               <h3 className="text-blue-600 font-semibold mb-2">Cancellation Cutoff</h3>
               <div className="space-y-2">
@@ -218,23 +101,28 @@ const CutoffManagement = () => {
                   placeholder="Enter cancellation cutoff in hours"
                 />
                 <p className="text-sm text-gray-500">
-                  Saved: <strong>{formData.cancellation}</strong> hours
+                  Saved: <strong>{displayCancellation}</strong> hours
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="flex justify-end mt-4">
+          {/* Actions */}
+          <div className="flex justify-end mt-4 space-x-2">
+            <button
+              onClick={handleReset}
+              className="bg-gray-300 text-gray-700 px-6 py-2 rounded hover:bg-gray-400"
+            >
+              Reset
+            </button>
             <button
               onClick={handleSave}
               className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-              disabled={status === 'saving'}
+              disabled={status === "saving"}
             >
-              {status === 'saving' ? 'Saving...' : 'Save Cutoffs'}
+              {status === "saving" ? "Saving..." : "Save Cutoffs"}
             </button>
           </div>
-
-          {error && <p className="text-red-600 text-sm">Error: {error}</p>}
         </>
       )}
     </div>

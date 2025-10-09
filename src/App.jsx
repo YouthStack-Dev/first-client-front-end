@@ -23,6 +23,7 @@ import CompanyDashboard from "./companies/CompanyDashboard";
 import RoleManagement from "./pages/RoleManagement";
 import RouteManagement from "./pages/RouteManagement";
 import Schedulemanagement from "./pages/Schedulemanagement";
+import CutoffManagement from "./components/Schedulemanagement/CutoffManagement";
 import ShiftManagement from "./components/Schedulemanagement/ShiftManagement";
 import ShiftForm from "./components/Schedulemanagement/ShiftForm";
 import ScheduledBookingsCopy from "./components/RouteManagement/ScheduledBookingsCopy";
@@ -145,7 +146,7 @@ function App() {
             <Route path="/manage-company" element={<ManageDepartment />} />
             <Route path="/scheduling" element={<Schedulemanagement/>} />
             <Route path="employees/create" element={<EmployeeForm />} />
-            <Route path="/cutoff-settings" element={<h1> this is the cutoff window</h1>} />
+            <Route path="/cutoff" element={<CutoffManagement />} />
             <Route path="/manage-vendors" element={<VendorManagement />} />
             <Route path="/vehicles" element={<VehicleManagement />} />
             <Route path="/employee/create-employee" element={<EmployeeForm />} />
