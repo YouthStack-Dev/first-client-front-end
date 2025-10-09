@@ -39,7 +39,8 @@ const initialFormData = {
   office: "",
   team_id: "",
   subscribe_via_email: false,
-  subscribe_via_sms: false
+  subscribe_via_sms: false,
+  employee_id: ''
 };
 
 const EmployeeForm = ({ mode = 'create' }) => {
@@ -115,6 +116,7 @@ const EmployeeForm = ({ mode = 'create' }) => {
         const mappedData = {
           ...initialFormData,
           name: employee.name || '',
+          employee_id:employee.employee_id || '',
           employee_code: employee.employee_code || '',
           email: employee.email || '',
           gender: employee.gender || '',
@@ -312,7 +314,7 @@ const EmployeeForm = ({ mode = 'create' }) => {
       const datawithpassword = {...submissionData, password: "Password@123"}
       const response = mode === 'create'
         ? await API_CLIENT.post(endpoint.createEmployee, datawithpassword)
-        : await API_CLIENT.put(`/employees/${userId}`, submissionData);
+        : await API_CLIENT.put(`${endpoint.updateEmployee}${userId}`, submissionData);
   
       if (response.status >= 200 && response.status < 300) {
         const employeeData = response.data; // Assuming API returns the created/updated employee
@@ -326,7 +328,7 @@ const EmployeeForm = ({ mode = 'create' }) => {
             teamId: formData.team_id,
             employee: {
               ...employeeData,
-              employee_code: formData.employee_code?.trim() // Ensure employee_code is included
+              employee_id: formData.employee_id?.trim() // Ensure employee_code is included
             }
           }));
         }

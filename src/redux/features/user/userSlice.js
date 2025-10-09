@@ -89,10 +89,10 @@ const userSlice = createSlice({
     // Add or update an employee
     upsertEmployee(state, action) {
       const employee = action.payload;
-      state.employees.byId[employee.employee_code] = employee;
+      state.employees.byId[employee.employee_id] = employee;
       
-      if (!state.employees.allIds.includes(employee.employee_code)) {
-        state.employees.allIds.push(employee.employee_code);
+      if (!state.employees.allIds.includes(employee.employee_id)) {
+        state.employees.allIds.push(employee.employee_id);
       }
     },
     
@@ -101,17 +101,17 @@ const userSlice = createSlice({
       const { teamId, employee } = action.payload;
       
       // Add/update employee first
-      state.employees.byId[employee.employee_code] = employee;
-      if (!state.employees.allIds.includes(employee.employee_code)) {
-        state.employees.allIds.push(employee.employee_code);
+      state.employees.byId[employee.employee_id] = employee;
+      if (!state.employees.allIds.includes(employee.employee_id)) {
+        state.employees.allIds.push(employee.employee_id);
       }
       
       // Add to team if not already present
       if (state.teams.byId[teamId] && 
-          !state.teams.byId[teamId].employeeIds.includes(employee.employee_code)) {
+          !state.teams.byId[teamId].employeeIds.includes(employee.employee_id)) {
         
         // Add employee to team
-        state.teams.byId[teamId].employeeIds.push(employee.employee_code);
+        state.teams.byId[teamId].employeeIds.push(employee.employee_id);
         
         // Update active_employee_count
         const currentCount = state.teams.byId[teamId].active_employee_count || 0;
@@ -121,33 +121,33 @@ const userSlice = createSlice({
     
     // Remove employee from a team (optionally globally)
     removeEmployeeFromTeam(state, action) {
-      const { teamId, employee_code, removeGlobally = false } = action.payload;
+      const { teamId, employee_id, removeGlobally = false } = action.payload;
       
       // Remove from team
       if (state.teams.byId[teamId]) {
         state.teams.byId[teamId].employeeIds = 
-          state.teams.byId[teamId].employeeIds.filter(id => id !== employee_code);
+          state.teams.byId[teamId].employeeIds.filter(id => id !== employee_id);
       }
       
       // Remove globally if needed
       if (removeGlobally) {
-        delete state.employees.byId[employee_code];
-        state.employees.allIds = state.employees.allIds.filter(id => id !== employee_code);
+        delete state.employees.byId[employee_id];
+        state.employees.allIds = state.employees.allIds.filter(id => id !== employee_id);
         
         // Remove from all teams
         Object.values(state.teams.byId).forEach(team => {
-          team.employeeIds = team.employeeIds.filter(id => id !== employee_code);
+          team.employeeIds = team.employeeIds.filter(id => id !== employee_id);
         });
         
         // Remove from all department caches
         Object.keys(state.departmentEmployees).forEach(deptId => {
           if (state.departmentEmployees[deptId]?.active) {
             state.departmentEmployees[deptId].active = 
-              state.departmentEmployees[deptId].active.filter(id => id !== employee_code);
+              state.departmentEmployees[deptId].active.filter(id => id !== employee_id);
           }
           if (state.departmentEmployees[deptId]?.inactive) {
             state.departmentEmployees[deptId].inactive = 
-              state.departmentEmployees[deptId].inactive.filter(id => id !== employee_code);
+              state.departmentEmployees[deptId].inactive.filter(id => id !== employee_id);
           }
         });
       }
@@ -159,9 +159,9 @@ const userSlice = createSlice({
       
       // Store each employee globally
       employees.forEach(emp => {
-        state.employees.byId[emp.employee_code] = emp;
-        if (!state.employees.allIds.includes(emp.employee_code)) {
-          state.employees.allIds.push(emp.employee_code);
+        state.employees.byId[emp.employee_id] = emp;
+        if (!state.employees.allIds.includes(emp.employee_id)) {
+          state.employees.allIds.push(emp.employee_id);
         }
       });
       
@@ -171,7 +171,7 @@ const userSlice = createSlice({
       }
       
       // Store employee codes based on active status
-      const employeeCodes = employees.map(emp => emp.employee_code);
+      const employeeCodes = employees.map(emp => emp.employee_id);
       
       if (isActive === true) {
         state.departmentEmployees[departmentId].active = employeeCodes;
@@ -184,16 +184,16 @@ const userSlice = createSlice({
     
     // Move employee between teams
     moveEmployee(state, action) {
-      const { fromTeamId, toTeamId, employee_code } = action.payload;
+      const { fromTeamId, toTeamId, employee_id } = action.payload;
       
       if (state.teams.byId[fromTeamId]) {
         state.teams.byId[fromTeamId].employeeIds = 
-          state.teams.byId[fromTeamId].employeeIds.filter(id => id !== employee_code);
+          state.teams.byId[fromTeamId].employeeIds.filter(id => id !== employee_id);
       }
       
       if (state.teams.byId[toTeamId] && 
-          !state.teams.byId[toTeamId].employeeIds.includes(employee_code)) {
-        state.teams.byId[toTeamId].employeeIds.push(employee_code);
+          !state.teams.byId[toTeamId].employeeIds.includes(employee_id)) {
+        state.teams.byId[toTeamId].employeeIds.push(employee_id);
       }
     },
 
