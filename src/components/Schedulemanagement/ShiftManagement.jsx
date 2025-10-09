@@ -26,13 +26,14 @@ const ShiftManagement = () => {
   const [shiftToDelete, setShiftToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedShifts, setSelectedShifts] = useState([]);
+const loaded = useSelector((state) => state.shift.loaded);
 
-  // Fetch shifts on load
-  useEffect(() => {
-    if (!shifts || shifts.length === 0) {
-      dispatch(fetchShiftTrunk());
-    }
-  }, [dispatch, shifts.length]);
+useEffect(() => {
+  if (!loaded) {
+    dispatch(fetchShiftTrunk());
+  }
+}, [dispatch, loaded]);
+
 
   // Handlers
   const handleAddClick = () => {

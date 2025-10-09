@@ -49,7 +49,7 @@ export const toggleShiftStatus = createAsyncThunk(
   "shift/toggleShiftStatus",
   async (shift_id, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.put(`/v1/shifts/${shift_id}/toggle-status`);
+      const response = await API_CLIENT.patch(`/v1/shifts/${shift_id}/toggle-status`);
 
       // Check for successful status
       if (response.status === 200) {
