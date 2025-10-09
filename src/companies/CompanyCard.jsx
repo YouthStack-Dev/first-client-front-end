@@ -1,9 +1,18 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Building2, Truck, Mail, Phone, MapPin, Link2, Edit2 } from "lucide-react";
+import {
+  Building2,
+  Truck,
+  Mail,
+  Phone,
+  MapPin,
+  Link2,
+  Edit2,
+  Power,
+  PowerOff,
+} from "lucide-react";
 import AssignEntityModal from "@components/modals/AssignEntityModal";
-
-
+import { toggleCompanyStatusThunk } from "../redux/features/company/companyThunks";
 const CompanyVendorsList = ({ vendors, loading, error }) => {
   if (loading) {
     return (
@@ -66,14 +75,13 @@ const CompanyVendorsList = ({ vendors, loading, error }) => {
   );
 };
 
-
 const CompanyCard = ({ company, onEditCompany }) => {
   const dispatch = useDispatch();
   const vendorState = useSelector((state) => state.vendor || {});
   const allVendors = useMemo(() => vendorState.data || [], [vendorState.data]);
-
-  const [companyVendorsListState, setCompanyVendorsListState] = useState([]);
+  const [isActive, setIsActive] = useState(company.is_active);
   const [isAssignOpen, setAssignOpen] = useState(false);
+  const [companyVendorsListState, setCompanyVendorsListState] = useState([]);
 
   const companyVendorsList = useMemo(() => {
     return allVendors.filter((v) => v.tenant_id === company.tenant_id);
@@ -83,30 +91,17 @@ const CompanyCard = ({ company, onEditCompany }) => {
   const companyVendorsError = vendorState.error || null;
 
   useEffect(() => {
+    setIsActive(company.is_active);
     setCompanyVendorsListState(companyVendorsList);
-  }, [companyVendorsList]);
+  }, [company.is_active, companyVendorsList]);
+
+  const handleToggle = async () => {
+    const newStatus = !isActive;
+    setIsActive(newStatus);
+    dispatch(toggleCompanyStatusThunk({ tenant_id: company.tenant_id }));
+  };
 
   const handleOpenAssign = () => setAssignOpen(true);
-
-  const handleAssignSave = async (vendorData) => {
-    try {
-      const newVendor = await dispatch(
-        createVendorThunk({
-          ...vendorData,
-          tenant_id: company.tenant_id,
-        })
-      ).unwrap();
-
-      setCompanyVendorsListState((prev) => {
-        if (prev.some((v) => v.vendor_id === newVendor.vendor_id)) return prev;
-        return [...prev, newVendor];
-      });
-
-      setAssignOpen(false);
-    } catch (err) {
-      console.error("Create vendor failed:", err);
-    }
-  };
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -116,9 +111,9 @@ const CompanyCard = ({ company, onEditCompany }) => {
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col h-[420px]">
+      <div className="bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col h-[420px] relative">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white flex-shrink-0">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white flex-shrink-0 relative">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Building2 className="w-6 h-6" />
@@ -126,12 +121,29 @@ const CompanyCard = ({ company, onEditCompany }) => {
             </div>
             <span
               className={`px-2 py-1 text-xs rounded-full ${
-                company.is_active ? "bg-green-600 text-white" : "bg-red-400 text-white"
+                isActive ? "bg-green-600 text-white" : "bg-red-400 text-white"
               }`}
             >
-              {company.is_active ? "Active" : "Inactive"}
+              {isActive ? "Active" : "Inactive"}
             </span>
           </div>
+
+          {/* ✅ Toggle Switch like Vendor */}
+          <button
+            onClick={handleToggle}
+            className={`absolute top-3 right-3 p-2 rounded-full shadow-lg transition-all duration-300 ${
+              isActive
+                ? "bg-green-100 hover:bg-green-200"
+                : "bg-gray-100 hover:bg-gray-200"
+            }`}
+            title={isActive ? "Deactivate Company" : "Activate Company"}
+          >
+            {isActive ? (
+              <Power className="w-5 h-5 text-green-700 transition-transform duration-300 transform hover:scale-110" />
+            ) : (
+              <PowerOff className="w-5 h-5 text-gray-500 transition-transform duration-300 transform hover:scale-110" />
+            )}
+          </button>
         </div>
 
         {/* Company Details */}
@@ -175,21 +187,19 @@ const CompanyCard = ({ company, onEditCompany }) => {
           />
         </div>
 
-        {/* Footer Actions with Icons */}
+        {/* Footer Actions */}
         <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center flex-shrink-0">
-         <span className="text-sm font-bold text-gray-700 whitespace-nowrap">
+          <span className="text-sm font-bold text-gray-700 whitespace-nowrap">
             {formatDate(company.created_at)}
-         </span>
+          </span>
           <div className="flex space-x-2">
-            {/* Edit Company */}
             <button
               onClick={() => onEditCompany?.(company)}
               className="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-              title="Edit Company" >
+              title="Edit Company"
+            >
               <Edit2 className="w-4 h-4" />
             </button>
-
-            {/* Assign Vendor */}
             <button
               onClick={handleOpenAssign}
               className="p-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition-colors"
@@ -202,7 +212,7 @@ const CompanyCard = ({ company, onEditCompany }) => {
         </div>
       </div>
 
-      {/* Assign Entity Modal */}
+      {/* Assign Modal */}
       <AssignEntityModal
         isOpen={isAssignOpen}
         onClose={() => setAssignOpen(false)}
@@ -213,7 +223,6 @@ const CompanyCard = ({ company, onEditCompany }) => {
         }}
         targetEntities={allVendors}
         assignedIds={companyVendorsListState.map((v) => v.vendor_id)}
-        onSave={handleAssignSave}
         onSaveSuccess={(newVendor) => {
           setCompanyVendorsListState((prev) => {
             if (prev.some((v) => v.vendor_id === newVendor.vendor_id)) return prev;
