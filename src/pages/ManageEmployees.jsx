@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { API_CLIENT } from '../Api/API_Client';
 import { toast } from 'react-toastify';
 import { useSelector, useDispatch } from 'react-redux';
@@ -23,6 +23,8 @@ const ManageEmployees = () => {
   const [isAuditLogModalOpen, setIsAuditLogModalOpen] = useState(false);
   const [auditLogs, setAuditLogs] = useState([]);
   const [isAuditLogLoading, setIsAuditLogLoading] = useState(false);
+  const location = useLocation();
+  const { depname } = location.state || {};  // safe fallback
 
   const navigate = useNavigate();
   const { depId } = useParams();
@@ -105,7 +107,9 @@ const ManageEmployees = () => {
 
   const handleRowClick = (employee, e) => {
     if (e.target.type === 'checkbox') return;
-    navigate(`/employees/${employee.employee_code}/view`);
+    navigate(`/department/${employee.team_id}/employees/${employee.employee_id}/view`, {
+      state: { employee, fromChild: true },
+    });
   };
 
   const handleAddClick = () => {
@@ -113,13 +117,13 @@ const ManageEmployees = () => {
   };
 
   const handleView = (employee) => {
-    navigate(`/department/${employee.departmentId}/employees/${employee.userId}/view`, {
+    navigate(`/department/${employee.team_id}/employees/${employee.employee_id}/view`, {
       state: { employee, fromChild: true },
     });
   };
 
   const handleEdit = (employee) => {
-    navigate(`/department/${employee.departmentId}/employees/${employee.userId}/edit`, {
+    navigate(`/department/${employee.team_id}/employees/${employee.employee_id}/edit`, {
       state: { employee },
     });
   };
@@ -141,8 +145,7 @@ const ManageEmployees = () => {
         const nameMatch = employee.name?.toLowerCase().includes(query);
         const mobileMatch = employee.phone?.toString().includes(query);
         const emailMatch = employee.email?.toLowerCase().includes(query);
-        const employeeCodeMatch = employee.employee_code?.toLowerCase().includes(query);
-        return nameMatch || mobileMatch || emailMatch || employeeCodeMatch;
+        return nameMatch || mobileMatch || emailMatch ;
       });
     }
     
@@ -170,8 +173,7 @@ const ManageEmployees = () => {
     setIsAuditLogModalOpen(true);
 
     try {
-      // TODO: Replace with actual API call
-      // await API_CLIENT.get(`/api/users/${employee.userId}/logs`);
+
       const dummyLogs = [
         {
           id: 1,
@@ -201,7 +203,7 @@ const ManageEmployees = () => {
   return (
     <div>
       <ToolBar
-        title={`${targetIsActive ? 'Active' : 'Inactive'} Employees in Department ${depId}`}
+        title={`${targetIsActive ? 'Active' : 'Inactive'} Employees in Department ${depname || " NAN "}`}
         onAddClick={handleAddClick}
         addButtonLabel="Add employee"
         addButtonIcon={<Plus size={16} />}
