@@ -94,39 +94,39 @@ const VendorForm = ({ isOpen, onClose, onSave, initialData }) => {
         </FormField>
 
         <FormField 
-  label="Address" 
-  name="address"
->
-  <input
-    name="address"
-    value={form.address}
-    onChange={handleChange}
-    className="w-full mt-1 border px-2 py-1.5 rounded text-sm"
-  />
-</FormField>
+          label="Address" 
+          name="address"
+        >
+          <input
+            name="address"
+            value={form.address}
+            onChange={handleChange}
+            className="w-full mt-1 border px-2 py-1.5 rounded text-sm"
+          />
+        </FormField>
 
-<FormField 
-  label="Point of Contact" 
-  name="pointOfContact" 
-  error={errors.pointOfContact}
->
-  <input
-    name="pointOfContact"
-    value={form.pointOfContact}
-    onChange={handleChange}
-    className="w-full mt-1 border px-2 py-1.5 rounded text-sm"
-  />
-</FormField>
-<div className="flex items-center space-x-2 mb-3">
-  <input
-    type="checkbox"
-    name="isActive"
-    checked={form.isActive}
-    onChange={handleChange}
-    className="h-3 w-3 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-  />
-  <label className="text-xs font-medium">Vendor is Active</label>
-</div>
+        <FormField 
+          label="Point of Contact" 
+          name="pointOfContact" 
+          error={errors.pointOfContact}
+        >
+        <input
+          name="pointOfContact"
+          value={form.pointOfContact}
+          onChange={handleChange}
+          className="w-full mt-1 border px-2 py-1.5 rounded text-sm"
+        />
+        </FormField>
+        <div className="flex items-center space-x-2 mb-3">
+          <input
+            type="checkbox"
+            name="isActive"
+            checked={form.isActive}
+            onChange={handleChange}
+            className="h-3 w-3 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <label className="text-xs font-medium">Vendor is Active</label>
+        </div>
 
         <div className="flex justify-end space-x-3">
           <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded">
