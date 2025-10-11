@@ -1,5 +1,5 @@
 import { createSlice, createSelector } from "@reduxjs/toolkit";
-import { fetchShiftTrunk, createShiftTrunk, toggleShiftStatus } from "./shiftTrunk";
+import { fetchShiftTrunk, createShiftTrunk, toggleShiftStatus,  updateShiftTrunk } from "./shiftTrunk";
 
 // --- Helper to normalize data from API (expects array of shifts) ---
 const normalizeShiftsData = (shiftArray) => {
@@ -31,6 +31,7 @@ const shiftSlice = createSlice({
     shiftCategories: { byId: {}, allIds: [] },
     selectedShifts: [],
     loading: false,
+    loaded: false,
     error: null,
   },
   reducers: {
@@ -98,14 +99,16 @@ const shiftSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchShiftTrunk.fulfilled, (state, action) => {
+       .addCase(fetchShiftTrunk.fulfilled, (state, action) => {
         state.loading = false;
+        state.loaded = true; // mark as loaded
         const normalizedData = normalizeShiftsData(action.payload);
         state.shifts.byId = normalizedData.shifts;
         state.shifts.allIds = normalizedData.shiftIds;
         state.shiftCategories.byId = normalizedData.shiftCategories;
         state.shiftCategories.allIds = Object.keys(normalizedData.shiftCategories);
       })
+
       .addCase(fetchShiftTrunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to fetch shifts";
@@ -131,24 +134,44 @@ const shiftSlice = createSlice({
         state.error = action.payload || "Failed to create shift";
       })
 
-      // --- Toggle Shift Status ---
+    // --- Toggle Shift Status ---
       .addCase(toggleShiftStatus.pending, (state) => {
         state.loading = true;
         state.error = null;
+        })
+        .addCase(toggleShiftStatus.fulfilled, (state, action) => {
+          state.loading = false;
+          const updatedShift = action.payload.data; // <-- use .data here
+          if (updatedShift && state.shifts.byId[updatedShift.shift_id]) {
+            state.shifts.byId[updatedShift.shift_id] = {
+              ...state.shifts.byId[updatedShift.shift_id],
+              ...updatedShift,
+            };
+          }
+        })
+        .addCase(toggleShiftStatus.rejected, (state, action) => {
+          state.loading = false;
+          state.error = action.payload || "Failed to toggle shift status";
+        })
+          // --- Update Shift ---
+      .addCase(updateShiftTrunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
       })
-      .addCase(toggleShiftStatus.fulfilled, (state, action) => {
+      .addCase(updateShiftTrunk.fulfilled, (state, action) => {
         state.loading = false;
         const updatedShift = action.payload;
         if (updatedShift && state.shifts.byId[updatedShift.shift_id]) {
           state.shifts.byId[updatedShift.shift_id] = {
             ...state.shifts.byId[updatedShift.shift_id],
             ...updatedShift,
+            shiftCategoryId: updatedShift.shiftCategoryId || null,
           };
         }
       })
-      .addCase(toggleShiftStatus.rejected, (state, action) => {
+      .addCase(updateShiftTrunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Failed to toggle shift status";
+        state.error = action.payload || "Failed to update shift";
       });
   },
 });

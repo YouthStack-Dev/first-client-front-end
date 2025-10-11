@@ -75,12 +75,29 @@ export const updateCompanyThunk = createAsyncThunk(
     try {
       const response = await API_CLIENT.put(`/tenants/${companyId}`, formData);
       console.log("Updated company:", response.data);
-      return response.data; // ✅ return only the updated company object
+      return response.data; 
     } catch (error) {
       console.error("[Thunk] Failed to update company:", error);
       return rejectWithValue(
         error.response?.data?.message || "Failed to update company"
       );
+    }
+  }
+);
+
+
+export const toggleCompanyStatusThunk = createAsyncThunk(
+  "company/toggleStatus",
+  async (payload, { rejectWithValue }) => {
+    console.log("Payload received in thunk:", payload);
+    const { tenant_id } = payload;
+    try {
+      const response = await API_CLIENT.patch(
+        `/v1/tenants/${tenant_id}/toggle-status`
+      );
+      return { tenant_id, data: response.data };
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
     }
   }
 );

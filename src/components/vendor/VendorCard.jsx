@@ -1,8 +1,19 @@
-import React, { useMemo } from "react";
-import { useSelector } from "react-redux";
-import { Truck, Users, Phone, Mail, MapPin, Building2, Pencil } from "lucide-react"; // ✅ Added Pencil for edit icon
+import React, { useMemo, useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  Truck,
+  Users,
+  Phone,
+  Mail,
+  MapPin,
+  Building2,
+  Pencil,
+  Trash2,
+  Power,
+  PowerOff,
+} from "lucide-react";
+import { toggleVendorStatusThunk } from "../../redux/features/vendors/vendorThunk"; 
 
-// List component for showing vendor's company/tenant
 const AssignedCompaniesList = ({ companies, loading, error }) => {
   if (loading && !companies.length) {
     return (
@@ -35,7 +46,7 @@ const AssignedCompaniesList = ({ companies, loading, error }) => {
     <div className="flex-1 overflow-y-auto px-4 pb-2 space-y-2">
       {companies.map((company, index) => (
         <div
-          key={company.id || `${company.name}-${index}`} // ✅ Unique key
+          key={company.id || `${company.name}-${index}`}
           className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
         >
           <div className="flex flex-col min-w-0">
@@ -54,11 +65,31 @@ const AssignedCompaniesList = ({ companies, loading, error }) => {
   );
 };
 
-const VendorCard = ({ vendor = {}, onAssignEntity }) => {
+const VendorCard = ({ vendor = {}, onAssignEntity, onDeleteVendor }) => {
+  const dispatch = useDispatch();
+  const [isActive, setIsActive] = useState(vendor.is_active);
+
+  // ✅ Update local toggle if vendor prop changes externally
+  useEffect(() => {
+    setIsActive(vendor.is_active);
+  }, [vendor.is_active]);
+
+  // ✅ Handle Toggle API + visual
+  const handleToggle = async () => {
+    const newStatus = !isActive;
+    setIsActive(newStatus); // instant UI feedback
+    dispatch(
+      toggleVendorStatusThunk({
+        vendorId: vendor.vendor_id,
+        tenant_id: vendor.tenant_id,
+      })
+    );
+  };
+
+  // ✅ Company list setup
   const companyState = useSelector((state) => state.company || {});
   const allCompanies = useMemo(() => companyState.data || [], [companyState.data]);
 
-  // Find the company/tenant this vendor belongs to
   const tenantCompany = useMemo(
     () =>
       vendor.tenant_id
@@ -70,19 +101,25 @@ const VendorCard = ({ vendor = {}, onAssignEntity }) => {
   const companiesLoading = companyState.loading;
   const vendorCompaniesError = companyState.error;
 
-  const statusText = vendor.is_active ? "Active" : "Inactive";
-  const statusColor = vendor.is_active
-    ? "bg-green-800 text-white"
+  const statusText = isActive ? "Active" : "Inactive";
+  const statusColor = isActive
+    ? "bg-green-700 text-white"
     : "bg-red-600 text-white";
 
+  // ✅ Better readable date
   const onboardedDate = vendor.created_at
-    ? new Date(vendor.created_at).toLocaleDateString()
+    ? new Date(vendor.created_at).toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
     : "N/A";
 
   return (
-    <div className="bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col h-[420px]">
+    <div className="relative bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col h-[440px]">
+      
       {/* Header */}
-      <div className="bg-gradient-to-r from-green-600 to-green-700 p-4 text-white flex-shrink-0">
+      <div className="bg-gradient-to-r from-green-600 to-green-700 p-4 text-white flex-shrink-0 relative">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Truck className="w-6 h-6" />
@@ -94,6 +131,23 @@ const VendorCard = ({ vendor = {}, onAssignEntity }) => {
             {statusText}
           </span>
         </div>
+
+        {/* ✅ Sleek Toggle Switch */}
+        <button
+          onClick={handleToggle}
+          className={`absolute top-3 right-3 p-2 rounded-full shadow-lg transition-all duration-300 ${
+            isActive
+              ? "bg-green-100 hover:bg-green-200"
+              : "bg-gray-100 hover:bg-gray-200"
+          }`}
+          title={isActive ? "Deactivate Vendor" : "Activate Vendor"}
+        >
+          {isActive ? (
+            <Power className="w-5 h-5 text-green-700 transition-transform duration-300 transform rotate-0 hover:scale-110" />
+          ) : (
+            <PowerOff className="w-5 h-5 text-gray-500 transition-transform duration-300 transform hover:scale-110" />
+          )}
+        </button>
       </div>
 
       {/* Vendor Details */}
@@ -137,19 +191,24 @@ const VendorCard = ({ vendor = {}, onAssignEntity }) => {
 
       {/* Footer */}
       <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center flex-shrink-0">
-        {/* ✅ Date in bold, no "Since:" */}
-        <span className="text-sm font-semibold text-gray-700">
-          {onboardedDate}
-        </span>
+        <span className="text-sm font-semibold text-gray-700">{onboardedDate}</span>
 
-        {/* ✅ Replaced button with icon */}
-        <button
-          onClick={() => onAssignEntity?.(vendor)}
-          className="p-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition-colors"
-          title="Edit Vendor"
-        >
-          <Pencil className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onAssignEntity?.(vendor)}
+            className="p-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition-colors"
+            title="Edit Vendor"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+          {/* <button
+            onClick={() => onDeleteVendor?.(vendor)}
+            className="p-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors"
+            title="Delete Vendor"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button> */}
+        </div>
       </div>
     </div>
   );

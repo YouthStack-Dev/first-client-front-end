@@ -1,6 +1,6 @@
 import React from 'react';
 import { Building2, Edit, Trash, History, UserCheck, UserX } from 'lucide-react';
-import { logDebug } from '../../utils/logger';
+import ReusableButton from '../ui/ReusableButton';
 
 const DepartmentList = ({
   departments,
@@ -79,48 +79,59 @@ const DepartmentList = ({
                         <div className="text-sm text-app-text-secondary">{department?.description || '-'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-green-200 transition-colors"
-                          onClick={() => onViewEmployees(department?.team_id, true, department?.name)} 
-                          title="View Active Employees"
-                        >
-                          <UserCheck size={14} className="mr-1" />
-                          {department?.active_employee_count || 0}
-                        </button>
+                      <ReusableButton
+                        module="team"
+                        action="read"
+                        icon={UserCheck}
+                        buttonName={department?.active_employee_count?.toString() || "0"}
+                        title="View Active Employees"
+                        onClick={() => onViewEmployees(department?.team_id, true, department?.name)}
+                        className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-green-200 transition-colors"
+                      />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          className="flex items-center bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-red-200 transition-colors"
-                          onClick={() => onViewEmployees(department?.team_id, false, department?.name)} // Added department name
-                          title="View Inactive Employees"
-                        >
-                          <UserX size={14} className="mr-1" />
-                          {department?.inactive_employee_count || 0}
-                        </button>
+                      <ReusableButton
+  module="team"
+  action="read"
+  icon={UserX}
+  buttonName={(department?.inactive_employee_count || 0).toString()}
+  title="View Inactive Employees"
+  onClick={() => onViewEmployees(department?.team_id, false, department?.name)}
+  className="flex items-center bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-red-200 transition-colors"
+  size={14}
+/>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex gap-3">
-                          <button
-                            className="text-sidebar-primary-600 hover:text-sidebar-primary-700 transition-colors"
-                            onClick={() => onEditDepartment(department)}
-                            title="Edit Department"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            className="text-sidebar-danger-600 hover:text-sidebar-danger-700 transition-colors"
-                            onClick={() => onDeleteDepartment(department?.team_id)}
-                            title="Delete Department"
-                          >
-                            <Trash size={16} />
-                          </button>
-                          <button
-                            className="text-sidebar-secondary-600 hover:text-sidebar-secondary-700 transition-colors"
-                            onClick={() => onViewHistory(department?.team_id)}
-                            title="View History"
-                          >
-                            <History size={16} />
-                          </button>
+                      {/* Delete Button (as you already have) */}
+                      <ReusableButton
+                        module="team"
+                        action="delete"
+                        icon={Trash}
+                        title="Delete Team"
+                        onClick={() => alert('No logic has been implemented')}
+                        className="text-red-600 hover:text-red-700 transition-colors"
+                      />
+
+                      {/* History Button */}
+                      <ReusableButton
+                        module="team"
+                        action="view_history"
+                        icon={History}
+                        title="View History"
+                        onClick={() => onViewHistory(department?.team_id)}
+                        className="text-sidebar-secondary-600 hover:text-sidebar-secondary-700 transition-colors"
+                      />
+
+                      {/* Edit Button */}
+                      <ReusableButton
+                        module="team"
+                        action="update"
+                        icon={Edit}
+                        title="Edit Department"
+                        onClick={() => onEditDepartment(department)}
+                        className="text-sidebar-primary-600 hover:text-sidebar-primary-700 transition-colors"
+                      />
                         </div>
                       </td>
                     </tr>

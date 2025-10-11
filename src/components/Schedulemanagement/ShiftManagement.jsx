@@ -9,7 +9,7 @@ import {
   selectAllShifts,
   selectLoading,
 } from "../../redux/features/shift/shiftSlice";
-import { fetchShiftTrunk, createShiftTrunk, toggleShiftStatus } from "../../redux/features/shift/shiftTrunk";
+import { fetchShiftTrunk, createShiftTrunk, toggleShiftStatus,updateShiftTrunk  } from "../../redux/features/shift/shiftTrunk";
 import { toast } from "react-toastify";
 
 const ShiftManagement = () => {
@@ -26,13 +26,14 @@ const ShiftManagement = () => {
   const [shiftToDelete, setShiftToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedShifts, setSelectedShifts] = useState([]);
+const loaded = useSelector((state) => state.shift.loaded);
 
-  // Fetch shifts on load
-  useEffect(() => {
-    if (!shifts || shifts.length === 0) {
-      dispatch(fetchShiftTrunk());
-    }
-  }, [dispatch, shifts.length]);
+useEffect(() => {
+  if (!loaded) {
+    dispatch(fetchShiftTrunk());
+  }
+}, [dispatch, loaded]);
+
 
   // Handlers
   const handleAddClick = () => {
@@ -63,21 +64,34 @@ const ShiftManagement = () => {
     }
   };
 
-  const handleFormSubmit = async (data) => {
-    try {
-      const result = await dispatch(createShiftTrunk(data));
-      if (createShiftTrunk.fulfilled.match(result)) {
-        toast.success("Shift saved successfully!");
-        setIsModalOpen(false);
-        setEditingShift(null);
-        dispatch(fetchShiftTrunk());
-      } else {
-        toast.error(result.payload || "Failed to save shift");
-      }
-    } catch (error) {
-      toast.error("Something went wrong while saving shift");
+ const handleFormSubmit = async (data) => {
+  try {
+    // ✅ Format shift_time to HH:MM only (remove seconds)
+    const formattedData = {
+      ...data,
+      shift_time: data.shift_time.includes(":") 
+        ? data.shift_time.split(":").slice(0, 2).join(":") // converts 09:00:00 → 09:00
+        : data.shift_time,
+    };
+
+    if (editingShift && editingShift.shift_id) {
+      // console.log("🟢 Updating shift with ID:", editingShift.shift_id);
+      // console.log("🟢 Formatted shift data:", formattedData);
+      await dispatch(updateShiftTrunk({ shift_id: editingShift.shift_id, data: formattedData })).unwrap();
+      toast.success("Shift updated successfully!");
+    } else {
+      await dispatch(createShiftTrunk(formattedData)).unwrap();
+      toast.success("Shift created successfully!");
     }
-  };
+
+    setIsModalOpen(false);
+    setEditingShift(null);
+    dispatch(fetchShiftTrunk());
+  } catch (err) {
+    // console.error("Error submitting shift:", err);
+    toast.error("Failed to save shift");
+  }
+};
 
   const handleDeleteConfirm = () => {
     setIsDeleteModalOpen(false);
@@ -222,7 +236,15 @@ const ShiftManagement = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center ">
+                           {/* Edit Button */}
+                            <button
+                              onClick={() => handleEdit(shift)}
+                              className="p-2 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors"
+                              title="Edit Shift"
+                            >
+                              ✏️
+                            </button>
                           <button
                             onClick={() => handleStatusToggle(shift)}
                             className={`p-2 rounded-lg transition-colors ${

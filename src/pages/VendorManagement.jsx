@@ -56,13 +56,13 @@ const VendorManagement = () => {
               Manage all registered transportation vendors
             </p>
           </div>
-          <button
+          {/* <button
             onClick={handleAddVendor}
             className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Vendor
-          </button>
+          </button> */}
         </div>
 
         {/* Vendor List */}

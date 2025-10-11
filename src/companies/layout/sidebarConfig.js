@@ -44,31 +44,25 @@ import {
     {
       title: 'Resources',
       items: [
-        {
-          title: 'Drivers',
+       {
+          title: 'Manage Drivers',
           icon: Users,
-          subItems: [
-            { title: 'Driver List', path: '/drivers', permission: 'driver.read', icon: Users },
-            { title: 'Add Driver', path: '/drivers/add', permission: 'driver.create', icon: Users }
-          ]
+          path: '/drivers', permission: 'driver.read',icon: Users,
         },
-      
         {
           title: 'Vehicles',
           icon: Car,
-          subItems: [
-            { title: 'Vehicles', path: '/vehicles', permission: 'vehicle.read', icon: Car },
-            // { title: 'Add Vehicle', path: '/vehicles/add', permission: 'vehicle.create', icon: Car }
-          ]
+          path: '/vehicles',permission: 'vehicle.read', icon: Car,
         },
-        {
-          title: 'Vehicle Types',
-          icon: Truck,
-          subItems: [
-            { title: 'Type List', path: '/vehicle-types', permission: 'vehicle-type.read', icon: Truck },
-            { title: 'Add Type', path: '/vehicle-types/add', permission: 'vehicle-type.create', icon: Truck }
-          ]
-        }
+
+        // {
+        //   title: 'Vehicle Types',
+        //   icon: Truck,
+        //   subItems: [
+        //     { title: 'Type List', path: '/vehicle-types', permission: 'vehicle-type.read', icon: Truck },
+        //     { title: 'Add Type', path: '/vehicle-types/add', permission: 'vehicle-type.create', icon: Truck }
+        //   ]
+        // }
       ]
     },
     {
@@ -78,17 +72,19 @@ import {
           title: 'Routes',
           icon: MapPin,
           subItems: [
-            { title: 'Route Management', path: '/routes', permission: 'route.read', icon: MapPin },
+            { title: 'Route Management', path: '/routing', permission: 'route.read', icon: MapPin },
             { title: 'Create Route', path: '/routes/create', permission: 'route.create', icon: MapPin }
           ]
         },
         {
-          title: 'Shifts',
-          icon: Clock,
-          subItems: [
-            { title: 'Shift Schedule', path: '/shifts', permission: 'shift.read', icon: Clock },
-            // { title: 'Create Shift', path: '/shifts/create', permission: 'shift.create', icon: Clock }
-          ]
+          title: 'Shift Management',
+          icon: Clock, 
+          path: '/shifts',permission: 'shift.read',icon: Clock,
+        },
+        {
+          title: 'Cutoff Management',
+          icon: Clock, // replace with your preferred icon
+          path: '/cutoff',permission: 'cutoff.read',icon: Clock,
         },
         {
           title: 'Teams',
@@ -100,7 +96,7 @@ import {
           icon: Store,
           subItems: [
             { title: 'Vendor List', path: '/vendors', permission: 'vendor.read', icon: Store },
-            { title: 'Add Vendor', path: '/vendors/add', permission: 'vendor.create', icon: Store }
+            // { title: 'Add Vendor', path: '/vendors/add', permission: 'vendor.create', icon: Store }
           ]
         },
         {

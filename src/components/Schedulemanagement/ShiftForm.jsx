@@ -127,6 +127,8 @@ const ShiftForm = ({ initialData = {}, onCancel, onSubmit }) => {
               Select Pickup Type
             </option>
             <option value="Pickup">Pickup</option>
+             <option value="Nodal">Nodal</option>
+
           </select>
           {errors.pickup_type && (
             <p className="text-red-500 text-xs mt-1">{errors.pickup_type}</p>

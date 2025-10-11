@@ -140,7 +140,7 @@ function App() {
             <Route path="/manage-company" element={<ManageDepartment />} />
             <Route path="/scheduling" element={<Schedulemanagement/>} />
             <Route path="employees/create" element={<EmployeeForm />} />
-            <Route path="/cutoff-settings" element={<h1> this is the cutoff window</h1>} />
+            <Route path="/cutoff" element={<CutoffManagement />} />
             <Route path="/manage-vendors" element={<VendorManagement />} />
             <Route path="/vehicles" element={<VehicleManagement />} />
             <Route path="/employee/create-employee" element={<EmployeeForm />} />
@@ -150,7 +150,8 @@ function App() {
             <Route path="/tracking" element={<h1> This is the screen of Tracking </h1>} />
             <Route path="/bookings" element={<h1> This is the screen of Booking </h1>} />
             <Route path="/routing" element={<RouteManagement/>} />
-            <Route path="/pra" element={<ScheduledBookingsCopy/>} />
+         {/* /   <Route path="/routing-management" element={<RoutingManagement />} /> */}
+            <Route path="/pra" element={<ScheduledBookings/>} />
             <Route path="/audit-report" element={<h1> This is the screen of audit-report </h1>} />
           </Route>
         </Route>

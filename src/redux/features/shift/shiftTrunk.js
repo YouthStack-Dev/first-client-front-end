@@ -49,7 +49,7 @@ export const toggleShiftStatus = createAsyncThunk(
   "shift/toggleShiftStatus",
   async (shift_id, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.put(`/v1/shifts/${shift_id}/toggle-status`);
+      const response = await API_CLIENT.patch(`/v1/shifts/${shift_id}/toggle-status`);
 
       // Check for successful status
       if (response.status === 200) {
@@ -58,6 +58,25 @@ export const toggleShiftStatus = createAsyncThunk(
 
       return rejectWithValue("Failed to toggle shift status");
     } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+// --- Update Shift ---
+export const updateShiftTrunk = createAsyncThunk(
+  "shift/updateShiftTrunk",
+  async ({ shift_id, data }, { rejectWithValue }) => {
+    try {
+      // console.log("🔹 Updating shift with ID:", shift_id);
+      // console.log("🔹 Data being sent:", data);
+
+      const response = await API_CLIENT.put(`/v1/shifts/${shift_id}`, data);
+
+      console.log("✅ Update Shift Response:", response.data);
+      return response.data.data; // The API returns data object inside response
+    } catch (error) {
+      console.error("❌ Error updating shift:", error.response?.data || error.message);
       return rejectWithValue(error.response?.data || error.message);
     }
   }

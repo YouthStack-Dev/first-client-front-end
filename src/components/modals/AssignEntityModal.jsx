@@ -86,8 +86,17 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSaveSuccess }) => 
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const validate = () => {
-    const newErrors = {};
+const validate = () => {
+  const newErrors = {};
+
+  if (isEditMode) {
+    // ✅ Edit mode (fields used in update payload)
+    if (!formData.name) newErrors.name = "Vendor name is required";
+    if (!emailRegex.test(formData.email)) newErrors.email = "Invalid vendor email";
+    if (!phoneRegex.test(formData.phone)) newErrors.phone = "Invalid vendor phone";
+    // if (!formData.admin_name) newErrors.admin_name = "Admin name is required";
+  } else {
+    // ✅ Create mode (full validation)
     if (!formData.name) newErrors.name = "Vendor name is required";
     if (!emailRegex.test(formData.email)) newErrors.email = "Invalid vendor email";
     if (!emailRegex.test(formData.admin_email)) newErrors.admin_email = "Invalid admin email";
@@ -96,11 +105,13 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSaveSuccess }) => 
     }
     if (!phoneRegex.test(formData.phone)) newErrors.phone = "Invalid vendor phone";
     if (!phoneRegex.test(formData.admin_phone)) newErrors.admin_phone = "Invalid admin phone";
-    if (!isEditMode && !formData.admin_password) newErrors.admin_password = "Admin password is required";
+    if (!formData.admin_password) newErrors.admin_password = "Admin password is required";
+  }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
+
 
   const handleSubmit = async () => {
     if (!validate()) return;
@@ -108,7 +119,7 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSaveSuccess }) => 
     try {
       let result;
       if (isEditMode) {
-        result = await dispatch(updateVendorThunk({ vendor_id: sourceEntity.vendor_id, ...formData })).unwrap();
+        result = await dispatch(updateVendorThunk({ vendorId: sourceEntity.vendor_id, formData })).unwrap();
       } else {
         result = await dispatch(createVendorThunk(formData)).unwrap();
       }

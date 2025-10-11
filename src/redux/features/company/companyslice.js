@@ -4,7 +4,8 @@ import {
   fetchCompaniesThunk, 
   createCompanyThunk, 
   updateCompanyThunk,
-  fetchCompanyByIdThunk
+  fetchCompanyByIdThunk,
+  toggleCompanyStatusThunk
 } from "./companyThunks";
 
 const initialState = {
@@ -15,6 +16,7 @@ const initialState = {
   error: null,
   selectedCompany: null, // for edit modal
   fetchingSingle: false, // fetching single company
+   toggling: false,  
 };
 
 const companySlice = createSlice({
@@ -76,6 +78,29 @@ const companySlice = createSlice({
         state.updating = false;
         state.error = action.payload;
       });
+
+          // ✅ Toggle company active/inactive status
+        builder
+          .addCase(toggleCompanyStatusThunk.pending, (state) => {
+            state.toggling = true;
+            state.error = null;
+          })
+          .addCase(toggleCompanyStatusThunk.fulfilled, (state, action) => {
+            state.toggling = false;
+
+            const { tenant_id } = action.payload;
+            const index = state.data.findIndex((c) => c.tenant_id === tenant_id);
+
+            if (index !== -1) {
+              // Toggle status locally
+              state.data[index].is_active = !state.data[index].is_active;
+            }
+          })
+          .addCase(toggleCompanyStatusThunk.rejected, (state, action) => {
+            state.toggling = false;
+            state.error = action.payload || "Failed to toggle company status";
+          });
+
 
     // Fetch single company
     builder
