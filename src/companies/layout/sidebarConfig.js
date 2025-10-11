@@ -72,7 +72,7 @@ import {
           title: 'Routes',
           icon: MapPin,
           subItems: [
-            { title: 'Route Management', path: '/routes', permission: 'route.read', icon: MapPin },
+            { title: 'Route Management', path: '/routing', permission: 'route.read', icon: MapPin },
             { title: 'Create Route', path: '/routes/create', permission: 'route.create', icon: MapPin }
           ]
         },

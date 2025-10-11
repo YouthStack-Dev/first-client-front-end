@@ -1,4 +1,6 @@
 import React from 'react';
+import ReusableButton from './ReusableButton';
+import { Plus } from 'lucide-react';
 
 const ToolBar = ({
   title,
@@ -44,16 +46,17 @@ const ToolBar = ({
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
           {rightElements}
           {onAddClick && (
-            <button
-              onClick={onAddClick}
-              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white 
-                text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none 
-                focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors
-                shadow-sm hover:shadow-md whitespace-nowrap min-w-[fit-content]"
-            >
-              {addButtonIcon}
-              <span>{addButtonLabel}</span>
-            </button>
+           <ReusableButton
+           module="employee"
+           action="create"
+           buttonName={addButtonLabel}
+           icon={Plus}
+           title="Create Employee"
+           onClick={onAddClick}
+           className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+
+         />
+         
           )}
         </div>
       </div>

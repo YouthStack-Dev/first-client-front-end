@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, UsersRound, History } from 'lucide-react';
+import { UserPlus, UsersRound, History, Trash } from 'lucide-react';
 import DepartmentForm from '@components/departments/DepartmentForm';
 import DepartmentList from '@components/departments/DepartmentList';
 import { useDispatch, useSelector } from 'react-redux';
@@ -13,6 +13,7 @@ import SearchInput from '@components/ui/SearchInput';
 import AuditLogModal from '@components/departments/AuditLogModal';
 import Modal from '@components/modals/Modal';
 import { toast } from 'react-toastify';
+import ReusableButton from '../components/ui/ReusableButton';
 
 const ManageDepartment = () => {
   const navigate = useNavigate();
@@ -182,22 +183,28 @@ const ManageDepartment = () => {
         }
         rightElements={
           <div className="flex items-center gap-3">
-            <button
-              onClick={handleHistoryClick}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg shadow hover:bg-gray-700 transition"
-              title="View Audit History"
-            >
-              <History size={17} />
-              History
-            </button>
+       
 
-            <button
-              className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
-              onClick={() => navigate('/employees/create')}
-            >
-              <UserPlus size={17} />
-              Employee
-            </button>
+                      <ReusableButton
+                             module="team"
+                              action="delete"
+                              buttonName={"History"}
+                              icon={History}
+                              title="Delete Team"
+                              onClick={() =>  alert('Default: No function provided')}
+                              className="text-white  bg-blue-600 p-2 rounded-md"
+                              />
+
+<ReusableButton
+  module="employee"
+  action="create"
+  buttonName="Employee"
+  icon={UserPlus}
+  title="Create Employee"
+  onClick={() => navigate('/employees/create')}
+  className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+/>
+
           </div>
         }
       />
