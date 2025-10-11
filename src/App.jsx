@@ -22,9 +22,8 @@ import CompanyDashboard from "./companies/CompanyDashboard";
 import RoleManagement from "./pages/RoleManagement";
 import RouteManagement from "./pages/RouteManagement";
 import Schedulemanagement from "./pages/Schedulemanagement";
-import CutoffManagement from "./components/Schedulemanagement/CutoffManagement";
 import ShiftForm from "./components/Schedulemanagement/ShiftForm";
-import ScheduledBookings from "./components/RouteManagement/ScheduledBookings";
+import ScheduledBookingsCopy from "./components/RouteManagement/ScheduledBookingsCopy";
 
 function App() {
 
