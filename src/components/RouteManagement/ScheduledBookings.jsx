@@ -1,158 +1,288 @@
 import React, { useEffect, useState } from "react";
+import ScheduleBooks from "../../staticData/ScheduleBooks";
 import ToolBar from "../ui/ToolBar";
+import ScheduleList from "./ScheduleList";
 import { API_CLIENT } from "../../Api/API_Client";
-import ScheduledBookingsList from "./ScheduledBookingsList";
 
-const ScheduledBookings = () => {
-  const [selectedDate, setSelectedDate] = useState("");
+const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate: initialSelectedDate }) => {
+  const [selectedDate, setSelectedDate] = useState(initialSelectedDate || new Date().toISOString().split('T')[0]);
   const [selectedShiftType, setSelectedShiftType] = useState("All");
-  const [bookings, setBookings] = useState([]);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [selectedShift, setSelectedShift] = useState(null);
+  const [shiftBookings, setShiftBookings] = useState([]);
+  const [selectedOption, setSelectedOption] = useState("Select option");
   const [loading, setLoading] = useState(false);
-// bookings/get-scheduled-bookings?companyId=3&date=2025-09-06
-  // fetch bookings when date changes
-  useEffect(() => {
-    const fetchBookings = async () => {
-      if (!selectedDate) return; // don’t fetch until a date is chosen
-      setLoading(true);
-      try {
-        const response = await API_CLIENT.get("api/bookings/get-scheduled-bookings", {
-          params: { date: selectedDate, companyId: 1 }
-        });
-        setBookings(response.data.bookings);
-        console.log("Bookings fetched:", response.data.bookings);
-      } catch (error) {
-        console.error("Error fetching bookings:", error);
-      } finally {
-        setLoading(false);
+  const [error, setError] = useState(null);
+
+  const [hasRoutesPermission] = useState(true);
+  const [hasTripSheetsPermission] = useState(false);
+
+  const shiftOptions = [
+    "Select option",
+    "Generate Route",
+    "Inter Shift Copy",
+    "Update Pickup Time",
+    "Delete Route",
+    "Download",
+    "Upload Vehicle",
+  ];
+
+  // 🔹 Fetch shifts data from backend API
+  const fetchShiftsData = async (date) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Replace with your actual API endpoint
+      const response = await API_CLIENT.get(`/admin/shift-bookings/?date=${date}`);
+      
+     
+      
+      const {data} = await response.data
+
+      if (response.status === 200) {
+        // Transform the API response to match the expected format
+        
+        setShiftBookings(data.shifts || []);
+      } else {
+        throw new Error(data.message || "Failed to fetch shifts data");
       }
-    };
-
-    fetchBookings();
-  }, [selectedDate, selectedShiftType]); // re-fetch on date or shift type change
-
-  const [bookingsData, setBookingsData] = useState([
-    {
-      id: 1,
-      shiftType: 'LOGIN',
-      shiftTime: '08:00 AM',
-      status: 'Scheduled',
-      routesCount: 5,
-      vendorCount: 3,
-      vehicleCount: 8,
-      employeeCount: 12,
-      routes: [
-        { id: 'R001', vendor: 'Vendor A', vehicle: 'KA-01-AB-1234' },
-        { id: 'R002', vendor: 'Vendor B', vehicle: 'KA-02-CD-5678' },
-        { id: 'R003', vendor: 'Vendor C', vehicle: 'KA-03-EF-9012' },
-        { id: 'R004', vendor: 'Vendor A', vehicle: 'KA-04-GH-3456' },
-        { id: 'R005', vendor: 'Vendor D', vehicle: 'KA-05-IJ-7890' }
-      ],
-      vendors: [
-        { id: 'V001', name: 'Vendor A', routes: ['R001', 'R004'] },
-        { id: 'V002', name: 'Vendor B', routes: ['R002'] },
-        { id: 'V003', name: 'Vendor C', routes: ['R003'] },
-        { id: 'V004', name: 'Vendor D', routes: ['R005'] }
-      ],
-      vehicles: [
-        { id: 'VH001', number: 'KA-01-AB-1234', route: 'R001' },
-        { id: 'VH002', number: 'KA-02-CD-5678', route: 'R002' },
-        { id: 'VH003', number: 'KA-03-EF-9012', route: 'R003' },
-        { id: 'VH004', number: 'KA-04-GH-3456', route: 'R004' },
-        { id: 'VH005', number: 'KA-05-IJ-7890', route: 'R005' },
-        { id: 'VH006', number: 'KA-06-KL-1357' },
-        { id: 'VH007', number: 'KA-07-MN-2468' },
-        { id: 'VH008', number: 'KA-08-OP-3690' }
-      ],
-      employees: [
-        { id: 'E001', name: 'Rajesh Kumar', phone: '9876543210', gender: 'Male', office: 'Main Branch', pickup: 'MG Road', drop: 'Electronic City' },
-        { id: 'E002', name: 'Priya Sharma', phone: '8765432109', gender: 'Female', office: 'Downtown Branch', pickup: 'Indiranagar', drop: 'Whitefield' },
-        { id: 'E003', name: 'Amit Patel', phone: '7654321098', gender: 'Male', office: 'Main Branch', pickup: 'Jayanagar', drop: 'HSR Layout' },
-        { id: 'E004', name: 'Sneha Reddy', phone: '6543210987', gender: 'Female', office: 'City Center', pickup: 'Koramangala', drop: 'BTM Layout' },
-        { id: 'E005', name: 'Vikram Singh', phone: '5432109876', gender: 'Male', office: 'Main Branch', pickup: 'Yeshwanthpur', drop: 'Malleswaram' },
-        { id: 'E006', name: 'Anjali Mehta', phone: '4321098765', gender: 'Female', office: 'Downtown Branch', pickup: 'Hebbal', drop: 'Yelahanka' }
-      ]
-    },
-    {
-      id: 2,
-      shiftType: 'LOGOUT',
-      shiftTime: '05:00 PM',
-      status: 'Pending',
-      routesCount: 2,
-      vendorCount: 1,
-      vehicleCount: 4,
-      employeeCount: 8,
-      routes: [
-        { id: 'R101', vendor: 'Vendor X', vehicle: 'KA-09-QR-1122' },
-        { id: 'R102', vendor: 'Vendor X', vehicle: 'KA-10-ST-3344' }
-      ],
-      vendors: [
-        { id: 'V101', name: 'Vendor X', routes: ['R101', 'R102'] }
-      ],
-      vehicles: [
-        { id: 'VH101', number: 'KA-09-QR-1122', route: 'R101' },
-        { id: 'VH102', number: 'KA-10-ST-3344', route: 'R102' },
-        { id: 'VH103', number: 'KA-11-UV-5566' },
-        { id: 'VH104', number: 'KA-12-WX-7788' }
-      ],
-      employees: [
-        { id: 'E101', name: 'Rahul Verma', phone: '3210987654', gender: 'Male', office: 'Main Branch', pickup: 'Silk Board', drop: 'Marathahalli' },
-        { id: 'E102', name: 'Neha Gupta', phone: '2109876543', gender: 'Female', office: 'City Center', pickup: 'KR Puram', drop: 'Tin Factory' },
-        { id: 'E103', name: 'Sanjay Joshi', phone: '1098765432', gender: 'Male', office: 'Downtown Branch', pickup: 'Banashankari', drop: 'Jayanagar' },
-        { id: 'E104', name: 'Pooja Desai', phone: '0987654321', gender: 'Female', office: 'Main Branch', pickup: 'HSR Layout', drop: 'Bellandur' }
-      ]
+    } catch (err) {
+      console.error("Error fetching shifts data:", err);
+      setError(err.message);
+      // Fallback to static data if API fails
+      if (ScheduleBooks[selectedDate]?.TimeShifts) {
+        setShiftBookings(ScheduleBooks[selectedDate].TimeShifts);
+      } else {
+        setShiftBookings([]);
+      }
+    } finally {
+      setLoading(false);
     }
-  ]);
-
-  // Function to handle actions from the child component
-  const handleGenerateRoute = (bookingId) => {
-    console.log(`Generating route for booking ${bookingId}`);
-    // Your implementation for generating routes
   };
 
-  const handleDeleteRoute = (bookingId) => {
-    console.log(`Deleting booking ${bookingId}`);
-    setBookingsData(prev => prev.filter(booking => booking.id !== bookingId));
+  // 🔹 Load shifts when selected date changes
+  useEffect(() => {
+    fetchShiftsData(selectedDate);
+  }, [selectedDate]);
+
+  // 🔹 Apply filter: In / Out
+  useEffect(() => {
+    if (ScheduleBooks[selectedDate]?.TimeShifts) {
+      let shifts = ScheduleBooks[selectedDate].TimeShifts;
+
+      if (selectedShiftType !== "All") {
+        shifts = shifts.filter((shift) =>
+          selectedShiftType === "In"
+            ? shift.bookingType === "LOGIN"
+            : shift.bookingType === "LOGOUT"
+        );
+      }
+
+      setShiftBookings(shifts);
+    }
+  }, [selectedDate, selectedShiftType]);
+
+  const handleButtonClick = (shift) => {
+    setSelectedShift(shift);
+    setShowBookingModal(true);
   };
+
+  const handleRoutingView = (shift) => {
+    setRoutingData(shift?.routes || []);
+    toggleRouting("routing");
+  };
+
+  const getVendorCount = (routes = []) =>
+    routes.filter((r) => r.vendorId).length;
+  const getVehicleCount = (routes = []) =>
+    routes.filter((r) => r.vehicleId).length;
+
+  const totalLogin = shiftBookings
+    .filter((s) => s.bookingType === "LOGIN")
+    .reduce((sum, s) => sum + (s.bookings?.length || 0), 0);
+
+  const totalLogout = shiftBookings
+    .filter((s) => s.bookingType === "LOGOUT")
+    .reduce((sum, s) => sum + (s.bookings?.length || 0), 0);
+
+  const handleShiftOption = (option, shift) => {
+    if (!shift) return;
+    switch (option) {
+      case "Generate Route":
+        console.log("Generating route for", shift.shift);
+        break;
+      case "Delete Route":
+        console.log("Deleting route for", shift.shift);
+        break;
+      default:
+        console.log(option, shift.shift);
+    }
+  };
+
+  const visiblePanelsCount =
+    Number(hasRoutesPermission) + Number(hasTripSheetsPermission);
+
+  // ---------------- Toolbar ----------------
+  const topToolbar = (
+    <ToolBar
+      className="mb-6"
+      leftElements={
+        <div className="flex items-center gap-4">
+          {/* Date Input */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600">Date</label>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-1 text-sm"
+            />
+          </div>
+          
+          {/* Shift Type Dropdown */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600">Shift Type</label>
+            <select
+              value={selectedShiftType}
+              onChange={(e) => setSelectedShiftType(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-1 text-sm"
+            >
+              <option value="All">All</option>
+              <option value="In">LogIn</option>
+              <option value="Out">LogOut</option>
+            </select>
+          </div>
+        </div>
+      }
+    />
+  );
+
   return (
-    <div>
-      <ToolBar
-        className="p-4 bg-white border rounded shadow-sm mb-4"
-        leftElements={
-          <div className="flex items-center gap-4">
-            {/* Date Input */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">Date</label>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-1 text-sm"
-              />
-            </div>
+    <div className="bg-gray-50">
+      <div className="mx-auto px-2 py-1">
+        {/* Top Toolbar */}
+        {topToolbar}
 
-            {/* Shift Type Dropdown */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">Shift Type</label>
-              <select
-                value={selectedShiftType}
-                onChange={(e) => setSelectedShiftType(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-1 text-sm"
-              >
-                <option value="All">All</option>
-                <option value="In">LogIn</option>
-                <option value="Out">LogOut</option>
-              </select>
+        {/* Loading and Error States */}
+        {loading && (
+          <div className="text-center py-4">
+            <p>Loading shifts data...</p>
+          </div>
+        )}
+        
+        {error && (
+          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+            <p>Error: {error}. Using fallback data.</p>
+          </div>
+        )}
+
+        {/* Panels */}
+        {visiblePanelsCount > 0 ? (
+          <div
+            className={`grid ${
+              visiblePanelsCount === 2 ? "lg:grid-cols-2" : "grid-cols-1"
+            } gap-6`}
+          >
+            {hasRoutesPermission && (
+              <ScheduleList
+                shiftBookings={shiftBookings}
+                totalLogin={totalLogin}
+                totalLogout={totalLogout}
+                hasRoutesPermission={hasRoutesPermission}
+                selectedOption={selectedOption}
+                setSelectedOption={setSelectedOption}
+                shiftOptions={shiftOptions}
+                handleShiftOption={handleShiftOption}
+                handleButtonClick={handleButtonClick}
+                handleRoutingView={handleRoutingView}
+                getVendorCount={getVendorCount}
+                getVehicleCount={getVehicleCount}
+                selectedShift={selectedShift}
+              />
+            )}
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow p-6 text-center">
+            <h2 className="text-lg font-semibold text-gray-700">
+              No Panels Available
+            </h2>
+            <p className="text-gray-500 mt-2">
+              You don't have permission to view any panels.
+            </p>
+          </div>
+        )}
+
+        {/* Booking Modal */}
+        {showBookingModal && selectedShift && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl mx-4 overflow-hidden">
+              {/* Modal Header */}
+              <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Booking Details - {selectedShift.shift} (
+                  {selectedShift.bookingType})
+                </h3>
+                <button
+                  onClick={() => setShowBookingModal(false)}
+                  className="text-gray-500 hover:text-gray-700 transition"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-4 max-h-[70vh] overflow-y-auto">
+                <table className="min-w-full divide-y divide-gray-200 table-fixed">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      {[
+                        "ID",
+                        "Name",
+                        "Phone",
+                        "Gender",
+                        "Actual Office",
+                        "Pickup Location",
+                        "Drop Location",
+                      ].map((col) => (
+                        <th
+                          key={col}
+                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                        >
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {selectedShift.bookings.length === 0 ? (
+                      <tr>
+                        <td colSpan={7}
+                          className="text-center py-4 text-gray-500" >
+                          No bookings available
+                        </td>
+                      </tr>
+                    ) : (
+                      selectedShift.bookings.map((booking) => (
+                        <tr key={booking.id}
+                          className="hover:bg-gray-50 transition">
+                          <td className="px-4 py-3 text-sm">{booking.id}</td>
+                          <td className="px-4 py-3 text-sm">{booking.customer?.name}</td>
+                          <td className="px-4 py-3 text-sm">{booking.customer?.phoneNo} </td>
+                          <td className="px-4 py-3 text-sm">{booking.customer?.gender} </td>
+                          <td className="px-4 py-3 text-sm break-words max-w-xs">{booking.customer?.address}</td>
+                          <td className="px-4 py-3 text-sm break-words max-w-xs">{booking.pickupAddress}</td>
+                          <td className="px-4 py-3 text-sm break-words max-w-xs"> {booking.dropAddress}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        }
-      />
-
-      {/* Bookings Display */}
-      <ScheduledBookingsList 
-        bookings={bookingsData}
-        onGenerateRoute={handleGenerateRoute}
-        onDeleteRoute={handleDeleteRoute}
-      />
+        )}
+      </div>
     </div>
   );
 };

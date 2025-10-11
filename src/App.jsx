@@ -23,8 +23,7 @@ import RoleManagement from "./pages/RoleManagement";
 import RouteManagement from "./pages/RouteManagement";
 import Schedulemanagement from "./pages/Schedulemanagement";
 import CutoffManagement from "./components/Schedulemanagement/CutoffManagement";
-import ShiftForm from "./components/Schedulemanagement/ShiftForm";
-import ScheduledBookingsCopy from "./components/RouteManagement/ScheduledBookingsCopy";
+import ScheduledBookings from "./components/RouteManagement/ScheduledBookings";
 
 function App() {
 
@@ -135,7 +134,6 @@ function App() {
             <Route path="departments" element={<ManageDepartment />} />
             <Route path="/shift-categories" element={<ManageDepartment />} />
             <Route path="/shifts" element={<Schedulemanagement />} />
-            <Route path="/shifts/:id/edit" element={<ShiftForm mode="edit" />} />
             <Route path="/role-management" element={<RoleManagement/>} />
             <Route path="/manage-drivers" element={<DriverManagement/>} />
             <Route path="/manage-company" element={<ManageDepartment />} />
@@ -151,7 +149,8 @@ function App() {
             <Route path="/tracking" element={<h1> This is the screen of Tracking </h1>} />
             <Route path="/bookings" element={<h1> This is the screen of Booking </h1>} />
             <Route path="/routing" element={<RouteManagement/>} />
-            <Route path="/pra" element={<ScheduledBookingsCopy/>} />
+         {/* /   <Route path="/routing-management" element={<RoutingManagement />} /> */}
+            <Route path="/pra" element={<ScheduledBookings/>} />
             <Route path="/audit-report" element={<h1> This is the screen of audit-report </h1>} />
           </Route>
         </Route>
