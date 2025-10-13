@@ -133,10 +133,8 @@ const VehicleList = ({
 const ManageVehicles = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [vehicleModal, setVehicleModal] = useState(false);
-  const [filters, setFilters] = useState({
-    rc_number: "",
-    is_active: null,
-  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isActiveFilter, setIsActiveFilter] = useState(null);
   const [editVehicle, setEditVehicle] = useState(null);
   const [vehicles, setVehicles] = useState([]);
 
@@ -173,12 +171,20 @@ const ManageVehicles = () => {
 
   const filteredVehicles = vehicles
     .filter((v) =>
-      filters.rc_number
-        ? v.rc_number.toLowerCase().includes(filters.rc_number.toLowerCase())
+      searchTerm
+        ? (
+            v.rc_number +
+            " " +
+            v.vehicleType +
+            " " +
+            v.driverName
+          )
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
         : true
     )
     .filter((v) =>
-      filters.is_active !== null ? v.isActive === filters.is_active : true
+      isActiveFilter !== null ? v.isActive === isActiveFilter : true
     );
 
   const itemsPerPage = 10;
@@ -209,31 +215,26 @@ const ManageVehicles = () => {
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 bg-white shadow-sm p-4 rounded-lg">
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          {/* Search */}
+          {/* Unified Search */}
           <div className="relative w-full sm:w-64">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search size={18} className="text-gray-400" />
             </div>
             <input
               type="text"
-              placeholder="Search RC Number..."
-              value={filters.rc_number}
-              onChange={(e) =>
-                setFilters({ ...filters, rc_number: e.target.value })
-              }
+              placeholder="Search RC, Vehicle Type, or Driver..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
             />
           </div>
 
           {/* Status Dropdown */}
           <select
-            value={filters.is_active === null ? "" : filters.is_active.toString()}
+            value={isActiveFilter === null ? "" : isActiveFilter.toString()}
             onChange={(e) => {
               const value = e.target.value;
-              setFilters({
-                ...filters,
-                is_active: value === "" ? null : value === "true",
-              });
+              setIsActiveFilter(value === "" ? null : value === "true");
             }}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full sm:w-auto"
           >
