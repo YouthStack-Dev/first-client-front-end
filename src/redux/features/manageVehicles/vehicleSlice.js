@@ -1,18 +1,23 @@
-import { createSlice } from "@reduxjs/toolkit";
-import { fetchVehiclesThunk } from "./vehicleThunks";
+// src/redux/features/manageVehicles/vehicleSlice.js
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { API_CLIENT } from '../../../Api/API_Client'; // adjust path
+import { fetchVehiclesThunk } from './vehicleThunk'; // your thunk
 
-const initialState = {
+export const initialState = {
   entities: {},      // vehicle_id -> vehicle object
   ids: [],           // all vehicle IDs
+  drivers: {},       // driver_id -> driver object
+  vendors: {},       // vendor_id -> vendor object
+  vehicleTypes: {},  // vehicle_type_id -> vehicle type object
   loading: false,
   error: null,
   hasFetched: false,
   filters: {
-    rc_number: "",
-    vehicle_type_id: "",
-    driver_id: "",
-    is_active: "",
-    vendor_id: "",
+    rc_number: '',
+    vehicle_type_id: 'all',
+    driver_id: 'all',
+    is_active: 'all',
+    vendor_id: 'all',
   },
   pagination: {
     skip: 0,
@@ -21,28 +26,28 @@ const initialState = {
 };
 
 const vehicleSlice = createSlice({
-  name: "vehicles",
+  name: 'vehicles',
   initialState,
   reducers: {
     // --- Filter actions ---
     setRcNumberFilter: (state, action) => {
-      state.filters.rc_number = action.payload || "";
+      state.filters.rc_number = action.payload || '';
       state.pagination.skip = 0;
     },
     setVehicleTypeFilter: (state, action) => {
-      state.filters.vehicle_type_id = action.payload || "";
+      state.filters.vehicle_type_id = action.payload || 'all';
       state.pagination.skip = 0;
     },
     setDriverFilter: (state, action) => {
-      state.filters.driver_id = action.payload || "";
+      state.filters.driver_id = action.payload || 'all';
       state.pagination.skip = 0;
     },
     setStatusFilter: (state, action) => {
-      state.filters.is_active = action.payload || "";
+      state.filters.is_active = action.payload || 'all';
       state.pagination.skip = 0;
     },
     setVendorFilter: (state, action) => {
-      state.filters.vendor_id = action.payload || "";
+      state.filters.vendor_id = action.payload || 'all';
       state.pagination.skip = 0;
     },
     resetFilters: (state) => {
@@ -52,26 +57,25 @@ const vehicleSlice = createSlice({
 
     // --- Pagination ---
     setPage: (state, action) => {
-      const page = action.payload || 1;
-      state.pagination.skip = (page - 1) * state.pagination.limit;
+      state.pagination.skip = (action.payload - 1) * state.pagination.limit;
     },
 
-    // --- Data actions ---
+    // --- Data management ---
     addVehicle: (state, action) => {
       const vehicle = action.payload;
-      if (vehicle && vehicle.id) {
-        state.entities[vehicle.id] = vehicle;
-        if (!state.ids.includes(vehicle.id)) state.ids.push(vehicle.id);
+      if (vehicle?.vehicle_id) {
+        state.entities[vehicle.vehicle_id] = vehicle;
+        if (!state.ids.includes(vehicle.vehicle_id)) state.ids.push(vehicle.vehicle_id);
       }
     },
     updateVehicle: (state, action) => {
       const vehicle = action.payload;
-      if (vehicle && vehicle.id) {
-        state.entities[vehicle.id] = {
-          ...state.entities[vehicle.id],
+      if (vehicle?.vehicle_id) {
+        state.entities[vehicle.vehicle_id] = {
+          ...state.entities[vehicle.vehicle_id],
           ...vehicle,
         };
-        if (!state.ids.includes(vehicle.id)) state.ids.push(vehicle.id);
+        if (!state.ids.includes(vehicle.vehicle_id)) state.ids.push(vehicle.vehicle_id);
       }
     },
     removeVehicle: (state, action) => {
@@ -89,20 +93,33 @@ const vehicleSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchVehiclesThunk.fulfilled, (state, action) => {
-        const vehicles = action.payload || [];
+        const vehicles = action.payload?.items || [];
+        const vehicleTypes = {};
+        const drivers = {};
+        const vendors = {};
 
-        // Merge instead of replace (for incremental fetch)
-        vehicles.forEach(v => {
-          if (v.id) state.entities[v.id] = v;
-          if (!state.ids.includes(v.id) && v.id) state.ids.push(v.id);
+        vehicles.forEach((v) => {
+          const id = v.vehicle_id;
+          if (!id) return;
+
+          state.entities[id] = v;
+          if (!state.ids.includes(id)) state.ids.push(id);
+
+          if (v.driver_id && v.driver_name) drivers[v.driver_id] = { driver_id: v.driver_id, driver_name: v.driver_name };
+          if (v.vendor_id && v.vendor_name) vendors[v.vendor_id] = { vendor_id: v.vendor_id, vendor_name: v.vendor_name };
+          if (v.vehicle_type_id && v.vehicle_type_name) vehicleTypes[v.vehicle_type_id] = { vehicle_type_id: v.vehicle_type_id, vehicle_type_name: v.vehicle_type_name };
         });
+
+        state.drivers = { ...state.drivers, ...drivers };
+        state.vendors = { ...state.vendors, ...vendors };
+        state.vehicleTypes = { ...state.vehicleTypes, ...vehicleTypes };
 
         state.loading = false;
         state.hasFetched = true;
       })
       .addCase(fetchVehiclesThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Failed to fetch vehicles";
+        state.error = action.payload || 'Failed to fetch vehicles';
       });
   },
 });

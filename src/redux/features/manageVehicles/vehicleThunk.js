@@ -1,29 +1,43 @@
+// vehicleThunks.js
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { API_CLIENT } from "../../../Api/API_Client";
 
 export const fetchVehiclesThunk = createAsyncThunk(
   "vehicles/fetchVehicles",
-  async (
-    { skip = 0, limit = 10, rc_number = "", vehicle_type_id = "", driver_id = "", is_active = "", vendor_id = "" } = {},
-    { rejectWithValue }
-  ) => {
+  async (_, { getState, rejectWithValue }) => {
     try {
-      const params = new URLSearchParams({ skip, limit });
+      const { filters, pagination } = getState().vehicles;
 
-      if (rc_number) params.append("rc_number", rc_number);
-      if (vehicle_type_id) params.append("vehicle_type_id", vehicle_type_id);
-      if (driver_id) params.append("driver_id", driver_id);
-      if (is_active) params.append("is_active", is_active);
-      if (vendor_id) params.append("vendor_id", vendor_id);
+      // Build params, skipping 'all' values
+      const params = {
+        skip: pagination.skip,
+        limit: pagination.limit,
+      };
 
-      const response = await API_CLIENT.get(`/v1/vehicles/?${params.toString()}`);
-
-      if (response.status === 200 && response.data?.success) {
-        return response.data.data.items; // ✅ return array of vehicles
+      if (filters.rc_number) params.rc_number = filters.rc_number;
+      if (filters.vehicle_type_id && filters.vehicle_type_id !== "all") {
+        params.vehicle_type_id = filters.vehicle_type_id;
       }
-      return rejectWithValue(response.data?.message || "Failed to fetch vehicles");
-    } catch (error) {
-      return rejectWithValue(error.message || "An unexpected error occurred");
+      if (filters.driver_id && filters.driver_id !== "all") {
+        params.driver_id = filters.driver_id;
+      }
+      if (filters.is_active && filters.is_active !== "all") {
+        params.is_active = filters.is_active === "true"; // convert string to boolean
+      }
+      if (filters.vendor_id && filters.vendor_id !== "all") {
+        params.vendor_id = filters.vendor_id;
+      }
+
+      const response = await API_CLIENT.get("/v1/vehicles/", { params });
+
+      if (!response.data?.success) {
+        return rejectWithValue(response.data?.message || "Failed to fetch vehicles");
+      }
+
+      // Return raw API response
+      return response.data.data; // { total, items }
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
     }
   }
 );
