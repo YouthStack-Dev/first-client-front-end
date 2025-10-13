@@ -34,47 +34,47 @@ const DriverManagement = () => {
   const [error, setError] = useState(null);
 
 
-  const fetchDrivers = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await API_CLIENT.get(`/drivers`, {
-        params: {
-          status: filters.driverStatus,
-          vendorId: filters.vendorId === 'All' ? null : filters.vendorId,
-          search: searchTerm || null
-        }
-      });
-      setDrivers(response.data);
-      setFilteredDrivers(response.data); // Initially, all drivers are shown
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch drivers');
-      console.error('Error fetching drivers:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const fetchDrivers = async () => {
+  //   setLoading(true);
+  //   setError(null);
+  //   try {
+  //     const response = await API_CLIENT.get(`/drivers`, {
+  //       params: {
+  //         status: filters.driverStatus,
+  //         vendorId: filters.vendorId === 'All' ? null : filters.vendorId,
+  //         search: searchTerm || null
+  //       }
+  //     });
+  //     setDrivers(response.data);
+  //     setFilteredDrivers(response.data); // Initially, all drivers are shown
+  //   } catch (err) {
+  //     setError(err.response?.data?.message || 'Failed to fetch drivers');
+  //     console.error('Error fetching drivers:', err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   // Fetch vendors from API
-  const fetchVendors = async () => {
-    try {
-      const response = await API_CLIENT.get(`/vendors`);
-      setVendors(response.data.vendors);
-    } catch (err) {
-      console.error('Error fetching vendors:', err);
-    }
-  };
+  // const fetchVendors = async () => {
+  //   try {
+  //     const response = await API_CLIENT.get(`/vendors`);
+  //     setVendors(response.data.vendors);
+  //   } catch (err) {
+  //     console.error('Error fetching vendors:', err);
+  //   }
+  // };
 
   // Initial data fetch
-  useEffect(() => {
-    fetchVendors();
-    fetchDrivers();
-  }, []);
+  // useEffect(() => {
+  //   fetchVendors();
+  //   fetchDrivers();
+  // }, []);
 
   // Refetch drivers when filters or search term changes
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchDrivers();
+      // fetchDrivers();
     }, 300); // Debounce to avoid too many API calls
     
     return () => clearTimeout(timer);
@@ -95,14 +95,14 @@ const DriverManagement = () => {
       const formData = new FormData();
       formData.append('file', file);
       
-      const response = await axios.post(`${API_BASE_URL}/drivers/upload`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      // const response = await axios.post(`${API_BASE_URL}/drivers/upload`, formData, {
+      //   headers: {
+      //     'Content-Type': 'multipart/form-data'
+      //   }
+      // });
       
       // Refresh drivers after successful upload
-      fetchDrivers();
+      // fetchDrivers();
       return { success: true, message: 'Bulk upload successful' };
     } catch (err) {
       return { 
@@ -124,8 +124,8 @@ const DriverManagement = () => {
 
   const onDelete = async (driverId) => {
     try {
-      await axios.delete(`${API_BASE_URL}/drivers/${driverId}`);
-      fetchDrivers(); // Refresh the list
+      // await axios.delete(`${API_BASE_URL}/drivers/${driverId}`);
+      // fetchDrivers(); // Refresh the list
     } catch (err) {
       console.error('Error deleting driver:', err);
     }
@@ -133,8 +133,8 @@ const DriverManagement = () => {
 
   const onStatusToggle = async (driverId, status) => {
     try {
-      await axios.patch(`${API_BASE_URL}/drivers/${driverId}/status`, { status });
-      fetchDrivers(); // Refresh the list
+      // await axios.patch(`${API_BASE_URL}/drivers/${driverId}/status`, { status });
+      // fetchDrivers(); // Refresh the list
     } catch (err) {
       console.error('Error updating driver status:', err);
     }
@@ -143,11 +143,11 @@ const DriverManagement = () => {
   const onSave = async (driverData) => {
     try {
       if (modalState.isEditing) {
-        await axios.put(`${API_BASE_URL}/drivers/${driverData.id}`, driverData);
+        // await axios.put(`${API_BASE_URL}/drivers/${driverData.id}`, driverData);
       } else {
-        await axios.post(`${API_BASE_URL}/drivers`, driverData);
+        // await axios.post(`${API_BASE_URL}/drivers`, driverData);
       }
-      fetchDrivers(); // Refresh the list
+      // fetchDrivers(); // Refresh the list
       setModalState({ show: false, isEditing: false, editData: null });
     } catch (err) {
       console.error('Error saving driver:', err);

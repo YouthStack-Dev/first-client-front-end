@@ -29,9 +29,11 @@ const ManageVehicleTypes = () => {
   // Local state for optimistic toggle
   const [localStatus, setLocalStatus] = useState({});
 
-  useEffect(() => {
+useEffect(() => {
+  if (!vehicleTypes || vehicleTypes.length === 0) {
     dispatch(fetchVehicleTypes());
-  }, [dispatch]);
+  }
+}, [dispatch]);
 
   const filteredVehicleTypes = vehicleTypes.filter((vt) => {
     if (!vt) return false;

@@ -8,7 +8,6 @@ import {
   Eye,
 } from "lucide-react";
 import { Modal } from "../SmallComponents";
-import ToolBar from "../ui/ToolBar";
 import VehicleForm from "./VehicleForm";
 
 const VehicleList = ({
@@ -20,7 +19,6 @@ const VehicleList = ({
   isLoading,
   handleEdit,
   handleView,
-  handleToggleStatus,
 }) => {
   return (
     <div className="rounded-lg border bg-white shadow-sm mt-4">
@@ -29,15 +27,15 @@ const VehicleList = ({
           <thead className="bg-gray-100 sticky top-0 z-10">
             <tr className="text-left text-gray-700">
               <th className="px-4 py-2">S. No.</th>
-              <th className="px-4 py-2">Vehicle Id</th>
-              <th className="px-4 py-2">Vehicle No.</th>
-              <th className="px-4 py-2">Model</th>
-              <th className="px-4 py-2">Contract Type</th>
+              <th className="px-4 py-2">Vehicle Type</th>
               <th className="px-4 py-2">Vendor</th>
+              <th className="px-4 py-2">RC Number</th>
               <th className="px-4 py-2">Driver</th>
-              <th className="px-4 py-2">Garage Name</th>
-              <th className="px-4 py-2">Device IMEI</th>
-              <th className="px-4 py-2">Device SIM</th>
+              <th className="px-4 py-2">RC Expiry</th>
+              <th className="px-4 py-2">Insurance Expiry</th>
+              <th className="px-4 py-2">Permit Expiry</th>
+              <th className="px-4 py-2">PUC Expiry</th>
+              <th className="px-4 py-2">Fitness Expiry</th>
               <th className="px-4 py-2 text-center">Actions</th>
             </tr>
           </thead>
@@ -60,46 +58,36 @@ const VehicleList = ({
                   <td className="px-4 py-2">
                     {index + 1 + (currentPage - 1) * 10}
                   </td>
-                  <td className="px-4 py-2">{vehicle.vehicleId}</td>
-                  <td className="px-4 py-2">{vehicle.registrationNo}</td>
-                  <td className="px-4 py-2">{vehicle.model}</td>
-                  <td className="px-4 py-2">{vehicle.contractType}</td>
-                  <td className="px-4 py-2">{vehicle.vendor}</td>
-                  <td className="px-4 py-2">
-                    {vehicle.driverName} ({vehicle.driverMobile})
-                  </td>
-                  <td className="px-4 py-2">{vehicle.garageName}</td>
-                  <td className="px-4 py-2">{vehicle.deviceImei}</td>
-                  <td className="px-4 py-2">{vehicle.simNumber}</td>
+                  <td className="px-4 py-2">{vehicle.vehicleType || "-"}</td>
+                  <td className="px-4 py-2">{vehicle.vendor || "-"}</td>
+                  <td className="px-4 py-2">{vehicle.rc_number || "-"}</td>
+                  <td className="px-4 py-2">{vehicle.driverName || "-"}</td>
+                  <td className="px-4 py-2">{vehicle.rc_expiry_date || "-"}</td>
+                  <td className="px-4 py-2">{vehicle.insurance_expiry_date || "-"}</td>
+                  <td className="px-4 py-2">{vehicle.permit_expiry_date || "-"}</td>
+                  <td className="px-4 py-2">{vehicle.puc_expiry_date || "-"}</td>
+                  <td className="px-4 py-2">{vehicle.fitness_expiry_date || "-"}</td>
                   <td className="px-4 py-2 text-center">
-                  <div className="flex justify-center items-center gap-2">
-  {/* View */}
-  <button
-    onClick={() => handleView(vehicle)}
-    className="flex items-center gap-1 px-3 py-1 text-sm border rounded text-gray-600 border-gray-400 hover:bg-gray-50"
-  >
-    <Eye size={14} />
-    
-  </button>
-
-  {/* Edit */}
-  <button
-    onClick={() => handleEdit(vehicle)}
-    className="flex items-center gap-1 px-3 py-1 text-sm border rounded text-blue-600 border-blue-600 hover:bg-blue-50"
-  >
-    <Edit size={14} />
-   
-  </button>
-
-  {/* Delete */}
-  <button
-    onClick={() => handleDelete(vehicle)}
-    className="flex items-center gap-1 px-3 py-1 text-sm border rounded text-red-600 border-red-600 hover:bg-red-50"
-  >
-    <Trash2 size={14} />
-  </button>
-</div>
-
+                    <div className="flex justify-center items-center gap-2">
+                      <button
+                        onClick={() => handleView(vehicle)}
+                        className="flex items-center gap-1 px-3 py-1 text-sm border rounded text-gray-600 border-gray-400 hover:bg-gray-50"
+                      >
+                        <Eye size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleEdit(vehicle)}
+                        className="flex items-center gap-1 px-3 py-1 text-sm border rounded text-blue-600 border-blue-600 hover:bg-blue-50"
+                      >
+                        <Edit size={14} />
+                      </button>
+                      <button
+                        onClick={() => console.log("delete", vehicle.id)}
+                        className="flex items-center gap-1 px-3 py-1 text-sm border rounded text-red-600 border-red-600 hover:bg-red-50"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -145,49 +133,58 @@ const VehicleList = ({
 const ManageVehicles = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [vehicleModal, setVehicleModal] = useState(false);
-  const [viewActive, setViewActive] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isActiveFilter, setIsActiveFilter] = useState(null);
   const [editVehicle, setEditVehicle] = useState(null);
   const [vehicles, setVehicles] = useState([]);
 
   useEffect(() => {
-    // Dummy data initialization
     setVehicles([
       {
         id: "v1",
-        vehicleId: "V12345",
-        registrationNo: "KA01AB1234",
-        model: "Hyundai i20",
-        contractType: "Lease",
+        vehicleType: "Truck",
         vendor: "ABC Motors",
+        rc_number: "KA01AB1234",
         driverName: "John Doe",
-        driverMobile: "9876543210",
-        garageName: "AutoFix Garage",
-        deviceImei: "123456789012345",
-        simNumber: "9876543210",
+        rc_expiry_date: "2025-12-31",
+        insurance_expiry_date: "2025-11-30",
+        permit_expiry_date: "2025-10-31",
+        puc_expiry_date: "2025-09-30",
+        fitness_expiry_date: "2026-01-15",
         isActive: true,
       },
       {
         id: "v2",
-        vehicleId: "V54321",
-        registrationNo: "KA05CD5678",
-        model: "Tata Nexon",
-        contractType: "Owned",
+        vehicleType: "Trailer",
         vendor: "XYZ Fleet",
+        rc_number: "KA05CD5678",
         driverName: "Jane Smith",
-        driverMobile: "9123456789",
-        garageName: "Speed Garage",
-        deviceImei: "987654321098765",
-        simNumber: "9123456789",
+        rc_expiry_date: "2025-08-31",
+        insurance_expiry_date: "2025-07-30",
+        permit_expiry_date: "2025-06-30",
+        puc_expiry_date: "2025-05-31",
+        fitness_expiry_date: "2025-12-20",
         isActive: false,
       },
     ]);
   }, []);
 
   const filteredVehicles = vehicles
-    .filter((v) => v.isActive === viewActive)
     .filter((v) =>
-      v.registrationNo?.toLowerCase().includes(searchTerm.toLowerCase())
+      searchTerm
+        ? (
+            v.rc_number +
+            " " +
+            v.vehicleType +
+            " " +
+            v.driverName
+          )
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
+        : true
+    )
+    .filter((v) =>
+      isActiveFilter !== null ? v.isActive === isActiveFilter : true
     );
 
   const itemsPerPage = 10;
@@ -198,9 +195,7 @@ const ManageVehicles = () => {
   );
 
   useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(1);
-    }
+    if (currentPage > totalPages) setCurrentPage(1);
   }, [filteredVehicles.length, totalPages]);
 
   const onPrev = () => currentPage > 1 && setCurrentPage(currentPage - 1);
@@ -210,15 +205,6 @@ const ManageVehicles = () => {
     setEditVehicle(vehicle);
     setVehicleModal(true);
   };
-
-  const handleToggleStatus = (vehicle) => {
-    const updatedVehicles = vehicles.map((v) =>
-      v.id === vehicle.id ? { ...v, isActive: !v.isActive } : v
-    );
-    setVehicles(updatedVehicles);
-  };
-
-
   const handleView = (vehicle) => {
     setEditVehicle(vehicle);
     setVehicleModal(true);
@@ -226,32 +212,47 @@ const ManageVehicles = () => {
 
   return (
     <div className="p-4 space-y-4">
-  
-  <ToolBar
-  className="mb-4 bg-white shadow-sm p-2 rounded-lg"
-  
-  leftContent={
-    <div className="flex items-center gap-2 w-full md:w-80">
-      <Search className="text-gray-500" size={18} />
-      <input
-        type="text"
-        placeholder="Search by Registration Number"
-        value={searchTerm}
-        onChange={(e) => {
-          setSearchTerm(e.target.value);
-          setCurrentPage(1);
-        }}
-        className="border border-gray-300 rounded-md px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
-  }
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 bg-white shadow-sm p-4 rounded-lg">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          {/* Unified Search */}
+          <div className="relative w-full sm:w-64">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search size={18} className="text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search RC, Vehicle Type, or Driver..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
+            />
+          </div>
 
-  onAddClick={()=> setVehicleModal(true)}
-  addButtonLabel="Add"
-/>
+          {/* Status Dropdown */}
+          <select
+            value={isActiveFilter === null ? "" : isActiveFilter.toString()}
+            onChange={(e) => {
+              const value = e.target.value;
+              setIsActiveFilter(value === "" ? null : value === "true");
+            }}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full sm:w-auto"
+          >
+            <option value="">All Status</option>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
 
+        {/* Add Vehicle Button */}
+        <button
+          onClick={() => setVehicleModal(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 w-full sm:w-auto"
+        >
+          Add Vehicle
+        </button>
+      </div>
 
-      {/* Table */}
       <VehicleList
         vehicles={paginatedVehicles}
         onNext={onNext}
@@ -261,10 +262,8 @@ const ManageVehicles = () => {
         isLoading={false}
         handleEdit={handleEdit}
         handleView={handleView}
-        handleToggleStatus={handleToggleStatus}
       />
 
-      {/* Modal */}
       <Modal
         isOpen={vehicleModal}
         onClose={() => setVehicleModal(false)}
@@ -275,7 +274,6 @@ const ManageVehicles = () => {
           defaultValues={editVehicle}
           onSuccess={() => setVehicleModal(false)}
         />
-
       </Modal>
     </div>
   );
