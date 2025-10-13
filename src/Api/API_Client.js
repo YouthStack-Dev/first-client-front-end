@@ -6,13 +6,12 @@ const baseURL = import.meta.env.VITE_API_URL;
 
 // Create Axios instance
 export const API_CLIENT = axios.create({
-  baseURL:'https://api.gocab.tech/api',
+  baseURL: "https://api.gocab.tech/api",
 });
 
 // Add request interceptor
 
 API_CLIENT.interceptors.request.use(
-  
   (config) => {
     const token = Cookies.get("auth_token"); // Replace with your actual cookie name
 
@@ -27,7 +26,7 @@ API_CLIENT.interceptors.request.use(
       data: config.data,
       params: config.params,
     });
-    
+
     return config;
   },
   (error) => {
@@ -35,7 +34,6 @@ API_CLIENT.interceptors.request.use(
     return Promise.reject(error);
   }
 );
-
 
 // Add response interceptor
 API_CLIENT.interceptors.response.use(

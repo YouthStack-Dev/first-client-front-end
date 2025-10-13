@@ -12,13 +12,13 @@ const Layout = ({ type }) => {
   const [isPinned, setIsPinned] = useState(false);
   const [mounted, setMounted] = useState(false);
   const mainContentRef = useRef(null);
-  
+
   const user = useSelector(selectCurrentUser);
-  const authLoading = useSelector((state)=>state.auth.loading);
+  const authLoading = useSelector((state) => state.auth.loading);
   const location = useLocation();
 
-  logDebug("Current User in Layout:", user);
-  logDebug("loading state", authLoading);
+  // // logDebug("Current User in Layout:", user);
+  // logDebug("loading state", authLoading);
 
   useEffect(() => {
     setMounted(true);
@@ -42,7 +42,7 @@ const Layout = ({ type }) => {
   }, [sidebarOpen]);
 
   const toggleSidebar = useCallback(() => {
-    setSidebarOpen(prev => !prev);
+    setSidebarOpen((prev) => !prev);
   }, []);
 
   const closeSidebar = useCallback(() => {
@@ -73,7 +73,9 @@ const Layout = ({ type }) => {
   if (type !== user.type) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <h2 className="text-xl font-semibold animate-pulse">Unauthorized Access</h2>
+        <h2 className="text-xl font-semibold animate-pulse">
+          Unauthorized Access
+        </h2>
       </div>
     );
   }

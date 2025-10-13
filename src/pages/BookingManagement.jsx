@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ProfileCard from "../components/ProfileCard";
 import { Calendar, Clock, History } from "lucide-react";
 import MultiDateCalendar from "@components/MultiDateCalendar";
@@ -6,19 +6,79 @@ import ShiftSelector from "@components/ShiftSelector";
 import BookingHistory from "@components/BookingHistory";
 import { useLocation } from "react-router-dom";
 import { logDebug } from "../utils/logger";
+import { API_CLIENT } from "../Api/API_Client";
+import endpoint from "../Api/Endpoints";
 
 export default function BookingManagement() {
-  const [step, setStep] = useState("welcome"); // 'welcome', 'calendar', 'shift', 'history'
+  const [step, setStep] = useState("welcome");
   const [selectedDates, setSelectedDates] = useState([]);
   const [selectedShiftId, setSelectedShiftId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const location = useLocation(); // ✅ This is what you were missing
-  const { employee } = location.state || {}; // safely extract employee
+  const [restrictedDays, setRestrictedDays] = useState([]); // State for restricted days
+  const [restrictedDates, setRestrictedDates] = useState([]); // State for holiday dates
+  const location = useLocation();
+  const { employee } = location.state || {};
 
   logDebug("Employee in BookingManagement:", employee);
 
-  // Example data (replace with real data)
-  const restrictedDays = [0, 6]; // Sunday (0) and Saturday (6)
+  // Function to convert weekoff config to restricted days array
+  const convertWeekOffToRestrictedDays = (weekoffConfig) => {
+    const dayMapping = {
+      sunday: 0,
+      monday: 1,
+      tuesday: 2,
+      wednesday: 3,
+      thursday: 4,
+      friday: 5,
+      saturday: 6,
+    };
+
+    const restricted = [];
+
+    Object.keys(dayMapping).forEach((day) => {
+      if (weekoffConfig[day] === true) {
+        restricted.push(dayMapping[day]);
+      }
+    });
+
+    logDebug("Converted restricted days:", restricted);
+    return restricted;
+  };
+
+  async function fetchWeekOffs() {
+    try {
+      const response = await API_CLIENT.get(
+        `${endpoint.getWeekOff}${employee.employee_id}`
+      );
+
+      logDebug("Week off response:", response.data.data.weekoff_config);
+
+      if (response.data.success && response.data.data.weekoff_config) {
+        const weekoffConfig = response.data.data.weekoff_config;
+
+        // Convert API response to restricted days format
+        const convertedRestrictedDays =
+          convertWeekOffToRestrictedDays(weekoffConfig);
+        setRestrictedDays(convertedRestrictedDays);
+
+        // You can also fetch holidays from another API if available
+        // For now, using static holidays as example
+        setRestrictedDates(["2024-12-25", "2024-01-01", "2024-07-04"]);
+      }
+    } catch (error) {
+      console.error("Error fetching week offs:", error);
+      // Fallback to default restricted days if API fails
+      setRestrictedDays([0, 6]); // Default: Sunday and Saturday
+    }
+  }
+
+  useEffect(() => {
+    if (employee?.employee_id) {
+      fetchWeekOffs();
+    }
+  }, [employee?.employee_id]);
+
+  // Example data
   const monthsForward = 3;
   const shifts = [
     {
@@ -43,7 +103,7 @@ export default function BookingManagement() {
       type: "IN",
     },
   ];
-  const bookingHistory = []; // Your booking history data
+  const bookingHistory = [];
 
   // 🟦 Book shift handler
   const handleBookShift = () => {
@@ -76,7 +136,6 @@ export default function BookingManagement() {
   const handleBookingSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // Your booking submission logic here
       console.log("Booking details:", {
         employeeId: employee.employee_id,
         dates: selectedDates,
@@ -184,8 +243,8 @@ export default function BookingManagement() {
                   <li className="flex items-start gap-2">
                     <span className="text-blue-600 font-bold">2.</span>
                     <span>
-                      Select a date range on the calendar (weekends are
-                      automatically excluded)
+                      Select a date range on the calendar (your configured week
+                      off days are automatically excluded)
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
@@ -217,11 +276,12 @@ export default function BookingManagement() {
                   Select Date Range
                 </h2>
                 <p className="text-gray-600">
-                  Click on two dates to select a range. Restricted days will be
-                  automatically excluded.
+                  Click on two dates to select a range. Your week off days and
+                  holidays will be automatically excluded.
                 </p>
               </div>
               <MultiDateCalendar
+                restrictedDates={restrictedDates}
                 selectedDates={selectedDates}
                 onDateSelect={setSelectedDates}
                 restrictedDays={restrictedDays}

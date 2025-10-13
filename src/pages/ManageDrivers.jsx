@@ -1,23 +1,36 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Plus } from 'lucide-react';
-import { useDispatch, useSelector } from 'react-redux';
-import { DriverList } from '@components/driver/DriverList';
-import ToolBar from '@components/ui/ToolBar';
-import Pagination from '@components/ui/Pagination';
-import FilterBadges from '@components/ui/FilterBadges';
-import StatusIndicator from '@components/ui/StatusIndicator';
-import { API_CLIENT } from '../Api/API_Client';
-import {  
-  setSearchTerm, setVendorFilter, setStatusFilter, setVerificationFilter, resetFilters,
-  setPage, setDriversLoading, setDriversError, setDriversData, updateDriverStatus, 
-  selectPaginatedDrivers, selectLoading, selectError, selectStatusOptions,
-  selectVerificationOptions, selectActiveFilters, selectCounts, selectFilteredDrivers
-} from '../redux/features/manageDriver/driverSlice';
-import DriverForm from '@components/driver/DriverForm';
-import Modal from '@components/modals/Modal';
-import ConfirmationModal from '@components/modals/ConfirmationModal';
-import { fetchDriversByVendorThunk } from '../redux/features/manageDriver/driverThunks';
-
+import React, { useEffect, useRef, useState } from "react";
+import { Plus } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { DriverList } from "@components/driver/DriverList";
+import ToolBar from "@components/ui/ToolBar";
+import Pagination from "@components/ui/Pagination";
+import FilterBadges from "@components/ui/FilterBadges";
+import StatusIndicator from "@components/ui/StatusIndicator";
+import { API_CLIENT } from "../Api/API_Client";
+import {
+  setSearchTerm,
+  setVendorFilter,
+  setStatusFilter,
+  setVerificationFilter,
+  resetFilters,
+  setPage,
+  setDriversLoading,
+  setDriversError,
+  setDriversData,
+  updateDriverStatus,
+  selectPaginatedDrivers,
+  selectLoading,
+  selectError,
+  selectStatusOptions,
+  selectVerificationOptions,
+  selectActiveFilters,
+  selectCounts,
+  selectFilteredDrivers,
+} from "../redux/features/manageDriver/driverSlice";
+import DriverForm from "@components/driver/DriverForm";
+import Modal from "@components/modals/Modal";
+import ConfirmationModal from "@components/modals/ConfirmationModal";
+import { fetchDriversByVendorThunk } from "../redux/features/manageDriver/driverThunks";
 
 function ManageDrivers() {
   const dispatch = useDispatch();
@@ -29,51 +42,57 @@ function ManageDrivers() {
   const verificationOptions = useSelector(selectVerificationOptions);
   const activeFilters = useSelector(selectActiveFilters);
   const counts = useSelector(selectCounts);
-  const { vendorId } = useSelector(state => state.vendor);
+  const { vendorId } = useSelector((state) => state.vendor);
   // Modal and form state
   const [showModal, setShowModal] = useState(false);
-  const [formMode, setFormMode] = useState('create'); // 'create', 'edit', 'view'
+  const [formMode, setFormMode] = useState("create"); // 'create', 'edit', 'view'
   const [selectedDriver, setSelectedDriver] = useState(null);
-  
+
   // Existing selectors
 
-  const statusFilterValue = useSelector(state => state.drivers.filters.statusFilter);
-  const verificationFilterValue = useSelector(state => state.drivers.filters.verificationFilter);
-  const searchTermValue = useSelector(state => state.drivers.filters.searchTerm);
-  const paginationSkip = useSelector(state => state.drivers.pagination.skip);
-  const paginationLimit = useSelector(state => state.drivers.pagination.limit);
-  const filteredDriversLength = useSelector(state => selectFilteredDrivers(state).length);
+  const statusFilterValue = useSelector(
+    (state) => state.drivers.filters.statusFilter
+  );
+  const verificationFilterValue = useSelector(
+    (state) => state.drivers.filters.verificationFilter
+  );
+  const searchTermValue = useSelector(
+    (state) => state.drivers.filters.searchTerm
+  );
+  const paginationSkip = useSelector((state) => state.drivers.pagination.skip);
+  const paginationLimit = useSelector(
+    (state) => state.drivers.pagination.limit
+  );
+  const filteredDriversLength = useSelector(
+    (state) => selectFilteredDrivers(state).length
+  );
 
-  const hasFetched = useSelector(state => state.drivers.hasFetched);
-  const allDrivers = useSelector(state => state.drivers.ids);
+  const hasFetched = useSelector((state) => state.drivers.hasFetched);
+  const allDrivers = useSelector((state) => state.drivers.ids);
   const currentPage = Math.floor(paginationSkip / paginationLimit) + 1;
   const [confirmationModal, setConfirmationModal] = useState({
     show: false,
-    title: '',
-    message: '',
+    title: "",
+    message: "",
     onConfirm: () => {},
-    onCancel: () => {}
+    onCancel: () => {},
   });
   // Track the last fetched page to prevent refetching when going back
-const lastFetchedPage = useRef(0);
-const lastFetchedVendor = useRef(null);
+  const lastFetchedPage = useRef(0);
+  const lastFetchedVendor = useRef(null);
 
-useEffect(() => {
-  // Example using sessionStorage
-const sessionStr = sessionStorage.getItem("userPermissions"); // or your actual key
-const session = sessionStr ? JSON.parse(sessionStr) : null;
-const vendorId = session?.user?.vendor_user?.vendor_id;
+  useEffect(() => {
+    // Example using sessionStorage
+    const sessionStr = sessionStorage.getItem("userPermissions"); // or your actual key
+    const session = sessionStr ? JSON.parse(sessionStr) : null;
+    const vendorId = session?.user?.vendor_user?.vendor_id;
 
-  if (vendorId) {
-    dispatch(fetchDriversByVendorThunk({ vendor_id: vendorId }));
-  }
-}, [dispatch, vendorId]);
-
-  
+    if (vendorId) {
+      dispatch(fetchDriversByVendorThunk({ vendor_id: vendorId }));
+    }
+  }, [dispatch, vendorId]);
 
   const [vendors, setVendors] = useState([]);
-
-
 
   // useEffect(() => {
   //   // Fetch drivers if:
@@ -86,19 +105,19 @@ const vendorId = session?.user?.vendor_user?.vendor_id;
 
   // Modal handlers
   const openCreateModal = () => {
-    setFormMode('create');
+    setFormMode("create");
     setSelectedDriver(null);
     setShowModal(true);
   };
 
   const openEditModal = (driver) => {
-    setFormMode('edit');
+    setFormMode("edit");
     setSelectedDriver(driver);
     setShowModal(true);
   };
 
   const openViewModal = (driver) => {
-    setFormMode('view');
+    setFormMode("view");
     setSelectedDriver(driver);
     setShowModal(true);
   };
@@ -106,7 +125,7 @@ const vendorId = session?.user?.vendor_user?.vendor_id;
   const closeModal = () => {
     setShowModal(false);
     setSelectedDriver(null);
-    setFormMode('create');
+    setFormMode("create");
   };
 
   const handleFormSuccess = () => {
@@ -118,16 +137,22 @@ const vendorId = session?.user?.vendor_user?.vendor_id;
   const handleStatusToggle = (driver) => {
     setConfirmationModal({
       show: true,
-      title: 'Confirm Status Change',
-      message: `Are you sure you want to ${driver.is_active ? 'deactivate' : 'activate'} this driver?`,
+      title: "Confirm Status Change",
+      message: `Are you sure you want to ${
+        driver.is_active ? "deactivate" : "activate"
+      } this driver?`,
       onConfirm: async () => {
         try {
           dispatch(setDriversLoading(true));
-          await API_CLIENT.patch(`/vendors/${driver.vendor.vendor_id}/drivers/${driver.driver_id}/status`);
-          dispatch(updateDriverStatus({
-            driverId: driver.driver_id,
-            isActive: !driver.is_active
-          }));
+          await API_CLIENT.patch(
+            `/vendors/${driver.vendor.vendor_id}/drivers/${driver.driver_id}/status`
+          );
+          dispatch(
+            updateDriverStatus({
+              driverId: driver.driver_id,
+              isActive: !driver.is_active,
+            })
+          );
           // Show success message
         } catch (err) {
           dispatch(setDriversError(err.message));
@@ -138,7 +163,7 @@ const vendorId = session?.user?.vendor_user?.vendor_id;
       },
       onCancel: () => {
         setConfirmationModal({ ...confirmationModal, show: false });
-      }
+      },
     });
   };
 
@@ -156,18 +181,21 @@ const vendorId = session?.user?.vendor_user?.vendor_id;
 
   const getModalTitle = () => {
     switch (formMode) {
-      case 'create':
-        return 'Add New Driver';
-      case 'edit':
-        return 'Edit Driver';
-      case 'view':
-        return 'View Driver Details';
+      case "create":
+        return "Add New Driver";
+      case "edit":
+        return "Edit Driver";
+      case "view":
+        return "View Driver Details";
       default:
-        return 'Driver Form';
+        return "Driver Form";
     }
   };
 
-  if (loading) return <div className="flex justify-center items-center h-64">Loading...</div>;
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-64">Loading...</div>
+    );
   if (error) return <div className="text-red-500 p-4">Error: {error}</div>;
 
   return (
@@ -179,7 +207,6 @@ const vendorId = session?.user?.vendor_user?.vendor_id;
         className="mb-6"
         leftElements={
           <div className="flex flex-wrap gap-2">
-            
             {/* Status filter dropdown */}
             <div className="relative">
               <select
@@ -196,8 +223,18 @@ const vendorId = session?.user?.vendor_user?.vendor_id;
                 ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </div>
             </div>
@@ -208,7 +245,9 @@ const vendorId = session?.user?.vendor_user?.vendor_id;
                 className="appearance-none border border-gray-300 rounded-md pl-3 pr-8 py-2 text-sm 
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
                   bg-white text-gray-700 shadow-sm"
-                onChange={(e) => dispatch(setVerificationFilter(e.target.value))}
+                onChange={(e) =>
+                  dispatch(setVerificationFilter(e.target.value))
+                }
                 value={verificationFilterValue}
               >
                 {verificationOptions.map((option) => (
@@ -218,8 +257,18 @@ const vendorId = session?.user?.vendor_user?.vendor_id;
                 ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </div>
             </div>
@@ -237,8 +286,18 @@ const vendorId = session?.user?.vendor_user?.vendor_id;
         searchBar={
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <svg
+                className="h-4 w-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
             </div>
             <input
@@ -256,10 +315,7 @@ const vendorId = session?.user?.vendor_user?.vendor_id;
 
       {/* Active filters display */}
       {activeFilters.length > 0 && (
-        <FilterBadges 
-          filters={activeFilters} 
-          onClear={handleFilterReset}
-        />
+        <FilterBadges filters={activeFilters} onClear={handleFilterReset} />
       )}
 
       {/* Status indicators */}
@@ -298,7 +354,7 @@ const vendorId = session?.user?.vendor_user?.vendor_id;
         onView={openViewModal}
         onStatusToggle={handleStatusToggle}
       />
-      
+
       <Pagination
         currentPage={Math.floor(paginationSkip / paginationLimit) + 1}
         totalPages={Math.ceil(filteredDriversLength / paginationLimit)}
@@ -321,14 +377,13 @@ const vendorId = session?.user?.vendor_user?.vendor_id;
         />
       </Modal>
 
-
       <ConfirmationModal
-      show={confirmationModal.show}
-      title={confirmationModal.title}
-      message={confirmationModal.message}
-      onConfirm={confirmationModal.onConfirm}
-      onCancel={confirmationModal.onCancel}
-    />
+        show={confirmationModal.show}
+        title={confirmationModal.title}
+        message={confirmationModal.message}
+        onConfirm={confirmationModal.onConfirm}
+        onCancel={confirmationModal.onCancel}
+      />
     </div>
   );
 }
