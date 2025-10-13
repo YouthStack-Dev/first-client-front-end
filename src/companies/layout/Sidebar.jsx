@@ -4,22 +4,25 @@ import {
   Pin,
   PinOff,
 } from 'lucide-react';
-
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
-import { getFilteredSidebar } from './sidebarConfig'; // You'll need to create this
+import { getFilteredSidebar } from './sidebarConfig';
 import { logout } from '../../redux/features/auth/authSlice';
 import { logDebug } from '../../utils/logger';
 
-// Skeleton Loading Components
+// Skeleton Loading Components using react-loading-skeleton
 const SkeletonMenuItem = ({ isOpen }) => (
   <div className="px-4 py-2.5 rounded-sidebar">
     <div className="flex items-center">
-      <div className="w-5 h-5 bg-sidebar-primary-100 rounded animate-pulse"></div>
+      <Skeleton circle width={20} height={20} baseColor="#374151" highlightColor="#4B5563" />
       {isOpen && (
-        <div className="ml-3 h-4 bg-sidebar-primary-100 rounded animate-pulse w-24"></div>
+        <div className="ml-3">
+          <Skeleton width={96} height={16} baseColor="#374151" highlightColor="#4B5563" />
+        </div>
       )}
     </div>
   </div>
@@ -29,11 +32,11 @@ const SkeletonHeader = ({ isOpen }) => (
   <div className="p-4 border-b border-sidebar-primary-200/30 flex items-center justify-between">
     {isOpen ? (
       <>
-        <div className="h-6 bg-sidebar-primary-100 rounded animate-pulse w-48"></div>
-        <div className="w-4 h-4 bg-sidebar-primary-100 rounded animate-pulse"></div>
+        <Skeleton width={192} height={24} baseColor="#374151" highlightColor="#4B5563" />
+        <Skeleton circle width={16} height={16} baseColor="#374151" highlightColor="#4B5563" />
       </>
     ) : (
-      <div className="w-8 h-8 bg-sidebar-primary-100 rounded animate-pulse mx-auto"></div>
+      <Skeleton circle width={32} height={32} baseColor="#374151" highlightColor="#4B5563" />
     )}
   </div>
 );
@@ -46,11 +49,12 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   
+  
   // Get auth state from Redux
   const { permissions, loading: authLoading, isAuthenticated } = useSelector((state) => state.auth);
-  let user = sessionStorage.getItem("userPermissions");
-  // const permissions = user ? JSON.parse(user) : [];
-  logDebug(" This are the permission in the Sidebar",permissions );
+  
+  logDebug("These are the permissions in the Sidebar", permissions);
+
   // Generate filtered sidebar based on permissions
   useEffect(() => {
     if (permissions && permissions?.length > 0) {
@@ -132,7 +136,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
           {isOpen && (
             <>
               <h2 className="text-xl font-bold text-white">
-                MLT ETS Management
+                Company Management
               </h2>
               {!isMobile && (
                 <button 
@@ -151,10 +155,12 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
       {/* Navigation Section */}
       <nav className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-sidebar-primary-200 scrollbar-track-transparent">
         {isLoading ? (
+          // Skeleton loading state
           Array.from({ length: 6 }).map((_, index) => (
             <SkeletonMenuItem key={index} isOpen={isOpen} />
           ))
         ) : (
+          // Actual sidebar content
           sidebarConfig.map((group) => (
             <div key={group.title} className="mb-4">
               {/* Group Title */}
@@ -264,7 +270,12 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
       {/* Footer Section */}
       <div className="p-4 border-t border-sidebar-primary-200/30 bg-sidebar-primary-800/50 backdrop-blur-sm">
         {isLoading ? (
-          <div className="w-full h-10 bg-sidebar-primary-100 rounded-sidebar animate-pulse"></div>
+          <Skeleton 
+            height={40} 
+            baseColor="#374151" 
+            highlightColor="#4B5563" 
+            borderRadius="0.5rem"
+          />
         ) : (
           <button
             onClick={handleLogout}
@@ -278,29 +289,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
         )}
       </div>
 
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-fadeIn {
-          animation: fadeIn 0.2s ease-out;
-        }
-        
-        .scrollbar-thin::-webkit-scrollbar {
-          width: 6px;
-        }
-        
-        .scrollbar-thumb-sidebar-primary-200::-webkit-scrollbar-thumb {
-          background-color: theme('colors.sidebar.primary.200');
-          border-radius: 3px;
-        }
-        
-        .scrollbar-track-transparent::-webkit-scrollbar-track {
-          background: transparent;
-        }
-      `}</style>
+ 
     </aside>
   );
 };

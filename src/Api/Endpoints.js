@@ -10,5 +10,6 @@
     updateEmployee:'/v1/employees/',
     getWeekOff:'/v1/weekoff-configs/',
     updateWeekOff:'/v1/weekoff-configs/',
+    toggleEmployeStatus:"/v1/employees/"
 }
 export default endpoint

@@ -148,9 +148,9 @@ const ManageDepartment = () => {
     }
   };
 
-  const handleViewEmployees = (departmentId, isActive, depname) => {
+  const handleViewEmployees = (departmentId, isActive, depname ,memberCount) => {
     navigate(`/department/${departmentId}/employees?active=${isActive}`,{
-      state: { isActive, depname ,departmentId }
+      state: { isActive, depname ,departmentId ,memberCount }
     });
   };
 

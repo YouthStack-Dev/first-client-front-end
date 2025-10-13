@@ -181,7 +181,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
           {isOpen && (
             <>
               <h2 className="text-xl font-bold text-white">
-                MLT ETS Management
+                Company Management
               </h2>
               {!isMobile && (
                 <button 

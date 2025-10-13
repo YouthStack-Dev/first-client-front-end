@@ -21,7 +21,6 @@ const ReusableButton = ({
     const userPermissions = sessionStorage.getItem('userPermissions');
     if (userPermissions) {
       const { permissions } = JSON.parse(userPermissions) || [];
-      logDebug('User Permissions:', permissions);
       return permissions;
     }
     return [];

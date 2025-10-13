@@ -24,6 +24,8 @@ import RouteManagement from "./pages/RouteManagement";
 import Schedulemanagement from "./pages/Schedulemanagement";
 import CutoffManagement from "./components/Schedulemanagement/CutoffManagement";
 import ScheduledBookings from "./components/RouteManagement/ScheduledBookings";
+import ProfilePage from "./pages/ProfilePage";
+import BookingManagement from "./pages/BookingManagement";
 
 function App() {
 
@@ -51,6 +53,15 @@ function App() {
         {/* Company Login */}
         <Route 
           path="/" 
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          } 
+        />
+
+          <Route 
+          path="/employee" 
           element={
             <PublicRoute>
               <Login />
@@ -109,7 +120,7 @@ function App() {
             />
           } 
         >
-          <Route element={<VendorLayout />}>
+          <Route element={<VendorLayout type={"vendor"} />}>
             <Route path="dashboard" element={<h1>Vendor Dashboard</h1>} />
             <Route path="employees" element={<ManageEmployees />} />
            
@@ -118,6 +129,9 @@ function App() {
             <Route path="reports" element={<h1>Vendor Reports</h1>} />
           </Route>
         </Route>
+
+
+
 
         {/* ================= COMPANY ROUTES ================= */}
         <Route 
@@ -129,8 +143,9 @@ function App() {
             />
           } 
         >
-          <Route element={<Layout />}>
+          <Route element={<Layout type={"employee"} />}>
             <Route path="/dashboard" element={<CompanyDashboard/>} />
+            <Route path="/profile" element={<ProfilePage/>} />
             <Route path="departments" element={<ManageDepartment />} />
             <Route path="/shift-categories" element={<ManageDepartment />} />
             <Route path="/shifts" element={<Schedulemanagement />} />
@@ -149,6 +164,8 @@ function App() {
             <Route path="/tracking" element={<h1> This is the screen of Tracking </h1>} />
             <Route path="/bookings" element={<h1> This is the screen of Booking </h1>} />
             <Route path="/routing" element={<RouteManagement/>} />
+            <Route path="/employee/:employee_id/bookings" element={<BookingManagement/>} />
+
          {/* /   <Route path="/routing-management" element={<RoutingManagement />} /> */}
             <Route path="/pra" element={<ScheduledBookings/>} />
             <Route path="/audit-report" element={<h1> This is the screen of audit-report </h1>} />

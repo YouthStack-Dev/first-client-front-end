@@ -138,7 +138,7 @@ export const Login = () => {
   <div className="w-1/8 h-1/3 bg-white rounded-lg flex items-center justify-center mr-4 overflow-hidden">
     <img 
       src="/icons/logo.jpeg" 
-      alt="MLT ETS Logo" 
+      alt="Company Logo" 
       className="w-full h-full object-contain"
     />
   </div>

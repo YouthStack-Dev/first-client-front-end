@@ -20,27 +20,27 @@ import {
   
   // Base sidebar configuration
   export const baseSidebarConfig = [
-    {
-      title: 'Operations',
-      items: [
-        {
-          title: 'Bookings',
-          icon: Calendar,
-           path: '/bookings',
-           permission: 'booking.read',
-           icon: Calendar
+    // {
+    //   title: 'Operations',
+    //   items: [
+    //     {
+    //       title: 'Bookings',
+    //       icon: Calendar,
+    //        path: '/bookings',
+    //        permission: 'booking.read',
+    //        icon: Calendar
           
-        },
-        {
-          title: 'Route Bookings',
-          icon: Route,
-          subItems: [
-            { title: 'Route Booking List', path: '/route-bookings', permission: 'route-booking.read', icon: Route },
-            { title: 'Create Route Booking', path: '/route-bookings/create', permission: 'route-booking.create', icon: Route }
-          ]
-        }
-      ]
-    },
+    //     },
+    //     {
+    //       title: 'Route Bookings',
+    //       icon: Route,
+    //       subItems: [
+    //         { title: 'Route Booking List', path: '/route-bookings', permission: 'route-booking.read', icon: Route },
+    //         { title: 'Create Route Booking', path: '/route-bookings/create', permission: 'route-booking.create', icon: Route }
+    //       ]
+    //     }
+    //   ]
+    // },
     {
       title: 'Resources',
       items: [
@@ -112,14 +112,14 @@ import {
     {
       title: 'Administration',
       items: [
-        {
-          title: 'Weekoff Config',
-          icon: CalendarOff,
-          subItems: [
-            { title: 'Configuration', path: '/weekoff-config', permission: 'weekoff-config.read', icon: CalendarOff },
-            { title: 'Manage Config', path: '/weekoff-config/manage', permission: 'weekoff-config.create', icon: CalendarOff }
-          ]
-        },
+        // {
+        //   title: 'Weekoff Config',
+        //   icon: CalendarOff,
+        //   subItems: [
+        //     { title: 'Configuration', path: '/weekoff-config', permission: 'weekoff-config.read', icon: CalendarOff },
+        //     { title: 'Manage Config', path: '/weekoff-config/manage', permission: 'weekoff-config.create', icon: CalendarOff }
+        //   ]
+        // },
         {
           title: 'Permissions',
           icon: Key,

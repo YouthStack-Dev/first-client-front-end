@@ -83,9 +83,9 @@ const DepartmentList = ({
                         module="team"
                         action="read"
                         icon={UserCheck}
-                        buttonName={department?.active_employee_count?.toString() || "0"}
+                        buttonName={department?.active_employee_count  || 0}
                         title="View Active Employees"
-                        onClick={() => onViewEmployees(department?.team_id, true, department?.name)}
+                        onClick={() => onViewEmployees(department?.team_id, true, department?.name  ,department.active_employee_count)}
                         className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-green-200 transition-colors"
                       />
                       </td>
@@ -94,9 +94,9 @@ const DepartmentList = ({
   module="team"
   action="read"
   icon={UserX}
-  buttonName={(department?.inactive_employee_count || 0).toString()}
+  buttonName={(department?.inactive_employee_count || 0)} 
   title="View Inactive Employees"
-  onClick={() => onViewEmployees(department?.team_id, false, department?.name)}
+  onClick={() => onViewEmployees(department?.team_id, false, department?.name ,department.inactive_employee_count)}
   className="flex items-center bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-red-200 transition-colors"
   size={14}
 />

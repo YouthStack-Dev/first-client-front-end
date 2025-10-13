@@ -182,6 +182,8 @@ const userSlice = createSlice({
       logDebug(`Cached ${employeeCodes.length} ${isActive ? 'active' : 'inactive'} employees for department ${departmentId}`);
     },
     
+
+    
     // Move employee between teams
     moveEmployee(state, action) {
       const { fromTeamId, toTeamId, employee_id } = action.payload;
@@ -208,36 +210,60 @@ const userSlice = createSlice({
         state.teams.allIds.push(dept.team_id);
       });
     },
+// Single action to handle moving from active to inactive
+moveEmployeeToInactive: (state, action) => {
+  const { departmentId } = action.payload;
+  if (state.teams.byId[departmentId]) {
+    const team = state.teams.byId[departmentId];
+    team.active_employee_count = Math.max(0, (team.active_employee_count || 0) - 1);
+    team.inactive_employee_count = (team.inactive_employee_count || 0) + 1;
+  }
+},
+
+// Single action to handle moving from inactive to active  
+moveEmployeeToActive: (state, action) => {
+  const { departmentId } = action.payload;
+  if (state.teams.byId[departmentId]) {
+    const team = state.teams.byId[departmentId];
+    team.active_employee_count = (team.active_employee_count || 0) + 1;
+    team.inactive_employee_count = Math.max(0, (team.inactive_employee_count || 0) - 1);
+  }
+},
+
+// Keep your existing updateEmployeeStatus as is
+updateEmployeeStatus: (state, action) => {
+  const { employeeId, isActive, departmentId, employeeData } = action.payload;
+  
+  // Update the employee in the global employees store
+  if (state.employees.byId[employeeId]) {
+    state.employees.byId[employeeId].is_active = isActive;
+  }
+  
+  // If we have employeeData, use it to update the employee
+  if (employeeData) {
+    state.employees.byId[employeeId] = employeeData;
+  }
+  
+  // Move employee between active/inactive lists in department cache
+  if (state.departmentEmployees[departmentId]) {
+    const department = state.departmentEmployees[departmentId];
     
-    updateEmployeeStatus: (state, action) => {
-      const { employeeId, isActive } = action.payload;
-      if (state.employees.byId[employeeId]) {
-        state.employees.byId[employeeId].is_active = isActive;
-        
-        // Update cached department lists
-        Object.keys(state.departmentEmployees).forEach(deptId => {
-          const deptCache = state.departmentEmployees[deptId];
-          
-          if (isActive) {
-            // Move from inactive to active
-            if (deptCache.inactive.includes(employeeId)) {
-              deptCache.inactive = deptCache.inactive.filter(id => id !== employeeId);
-              if (!deptCache.active.includes(employeeId)) {
-                deptCache.active.push(employeeId);
-              }
-            }
-          } else {
-            // Move from active to inactive
-            if (deptCache.active.includes(employeeId)) {
-              deptCache.active = deptCache.active.filter(id => id !== employeeId);
-              if (!deptCache.inactive.includes(employeeId)) {
-                deptCache.inactive.push(employeeId);
-              }
-            }
-          }
-        });
-      }
-    },
+    // Remove from current list
+    if (department.active) {
+      department.active = department.active.filter(id => id !== employeeId);
+    }
+    if (department.inactive) {
+      department.inactive = department.inactive.filter(id => id !== employeeId);
+    }
+    
+    // Add to appropriate list
+    if (isActive) {
+      department.active = [...(department.active || []), employeeId];
+    } else {
+      department.inactive = [...(department.inactive || []), employeeId];
+    }
+  }
+},
     
     // Clear department cache (optional, for cleanup)
     clearDepartmentCache(state, action) {
@@ -263,7 +289,10 @@ export const {
   setLastFetchedDepId,
   setDepartmentEmployees,
   updateEmployeeStatus,
-  clearDepartmentCache
+  clearDepartmentCache,
+  moveEmployeeToInactive,
+  moveEmployeeToActive
+  
 } = userSlice.actions;
 
 export default userSlice.reducer;
