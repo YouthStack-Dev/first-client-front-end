@@ -11,7 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 import ManageEmployees from "./pages/ManageEmployees";
 import VendorManagement from "./pages/VendorManagement";
 import VehicleManagement from "./pages/VehicleManagement";
-import DriverManagement from "./pages/DriverManagement";
+import ManageDrivers from "./pages/ManageDrivers";
 import SuperAdminLayout from "./superadmin/SuperAdminLayout";
 import VendorLayout from "./vendor/VendorLayout";
 import { useDispatch } from "react-redux";
@@ -112,10 +112,10 @@ function App() {
           <Route element={<VendorLayout />}>
             <Route path="dashboard" element={<h1>Vendor Dashboard</h1>} />
             <Route path="employees" element={<ManageEmployees />} />
-           
             <Route path="employees/:userId/edit" element={<EmployeeForm mode="edit" />} />
             <Route path="employees/:userId/view" element={<EmployeeForm mode="view" />} />
             <Route path="reports" element={<h1>Vendor Reports</h1>} />
+            
           </Route>
         </Route>
 
@@ -135,7 +135,7 @@ function App() {
             <Route path="/shift-categories" element={<ManageDepartment />} />
             <Route path="/shifts" element={<Schedulemanagement />} />
             <Route path="/role-management" element={<RoleManagement/>} />
-            <Route path="/manage-drivers" element={<DriverManagement/>} />
+            <Route path="/drivers" element={<ManageDrivers/>} />
             <Route path="/manage-company" element={<ManageDepartment />} />
             <Route path="/scheduling" element={<Schedulemanagement/>} />
             <Route path="employees/create" element={<EmployeeForm />} />

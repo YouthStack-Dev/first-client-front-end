@@ -3,7 +3,7 @@ import authReducer from "./features/auth/authSlice";
 import userReducer from "./features/user/userSlice";
 import shiftReducer from "./features/shift/shiftSlice";
 import vendorReducer from "./features/vendors/vendorSlice";
-import driverReducer from "./features/drivers/driverSlice";
+import driverReducer from "./features/manageDriver/driverSlice";
 import companyReducer from "./features/company/companyslice";
 import permissionsReducer from "./features/Permissions/permisssionsSlice";
 import companyVendorReducer from  "./features/companyVendor/companyVendorSlice";
@@ -16,7 +16,7 @@ const store = configureStore({
     auth: authReducer,
     user: userReducer,
     vendor: vendorReducer,
-    driver: driverReducer,
+    drivers: driverReducer,
     company: companyReducer, 
     permissions: permissionsReducer,
     companyVendor:companyVendorReducer,
