@@ -4,6 +4,7 @@ import { Calendar } from 'lucide-react';
 import { logDebug } from '@utils/logger';
 import endpoint from '@Api/Endpoints';
 import { API_CLIENT } from '@Api/API_Client';
+import ReusableButton from '../ui/ReusableButton'; // Import the reusable button
 
 const WeekOffModal = ({
   show = false,
@@ -97,12 +98,13 @@ const WeekOffModal = ({
     if (!employee) return;
 
     try {
-
       // Determine the endpoint based on update level
       const endpoints = updateLevel === 'employee' 
         ? `${endpoint.updateWeekOff}${employee.employee_id}`
         : `${endpoint.updateWeekOff}${employee.team_id}`;
-logDebug("Updating week off at endpoint:", endpoints, "with data:", weekOffData, "for level:", updateLevel);
+      
+      logDebug("Updating week off at endpoint:", endpoints, "with data:", weekOffData, "for level:", updateLevel);
+      
       // Make API call to update week off
       const response = await API_CLIENT.put(endpoints, weekOffData);
 
@@ -259,8 +261,9 @@ logDebug("Updating week off at endpoint:", endpoints, "with data:", weekOffData,
             </div>
           </div>
           
-          {/* Footer */}
+          {/* Footer - Using ReusableButton components */}
           <div className="flex justify-end space-x-3 px-6 py-4 bg-gray-50 rounded-b-xl">
+            {/* Cancel Button */}
             <button
               type="button"
               onClick={handleClose}
@@ -269,20 +272,26 @@ logDebug("Updating week off at endpoint:", endpoints, "with data:", weekOffData,
             >
               Cancel
             </button>
-            <button
-              type="submit"
+            {/* Update Week Off Button */}
+            <ReusableButton
+              module="weekoff-config"
+              action="update"
+              buttonName={
+                isProcessing 
+                  ? (isFetching ? 'Loading...' : 'Updating...') 
+                  : 'Update Week Off'
+              }
+              onClick={handleSubmit}
               disabled={isProcessing}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors flex items-center"
+              className={`px-4 py-2 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors flex items-center ${
+                isProcessing ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+              size={16}
             >
-              {isProcessing ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
-                  {isFetching ? 'Loading...' : 'Updating...'}
-                </>
-              ) : (
-                'Update Week Off'
+              {isProcessing && (
+                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
               )}
-            </button>
+            </ReusableButton>
           </div>
         </form>
       </div>

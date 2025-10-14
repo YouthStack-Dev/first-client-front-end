@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { 
-  LogOut, 
-  ChevronDown, 
-  Pin, 
-  PinOff,
-  Building2
-} from "lucide-react";
+import { LogOut, ChevronDown, Pin, PinOff, Building2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { getFilteredSidebar } from "../companies/layout/sidebarConfig";
+// import { getFilteredVendorSidebar } from "../companies/layout/sidebarConfig";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "@features/auth/authSlice";
+import { getFilteredVendorSidebar } from "./vendorSidebarConfig";
 
 // Static vendor data
 const vendorData = {
@@ -18,7 +13,7 @@ const vendorData = {
   phone: "+1 (555) 123-4567",
   totalVehicles: 45,
   activeDrivers: 38,
-  todayTrips: 12
+  todayTrips: 12,
 };
 
 const VendorSidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
@@ -26,14 +21,16 @@ const VendorSidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
   const [openDropdown, setOpenDropdown] = useState({});
   const [isMobile, setIsMobile] = useState(false);
   const [filteredMenuItems, setFilteredMenuItems] = useState([]);
-  
+
   // Get permissions from Redux store
-  const { permissions, loading: authLoading } = useSelector((state) => state.auth);
+  const { permissions, loading: authLoading } = useSelector(
+    (state) => state.auth
+  );
 
   // Filter menu items based on permissions
   useEffect(() => {
     if (permissions && !authLoading) {
-      const filtered = getFilteredSidebar(permissions);
+      const filtered = getFilteredVendorSidebar(permissions);
       setFilteredMenuItems(filtered);
     } else {
       // Optionally show empty sidebar or loading state
@@ -80,7 +77,7 @@ const VendorSidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
       setIsOpen(!isPinned);
     }
   };
-const dispatch = useDispatch();
+  const dispatch = useDispatch();
 
   const handleLogout = () => {
     dispatch(logout());
@@ -92,7 +89,7 @@ const dispatch = useDispatch();
 
   // Helper function to check if any subitem is active
   const isSubItemActive = (subItems) => {
-    return subItems.some(subItem => location.pathname === subItem.path);
+    return subItems.some((subItem) => location.pathname === subItem.path);
   };
 
   // Show loading state if permissions are still loading
@@ -117,7 +114,9 @@ const dispatch = useDispatch();
         {isOpen && (
           <>
             <div className="flex flex-col">
-              <h2 className="text-lg font-bold text-white">{vendorData.companyName}</h2>
+              <h2 className="text-lg font-bold text-white">
+                {vendorData.companyName}
+              </h2>
               <span className="text-xs text-indigo-300">Vendor Portal</span>
             </div>
             {!isMobile && (
@@ -156,18 +155,19 @@ const dispatch = useDispatch();
                   {group.title}
                 </div>
               )}
-              
+
               {/* Group Items */}
               {group.items.map((item) => {
                 const IconComponent = item.icon;
-                
+
                 if (item.subItems && item.subItems.length > 0) {
                   return (
                     <div key={item.title} className="relative">
                       <button
                         onClick={() => toggleDropdown(item.title)}
                         className={`flex items-center w-full px-3 py-2.5 rounded-lg transition-all duration-200 text-sm ${
-                          openDropdown[item.title] || isSubItemActive(item.subItems)
+                          openDropdown[item.title] ||
+                          isSubItemActive(item.subItems)
                             ? "bg-indigo-700 text-white"
                             : "hover:bg-indigo-800 text-indigo-100"
                         }`}
@@ -175,7 +175,9 @@ const dispatch = useDispatch();
                         <IconComponent className="w-5 h-5 min-w-[1.25rem]" />
                         {isOpen && (
                           <>
-                            <span className="ml-3 flex-1 text-left">{item.title}</span>
+                            <span className="ml-3 flex-1 text-left">
+                              {item.title}
+                            </span>
                             <ChevronDown
                               className={`w-4 h-4 transition-transform duration-200 ${
                                 openDropdown[item.title] ? "rotate-180" : ""

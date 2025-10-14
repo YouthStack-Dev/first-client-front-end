@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Plus } from "lucide-react";
 import { useDispatch } from "react-redux";
 import EntityModal from "@components/EntityModal";
 import AssignEntityModal from "@components/modals/AssignEntityModal";
@@ -46,26 +45,8 @@ const VendorManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">Vendor Management</h1>
-            <p className="text-gray-600">
-              Manage all registered transportation vendors
-            </p>
-          </div>
-          {/* <button
-            onClick={handleAddVendor}
-            className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Vendor
-          </button> */}
-        </div>
-
-        {/* Vendor List */}
+    <div className="min-h-screen  p-6">
+      <div className=" mx-auto">
         <VendorList onAssignEntity={handleAssignEntity} />
 
         {/* Create/Edit Vendor Modal */}
