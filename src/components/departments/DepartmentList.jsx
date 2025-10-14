@@ -15,6 +15,11 @@ import {
 } from "lucide-react";
 import ReusableButton from "../ui/ReusableButton";
 import ReusableToggleButton from "../ui/ReusableToggleButton";
+import { logDebug, logError } from "../../utils/logger";
+import { API_CLIENT } from "../../Api/API_Client";
+import endpoint from "../../Api/Endpoints";
+import { toggleTeamStatus } from "../../redux/features/user/userSlice";
+import { useDispatch } from "react-redux";
 
 const DepartmentList = ({
   departments,
@@ -27,7 +32,7 @@ const DepartmentList = ({
   onDeleteDepartment,
   onViewEmployees,
   onViewHistory,
-  onToggleDepartmentStatus,
+
   currentPage,
   totalItems,
   itemsPerPage,
@@ -49,7 +54,7 @@ const DepartmentList = ({
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
-
+  const dispatch = useDispatch();
   // Apply column filters and sorting
   const filteredAndSortedDepartments = React.useMemo(() => {
     let filtered = departments?.filter((dept) => {
@@ -163,8 +168,19 @@ const DepartmentList = ({
     }
   };
 
-  const handleStatusToggle = (departmentId, newStatus) => {
-    onToggleDepartmentStatus?.(departmentId, newStatus);
+  const handleStatusToggle = async (teamId) => {
+    try {
+      const response = await API_CLIENT.patch(
+        `${endpoint.toggleTeamStatus}${teamId}/toggle-status`
+      );
+
+      if (response.status === 200) {
+        // ✅ Update local Redux store after backend success
+        dispatch(toggleTeamStatus(teamId));
+      }
+    } catch (error) {
+      logError("Failed to toggle team status:", error);
+    }
   };
 
   const getSortIcon = (columnKey) => {
@@ -366,12 +382,7 @@ const DepartmentList = ({
                         module="team"
                         action="update"
                         isChecked={department?.is_active ?? true}
-                        onToggle={(newStatus) =>
-                          handleStatusToggle(
-                            department?.team_id || department?.id,
-                            newStatus
-                          )
-                        }
+                        onToggle={() => handleStatusToggle(department?.team_id)}
                         labels={{ on: "Active", off: "Inactive" }}
                         size="small"
                         className="scale-90"

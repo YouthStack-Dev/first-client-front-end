@@ -105,7 +105,10 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
     return () => window.removeEventListener("resize", checkMobile);
   }, [setIsPinned]);
 
-  const toggleDropdown = (menuName) => {
+  const toggleDropdown = (menuName, e) => {
+    if (e) {
+      e.stopPropagation(); // Prevent event bubbling
+    }
     setOpenDropdown((prev) => ({
       ...prev,
       [menuName]: !prev[menuName],
@@ -125,18 +128,28 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
     }
   };
 
-  const togglePin = () => {
+  const togglePin = (e) => {
+    if (e) {
+      e.stopPropagation(); // Prevent event bubbling
+    }
     if (!isMobile) {
       setIsPinned(!isPinned);
       setIsOpen(!isPinned);
     }
   };
 
-  // Close sidebar on mobile when clicking a menu item
-  const handleMenuItemClick = () => {
+  // Close sidebar on mobile when clicking a menu item - FIXED VERSION
+  const handleMenuItemClick = (e) => {
+    if (e) {
+      e.stopPropagation(); // Prevent event bubbling to parent elements
+    }
+
     if (isMobile) {
-      setIsOpen(false);
-      setOpenDropdown({});
+      // Use setTimeout to allow the navigation to happen first
+      setTimeout(() => {
+        setIsOpen(false);
+        setOpenDropdown({});
+      }, 300); // Increased delay to ensure navigation completes
     }
   };
 
@@ -153,6 +166,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
       }`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onClick={(e) => e.stopPropagation()} // Prevent click propagation from entire sidebar
     >
       {/* Header Section */}
       {isLoading ? (
@@ -183,7 +197,10 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
       )}
 
       {/* Navigation Section */}
-      <nav className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-sidebar-primary-200 scrollbar-track-transparent">
+      <nav
+        className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-sidebar-primary-200 scrollbar-track-transparent"
+        onClick={(e) => e.stopPropagation()} // Prevent click propagation from nav
+      >
         {isLoading
           ? // Skeleton loading state
             Array.from({ length: 6 }).map((_, index) => (
@@ -205,7 +222,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
                     {item.subItems && item.subItems.length > 0 ? (
                       <>
                         <button
-                          onClick={() => toggleDropdown(item.title)}
+                          onClick={(e) => toggleDropdown(item.title, e)}
                           className={`flex items-center w-full px-4 py-2.5 rounded-sidebar transition-all duration-200 group ${
                             openDropdown[item.title]
                               ? "bg-gradient-to-r from-sidebar-primary-600 to-sidebar-primary-400 text-white shadow-sidebar-item-hover"
@@ -314,7 +331,10 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
       </nav>
 
       {/* Footer Section */}
-      <div className="p-4 border-t border-sidebar-primary-200/30 bg-sidebar-primary-800/50 backdrop-blur-sm">
+      <div
+        className="p-4 border-t border-sidebar-primary-200/30 bg-sidebar-primary-800/50 backdrop-blur-sm"
+        onClick={(e) => e.stopPropagation()} // Prevent click propagation from footer
+      >
         {isLoading ? (
           <Skeleton
             height={40}
@@ -324,7 +344,10 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
           />
         ) : (
           <button
-            onClick={handleLogout}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleLogout();
+            }}
             className="flex items-center justify-center w-full px-4 py-2.5 bg-gradient-to-r from-sidebar-danger-600 to-sidebar-danger-500 text-white rounded-sidebar hover:from-sidebar-danger-700 hover:to-sidebar-danger-600 transition-all duration-200 shadow-sidebar-item hover:shadow-sidebar-item-hover group"
             aria-label="Logout"
             title="Logout"

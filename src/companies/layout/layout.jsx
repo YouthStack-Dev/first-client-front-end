@@ -11,34 +11,41 @@ const Layout = ({ type }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const sidebarRef = useRef(null);
   const mainContentRef = useRef(null);
 
   const user = useSelector(selectCurrentUser);
   const authLoading = useSelector((state) => state.auth.loading);
   const location = useLocation();
 
-  // // logDebug("Current User in Layout:", user);
-  // logDebug("loading state", authLoading);
-
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Handle outside click to close sidebar on mobile
+  // Handle outside click to close sidebar on mobile - FIXED VERSION
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        window.innerWidth < 1024 &&
-        sidebarOpen &&
-        mainContentRef.current &&
-        !mainContentRef.current.contains(event.target)
-      ) {
-        setSidebarOpen(false);
+      // Only handle mobile clicks when sidebar is open
+      if (window.innerWidth < 1024 && sidebarOpen) {
+        // Check if click is outside both sidebar and the toggle button
+        const isSidebarClick = sidebarRef.current?.contains(event.target);
+        const isToggleButtonClick = event.target.closest(
+          "[data-sidebar-toggle]"
+        );
+
+        if (!isSidebarClick && !isToggleButtonClick) {
+          setSidebarOpen(false);
+        }
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, [sidebarOpen]);
 
   const toggleSidebar = useCallback(() => {
@@ -86,12 +93,14 @@ const Layout = ({ type }) => {
         mounted ? "transition-opacity duration-500 opacity-100" : "opacity-0"
       }`}
     >
-      <Sidebar
-        isOpen={sidebarOpen}
-        setIsOpen={setSidebarOpen}
-        isPinned={isPinned}
-        setIsPinned={setIsPinned}
-      />
+      <div ref={sidebarRef}>
+        <Sidebar
+          isOpen={sidebarOpen}
+          setIsOpen={setSidebarOpen}
+          isPinned={isPinned}
+          setIsPinned={setIsPinned}
+        />
+      </div>
 
       <div
         ref={mainContentRef}

@@ -240,22 +240,23 @@ const ManageDepartment = () => {
   };
 
   const handleDelete = async (teamId) => {
-    if (window.confirm(`Are you sure you want to delete this department?`)) {
-      try {
-        await API_CLIENT.delete(`/departments/${teamId}`);
-        dispatch(removeTeam({ teamId }));
-        setSelectedDepartments((prev) => prev.filter((id) => id !== teamId));
+    alert("Delete functionality is currently disabled.");
+    // if (window.confirm(`Are you sure you want to delete this department?`)) {
+    //   try {
+    //     await API_CLIENT.delete(`/departments/${teamId}`);
+    //     dispatch(removeTeam({ teamId }));
+    //     setSelectedDepartments((prev) => prev.filter((id) => id !== teamId));
 
-        // Refresh the current page if we're left with no items after deletion
-        if (teams.length === 1 && currentPage > 1) {
-          setCurrentPage(currentPage - 1);
-        }
-        toast.success("Department deleted successfully");
-      } catch (error) {
-        console.error("Error deleting department:", error);
-        toast.error("Failed to delete department");
-      }
-    }
+    //     // Refresh the current page if we're left with no items after deletion
+    //     if (teams.length === 1 && currentPage > 1) {
+    //       setCurrentPage(currentPage - 1);
+    //     }
+    //     toast.success("Department deleted successfully");
+    //   } catch (error) {
+    //     console.error("Error deleting department:", error);
+    //     toast.error("Failed to delete department");
+    //   }
+    // }
   };
 
   const handleViewEmployees = (
