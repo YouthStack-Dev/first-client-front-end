@@ -12,6 +12,7 @@ export const initialState = {
   loading: false,
   error: null,
   hasFetched: false,
+  dataLoadedForVendor: null,
   filters: {
     rc_number: '',
     vehicle_type_id: 'all',
@@ -117,6 +118,7 @@ const vehicleSlice = createSlice({
         state.loading = false;
         state.hasFetched = true;
       })
+      
       .addCase(fetchVehiclesThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to fetch vehicles';

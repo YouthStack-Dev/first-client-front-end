@@ -61,7 +61,12 @@ const CutoffManagement = () => {
       <HeaderWithActionNoRoute title="Cutoff Management" extraButtons={[]} />
 
       {status === "loading" && <p className="text-gray-600">Loading...</p>}
-      {status === "failed" && <p className="text-red-600">Error: {error}</p>}
+      {status === "failed" && (
+        <p className="text-red-600">
+          Error: {typeof error === "string" ? error : error?.message || JSON.stringify(error)}
+        </p>
+      )}
+
 
       {data && (
         <>

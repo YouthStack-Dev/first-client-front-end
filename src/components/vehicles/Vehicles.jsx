@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Edit,
@@ -10,21 +10,21 @@ import {
 } from "lucide-react";
 import { Modal } from "../SmallComponents";
 import VehicleForm from "./VehicleForm";
-import {fetchVehiclesThunk} from "../../redux/features/manageVehicles/vehicleThunk";
+
+import { fetchVehiclesThunk } from "../../redux/features/manageVehicles/vehicleThunk";
 import {
   setRcNumberFilter,
   setStatusFilter,
   setPage,
-  setVendorFilter,
 } from "../../redux/features/manageVehicles/vehicleSlice";
 
-// Selectors come from the selectors file
 import {
   selectPaginatedVehicles,
   selectVehicleCounts,
   selectFilters,
   selectPagination,
   selectLoading,
+  selectHasFetched,
 } from "../../redux/features/manageVehicles/vehicleSelectors";
 
 const VehicleList = ({
@@ -71,7 +71,9 @@ const VehicleList = ({
           ) : (
             vehicles.map((vehicle, index) => (
               <tr key={vehicle.vehicle_id} className="border-t hover:bg-gray-50">
-                <td className="px-4 py-2">{index + 1 + (currentPage - 1) * 10}</td>
+                <td className="px-4 py-2">
+                  {index + 1 + (currentPage - 1) * 10}
+                </td>
                 <td className="px-4 py-2">{vehicle.vehicle_type_name || "-"}</td>
                 <td className="px-4 py-2">{vehicle.vendor_name || "-"}</td>
                 <td className="px-4 py-2">{vehicle.rc_number || "-"}</td>
@@ -116,8 +118,7 @@ const VehicleList = ({
         onClick={onPrev}
         className="flex items-center gap-2 px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
       >
-        <ChevronLeft size={18} />
-        Prev
+        <ChevronLeft size={18} /> Prev
       </button>
       <span className="text-sm text-gray-700 font-medium">
         Page {currentPage} of {totalPages}
@@ -126,8 +127,7 @@ const VehicleList = ({
         onClick={onNext}
         className="flex items-center gap-2 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
       >
-        Next
-        <ChevronRight size={18} />
+        Next <ChevronRight size={18} />
       </button>
     </div>
   </div>
@@ -140,25 +140,17 @@ const ManageVehicles = () => {
   const pagination = useSelector(selectPagination);
   const { total } = useSelector(selectVehicleCounts);
   const loading = useSelector(selectLoading);
-
+  const hasFetched = useSelector(selectHasFetched);
 
   const [vehicleModal, setVehicleModal] = useState(false);
   const [editVehicle, setEditVehicle] = useState(null);
 
-
-useEffect(() => {
-  dispatch(fetchVehiclesThunk());
-}, [
-  dispatch,
-  filters.rc_number,
-  filters.vehicle_type_id,
-  filters.driver_id,
-  filters.is_active,
-  filters.vendor_id,
-  pagination.skip,
-  pagination.limit,
-]);
-
+  // --- Fetch once on mount ---
+  useEffect(() => {
+    if (!hasFetched) {
+      dispatch(fetchVehiclesThunk());
+    }
+  }, [dispatch, hasFetched]);
 
   const totalPages = Math.ceil(total / pagination.limit) || 1;
 
@@ -173,7 +165,7 @@ useEffect(() => {
 
   const onPrev = () => {
     if (pagination.skip > 0)
-      dispatch(setPage((pagination.skip / pagination.limit)));
+      dispatch(setPage(pagination.skip / pagination.limit));
   };
   const onNext = () => {
     const nextPage = pagination.skip / pagination.limit + 2;
@@ -185,7 +177,7 @@ useEffect(() => {
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 bg-white shadow-sm p-4 rounded-lg">
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          {/* Unified Search */}
+          {/* Search RC Number */}
           <div className="relative w-full sm:w-64">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search size={18} className="text-gray-400" />

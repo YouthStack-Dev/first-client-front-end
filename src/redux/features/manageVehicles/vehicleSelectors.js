@@ -52,16 +52,26 @@ export const selectFilteredVehicles = createSelector(
   [selectAllVehicles, selectFilters],
   (vehicles, filters) => {
     const { rc_number, vehicle_type_id, driver_id, is_active, vendor_id } = filters;
+
+    const rcFilter = rc_number?.toLowerCase().trim();
+
     return vehicles.filter(vehicle => {
-      const matchesRc = !rc_number || vehicle.rc_number?.toString().includes(rc_number);
-      const matchesType = !vehicle_type_id || vehicle_type_id === 'all' || vehicle.vehicle_type_id?.toString() === vehicle_type_id;
-      const matchesDriver = !driver_id || driver_id === 'all' || vehicle.driver_id?.toString() === driver_id;
-      const matchesStatus = !is_active || is_active === 'all' || vehicle.is_active === (is_active === 'true');
-      const matchesVendor = !vendor_id || vendor_id === 'all' || vehicle.vendor_id?.toString() === vendor_id;
+      if (!vehicle) return false;
+
+      const vehicleRc = vehicle.rc_number?.toLowerCase() || "";
+
+      const matchesRc = !rcFilter || vehicleRc.includes(rcFilter);
+      const matchesType = vehicle_type_id === 'all' || vehicle.vehicle_type_id?.toString() === vehicle_type_id;
+      const matchesDriver = driver_id === 'all' || vehicle.driver_id?.toString() === driver_id;
+      const matchesStatus = is_active === 'all' || vehicle.is_active === (is_active === 'true');
+      const matchesVendor = vendor_id === 'all' || vehicle.vendor_id?.toString() === vendor_id;
+
       return matchesRc && matchesType && matchesDriver && matchesStatus && matchesVendor;
     });
   }
 );
+
+
 
 // --- Paginated vehicles ---
 export const selectPaginatedVehicles = createSelector(
