@@ -1,62 +1,65 @@
-import React, { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
-import { API_CLIENT } from '../../Api/API_Client';
-import {  logError } from '../../utils/logger';
-import { fetchDepartments } from '../../redux/features/user/userTrunk';
-import { setDepartments } from '../../redux/features/user/userSlice';
-import { useDispatch } from 'react-redux';
-import endpoint from '../../Api/Endpoints';
+import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import { API_CLIENT } from "../../Api/API_Client";
+import { logDebug, logError } from "../../utils/logger";
+import { fetchDepartments } from "../../redux/features/user/userTrunk";
+import { setDepartments } from "../../redux/features/user/userSlice";
+import { useDispatch } from "react-redux";
+import endpoint from "../../Api/Endpoints";
 
 const DepartmentForm = ({ onClose, onSuccess, initialData = null }) => {
   const isEditMode = Boolean(initialData);
-  const [formData, setFormData] = useState({ name: '', description: '' });
-const dispatch = useDispatch();
+  const [formData, setFormData] = useState({ name: "", description: "" });
+  const dispatch = useDispatch();
   useEffect(() => {
     if (isEditMode) {
       setFormData({
-        name: initialData.name || '',
-        description: initialData.description || ''
+        name: initialData.name || "",
+        description: initialData.description || "",
       });
     }
   }, [isEditMode, initialData]);
 
   const handleChange = (e) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     }));
   };
 
+  logDebug("Form Data:", initialData);
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const urlpoint = isEditMode
-        ? `/departments/${initialData.id}`
+        ? `${endpoint.createTeam}${initialData.team_id}`
         : endpoint.createTeam;
-  
-      const method = isEditMode ? 'put' : 'post';
+
+      const method = isEditMode ? "put" : "post";
       const { data } = await API_CLIENT[method](urlpoint, formData);
-  
-      toast.success(isEditMode ? 'Team updated successfully' : 'Team created successfully');
-  
-      // Re-fetch full list of departments
+
+      toast.success(
+        isEditMode ? "Team updated successfully" : "Team created successfully"
+      );
+
       const departments = await fetchDepartments();
-      dispatch(setDepartments(departments)); // <-- you need a reducer like this
+      dispatch(setDepartments(departments));
       onSuccess?.();
       onClose?.();
-      setFormData({ name: '', description: '' })
+      setFormData({ name: "", description: "" });
     } catch (error) {
       logError("this is the error", error);
-      toast.error(error.response?.data?.detail || '');
+      toast.error(error.response?.data?.detail || "");
     }
   };
-  
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Name */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">Team Name</label>
+        <label className="block text-sm font-medium text-gray-700">
+          Team Name
+        </label>
         <input
           type="text"
           name="name"
@@ -69,7 +72,9 @@ const dispatch = useDispatch();
 
       {/* Description */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">Description</label>
+        <label className="block text-sm font-medium text-gray-700">
+          Description
+        </label>
         <textarea
           name="description"
           value={formData.description}
@@ -89,14 +94,17 @@ const dispatch = useDispatch();
         </button>
         <button
           type="submit"
-          className={`px-4 py-2 rounded text-white ${isEditMode ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-600 hover:bg-green-700'}`}
+          className={`px-4 py-2 rounded text-white ${
+            isEditMode
+              ? "bg-blue-500 hover:bg-blue-600"
+              : "bg-green-600 hover:bg-green-700"
+          }`}
         >
-          {isEditMode ? 'Update' : 'Create'}
+          {isEditMode ? "Update" : "Create"}
         </button>
       </div>
     </form>
   );
 };
-
 
 export default DepartmentForm;

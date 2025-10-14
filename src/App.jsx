@@ -143,7 +143,7 @@ function App() {
         >
           <Route element={<Layout type={"employee"} />}>
             <Route path="/dashboard" element={<CompanyDashboard />} />
-            <Route path="/profile" element={<ProfilePage />} />
+
             <Route path="departments" element={<ManageDepartment />} />
             <Route path="/shift-categories" element={<ManageDepartment />} />
             <Route path="/shifts" element={<Schedulemanagement />} />

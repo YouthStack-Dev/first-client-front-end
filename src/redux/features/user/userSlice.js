@@ -90,6 +90,33 @@ const userSlice = createSlice({
       delete state.departmentEmployees[teamId];
     },
 
+    toggleTeamStatus(state, action) {
+      const teamId = action.payload;
+      const team = state.teams.byId[teamId];
+      if (!team) return;
+
+      team.is_active = !team.is_active;
+
+      const depId = team.departmentId;
+      if (depId && state.departmentEmployees[depId]) {
+        const { active, inactive } = state.departmentEmployees[depId];
+
+        // Remove from both arrays first
+        state.departmentEmployees[depId].active = active.filter(
+          (id) => id !== teamId
+        );
+        state.departmentEmployees[depId].inactive = inactive.filter(
+          (id) => id !== teamId
+        );
+
+        // Add to correct list
+        if (team.is_active) {
+          state.departmentEmployees[depId].active.push(teamId);
+        } else {
+          state.departmentEmployees[depId].inactive.push(teamId);
+        }
+      }
+    },
     // Add employee to a team (without duplicating)
     addEmployeeToTeam(state, action) {
       const { teamId, employee } = action.payload;
@@ -257,6 +284,7 @@ const userSlice = createSlice({
 
 export const {
   setDepartments,
+  toggleTeamStatus,
   setTeams,
   upsertTeam,
   removeTeam,
