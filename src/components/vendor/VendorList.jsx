@@ -9,10 +9,16 @@ const VendorList = ({ onAssignEntity }) => {
   const dispatch = useDispatch();
 
   // Redux state
-  const { data: vendors = [], loading: vendorLoading, error: vendorError } =
-    useSelector((state) => state.vendor || {});
-  const { data: companies = [], loading: companyLoading, error: companyError } =
-    useSelector((state) => state.company || {});
+  const {
+    data: vendors = [],
+    loading: vendorLoading,
+    error: vendorError,
+  } = useSelector((state) => state.vendor || {});
+  const {
+    data: companies = [],
+    loading: companyLoading,
+    error: companyError,
+  } = useSelector((state) => state.company || {});
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -31,7 +37,8 @@ const VendorList = ({ onAssignEntity }) => {
 
     let matchesStatus = true;
     if (statusFilter === "Active") matchesStatus = vendor.is_active === true;
-    else if (statusFilter === "Inactive") matchesStatus = vendor.is_active === false;
+    else if (statusFilter === "Inactive")
+      matchesStatus = vendor.is_active === false;
 
     return matchesSearch && matchesStatus;
   });
@@ -80,7 +87,9 @@ const VendorList = ({ onAssignEntity }) => {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-2xl font-bold text-green-600">{vendors.length}</div>
+          <div className="text-2xl font-bold text-green-600">
+            {vendors.length}
+          </div>
           <div className="text-sm text-gray-600">Total Vendors</div>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
@@ -101,7 +110,9 @@ const VendorList = ({ onAssignEntity }) => {
       {filteredVendors.length === 0 && !(vendorLoading || companyLoading) ? (
         <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
           <Truck className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-600">No vendors found</h3>
+          <h3 className="text-lg font-medium text-gray-600">
+            No vendors found
+          </h3>
           <p className="text-gray-500">
             Try adjusting your search or filter criteria
           </p>

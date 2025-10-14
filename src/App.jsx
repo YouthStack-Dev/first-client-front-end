@@ -11,7 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 import ManageEmployees from "./pages/ManageEmployees";
 import VendorManagement from "./pages/VendorManagement";
 import VehicleManagement from "./pages/VehicleManagement";
-import DriverManagement from "./pages/DriverManagement";
+import ManageDrivers from "./pages/ManageDrivers";
 import SuperAdminLayout from "./superadmin/SuperAdminLayout";
 import VendorLayout from "./vendor/VendorLayout";
 import { useDispatch } from "react-redux";
@@ -22,22 +22,17 @@ import CompanyDashboard from "./companies/CompanyDashboard";
 import RoleManagement from "./pages/RoleManagement";
 import RouteManagement from "./pages/RouteManagement";
 import Schedulemanagement from "./pages/Schedulemanagement";
-import ShiftForm from "./components/Schedulemanagement/ShiftForm";
-import ScheduledBookingsCopy from "./components/RouteManagement/ScheduledBookingsCopy";
+import CutoffManagement from "./components/Schedulemanagement/CutoffManagement";
+import ScheduledBookings from "./components/RouteManagement/ScheduledBookings";
+import ProfilePage from "./pages/ProfilePage";
+import BookingManagement from "./pages/BookingManagement";
 
 function App() {
-
-
   const dispatch = useDispatch();
- 
+
   useEffect(() => {
     dispatch(initializeAuth());
   }, [dispatch]);
-
-
-  
-
-
 
   return (
     <BrowserRouter>
@@ -45,114 +40,158 @@ function App() {
 
       <Routes>
         {/* ================= PRACTICE ROUTE ================= */}
-        <Route path="/practice" element={<RoleManagement/>} />
+        <Route path="/practice" element={<RoleManagement />} />
 
         {/* ================= PUBLIC LOGIN ROUTES ================= */}
         {/* Company Login */}
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={
             <PublicRoute>
               <Login />
             </PublicRoute>
-          } 
+          }
+        />
+
+        <Route
+          path="/employee"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
         />
 
         {/* Vendor Login - EXACT PATH */}
-        <Route 
-          path="/vendor" 
+        <Route
+          path="/vendor"
           element={
             <PublicRoute>
               <Login />
             </PublicRoute>
-          } 
+          }
         />
 
         {/* SuperAdmin Login - EXACT PATH */}
-        <Route 
-          path="/superadmin" 
+        <Route
+          path="/superadmin"
           element={
             <PublicRoute>
               <Login />
             </PublicRoute>
-          } 
+          }
         />
 
         {/* ================= SUPER ADMIN ROUTES ================= */}
-        <Route 
-          path="/superadmin/*" 
-          element={ 
-            <ProtectedRouteAuth 
-            type="admin"
-              redirectPath="/superadmin" 
-              authRedirectPath="/superadmin/dashboard" 
+        <Route
+          path="/superadmin/*"
+          element={
+            <ProtectedRouteAuth
+              type="admin"
+              redirectPath="/superadmin"
+              authRedirectPath="/superadmin/dashboard"
             />
           }
         >
           <Route element={<SuperAdminLayout />}>
-            <Route path="dashboard" element={<SuperAdminDashboard/>} />
-            <Route path="manage-companies" element={ <CompanyManagement />} />
-            <Route path="manage-vendors" element={ <VendorManagement/>} />
-            <Route path="iam-permissions" element={ <VendorManagement/>} />
-         
+            <Route path="dashboard" element={<SuperAdminDashboard />} />
+            <Route path="manage-companies" element={<CompanyManagement />} />
+            <Route path="manage-vendors" element={<VendorManagement />} />
+            <Route path="iam-permissions" element={<VendorManagement />} />
           </Route>
+          <Route path="*" element={<NotFound />} />
         </Route>
 
         {/* ================= VENDOR ROUTES ================= */}
-        <Route 
-          path="/vendor/*" 
+        <Route
+          path="/vendor/*"
           element={
-            <ProtectedRouteAuth 
-            type="vendor"
-              redirectPath="/vendor" 
-              authRedirectPath="/dashboard" 
+            <ProtectedRouteAuth
+              type="vendor"
+              redirectPath="/vendor"
+              authRedirectPath="/dashboard"
             />
-          } 
+          }
         >
-          <Route element={<VendorLayout />}>
+          <Route element={<VendorLayout type={"vendor"} />}>
             <Route path="dashboard" element={<h1>Vendor Dashboard</h1>} />
             <Route path="employees" element={<ManageEmployees />} />
-           
-            <Route path="employees/:userId/edit" element={<EmployeeForm mode="edit" />} />
-            <Route path="employees/:userId/view" element={<EmployeeForm mode="view" />} />
+            <Route
+              path="employees/:userId/edit"
+              element={<EmployeeForm mode="edit" />}
+            />
+            <Route
+              path="employees/:userId/view"
+              element={<EmployeeForm mode="view" />}
+            />
             <Route path="reports" element={<h1>Vendor Reports</h1>} />
+            <Route path="drivers" element={<ManageDrivers />} />
+            <Route path="vehicles" element={<VehicleManagement />} />
           </Route>
+          <Route path="*" element={<NotFound />} />
         </Route>
 
         {/* ================= COMPANY ROUTES ================= */}
-        <Route 
+        <Route
           element={
-            <ProtectedRouteAuth 
-            type="employee"
-              redirectPath="/" 
-              authRedirectPath="/dashboard" 
+            <ProtectedRouteAuth
+              type="employee"
+              redirectPath="/"
+              authRedirectPath="/dashboard"
             />
-          } 
+          }
         >
-          <Route element={<Layout />}>
-            <Route path="/dashboard" element={<CompanyDashboard/>} />
+          <Route element={<Layout type={"employee"} />}>
+            <Route path="/dashboard" element={<CompanyDashboard />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="departments" element={<ManageDepartment />} />
             <Route path="/shift-categories" element={<ManageDepartment />} />
             <Route path="/shifts" element={<Schedulemanagement />} />
-            <Route path="/shifts/:id/edit" element={<ShiftForm mode="edit" />} />
-            <Route path="/role-management" element={<RoleManagement/>} />
-            <Route path="/manage-drivers" element={<DriverManagement/>} />
+            <Route path="/role-management" element={<RoleManagement />} />
+            <Route path="/drivers" element={<ManageDrivers />} />
             <Route path="/manage-company" element={<ManageDepartment />} />
-            <Route path="/scheduling" element={<Schedulemanagement/>} />
+            <Route path="/scheduling" element={<Schedulemanagement />} />
             <Route path="employees/create" element={<EmployeeForm />} />
             <Route path="/cutoff" element={<CutoffManagement />} />
             <Route path="/manage-vendors" element={<VendorManagement />} />
             <Route path="/vehicles" element={<VehicleManagement />} />
-            <Route path="/employee/create-employee" element={<EmployeeForm />} />
-            <Route path="/department/:depId/employees" element={<ManageEmployees />} />
-            <Route path="/department/:depId/employees/:userId/edit" element={<EmployeeForm mode="edit" />} />
-            <Route path="/department/:depId/employees/:userId/view" element={<EmployeeForm mode="view" />} />
-            <Route path="/tracking" element={<h1> This is the screen of Tracking </h1>} />
-            <Route path="/bookings" element={<h1> This is the screen of Booking </h1>} />
-            <Route path="/routing" element={<RouteManagement/>} />
-         {/* /   <Route path="/routing-management" element={<RoutingManagement />} /> */}
-            <Route path="/pra" element={<ScheduledBookings/>} />
-            <Route path="/audit-report" element={<h1> This is the screen of audit-report </h1>} />
+            <Route path="/vendors" element={<VendorManagement />} />
+            <Route
+              path="/employee/create-employee"
+              element={<EmployeeForm />}
+            />
+            <Route
+              path="/department/:depId/employees"
+              element={<ManageEmployees />}
+            />
+            <Route
+              path="/department/:depId/employees/:userId/edit"
+              element={<EmployeeForm mode="edit" />}
+            />
+            <Route
+              path="/department/:depId/employees/:userId/view"
+              element={<EmployeeForm mode="view" />}
+            />
+            <Route
+              path="/tracking"
+              element={<h1> This is the screen of Tracking </h1>}
+            />
+            <Route
+              path="/bookings"
+              element={<h1> This is the screen of Booking </h1>}
+            />
+            <Route path="/routing" element={<RouteManagement />} />
+            <Route
+              path="/employee/:employee_id/bookings"
+              element={<BookingManagement />}
+            />
+
+            {/* /   <Route path="/routing-management" element={<RoutingManagement />} /> */}
+            <Route path="/pra" element={<ScheduledBookings />} />
+            <Route
+              path="/audit-report"
+              element={<h1> This is the screen of audit-report </h1>}
+            />
           </Route>
         </Route>
 

@@ -1,38 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
-import FormSteps from './FormSteps';
-import PersonalInfoForm from './PersonalInfoForm';
-import NavigationButtons from './NavigationButtons';
-import HeaderWithAction from '../HeaderWithAction';
-import EmployeeAddressGoogleMapView from '../Map';
-import { toast } from 'react-toastify';
-import { format } from 'date-fns';
-import { logDebug, logError } from '../../utils/logger';
-import { useDispatch, useSelector } from 'react-redux';
-import { selectAllTeams } from '../../redux/features/user/userSelectors';
-import { addEmployeeToTeam, setTeams } from '../../redux/features/user/userSlice';
-import { API_CLIENT } from '../../Api/API_Client';
-import { useNavigate } from 'react-router-dom';
-import { fetchDepartments } from '../../redux/features/user/userTrunk';
-import { 
-  validatePersonalInfo, 
-  validateAddressInfo, 
-  formatFormDataForValidation 
-} from './employeeSchema';
-import endpoint from '../../Api/Endpoints';
+import React, { useState, useEffect } from "react";
+import { useLocation, useParams } from "react-router-dom";
+import FormSteps from "./FormSteps";
+import PersonalInfoForm from "./PersonalInfoForm";
+import NavigationButtons from "./NavigationButtons";
+import HeaderWithAction from "../HeaderWithAction";
+import EmployeeAddressGoogleMapView from "../Map";
+import { toast } from "react-toastify";
+import { format } from "date-fns";
+import { logDebug, logError } from "../../utils/logger";
+import { useDispatch, useSelector } from "react-redux";
+import { selectAllTeams } from "../../redux/features/user/userSelectors";
+import {
+  addEmployeeToTeam,
+  setTeams,
+} from "../../redux/features/user/userSlice";
+import { API_CLIENT } from "../../Api/API_Client";
+import { useNavigate } from "react-router-dom";
+import { fetchDepartments } from "../../redux/features/user/userTrunk";
+import {
+  validatePersonalInfo,
+  validateAddressInfo,
+  formatFormDataForValidation,
+} from "./employeeSchema";
+import endpoint from "../../Api/Endpoints";
 
 const initialFormData = {
-  name: '',
-  email: '',
-  gender: '',
+  name: "",
+  email: "",
+  gender: "",
   employee_code: "",
-  phone: '',
-  alternate_phone: '',
-  address: '',
-  landmark: '',
+  phone: "",
+  alternate_phone: "",
+  address: "",
+  landmark: "",
   latitude: null,
   longitude: null,
-  distance_from_company: '',
+  distance_from_company: "",
   special_needs: "none",
   special_needs_start_date: null,
   special_needs_end_date: null,
@@ -40,17 +43,17 @@ const initialFormData = {
   team_id: "",
   subscribe_via_email: false,
   subscribe_via_sms: false,
-  employee_id: ''
+  employee_id: "",
 };
 
-const EmployeeForm = ({ mode = 'create' }) => {
+const EmployeeForm = ({ mode = "create" }) => {
   const { state } = useLocation();
   const [formData, setFormData] = useState(initialFormData);
-  const [currentStep, setCurrentStep] = useState('personalInfo');
+  const [currentStep, setCurrentStep] = useState("personalInfo");
   const [completedSteps, setCompletedSteps] = useState([]);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(mode !== 'create');
+  const [isLoading, setIsLoading] = useState(mode !== "create");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const teams = useSelector(selectAllTeams);
   const dispatch = useDispatch();
@@ -61,12 +64,12 @@ const EmployeeForm = ({ mode = 'create' }) => {
     {
       startDate: null,
       endDate: null,
-      key: 'selection',
+      key: "selection",
     },
   ]);
 
-  if (mode === 'view' && !state?.employee) {
-    toast.error('Employee data not found');
+  if (mode === "view" && !state?.employee) {
+    toast.error("Employee data not found");
     navigate(-1);
   }
 
@@ -74,21 +77,24 @@ const EmployeeForm = ({ mode = 'create' }) => {
     const { startDate, endDate } = ranges.selection;
     setDateRangeSelection([ranges.selection]);
 
-    if (formData.special_needs !== 'none') {
-      setFormData(prev => ({
+    if (formData.special_needs !== "none") {
+      setFormData((prev) => ({
         ...prev,
-        special_needs_start_date: startDate.toISOString().split('T')[0],
-        special_needs_end_date: endDate.toISOString().split('T')[0],
+        special_needs_start_date: startDate.toISOString().split("T")[0],
+        special_needs_end_date: endDate.toISOString().split("T")[0],
       }));
     }
   };
 
   const displayDateRange = () => {
-    if (formData.special_needs === 'none') return "";
-    
+    if (formData.special_needs === "none") return "";
+
     const { startDate, endDate } = dateRangeSelection[0];
     if (!startDate || !endDate) return "";
-    return `${format(startDate, "yyyy-MM-dd")} - ${format(endDate, "yyyy-MM-dd")}`;
+    return `${format(startDate, "yyyy-MM-dd")} - ${format(
+      endDate,
+      "yyyy-MM-dd"
+    )}`;
   };
 
   useEffect(() => {
@@ -97,8 +103,8 @@ const EmployeeForm = ({ mode = 'create' }) => {
         const response = await fetchDepartments();
         dispatch(setTeams(response));
       } catch (error) {
-        logError('Error fetching teams:', error);
-        toast.error('Failed to load departments');
+        logError("Error fetching teams:", error);
+        toast.error("Failed to load departments");
       }
     };
 
@@ -108,50 +114,60 @@ const EmployeeForm = ({ mode = 'create' }) => {
   }, [dispatch, teams]);
 
   useEffect(() => {
-    if (mode !== 'create') {
+    if (mode !== "create") {
       const employee = state?.employee;
 
-      logDebug('Employee data from state:', employee);
+      logDebug("Employee data from state:", employee);
       if (employee) {
         const mappedData = {
           ...initialFormData,
-          name: employee.name || '',
-          employee_id:employee.employee_id || '',
-          employee_code: employee.employee_code || '',
-          email: employee.email || '',
-          gender: employee.gender || '',
-          phone: employee.phone || '',
-          alternate_phone: employee.alternate_phone || '',
-          special_needs: employee.special_needs || 'none',
-          special_needs_start_date: employee.special_needs === 'none' ? null : (employee.special_needs_start_date || null),
-          special_needs_end_date: employee.special_needs === 'none' ? null : (employee.special_needs_end_date || null),
-          team_id: employee.team_id || '',
-          address: employee.address || '',
-          landmark: employee.landmark || '',
+          name: employee.name || "",
+          employee_id: employee.employee_id || "",
+          employee_code: employee.employee_code || "",
+          email: employee.email || "",
+          gender: employee.gender || "",
+          phone: employee.phone || "",
+          alternate_phone: employee.alternate_phone || "",
+          special_needs: employee.special_needs || "none",
+          special_needs_start_date:
+            employee.special_needs === "none"
+              ? null
+              : employee.special_needs_start_date || null,
+          special_needs_end_date:
+            employee.special_needs === "none"
+              ? null
+              : employee.special_needs_end_date || null,
+          team_id: employee.team_id || "",
+          address: employee.address || "",
+          landmark: employee.landmark || "",
           latitude: employee.latitude || null,
           longitude: employee.longitude || null,
-          distance_from_company: employee.distance_from_company || '',
-          office: employee.office || '',
+          distance_from_company: employee.distance_from_company || "",
+          office: employee.office || "",
           subscribe_via_email: employee.subscribe_via_email || false,
           subscribe_via_sms: employee.subscribe_via_sms || false,
         };
         setFormData(mappedData);
-        
-        if (employee?.special_needs !== 'none' && employee?.special_needs_start_date && employee?.special_needs_end_date) {
+
+        if (
+          employee?.special_needs !== "none" &&
+          employee?.special_needs_start_date &&
+          employee?.special_needs_end_date
+        ) {
           setDateRangeSelection([
             {
               startDate: new Date(employee.special_needs_start_date),
               endDate: new Date(employee.special_needs_end_date),
-              key: "selection"
-            }
+              key: "selection",
+            },
           ]);
         } else {
           setDateRangeSelection([
             {
               startDate: null,
               endDate: null,
-              key: "selection"
-            }
+              key: "selection",
+            },
           ]);
         }
       }
@@ -161,50 +177,52 @@ const EmployeeForm = ({ mode = 'create' }) => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    logDebug('Input change:', name, value);
-    
-    if (type === 'checkbox') {
-      setFormData(prev => ({
+    logDebug("Input change:", name, value);
+
+    if (type === "checkbox") {
+      setFormData((prev) => ({
         ...prev,
-        [name]: checked
+        [name]: checked,
       }));
       return;
     }
 
-    if (name === 'special_needs') {
-      if (value === 'none') {
-        setFormData(prev => ({
+    if (name === "special_needs") {
+      if (value === "none") {
+        setFormData((prev) => ({
           ...prev,
           [name]: value,
           special_needs_start_date: null,
-          special_needs_end_date: null
+          special_needs_end_date: null,
         }));
-        
+
         setDateRangeSelection([
           {
             startDate: null,
             endDate: null,
-            key: "selection"
-          }
+            key: "selection",
+          },
         ]);
       } else {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          [name]: value
+          [name]: value,
         }));
       }
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [name]:
-          name === 'team_id'
-            ? value === '' ? '' : parseInt(value, 10)
-            : value
+          name === "team_id"
+            ? value === ""
+              ? ""
+              : parseInt(value, 10)
+            : value,
       }));
     }
-  
+
     if (errors[name]) {
-      setErrors(prev => {
+      setErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[name];
         return newErrors;
@@ -213,187 +231,216 @@ const EmployeeForm = ({ mode = 'create' }) => {
   };
 
   const handleCheckboxChange = (name, checked) => {
-    setFormData(prev => ({ ...prev, [name]: checked }));
+    setFormData((prev) => ({ ...prev, [name]: checked }));
   };
 
   const handleNext = () => {
-    if (currentStep === 'personalInfo') {
+    if (currentStep === "personalInfo") {
       const formattedData = formatFormDataForValidation(formData);
       const validationResult = validatePersonalInfo(formattedData);
-      
+
       if (!validationResult.isValid) {
         setErrors(validationResult.errors);
-        logError('Validation errors:', validationResult.errors);
-        
+        logError("Validation errors:", validationResult.errors);
+
         const firstErrorKey = Object.keys(validationResult.errors)[0];
         toast.error(validationResult.errors[firstErrorKey]);
         return;
       }
     }
-    
-    setCurrentStep('address');
-    if (!completedSteps.includes('personalInfo')) {
-      setCompletedSteps(prev => [...prev, 'personalInfo']);
+
+    setCurrentStep("address");
+    if (!completedSteps.includes("personalInfo")) {
+      setCompletedSteps((prev) => [...prev, "personalInfo"]);
     }
   };
 
   const handleBack = () => {
-    setCurrentStep('personalInfo');
+    setCurrentStep("personalInfo");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-  
+
     const formattedData = formatFormDataForValidation(formData);
     const personalValidation = validatePersonalInfo(formattedData);
     const addressValidation = validateAddressInfo(formattedData);
-    
-    const allErrors = { 
-      ...personalValidation.errors, 
-      ...addressValidation.errors 
+
+    const allErrors = {
+      ...personalValidation.errors,
+      ...addressValidation.errors,
     };
-  
+
     if (Object.keys(allErrors).length > 0) {
       setErrors(allErrors);
-      logDebug('Form submission errors:', allErrors);
-      toast.error('Please fix all errors before submitting');
+      logDebug("Form submission errors:", allErrors);
+      toast.error("Please fix all errors before submitting");
       setIsSubmitting(false);
       return;
     }
-  
+
     try {
       const submissionData = {
-        name: formData.name?.trim() || '',
-        email: formData.email?.trim() || '',
-        gender: formData.gender || '',
-        employee_code: formData.employee_code?.trim() || '',
-        phone: formData.phone?.trim() || '',
-        alternate_phone: formData.alternate_phone?.trim() || '',
-        address: formData.address?.trim() || '',
-        landmark: formData.landmark?.trim() || '',
+        name: formData.name?.trim() || "",
+        email: formData.email?.trim() || "",
+        gender: formData.gender || "",
+        employee_code: formData.employee_code?.trim() || "",
+        phone: formData.phone?.trim() || "",
+        alternate_phone: formData.alternate_phone?.trim() || "",
+        address: formData.address?.trim() || "",
+        landmark: formData.landmark?.trim() || "",
         // Convert coordinates to numbers
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
         team_id: formData.team_id ? parseInt(formData.team_id, 10) : null,
       };
 
-      if (formData.special_needs === 'none') {
+      if (formData.special_needs === "none") {
         submissionData.special_needs = null;
         submissionData.special_needs_start_date = null;
         submissionData.special_needs_end_date = null;
       } else {
         submissionData.special_needs = formData.special_needs;
-        
+
         if (formData.special_needs_start_date) {
-          submissionData.special_needs_start_date = formData.special_needs_start_date;
+          submissionData.special_needs_start_date =
+            formData.special_needs_start_date;
         } else if (dateRangeSelection[0]?.startDate) {
-          submissionData.special_needs_start_date = dateRangeSelection[0].startDate.toISOString().split('T')[0];
+          submissionData.special_needs_start_date =
+            dateRangeSelection[0].startDate.toISOString().split("T")[0];
         } else {
           submissionData.special_needs_start_date = null;
         }
-        
+
         if (formData.special_needs_end_date) {
-          submissionData.special_needs_end_date = formData.special_needs_end_date;
+          submissionData.special_needs_end_date =
+            formData.special_needs_end_date;
         } else if (dateRangeSelection[0]?.endDate) {
-          submissionData.special_needs_end_date = dateRangeSelection[0].endDate.toISOString().split('T')[0];
+          submissionData.special_needs_end_date = dateRangeSelection[0].endDate
+            .toISOString()
+            .split("T")[0];
         } else {
           submissionData.special_needs_end_date = null;
         }
       }
-  
-      Object.keys(submissionData).forEach(key => {
-        if (submissionData[key] === undefined || submissionData[key] === '') {
+
+      Object.keys(submissionData).forEach((key) => {
+        if (submissionData[key] === undefined || submissionData[key] === "") {
           delete submissionData[key];
         }
       });
-  
-      logDebug('Submission data:', submissionData);
-      console.log('Formatted submission data:', JSON.stringify(submissionData, null, 2));
-      
-      const datawithpassword = {...submissionData, password: "Password@123"}
-      const response = mode === 'create'
-        ? await API_CLIENT.post(endpoint.createEmployee, datawithpassword)
-        : await API_CLIENT.put(`${endpoint.updateEmployee}${userId}`, submissionData);
-  
+
+      logDebug("Submission data:", submissionData);
+      console.log(
+        "Formatted submission data:",
+        JSON.stringify(submissionData, null, 2)
+      );
+
+      const datawithpassword = { ...submissionData, password: "Password@123" };
+      const response =
+        mode === "create"
+          ? await API_CLIENT.post(endpoint.createEmployee, datawithpassword)
+          : await API_CLIENT.put(
+              `${endpoint.updateEmployee}${userId}`,
+              submissionData
+            );
+
       if (response.status >= 200 && response.status < 300) {
         const employeeData = response.data; // Assuming API returns the created/updated employee
-        
-        toast.success(`Employee ${mode === 'create' ? 'created' : 'updated'} successfully!`);
-        
+
+        toast.success(
+          `Employee ${mode === "create" ? "created" : "updated"} successfully!`
+        );
+
         // Dispatch to Redux store only for create mode and if team_id exists
-        if (mode === 'create' && formData.team_id) {
+        if (mode === "create" && formData.team_id) {
           // Assuming you have access to dispatch via useDispatch hook
-          dispatch(addEmployeeToTeam({
-            teamId: formData.team_id,
-            employee: {
-              ...employeeData,
-              employee_id: formData.employee_id?.trim() // Ensure employee_code is included
-            }
-          }));
+          dispatch(
+            addEmployeeToTeam({
+              teamId: formData.team_id,
+              employee: {
+                ...employeeData,
+                employee_id: formData.employee_id?.trim(), // Ensure employee_code is included
+              },
+            })
+          );
         }
-        
-        if (mode === 'create') {
+
+        if (mode === "create") {
           setFormData(initialFormData);
-          setCurrentStep('personalInfo');
+          setCurrentStep("personalInfo");
           setCompletedSteps([]);
           setDateRangeSelection([
             {
               startDate: null,
               endDate: null,
-              key: "selection"
-            }
+              key: "selection",
+            },
           ]);
         }
         navigate(-1);
       } else {
-        toast.error(response.data?.detail || `Failed to ${mode === 'create' ? 'create' : 'update'} employee`);
+        toast.error(
+          response.data?.detail ||
+            `Failed to ${mode === "create" ? "create" : "update"} employee`
+        );
       }
-  
     } catch (error) {
-      logError('Submission error:', error);
-      console.error('Full error object:', error);
-      console.error('Error response:', error.response?.data);
+      logError("Submission error:", error);
+      console.error("Full error object:", error);
+      console.error("Error response:", error.response?.data);
 
-      // Handle the specific error structure from your API
-      if (error.response?.data?.detail) {
-        const errorDetail = error.response.data.detail;
-        
-        // Handle array of error objects (like in your example)
-        if (Array.isArray(errorDetail)) {
-          const errorMessages = errorDetail.map(err => {
-            // Extract field name and error message
-            const field = err.loc?.[err.loc.length - 1] || 'field';
-            const message = err.msg || 'Validation error';
-            
-            // Format for display: "Password: Value error, Password must have min 8 chars..."
-            return `${field.charAt(0).toUpperCase() + field.slice(1)}: ${message}`;
+      const errorData = error.response?.data;
+
+      // Handle the array of validation errors in detail
+      if (errorData?.detail && Array.isArray(errorData.detail)) {
+        // Extract error messages from each validation error object
+        errorData.detail.forEach((errorObj, index) => {
+          if (errorObj.msg) {
+            // Format the field name from the location array
+            const fieldName =
+              errorObj.loc && errorObj.loc.length > 1
+                ? errorObj.loc[1]
+                    .replace(/_/g, " ")
+                    .replace(/\b\w/g, (c) => c.toUpperCase())
+                : "Field";
+
+            // Show the error message
+            toast.error(`${fieldName}: ${errorObj.msg}`);
+          }
+        });
+      }
+      // Handle the "detail" object with conflict info (your previous case)
+      else if (errorData?.detail && typeof errorData.detail === "object") {
+        if (errorData.detail.details?.conflicting_fields) {
+          const conflicts = errorData.detail.details.conflicting_fields;
+          Object.keys(conflicts).forEach((fieldKey) => {
+            const fieldValue = conflicts[fieldKey];
+            const fieldName = fieldKey
+              .replace(/_/g, " ")
+              .replace(/\b\w/g, (c) => c.toUpperCase());
+            toast.error(`${fieldName} "${fieldValue}" already exists`);
           });
-          
-          // Show all error messages
-          errorMessages.forEach(msg => toast.error(msg));
-        } 
-        // Handle string error message
-        else if (typeof errorDetail === 'string') {
-          toast.error(errorDetail);
+        } else if (errorData.detail.message) {
+          toast.error(errorData.detail.message);
         }
-        // Handle single error object
-        else if (errorDetail.msg) {
-          const field = errorDetail.loc?.[errorDetail.loc.length - 1] || 'field';
-          toast.error(`${field.charAt(0).toUpperCase() + field.slice(1)}: ${errorDetail.msg}`);
-        }
-      } 
-      // Fallback to existing error handling
-      else if (error.response?.data?.errors) {
-        const errorMessages = error.response.data.errors
-          .map(err => `${err.message}`)
-          .join('\n');
+      }
+      // Handle string message in detail
+      else if (typeof errorData?.detail === "string") {
+        toast.error(errorData.detail);
+      }
+      // Fallback to previous error structures
+      else if (errorData?.errors) {
+        const errorMessages = errorData.errors
+          .map((err) => `${err.message}`)
+          .join("\n");
         toast.error(errorMessages);
       } else {
         toast.error(
-          error.response?.data?.message ||
-          error.message ||
-          `Failed to ${mode === 'create' ? 'create' : 'update'} employee`
+          errorData?.message ||
+            error.message ||
+            `Failed to ${mode === "create" ? "create" : "update"} employee`
         );
       }
     } finally {
@@ -401,8 +448,8 @@ const EmployeeForm = ({ mode = 'create' }) => {
     }
   };
 
-  const isFirstStep = currentStep === 'personalInfo';
-  const isLastStep = currentStep === 'address';
+  const isFirstStep = currentStep === "personalInfo";
+  const isLastStep = currentStep === "address";
 
   if (isLoading) {
     return (
@@ -415,12 +462,18 @@ const EmployeeForm = ({ mode = 'create' }) => {
 
   return (
     <>
-      <HeaderWithAction 
-        title={mode === 'create' ? 'NEW EMPLOYEE' : mode === 'edit' ? 'EDIT EMPLOYEE' : 'EMPLOYEE DETAILS'} 
-        showBackButton={true} 
+      <HeaderWithAction
+        title={
+          mode === "create"
+            ? "NEW EMPLOYEE"
+            : mode === "edit"
+            ? "EDIT EMPLOYEE"
+            : "EMPLOYEE DETAILS"
+        }
+        showBackButton={true}
       />
-      <div className='p-2 m-3 bg-white rounded-xl'>
-        {mode === 'view' ? (
+      <div className="p-2 m-3 bg-white rounded-xl">
+        {mode === "view" ? (
           <>
             <div className="mb-6">
               <h2 className="text-xl font-bold mb-4">Personal Information</h2>
@@ -440,8 +493,8 @@ const EmployeeForm = ({ mode = 'create' }) => {
             </div>
             <div className="mt-8">
               <h2 className="text-xl font-bold mb-4">Address Information</h2>
-              <EmployeeAddressGoogleMapView 
-                formData={formData} 
+              <EmployeeAddressGoogleMapView
+                formData={formData}
                 setFormData={setFormData}
                 setErrors={setErrors}
                 isReadOnly={true}
@@ -456,9 +509,12 @@ const EmployeeForm = ({ mode = 'create' }) => {
           </>
         ) : (
           <>
-            <FormSteps currentStep={currentStep} completedSteps={completedSteps} />
+            <FormSteps
+              currentStep={currentStep}
+              completedSteps={completedSteps}
+            />
             <div className="mt-6 m-3">
-              {currentStep === 'personalInfo' ? (
+              {currentStep === "personalInfo" ? (
                 <PersonalInfoForm
                   formData={formData}
                   onChange={handleInputChange}
@@ -473,9 +529,9 @@ const EmployeeForm = ({ mode = 'create' }) => {
                   teams={teams}
                 />
               ) : (
-                <EmployeeAddressGoogleMapView 
+                <EmployeeAddressGoogleMapView
                   handleInputChange={handleInputChange}
-                  formData={formData} 
+                  formData={formData}
                   setFormData={setFormData}
                   setErrors={setErrors}
                   isReadOnly={false}

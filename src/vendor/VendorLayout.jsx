@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Outlet } from "react-router-dom";
-// import VendorSidebar from "./VendorSidebar";
+import { Outlet, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 import VendorHeader from "./VendorHeader";
-import { useLocation } from "react-router-dom";
 import VendorSideBar from "./VendorSideBar";
+import { selectAuthLoading, selectCurrentUser } from "../redux/features/auth/authSlice";
 
 // Static title mapping for vendor routes
 const vendorPathTitleMap = {
@@ -38,12 +38,14 @@ const getTitleFromVendorPath = (pathname) => {
   return vendorPathTitleMap[pathname] || "Vendor Portal";
 };
 
-const VendorLayout = () => {
+const VendorLayout = ({ type }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
   const mainContentRef = useRef(null);
   const [mounted, setMounted] = useState(false);
   const location = useLocation();
+  const user = useSelector(selectCurrentUser);
+  const authLoading = useSelector(selectAuthLoading);
 
   useEffect(() => {
     setMounted(true);
@@ -56,7 +58,7 @@ const VendorLayout = () => {
         window.innerWidth < 1024 &&
         sidebarOpen &&
         mainContentRef.current &&
-        mainContentRef.current.contains(event.target)
+        !mainContentRef.current.contains(event.target)
       ) {
         setSidebarOpen(false);
       }
@@ -70,7 +72,38 @@ const VendorLayout = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
+  const closeSidebar = () => {
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
+  };
+
   const title = getTitleFromVendorPath(location.pathname);
+
+  // Loading and authentication states - moved after all hooks
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-xl font-semibold animate-pulse">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-xl font-semibold animate-pulse">Please log in</div>
+      </div>
+    );
+  }
+
+  if (type !== user.type) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <h2 className="text-xl font-semibold animate-pulse">Unauthorized Access</h2>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -106,7 +139,7 @@ const VendorLayout = () => {
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-10 bg-gray-600 opacity-75 lg:hidden"
-          onClick={toggleSidebar}
+          onClick={closeSidebar}
         ></div>
       )}
     </div>

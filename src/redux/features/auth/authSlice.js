@@ -1,9 +1,8 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
 import { fetchUserFromToken, loginUser } from "./authTrunk";
 import { logDebug } from "../../../utils/logger";
-import { API_CLIENT } from "../../../Api/API_Client";
 
 // Utility function to get token expiration
 const getTokenExpiration = (token) => {
@@ -52,11 +51,27 @@ const authSlice = createSlice({
       Object.assign(state, initialState);
     },
     setAuthCredentials: (state, action) => {
-      state.user = action.payload.user;
-      state.token = action.payload.token;
+      const { user, token } = action.payload;
+    
+      let userType = "admin"; // default type
+    
+      if (user.employee) {
+        userType = "employee";
+      } else if (user.vendor_user) {
+        userType = "vendor";
+      }
+    
+      // Assign the type to the user object
+      const userWithType = { ...user, type: userType };
+    
+      // Update state
+      state.user = userWithType;
+      state.token = token;
       state.isAuthenticated = true;
-      logDebug("Setting auth credentials:", action.payload);
+    
+      logDebug("Setting auth credentials:", { user: userWithType, token });
     },
+    
     // New reducer to handle token-based state restoration
     setAuthFromToken: (state, action) => {
       state.user = action.payload.user;
