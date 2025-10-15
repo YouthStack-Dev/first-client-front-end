@@ -35,13 +35,14 @@ export const Login = () => {
       return '/vendor/dashboard';
     }
   
-    return '/dashboard'; // Default for company login
+  
+    return '/profile'; // Default for company login
   };
 
   // Check if ID field is required based on login type
   const requiresIdField = () => {
     const path = location.pathname.toLowerCase();
-    return path === '/' || path === '' || path.includes('/vendor');
+    return path === '/' || path === '' || path.includes('/vendor' )||  path.includes('/employee');
   };
 
   // Redirect if already authenticated
@@ -122,6 +123,15 @@ export const Login = () => {
         icon: <Shield className="w-8 h-8 text-red-600" />,
         idLabel: "",
         idPlaceholder: ""
+      };
+    }
+    else if (path.includes('/employee')) {
+      return {
+        title: "Employee Login",
+        subtitle: "Employee portal access",
+        icon: <Shield className="w-8 h-8 text-red-600" />,
+         idLabel: "Company ID",
+        idPlaceholder: "Enter your company ID"
       };
     } else if (path.includes('/vendor')) {
       return {
@@ -261,11 +271,11 @@ export const Login = () => {
         </form>
 
         {/* Additional Links */}
-        <div className="mt-6 text-center text-sm text-gray-500">
+        {/* <div className="mt-6 text-center text-sm text-gray-500">
           <a href="/forgot-password" className="text-blue-600 hover:underline">
             Forgot password?
           </a>
-        </div>
+        </div> */}
       </div>
     </div>
   );

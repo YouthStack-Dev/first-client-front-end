@@ -1,128 +1,172 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-// Base schemas for reusable validation
-export const phoneSchema = z.string()
-  .regex(/^\d{10}$/, 'Phone number must be exactly 10 digits')
+export const phoneSchema = z
+  .string()
   .optional()
-  .or(z.literal(''));
+  .refine((val) => !val || /^[1-9]\d{9}$/.test(val), {
+    message: "Phone number must be exactly 10 digits and cannot start with 0",
+  })
+  .or(z.literal(""));
 
-export const requiredPhoneSchema = z.string()
-  .min(1, 'Phone number is required')
-  .regex(/^\d{10}$/, 'Phone number must be exactly 10 digits');
+// Phone number must be exactly 10 digits and cannot start with 0
+export const requiredPhoneSchema = z
+  .string()
+  .min(1, "Phone number is required")
+  .regex(
+    /^[1-9]\d{9}$/,
+    "Phone number must be exactly 10 digits and cannot start with 0"
+  );
 
-export const emailSchema = z.string()
-  .min(1, 'Email is required')
-  .email('Please enter a valid email address')
-  .max(100, 'Email must be less than 100 characters');
+// Alternate phone (optional) with same rule
 
-export const requiredStringSchema = z.string().min(1, 'This field is required');
+export const emailSchema = z
+  .string()
+  .min(1, "Email is required")
+  .email("Please enter a valid email address")
+  .max(100, "Email must be less than 100 characters");
 
-export const optionalStringSchema = z.string().optional().or(z.literal(''));
+export const requiredStringSchema = z.string().min(1, "This field is required");
+
+export const optionalStringSchema = z.string().optional().or(z.literal(""));
 
 // Personal Info Schema - Updated field names
-export const personalInfoSchema = z.object({
-  name: z.string()
-    .min(1, 'Employee name is required')
-    .max(100, 'Name must be less than 100 characters')
-    .regex(/^[a-zA-Z\s]*$/, 'Name can only contain letters and spaces'),
+export const personalInfoSchema = z
+  .object({
+    name: z
+      .string()
+      .min(1, "Employee name is required")
+      .max(100, "Name must be less than 100 characters")
+      .regex(/^[a-zA-Z\s]*$/, "Name can only contain letters and spaces"),
 
-  employee_code: z.string()
-    .min(1, 'Employee ID is required')
-    .max(50, 'Employee ID must be less than 50 characters')
-    .regex(/^[a-zA-Z0-9_-]*$/, 'Employee ID can only contain letters, numbers, hyphens, and underscores'),
+    employee_code: z
+      .string()
+      .min(1, "Employee ID is required")
+      .max(50, "Employee ID must be less than 50 characters")
+      .regex(
+        /^[a-zA-Z0-9_-]*$/,
+        "Employee ID can only contain letters, numbers, hyphens, and underscores"
+      ),
 
-  email: emailSchema,
+    email: emailSchema,
 
-  gender: z.enum(['Male', 'Female', 'Other', ''], {
-    errorMap: () => ({ message: 'Gender is required' })
-  }).refine(val => val !== '', 'Gender is required'),
+    gender: z
+      .enum(["Male", "Female", "Other", ""], {
+        errorMap: () => ({ message: "Gender is required" }),
+      })
+      .refine((val) => val !== "", "Gender is required"),
 
-  phone: requiredPhoneSchema,
+    phone: requiredPhoneSchema,
 
-  alternate_phone: z.string()
-    .optional()
-    .refine(
-      (val) => !val || /^\d{10}$/.test(val),
-      'Alternate phone number must be exactly 10 digits'
-    ),
+    alternate_phone: z
+      .string()
+      .optional()
+      .refine(
+        (val) => !val || /^\d{10}$/.test(val),
+        "Alternate phone number must be exactly 10 digits"
+      ),
 
-  special_needs: z.enum(['none', 'Wheelchair', 'Pregnancy', ''], {
-    errorMap: () => ({ message: 'Invalid special need selection' })
-  }).default('none'),
+    special_needs: z
+      .enum(["none", "Wheelchair", "Pregnancy", ""], {
+        errorMap: () => ({ message: "Invalid special need selection" }),
+      })
+      .default("none"),
 
-  special_needs_start_date: z.string().nullable().optional(),
-  special_needs_end_date: z.string().nullable().optional(),
+    special_needs_start_date: z.string().nullable().optional(),
+    special_needs_end_date: z.string().nullable().optional(),
 
-  team_id: z.union([
-    z.number().positive('Department is required'),
-    z.string().min(1, 'Department is required'),
-    z.string().refine(val => !isNaN(parseInt(val, 10)), 'Department must be a valid number')
-  ])
-}).refine(
-  (data) => {
-    // Check if alternate_phone is different from phone
-    if (data.alternate_phone && data.phone && data.alternate_phone === data.phone) {
-      return false;
-    }
-    return true;
-  },
-  {
-    message: 'Alternate phone number cannot be same as primary phone number',
-    path: ['alternate_phone']
-  }
-).refine(
-  (data) => {
-    if (data.special_needs && data.special_needs !== 'none' && data.special_needs !== '') {
-      return data.special_needs_start_date && data.special_needs_end_date;
-    }
-    return true;
-  },
-  {
-    message: 'Start date and end date are required when special need is selected',
-    path: ['special_needs_start_date']
-  }
-).refine(
-  (data) => {
-    if (data.special_needs && data.special_needs !== 'none' && data.special_needs !== '') {
-      if (data.special_needs_start_date && data.special_needs_end_date) {
-        const startDate = new Date(data.special_needs_start_date);
-        const endDate = new Date(data.special_needs_end_date);
-        return endDate >= startDate;
+    team_id: z.union([
+      z.number().positive("Department is required"),
+      z.string().min(1, "Department is required"),
+      z
+        .string()
+        .refine(
+          (val) => !isNaN(parseInt(val, 10)),
+          "Department must be a valid number"
+        ),
+    ]),
+  })
+  .refine(
+    (data) => {
+      // Check if alternate_phone is different from phone
+      if (
+        data.alternate_phone &&
+        data.phone &&
+        data.alternate_phone === data.phone
+      ) {
+        return false;
       }
+      return true;
+    },
+    {
+      message: "Alternate phone number cannot be same as primary phone number",
+      path: ["alternate_phone"],
     }
-    return true;
-  },
-  {
-    message: 'End date must be after start date',
-    path: ['special_needs_end_date']
-  }
-);
+  )
+  .refine(
+    (data) => {
+      if (
+        data.special_needs &&
+        data.special_needs !== "none" &&
+        data.special_needs !== ""
+      ) {
+        return data.special_needs_start_date && data.special_needs_end_date;
+      }
+      return true;
+    },
+    {
+      message:
+        "Start date and end date are required when special need is selected",
+      path: ["special_needs_start_date"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (
+        data.special_needs &&
+        data.special_needs !== "none" &&
+        data.special_needs !== ""
+      ) {
+        if (data.special_needs_start_date && data.special_needs_end_date) {
+          const startDate = new Date(data.special_needs_start_date);
+          const endDate = new Date(data.special_needs_end_date);
+          return endDate >= startDate;
+        }
+      }
+      return true;
+    },
+    {
+      message: "End date must be after start date",
+      path: ["special_needs_end_date"],
+    }
+  );
 
 // Address Info Schema
 export const addressInfoSchema = z.object({
   address: requiredStringSchema,
   landmark: optionalStringSchema,
   latitude: z.union([
-    z.number().min(-90).max(90, 'Valid latitude is required'),
-    z.string().refine(val => !isNaN(parseFloat(val)), 'Valid latitude is required')
+    z.number().min(-90).max(90, "Valid latitude is required"),
+    z
+      .string()
+      .refine((val) => !isNaN(parseFloat(val)), "Valid latitude is required"),
   ]),
   longitude: z.union([
-    z.number().min(-180).max(180, 'Valid longitude is required'),
-    z.string().refine(val => !isNaN(parseFloat(val)), 'Valid longitude is required')
+    z.number().min(-180).max(180, "Valid longitude is required"),
+    z
+      .string()
+      .refine((val) => !isNaN(parseFloat(val)), "Valid longitude is required"),
   ]),
-  distance_from_company: z.union([
-    z.number(),
-    z.string(),
-    z.null()
-  ]).optional(),
+  distance_from_company: z.union([z.number(), z.string(), z.null()]).optional(),
   office: optionalStringSchema,
 });
 
 // Complete Employee Schema
-export const employeeSchema = personalInfoSchema.merge(addressInfoSchema).extend({
-  subscribe_via_email: z.boolean().optional().default(false),
-  subscribe_via_sms: z.boolean().optional().default(false),
-});
+export const employeeSchema = personalInfoSchema
+  .merge(addressInfoSchema)
+  .extend({
+    subscribe_via_email: z.boolean().optional().default(false),
+    subscribe_via_sms: z.boolean().optional().default(false),
+  });
 
 // Validation functions
 export const validatePersonalInfo = (formData) => {
@@ -134,11 +178,11 @@ export const validatePersonalInfo = (formData) => {
       special_needs_end_date: formData.special_needs_end_date || null,
     };
 
-    console.log('Validating personal info:', dataToValidate);
+    console.log("Validating personal info:", dataToValidate);
     personalInfoSchema.parse(dataToValidate);
     return { isValid: true, errors: {} };
   } catch (error) {
-    console.error('Validation error details:', error);
+    console.error("Validation error details:", error);
     if (error instanceof z.ZodError) {
       const errors = {};
       // Use error.issues instead of error.errors
@@ -153,18 +197,21 @@ export const validatePersonalInfo = (formData) => {
       return { isValid: false, errors };
     }
     // Log the actual error for debugging
-    console.error('Non-Zod validation error:', error);
-    return { isValid: false, errors: { general: `Validation failed: ${error.message}` } };
+    console.error("Non-Zod validation error:", error);
+    return {
+      isValid: false,
+      errors: { general: `Validation failed: ${error.message}` },
+    };
   }
 };
 
 export const validateAddressInfo = (formData) => {
   try {
-    console.log('Validating address info:', formData);
+    console.log("Validating address info:", formData);
     addressInfoSchema.parse(formData);
     return { isValid: true, errors: {} };
   } catch (error) {
-    console.error('Address validation error details:', error);
+    console.error("Address validation error details:", error);
     if (error instanceof z.ZodError) {
       const errors = {};
       // Use error.issues instead of error.errors
@@ -177,18 +224,21 @@ export const validateAddressInfo = (formData) => {
       });
       return { isValid: false, errors };
     }
-    console.error('Non-Zod validation error:', error);
-    return { isValid: false, errors: { general: `Validation failed: ${error.message}` } };
+    console.error("Non-Zod validation error:", error);
+    return {
+      isValid: false,
+      errors: { general: `Validation failed: ${error.message}` },
+    };
   }
 };
 
 export const validateEmployeeForm = (formData) => {
   try {
-    console.log('Validating complete employee form:', formData);
+    console.log("Validating complete employee form:", formData);
     employeeSchema.parse(formData);
     return { isValid: true, errors: {} };
   } catch (error) {
-    console.error('Employee form validation error details:', error);
+    console.error("Employee form validation error details:", error);
     if (error instanceof z.ZodError) {
       const errors = {};
       // Use error.issues instead of error.errors
@@ -201,8 +251,11 @@ export const validateEmployeeForm = (formData) => {
       });
       return { isValid: false, errors };
     }
-    console.error('Non-Zod validation error:', error);
-    return { isValid: false, errors: { general: `Validation failed: ${error.message}` } };
+    console.error("Non-Zod validation error:", error);
+    return {
+      isValid: false,
+      errors: { general: `Validation failed: ${error.message}` },
+    };
   }
 };
 

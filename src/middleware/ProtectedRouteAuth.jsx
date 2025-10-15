@@ -2,6 +2,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import Cookies from "js-cookie";
 import { useSelector } from "react-redux";
 
+
 const ProtectedRouteAuth = ({ type, redirectPath, authRedirectPath }) => {
   const token = Cookies.get("auth_token");
   const location = useLocation();
@@ -19,13 +20,17 @@ const ProtectedRouteAuth = ({ type, redirectPath, authRedirectPath }) => {
     if (!token ||!isAuthenticated && authloading) {
       return <Navigate to={redirectPath} replace state={{ from: location }} />;
     }
- 
+
+
+
 
   // 🚨 Role mismatch handling
   if (user?.type && user?.type !== type) {
-    if (user?.type === "employee") return <Navigate to="/dashboard" replace />;
-    if (user?.type === "admin") return <Navigate to="/superadmin/dashboard" replace />;
-    if (user?.type === "vendor") return <Navigate to="/vendor/dashboard" replace />;
+
+    if (user?.type === "employee" && type === "employee") return <Navigate to="/dashboard" replace />;
+    if (user?.type === "admin" && type === "admin") return <Navigate to="/superadmin/dashboard" replace />;
+    if (user?.type === "vendor" && type === "vendor") return <Navigate to="/vendor/dashboard" replace />;
+
   }
 
   // 🚨 Redirect only if exactly on login path
