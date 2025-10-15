@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Upload, Eye, Download } from "lucide-react";
 import Select from "react-select";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchVehicleTypes } from "../../redux/features/managevehicletype/vehicleTypeThunks";
 
 const TABS = ["BASIC INFO", "DOCUMENTS"];
 
@@ -21,31 +23,68 @@ const initialState = {
   puc_file: null,
   fitness_file: null,
   tax_receipt_file: null,
+  is_active: true,
 };
-
-const DUMMY_VENDORS = [
-  { vendor_id: "1", vendor_name: "Vendor A" },
-  { vendor_id: "2", vendor_name: "Vendor B" },
-];
 
 const DUMMY_DRIVERS = [
   { driver_id: "1", driver_name: "John Doe" },
   { driver_id: "2", driver_name: "Jane Smith" },
 ];
 
-const DUMMY_VEHICLE_TYPES = [
-  { vehicle_type_id: "1", name: "Truck" },
-  { vehicle_type_id: "2", name: "Trailer" },
-];
-
 const VehicleForm = ({ isEdit = false, initialData = {}, onFormChange }) => {
+  const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState(TABS[0]);
-  const [formData, setFormData] = useState({ ...initialState, ...initialData });
+  const [formData, setFormData] = useState(initialState);
   const [errors, setErrors] = useState({});
+
+  const sessionStr = sessionStorage.getItem("userPermissions");
+  const session = sessionStr ? JSON.parse(sessionStr) : null;
+  const loggedInVendor = session?.user?.vendor_user || null;
+  const loggedInVendorId = loggedInVendor?.vendor_id || "";
+
+  // Normalize initialData for edit (prefill form)
+  useEffect(() => {
+    console.log("VehicleForm: initialData received =>", initialData); // LOG initialData
+    if (initialData && Object.keys(initialData).length > 0) {
+      const normalized = {
+        ...initialState,
+        ...initialData,
+        insurance_file: null,
+        permit_file: null,
+        puc_file: null,
+        fitness_file: null,
+        tax_receipt_file: null,
+      };
+      setFormData(normalized);
+      console.log("VehicleForm: formData after prefill =>", normalized); // LOG formData
+    }
+  }, [initialData]);
+
+  // Pre-fill vendor for vendor user
+  useEffect(() => {
+    if (loggedInVendorId && !formData.vendor_id) {
+      setFormData((prev) => {
+        const updated = { ...prev, vendor_id: loggedInVendorId };
+        console.log("VehicleForm: prefilled vendor_id =>", updated.vendor_id); // LOG vendor_id
+        return updated;
+      });
+    }
+  }, [loggedInVendorId]);
+
+  // Fetch vehicle types
+  const { byId, allIds, loading } = useSelector((state) => state.vehicleType);
+  const vehicleTypes = allIds.map((id) => byId[id]);
+
+  useEffect(() => {
+    if (!vehicleTypes || vehicleTypes.length === 0) {
+      dispatch(fetchVehicleTypes());
+    }
+  }, [dispatch, vehicleTypes]);
 
   const updateFormData = (updated) => {
     setFormData(updated);
     onFormChange?.(updated);
+    console.log("VehicleForm: formData updated =>", updated); // LOG every update
   };
 
   const handleInputChange = (field, value) => {
@@ -88,7 +127,7 @@ const VehicleForm = ({ isEdit = false, initialData = {}, onFormChange }) => {
     ];
     const newErrors = {};
     requiredDocs.forEach((doc) => {
-      if (!formData[doc] && !initialData[doc]) {
+      if (!formData[doc] && !initialData[`${doc.replace("_file", "_url")}`]) {
         newErrors[doc] = "This document is required";
       }
     });
@@ -96,12 +135,14 @@ const VehicleForm = ({ isEdit = false, initialData = {}, onFormChange }) => {
   };
 
   const handleNext = () => {
-    const newErrors = activeTab === "BASIC INFO" ? validateBasicInfo() : validateDocuments();
+    const newErrors =
+      activeTab === "BASIC INFO" ? validateBasicInfo() : validateDocuments();
     if (Object.keys(newErrors).length === 0) {
       const index = TABS.indexOf(activeTab);
       if (index < TABS.length - 1) setActiveTab(TABS[index + 1]);
     } else {
       setErrors(newErrors);
+      console.log("VehicleForm: validation errors =>", newErrors);
     }
   };
 
@@ -125,7 +166,7 @@ const VehicleForm = ({ isEdit = false, initialData = {}, onFormChange }) => {
     </div>
   );
 
-  const renderSearchableSelect = (label, field, options = [], required = false) => (
+  const renderSearchableSelect = (label, field, options = [], required = false, disabled = false) => (
     <div>
       <label className="block font-medium mb-1">
         {label} {required && "*"}
@@ -136,162 +177,104 @@ const VehicleForm = ({ isEdit = false, initialData = {}, onFormChange }) => {
         onChange={(selected) => handleInputChange(field, selected?.value || "")}
         isSearchable
         placeholder={`Select ${label}`}
+        isDisabled={disabled || loading}
       />
+      {loading && <p className="text-gray-500 text-sm mt-1">Loading {label.toLowerCase()}...</p>}
       {errors[field] && <p className="text-red-500 text-sm">{errors[field]}</p>}
     </div>
   );
 
-  /** ✅ Updated Horizontal Layout for Documents **/
   const renderFileWithExpiry = (label, fileField, expiryField) => {
-    const file = formData[fileField];
-    const fileUrl =
-      file instanceof File
-        ? URL.createObjectURL(file)
-        : typeof file === "string"
-        ? file
-        : null;
+    const existingFilePath = initialData[`${fileField.replace("_file", "_url")}`];
+    const fileUrl = formData[fileField] instanceof File
+      ? URL.createObjectURL(formData[fileField])
+      : existingFilePath
+      ? `/api/v1/vehicles/files/${existingFilePath}`
+      : null;
+
+    console.log(`File URL for ${fileField}:`, fileUrl);
 
     const handleUpload = (e) => {
       const selectedFile = e.target.files[0];
       if (selectedFile) handleFileChange(fileField, selectedFile);
     };
 
-    const handleView = () => {
-      if (fileUrl) window.open(fileUrl, "_blank");
-    };
-
-    const handleDownload = () => {
-      if (fileUrl) {
-        const a = document.createElement("a");
-        a.href = fileUrl;
-        a.download = file.name || `${label}.pdf`;
-        a.click();
-      }
-    };
-
-    const handleRemove = () => {
-      handleFileChange(fileField, null);
-    };
+    const handleView = () => fileUrl && window.open(fileUrl, "_blank");
+    const handleDownload = () => fileUrl && (window.location.href = fileUrl + "?download=true");
+    const handleRemove = () => handleFileChange(fileField, null);
 
     return (
       <div className="border rounded-lg p-4 bg-gray-50 shadow-sm flex flex-col gap-3">
         <label className="block font-semibold text-gray-700">{label}</label>
-
-        {/* File + Actions Row */}
         <div className="flex items-center gap-2">
           <div className="flex-1 text-sm text-gray-700 bg-white border rounded px-3 py-2 truncate">
-            {file ? file.name || "Existing File" : "No file chosen"}
+            {formData[fileField]?.name || existingFilePath ? "Existing File" : "No file chosen"}
           </div>
-
-          <label
-            htmlFor={`${fileField}-input`}
-            className="flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-400 px-2 py-1 rounded cursor-pointer hover:bg-blue-200"
-          >
+          <label htmlFor={`${fileField}-input`} className="flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-400 px-2 py-1 rounded cursor-pointer hover:bg-blue-200">
             <Upload size={16} />
           </label>
-          <input
-            type="file"
-            id={`${fileField}-input`}
-            className="hidden"
-            onChange={handleUpload}
-          />
-
-          {file && (
+          <input type="file" id={`${fileField}-input`} className="hidden" onChange={handleUpload} />
+          {fileUrl && (
             <>
-              <button
-                type="button"
-                onClick={handleView}
-                className="flex items-center gap-1 bg-green-100 text-green-700 border border-green-400 px-2 py-1 rounded hover:bg-green-200"
-              >
+              <button type="button" onClick={handleView} className="flex items-center gap-1 bg-green-100 text-green-700 border border-green-400 px-2 py-1 rounded hover:bg-green-200">
                 <Eye size={16} />
               </button>
-              <button
-                type="button"
-                onClick={handleDownload}
-                className="flex items-center gap-1 bg-gray-100 text-gray-700 border border-gray-400 px-2 py-1 rounded hover:bg-gray-200"
-              >
+              <button type="button" onClick={handleDownload} className="flex items-center gap-1 bg-gray-100 text-gray-700 border border-gray-400 px-2 py-1 rounded hover:bg-gray-200">
                 <Download size={16} />
               </button>
-              <button
-                type="button"
-                onClick={handleRemove}
-                className="flex items-center gap-1 bg-red-100 text-red-600 border border-red-400 px-2 py-1 rounded hover:bg-red-200"
-              >
+              <button type="button" onClick={handleRemove} className="flex items-center gap-1 bg-red-100 text-red-600 border border-red-400 px-2 py-1 rounded hover:bg-red-200">
                 ❌
               </button>
             </>
           )}
         </div>
-
-        {/* Expiry Date */}
         <div>
           <label className="text-sm font-medium text-gray-600">Expiry Date</label>
           <input
             type="date"
-            value={formData[expiryField] || ""}
+            value={formData[expiryField] || initialData[expiryField] || ""}
             onChange={(e) => handleInputChange(expiryField, e.target.value)}
             className="w-full border rounded px-3 py-1.5 text-sm mt-1"
           />
         </div>
-
-        {/* Error */}
-        {errors[fileField] && (
-          <p className="text-red-500 text-sm mt-1">{errors[fileField]}</p>
-        )}
+        {errors[fileField] && <p className="text-red-500 text-sm mt-1">{errors[fileField]}</p>}
       </div>
     );
   };
 
   return (
     <>
-      {/* Tabs */}
       <div className="flex space-x-6 border-b mb-4">
         {TABS.map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => setActiveTab(tab)}
-            className={`pb-2 font-medium ${
-              activeTab === tab
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-500"
-            }`}
-          >
+          <button key={tab} type="button" onClick={() => setActiveTab(tab)}
+            className={`pb-2 font-medium ${activeTab === tab ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-500"}`}>
             {tab}
           </button>
         ))}
       </div>
 
-      {/* Tab Content */}
       <div className="grid grid-cols-2 gap-4">
         {activeTab === "BASIC INFO" && (
           <>
             {renderSearchableSelect(
               "Vendor",
               "vendor_id",
-              DUMMY_VENDORS.map((v) => ({
-                value: v.vendor_id,
-                label: v.vendor_name,
-              })),
-              true
+              loggedInVendor ? [{ value: loggedInVendor.vendor_id, label: loggedInVendor.name }] : [],
+              true,
+              !!loggedInVendor
             )}
             {renderSearchableSelect(
               "Vehicle Type",
               "vehicle_type_id",
-              DUMMY_VEHICLE_TYPES.map((t) => ({
-                value: t.vehicle_type_id,
-                label: t.name,
-              })),
+              vehicleTypes?.map((t) => ({ value: t.id, label: t.name })) || [],
               true
             )}
             {renderField("RC Number", "rc_number", "text", true)}
+            {renderField("RC Expiry Date", "rc_expiry_date", "date", true)}
             {renderSearchableSelect(
               "Driver",
               "driver_id",
-              DUMMY_DRIVERS.map((d) => ({
-                value: d.driver_id,
-                label: d.driver_name,
-              })),
+              DUMMY_DRIVERS.map((d) => ({ value: d.driver_id, label: d.driver_name })),
               true
             )}
             {renderField("Description", "description")}
@@ -309,25 +292,12 @@ const VehicleForm = ({ isEdit = false, initialData = {}, onFormChange }) => {
         )}
       </div>
 
-      {/* Navigation Buttons */}
       <div className="flex justify-between mt-6">
         {activeTab !== "BASIC INFO" && (
-          <button
-            type="button"
-            onClick={handleBack}
-            className="border px-6 py-2 rounded"
-          >
-            Back
-          </button>
+          <button type="button" onClick={handleBack} className="border px-6 py-2 rounded">Back</button>
         )}
         {activeTab !== TABS[TABS.length - 1] && (
-          <button
-            type="button"
-            onClick={handleNext}
-            className="bg-blue-600 text-white px-6 py-2 rounded ml-auto"
-          >
-            Next
-          </button>
+          <button type="button" onClick={handleNext} className="bg-blue-600 text-white px-6 py-2 rounded ml-auto">Next</button>
         )}
       </div>
     </>

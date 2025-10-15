@@ -1,13 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  Edit,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
-  Search,
-  Eye,
-} from "lucide-react";
+import { Edit, Eye } from "lucide-react";
+import ReusableButton from "../ui/ReusableButton";
+import ReusableToggleButton from "../ui/ReusableToggleButton";
 import { Modal } from "../SmallComponents";
 import VehicleForm from "./VehicleForm";
 
@@ -36,6 +31,7 @@ const VehicleList = ({
   isLoading,
   handleEdit,
   handleView,
+  handleToggle,
 }) => (
   <div className="rounded-lg border bg-white shadow-sm mt-4">
     <div className="overflow-auto max-h-[500px]">
@@ -43,8 +39,7 @@ const VehicleList = ({
         <thead className="bg-gray-100 sticky top-0 z-10">
           <tr className="text-left text-gray-700">
             <th className="px-4 py-2">S. No.</th>
-            <th className="px-4 py-2">Vehicle Type</th>
-            <th className="px-4 py-2">Vendor</th>
+            <th className="px-4 py-2">Vehicle Type ID</th>
             <th className="px-4 py-2">RC Number</th>
             <th className="px-4 py-2">Driver</th>
             <th className="px-4 py-2">RC Expiry</th>
@@ -55,54 +50,79 @@ const VehicleList = ({
             <th className="px-4 py-2 text-center">Actions</th>
           </tr>
         </thead>
+
         <tbody>
           {isLoading ? (
             <tr>
-              <td colSpan="11" className="text-center p-4 text-gray-500">
+              <td colSpan="10" className="text-center p-4 text-gray-500">
                 Loading...
               </td>
             </tr>
           ) : vehicles.length === 0 ? (
             <tr>
-              <td colSpan="11" className="text-center p-4 text-gray-500">
+              <td colSpan="10" className="text-center p-4 text-gray-500">
                 No vehicles found
               </td>
             </tr>
           ) : (
             vehicles.map((vehicle, index) => (
-              <tr key={vehicle.vehicle_id} className="border-t hover:bg-gray-50">
+              <tr
+                key={vehicle.vehicle_id}
+                className="border-t hover:bg-gray-50 transition-all"
+              >
                 <td className="px-4 py-2">
                   {index + 1 + (currentPage - 1) * 10}
                 </td>
-                <td className="px-4 py-2">{vehicle.vehicle_type_name || "-"}</td>
-                <td className="px-4 py-2">{vehicle.vendor_name || "-"}</td>
+                <td className="px-4 py-2">{vehicle.vehicle_type_id || "-"}</td>
                 <td className="px-4 py-2">{vehicle.rc_number || "-"}</td>
-                <td className="px-4 py-2">{vehicle.driver_name || "-"}</td>
-                <td className="px-4 py-2">{vehicle.rc_expiry_date || "-"}</td>
-                <td className="px-4 py-2">{vehicle.insurance_expiry_date || "-"}</td>
-                <td className="px-4 py-2">{vehicle.permit_expiry_date || "-"}</td>
-                <td className="px-4 py-2">{vehicle.puc_expiry_date || "-"}</td>
-                <td className="px-4 py-2">{vehicle.fitness_expiry_date || "-"}</td>
+                <td className="px-4 py-2">
+                  {vehicle.driver_id ? vehicle.driver_id : "Unassigned"}
+                </td>
+                <td className="px-4 py-2">
+                  {vehicle.rc_expiry_date?.split("T")[0] || "-"}
+                </td>
+                <td className="px-4 py-2">
+                  {vehicle.insurance_expiry_date?.split("T")[0] || "-"}
+                </td>
+                <td className="px-4 py-2">
+                  {vehicle.permit_expiry_date?.split("T")[0] || "-"}
+                </td>
+                <td className="px-4 py-2">
+                  {vehicle.puc_expiry_date?.split("T")[0] || "-"}
+                </td>
+                <td className="px-4 py-2">
+                  {vehicle.fitness_expiry_date?.split("T")[0] || "-"}
+                </td>
                 <td className="px-4 py-2 text-center">
-                  <div className="flex justify-center items-center gap-2">
-                    <button
-                      onClick={() => handleView(vehicle)}
-                      className="flex items-center gap-1 px-3 py-1 text-sm border rounded text-gray-600 border-gray-400 hover:bg-gray-50"
-                    >
-                      <Eye size={14} />
-                    </button>
-                    <button
-                      onClick={() => handleEdit(vehicle)}
-                      className="flex items-center gap-1 px-3 py-1 text-sm border rounded text-blue-600 border-blue-600 hover:bg-blue-50"
-                    >
-                      <Edit size={14} />
-                    </button>
-                    <button
-                      onClick={() => console.log("delete", vehicle.vehicle_id)}
-                      className="flex items-center gap-1 px-3 py-1 text-sm border rounded text-red-600 border-red-600 hover:bg-red-50"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                  <div className="flex justify-center items-center gap-4">
+                    <div className="flex gap-2">
+                      <ReusableButton
+                        module="vehicle"
+                        action="read"
+                        icon={Eye}
+                        title="View Vehicle"
+                        onClick={() => handleView(vehicle)}
+                        className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all"
+                      />
+                      <ReusableButton
+                        module="vehicle"
+                        action="update"
+                        icon={Edit}
+                        title="Edit Vehicle"
+                        onClick={() => handleEdit(vehicle)}
+                        className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all"
+                      />
+                    </div>
+
+                    <ReusableToggleButton
+                      module="vehicle"
+                      action="update"
+                      isChecked={vehicle.is_active ?? true}
+                      onToggle={() => handleToggle(vehicle.vehicle_id)}
+                      labels={{ on: "Active", off: "Inactive" }}
+                      size="small"
+                      className="scale-90"
+                    />
                   </div>
                 </td>
               </tr>
@@ -116,18 +136,28 @@ const VehicleList = ({
     <div className="flex justify-center items-center gap-4 py-4">
       <button
         onClick={onPrev}
-        className="flex items-center gap-2 px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
+        disabled={currentPage === 1}
+        className={`flex items-center gap-2 px-4 py-2 rounded ${
+          currentPage === 1
+            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+        }`}
       >
-        <ChevronLeft size={18} /> Prev
+        Prev
       </button>
       <span className="text-sm text-gray-700 font-medium">
         Page {currentPage} of {totalPages}
       </span>
       <button
         onClick={onNext}
-        className="flex items-center gap-2 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+        disabled={currentPage === totalPages}
+        className={`flex items-center gap-2 px-4 py-2 rounded ${
+          currentPage === totalPages
+            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+            : "bg-blue-600 text-white hover:bg-blue-700"
+        }`}
       >
-        Next <ChevronRight size={18} />
+        Next
       </button>
     </div>
   </div>
@@ -145,7 +175,7 @@ const ManageVehicles = () => {
   const [vehicleModal, setVehicleModal] = useState(false);
   const [editVehicle, setEditVehicle] = useState(null);
 
-  // --- Fetch once on mount ---
+  // Fetch all vehicles on mount
   useEffect(() => {
     if (!hasFetched) {
       dispatch(fetchVehiclesThunk());
@@ -158,15 +188,22 @@ const ManageVehicles = () => {
     setEditVehicle(vehicle);
     setVehicleModal(true);
   };
+
   const handleView = (vehicle) => {
     setEditVehicle(vehicle);
     setVehicleModal(true);
   };
 
-  const onPrev = () => {
-    if (pagination.skip > 0)
-      dispatch(setPage(pagination.skip / pagination.limit));
+  const handleToggle = (vehicleId) => {
+    console.log("Toggle vehicle active/inactive:", vehicleId);
+    // Add toggle thunk logic here (updateVehicleStatusThunk)
   };
+
+  const onPrev = () => {
+    const prevPage = pagination.skip / pagination.limit;
+    if (prevPage > 0) dispatch(setPage(prevPage));
+  };
+
   const onNext = () => {
     const nextPage = pagination.skip / pagination.limit + 2;
     if (nextPage <= totalPages) dispatch(setPage(nextPage));
@@ -175,19 +212,16 @@ const ManageVehicles = () => {
   return (
     <div className="p-4 space-y-4">
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 bg-white shadow-sm p-4 rounded-lg">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white shadow-sm p-4 rounded-lg">
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           {/* Search RC Number */}
           <div className="relative w-full sm:w-64">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search size={18} className="text-gray-400" />
-            </div>
             <input
               type="text"
               placeholder="Search RC Number..."
               value={filters.rc_number}
               onChange={(e) => dispatch(setRcNumberFilter(e.target.value))}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
+              className="pl-3 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
             />
           </div>
 
@@ -205,7 +239,10 @@ const ManageVehicles = () => {
 
         {/* Add Vehicle Button */}
         <button
-          onClick={() => setVehicleModal(true)}
+          onClick={() => {
+            setEditVehicle(null);
+            setVehicleModal(true);
+          }}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 w-full sm:w-auto"
         >
           Add Vehicle
@@ -222,6 +259,7 @@ const ManageVehicles = () => {
         isLoading={loading}
         handleEdit={handleEdit}
         handleView={handleView}
+        handleToggle={handleToggle}
       />
 
       {/* Modal */}
@@ -233,7 +271,10 @@ const ManageVehicles = () => {
       >
         <VehicleForm
           defaultValues={editVehicle}
-          onSuccess={() => setVehicleModal(false)}
+          onSuccess={() => {
+            setVehicleModal(false);
+            dispatch(fetchVehiclesThunk());
+          }}
         />
       </Modal>
     </div>

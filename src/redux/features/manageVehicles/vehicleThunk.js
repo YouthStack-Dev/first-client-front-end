@@ -17,3 +17,18 @@ export const fetchVehiclesThunk = createAsyncThunk(
     }
   }
 );
+
+
+// ✅ Update a vehicle
+export const updateVehicleThunk = createAsyncThunk(
+  "vehicles/update",
+  async ({ vehicle_id, data }, { rejectWithValue }) => {
+    try {
+      const response = await API_CLIENT.put(`/vehicles/${vehicle_id}`, data);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating vehicle:", error);
+      return rejectWithValue(error.response?.data || "Failed to update vehicle");
+    }
+  }
+);

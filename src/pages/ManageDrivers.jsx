@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState,useMemo } from "react";
 import { Plus } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { DriverList } from "@components/driver/DriverList";
@@ -9,7 +9,6 @@ import StatusIndicator from "@components/ui/StatusIndicator";
 import { API_CLIENT } from "../Api/API_Client";
 import {
   setSearchTerm,
-  setVendorFilter,
   setStatusFilter,
   setVerificationFilter,
   resetFilters,
@@ -30,19 +29,22 @@ import {
 import DriverForm from "@components/driver/DriverForm";
 import Modal from "@components/modals/Modal";
 import ConfirmationModal from "@components/modals/ConfirmationModal";
-import { fetchDriversByVendorThunk } from "../redux/features/manageDriver/driverThunks";
+import { fetchDriversThunk } from "../redux/features/manageDriver/driverThunks";
 
 function ManageDrivers() {
   const dispatch = useDispatch();
   const drivers = useSelector(selectPaginatedDrivers);
   const loading = useSelector(selectLoading);
   const error = useSelector(selectError);
-  // const vendorOptions = useSelector(selectVendorOptions);
   const statusOptions = useSelector(selectStatusOptions);
   const verificationOptions = useSelector(selectVerificationOptions);
   const activeFilters = useSelector(selectActiveFilters);
   const counts = useSelector(selectCounts);
-  const { vendorId } = useSelector((state) => state.vendor);
+   const filters = useSelector((state) => state.drivers.filters);
+  const pagination = useSelector((state) => state.drivers.pagination);
+  const driversEntities = useSelector((state) => state.drivers.entities);
+  const driversIds = useSelector((state) => state.drivers.ids);
+
   // Modal and form state
   const [showModal, setShowModal] = useState(false);
   const [formMode, setFormMode] = useState("create"); // 'create', 'edit', 'view'
@@ -77,22 +79,47 @@ function ManageDrivers() {
     onConfirm: () => {},
     onCancel: () => {},
   });
+
   // Track the last fetched page to prevent refetching when going back
   const lastFetchedPage = useRef(0);
-  const lastFetchedVendor = useRef(null);
+ 
+    // Fetch drivers once
+useEffect(() => {
+  if (!hasFetched) {
+    dispatch(fetchDriversThunk());
+  }
+}, [dispatch]);
 
-  useEffect(() => {
-    // Example using sessionStorage
-    const sessionStr = sessionStorage.getItem("userPermissions"); // or your actual key
-    const session = sessionStr ? JSON.parse(sessionStr) : null;
-    const vendorId = session?.user?.vendor_user?.vendor_id;
+  // Local filtered drivers
+  const filteredDrivers = useMemo(() => {
+    return driversIds
+      .map((id) => driversEntities[id])
+      .filter((driver) => {
+        const matchesStatus =
+          filters.statusFilter === "all" ||
+          (filters.statusFilter === "active" && driver.is_active) ||
+          (filters.statusFilter === "inactive" && !driver.is_active);
 
-    if (vendorId) {
-      dispatch(fetchDriversByVendorThunk({ vendor_id: vendorId }));
-    }
-  }, [dispatch, vendorId]);
+        const matchesVerification =
+          filters.verificationFilter === "all" ||
+          (filters.verificationFilter === "pending" &&
+            driver.verification_status?.toLowerCase() === "pending") ||
+          (filters.verificationFilter === "verified" &&
+            driver.verification_status?.toLowerCase() === "verified");
 
-  const [vendors, setVendors] = useState([]);
+        const term = filters.searchTerm.toLowerCase();
+        const matchesSearch =
+          !term ||
+          driver.name?.toLowerCase().includes(term) ||
+          driver.email?.toLowerCase().includes(term) ||
+          driver.phone?.toLowerCase().includes(term) ||
+          driver.license_number?.toLowerCase().includes(term);
+
+        return matchesStatus && matchesVerification && matchesSearch;
+      });
+  }, [driversEntities, driversIds, filters]);
+
+
 
   // useEffect(() => {
   //   // Fetch drivers if:
@@ -144,9 +171,9 @@ function ManageDrivers() {
       onConfirm: async () => {
         try {
           dispatch(setDriversLoading(true));
-          await API_CLIENT.patch(
-            `/vendors/${driver.vendor.vendor_id}/drivers/${driver.driver_id}/status`
-          );
+          // await API_CLIENT.patch(
+          //   `/vendors/${driver.vendor.vendor_id}/drivers/${driver.driver_id}/status`
+          // );
           dispatch(
             updateDriverStatus({
               driverId: driver.driver_id,
@@ -372,7 +399,6 @@ function ManageDrivers() {
         <DriverForm
           initialData={selectedDriver}
           mode={formMode}
-          vendors={vendors}
           onClose={handleFormSuccess}
         />
       </Modal>

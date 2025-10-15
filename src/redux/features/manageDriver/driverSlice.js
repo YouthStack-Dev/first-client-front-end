@@ -1,16 +1,14 @@
 import { createSlice, createSelector } from '@reduxjs/toolkit';
-import { fetchDriversByVendorThunk  } from "./driverThunks";
+import { fetchDriversThunk  } from "./driverThunks";
 
 const initialState = {
   entities: {},
   ids: [],
-  vendors: {},
   loading: false,
   error: null,
   hasFetched: false,
   filters: {
     searchTerm: '',
-    vendorFilter: 'all',
     statusFilter: 'all',
     verificationFilter: 'all'
   },
@@ -27,10 +25,6 @@ const driversSlice = createSlice({
     // Filter actions
     setSearchTerm: (state, action) => {
       state.filters.searchTerm = action.payload;
-      state.pagination.skip = 0;
-    },
-    setVendorFilter: (state, action) => {
-      state.filters.vendorFilter = action.payload;
       state.pagination.skip = 0;
     },
     setStatusFilter: (state, action) => {
@@ -64,20 +58,15 @@ const driversSlice = createSlice({
       const normalized = {
         entities: {},
         ids: [],
-        vendors: {}
       };
       
       action.payload.forEach(driver => {
         normalized.entities[driver.driver_id] = driver;
         normalized.ids.push(driver.driver_id);
-        if (driver.vendor) {
-          normalized.vendors[driver.vendor.vendor_id] = driver.vendor;
-        }
       });
       
       state.entities = normalized.entities;
       state.ids = normalized.ids;
-      state.vendors = normalized.vendors;
     },
     updateDriverStatus: (state, action) => {
       const { driverId, isActive } = action.payload;
@@ -88,33 +77,29 @@ const driversSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchDriversByVendorThunk.pending, (state) => {
+      .addCase(fetchDriversThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchDriversByVendorThunk.fulfilled, (state, action) => {
+      .addCase(fetchDriversThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.hasFetched = true;
         state.error = null;
 
-          const entities = {};
-          const ids = [];
-          const vendors = {};
+        const entities = {};
+        const ids = [];
+        const vendors = {};
 
-          action.payload.forEach(driver => {
-            entities[driver.driver_id] = driver;
-            ids.push(driver.driver_id);
+        action.payload.forEach(driver => {
+          entities[driver.driver_id] = driver;
+          ids.push(driver.driver_id);
 
-            if (driver.vendor) {
-              vendors[driver.vendor.vendor_id] = driver.vendor;
-            }
-          });
+        });
+        state.entities = entities;
+        state.ids = ids;
 
-          state.entities = entities;  
-          state.ids = ids;            
-          state.vendors = vendors;    
-        })
-      .addCase(fetchDriversByVendorThunk.rejected, (state, action) => {
+      })
+      .addCase(fetchDriversThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to fetch drivers";
       });
@@ -164,8 +149,6 @@ export const selectFilteredDrivers = createSelector(
       [driver.name, driver.email, driver.mobile_number, driver.license_number]
         .some(field => field && field.toString().toLowerCase().includes(filters.searchTerm.toLowerCase()));
 
-    const matchesVendor = filters.vendorFilter === 'all' || 
-      (driver.vendor && driver.vendor.vendor_id.toString() === filters.vendorFilter);
     
     const matchesStatus = filters.statusFilter === 'all' || 
       (filters.statusFilter === 'active' && driver.is_active) || 
@@ -176,7 +159,7 @@ export const selectFilteredDrivers = createSelector(
        'training_verification_status', 'eye_test_verification_status']
         .some(field => driver[field] === filters.verificationFilter);
 
-    return matchesSearch && matchesVendor && matchesStatus && matchesVerification;
+    return matchesSearch  && matchesStatus && matchesVerification;
   })
 );
 
@@ -224,8 +207,7 @@ export const selectActiveFilters = createSelector(
 );
 
 export const { 
-  setSearchTerm, 
-  setVendorFilter, 
+  setSearchTerm,  
   setStatusFilter, 
   setVerificationFilter, 
   resetFilters,

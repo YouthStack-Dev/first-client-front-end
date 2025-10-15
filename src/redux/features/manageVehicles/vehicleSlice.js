@@ -1,7 +1,7 @@
 // src/redux/features/manageVehicles/vehicleSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { API_CLIENT } from '../../../Api/API_Client'; // adjust path
-import { fetchVehiclesThunk } from './vehicleThunk'; // your thunk
+import { fetchVehiclesThunk,updateVehicleThunk  } from './vehicleThunk'; // your thunk
 
 export const initialState = {
   entities: {},      // vehicle_id -> vehicle object
@@ -122,6 +122,27 @@ const vehicleSlice = createSlice({
       .addCase(fetchVehiclesThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to fetch vehicles';
+      })
+       .addCase(updateVehicleThunk.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateVehicleThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        const updatedVehicle = action.payload;
+
+        if (updatedVehicle?.vehicle_id) {
+          state.entities[updatedVehicle.vehicle_id] = updatedVehicle;
+
+          if (!state.ids.includes(updatedVehicle.vehicle_id)) {
+            state.ids.push(updatedVehicle.vehicle_id);
+          }
+
+          console.log("✅ Vehicle updated in state:", updatedVehicle.vehicle_id);
+        }
+      })
+      .addCase(updateVehicleThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to update vehicle";
       });
   },
 });

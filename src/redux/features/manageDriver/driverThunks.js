@@ -1,35 +1,21 @@
-// src/redux/features/manageDriver/driverThunks.js
+// src/redux/features/manageDrivers/driverThunks.js
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { API_CLIENT } from "../../../Api/API_Client";
 
-// Fetch drivers for the logged-in vendor
-export const fetchDriversByVendorThunk = createAsyncThunk(
-  "drivers/fetchDrivers",
-  async (
-    { vendor_id, active_only, license_number, search } = {},
-    { rejectWithValue }
-  ) => {
+// Fetch all drivers for the logged-in vendor (vendor_id taken from session/token in backend)
+export const fetchDriversThunk = createAsyncThunk(
+  "drivers/fetchAll",
+  async (_, { rejectWithValue }) => {
     try {
-      if (!vendor_id) throw new Error("Vendor ID is required");
+      const response = await API_CLIENT.get("/v1/drivers/vendor");
 
-      // Build query params
-      const params = new URLSearchParams();
-      params.append("vendor_id", vendor_id); // always first
-      if (active_only !== undefined) params.append("active_only", active_only);
-      if (license_number) params.append("license_number", license_number);
-      if (search) params.append("search", search);
-
-      const response = await API_CLIENT.get(
-        `/v1/drivers/vendor?${params.toString()}`
-      );
-
-      if (response.status === 200 && response.data?.success) {
-        return response.data.data.items; // ✅ array of drivers
+      if (response?.data?.success) {
+        return response.data.data.items; 
+      } else {
+        return rejectWithValue(response.data.message || "Failed to fetch drivers");
       }
-
-      return rejectWithValue(response.data?.message || "Failed to fetch drivers");
     } catch (error) {
-      return rejectWithValue(error.message || "Unexpected error occurred");
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
