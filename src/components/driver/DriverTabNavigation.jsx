@@ -8,22 +8,22 @@ const tabs = [
 ];
 
 const DriverTabNavigation = ({ activeTab, errors = {}, onTabChange, validateTab }) => {
-  logDebug('Driver errors', errors);
 
-  const handleTabClick = (tabId) => {
-    if (tabId === activeTab) return;
+const handleTabClick = (tabId) => {
+  if (tabId === activeTab) return;
 
-    // Validate current tab before switching
-    if (validateTab) {
-      const currentErrors = validateTab(activeTab);
-      if (Object.keys(currentErrors).length > 0) {
-        toast.error("Please fix errors in this tab before switching");
-        return; // Block tab switch
-      }
+  // Only validate PERSONAL DETAILS tab before switching
+  if (activeTab === 'personalDetails' && validateTab) {
+    const currentErrors = validateTab(activeTab);
+    if (Object.keys(currentErrors).length > 0) {
+      toast.error("Please fix errors in this tab before switching");
+      return; // Block tab switch
     }
+  }
 
-    onTabChange(tabId);
-  };
+  onTabChange(tabId);
+};
+
 
   return (
     <div className="border-b border-gray-200">

@@ -2,24 +2,56 @@ import React, { useEffect, useState } from 'react';
 import DriverTabNavigation from './DriverTabNavigation';
 import DriverPersonalDetails from './DriverPersonalDetails';
 import DocumentsTab from './DocumentsTab';
-import { logDebug } from '../../utils/logger';
-import { API_CLIENT } from '../../Api/API_Client';
-import { fieldMapping, transformBackendToFormData } from './driverUtility';
 import { toast } from 'react-toastify';
+import { useDispatch, useSelector } from 'react-redux';
+import { fieldMapping, transformBackendToFormData } from './driverUtility';
+import { createDriverThunk,fetchDriversThunk } from '../../redux/features/manageDriver/driverThunks';
 
 const defaultFormData = {
-  name: '', dateOfBirth: '', mobileNumber: '', driver_code: '',
-  permanentAddress: '', currentAddress: '', isSameAddress: false,
-  alternateMobileNumber: '', city: '', vendorId: '', email: '', password: '',
-  gender: 'male', bgvStatus: 'pending', policeVerification: 'pending',
-  medicalVerification: 'pending', trainingVerification: 'pending', eyeTestStatus: 'pending',
-  bgvExpiryDate: '', policeExpiryDate: '', medicalExpiryDate: '', trainingExpiryDate: '',
-  eyeTestExpiryDate: '', licenseNumber: '', licenseExpiryDate: '', inductionDate: '',
-  badgeNumber: '', badgeExpiryDate: '', alternateGovtId: '', govtIdNumber: '',
-  bgvDocument: null, policeDocument: null, medicalDocument: null, trainingDocument: null,
-  eyeTestDocument: null, licenseDocument: null, inductionDocument: null,
-  badgeDocument: null, govtIdDocument: null, profileImage: null,
+  name: '',
+  code: '',
+  email: '',
+  mobileNumber: '',
+  gender: 'Male',
+  password: '',
+  dateOfBirth: '',
+  dateOfJoining: '',
+  permanentAddress: '',
+  currentAddress: '',
+  isSameAddress: false,
+  licenseNumber: '',
+  licenseExpiryDate: '',
+  badgeNumber: '',
+  badgeExpiryDate: '',
+  inductionDate: '',
+  bgvExpiryDate: '',
+  policeExpiryDate: '',
+  medicalExpiryDate: '',
+  trainingExpiryDate: '',
+  eyeTestExpiryDate: '',
+  govtIdNumber: '',
+  alternateGovtId: '',
+
+  // Files
+  profileImage: null,
+  license_file: null,
+  badge_file: null,
+  alt_govt_id_file: null,
+  bgv_file: null,
+  police_file: null,
+  medical_file: null,
+  training_file: null,
+  eye_file: null,
+  induction_file: null,
+
+  // Verification statuses
+  bgvStatus: 'Pending',
+  policeVerification: 'Pending',
+  medicalVerification: 'Pending',
+  trainingVerification: 'Pending',
+  eyeTestStatus: 'Pending',
 };
+
 
 const tabs = ["personalDetails", "documents"];
 
@@ -27,18 +59,22 @@ const DriverForm = ({ initialData = null, mode, onClose, vendors = [] }) => {
   const [activeTab, setActiveTab] = useState('personalDetails');
   const [formData, setFormData] = useState(defaultFormData);
   const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const dispatch = useDispatch();
+  const driversLoading = useSelector(state => state.drivers.loading);
 
-  useEffect(() => {
-    if (initialData && (mode === "edit" || mode === "view")) {
-      const transformedData = transformBackendToFormData(initialData);
-      setFormData(prev => ({
-        ...prev,
-        ...transformedData,
-        vendorId: initialData.vendor?.vendor_id || '',
-      }));
-    }
-  }, [initialData, mode]);
+useEffect(() => {
+  if (initialData && (mode === "edit" || mode === "view")) {
+    console.log('--- Initial Data from Backend ---', initialData); // <-- Add this log
+    const transformedData = transformBackendToFormData(initialData);
+    console.log('--- Transformed Data for Form ---', transformedData); // <-- Add this log
+    setFormData(prev => ({
+      ...prev,
+      ...transformedData,
+      vendorId: initialData.vendor?.vendor_id || '',
+    }));
+  }
+}, [initialData, mode]);
+
 
   // --- Handlers ---
   const handleChange = e => {
@@ -50,6 +86,7 @@ const DriverForm = ({ initialData = null, mode, onClose, vendors = [] }) => {
 
   const handleFileChange = (name, file) => {
     if (mode === 'view') return;
+      console.log(`--- File Changed --- name: ${name}, file:`, file);
     setFormData(prev => ({ ...prev, [name]: file }));
     setErrors(prev => ({ ...prev, [name]: '' }));
   };
@@ -63,74 +100,93 @@ const DriverForm = ({ initialData = null, mode, onClose, vendors = [] }) => {
     if (mode === 'view') return;
     setFormData(prev => {
       const newData = { ...prev, [name]: checked };
-      if (name === 'isSameAddress' && checked) newData.currentAddress = prev.permanentAddress;
+      if (name === 'isSameAddress' && checked) newData.current_address = prev.permanent_address;
       return newData;
     });
   };
 
   // --- Validations ---
   const validatePersonalDetails = () => {
-    const personalErrors = {};
-    if (!formData.name?.trim()) personalErrors.name = 'Driver name is required';
-    if (!formData.city?.trim()) personalErrors.city = 'City is required';
-    if (!formData.dateOfBirth) personalErrors.dateOfBirth = 'Date of birth is required';
-    if (!formData.mobileNumber?.trim()) personalErrors.mobileNumber = 'Mobile number is required';
-    else if (!/^\d{10}$/.test(formData.mobileNumber)) personalErrors.mobileNumber = 'Mobile number must be exactly 10 digits';
-    if (formData.alternateMobileNumber?.trim()) {
-      if (!/^\d{10}$/.test(formData.alternateMobileNumber)) personalErrors.alternateMobileNumber = 'Alternate number must be exactly 10 digits';
-      else if (formData.alternateMobileNumber === formData.mobileNumber) personalErrors.alternateMobileNumber = 'Alternate number cannot be same as Mobile number';
-    }
-    if (!formData.email?.trim()) personalErrors.email = 'Email is required';
-    if (!formData.password?.trim() && mode !== 'edit') personalErrors.password = 'Password is required';
-    if (!formData.vendorId) personalErrors.vendorId = 'Vendor selection is required';
-    if (!formData.driver_code?.trim()) personalErrors.driver_code = 'Driver code is required';
-    if (!formData.gender) personalErrors.gender = 'Gender is required';
-    return personalErrors;
-  };
+  const personalErrors = {};
+  if (!formData.name?.trim()) personalErrors.name = 'Driver name is required';
+  if (!formData.dateOfBirth) personalErrors.dateOfBirth = 'Date of birth is required';
+  if (!formData.mobileNumber?.trim()) personalErrors.mobileNumber = 'Mobile number is required';
+  else if (!/^\d{10}$/.test(formData.mobileNumber)) personalErrors.mobileNumber = 'Mobile number must be exactly 10 digits';
+  if (!formData.email?.trim()) personalErrors.email = 'Email is required';
+  if (!formData.password?.trim() && mode !== 'edit') personalErrors.password = 'Password is required';
+  if (!formData.code?.trim()) personalErrors.code = 'Driver code is required';
+  if (!formData.gender) personalErrors.gender = 'Gender is required';
+  return personalErrors;
+};
 
-  const validateDocuments = () => {
-    const docErrors = {};
-    const today = new Date();
-    const requiredDocs = [
-      'bgvDocument', 'policeDocument', 'medicalDocument',
-      'trainingDocument', 'eyeTestDocument', 'licenseDocument',
-      'govtIdDocument', 'inductionDocument', 'badgeDocument',
-    ];
-    requiredDocs.forEach(doc => {
-      if (!formData[doc]) docErrors[doc] = 'This document is required';
-    });
-    if (!formData.licenseNumber?.trim()) docErrors.licenseNumber = 'License number is required';
-    if (!formData.licenseExpiryDate) docErrors.licenseExpiryDate = 'License expiry date is required';
-    else if (new Date(formData.licenseExpiryDate) < today) docErrors.licenseExpiryDate = 'License expiry date cannot be in the past';
-    const expiryFields = [
-      { key: 'bgvExpiryDate', label: 'BGV expiry date' },
-      { key: 'policeExpiryDate', label: 'Police verification expiry date' },
-      { key: 'medicalExpiryDate', label: 'Medical expiry date' },
-      { key: 'trainingExpiryDate', label: 'Training expiry date' },
-      { key: 'eyeTestExpiryDate', label: 'Eye test expiry date' },
-      { key: 'badgeExpiryDate', label: 'Badge expiry date' },
-    ];
-    expiryFields.forEach(({ key, label }) => {
-      if (!formData[key]) docErrors[key] = `${label} is required`;
-      else if (new Date(formData[key]) < today) docErrors[key] = `${label} cannot be in the past`;
-    });
-    if (!formData.badgeNumber?.trim()) docErrors.badgeNumber = 'Badge number is required';
-    if (!formData.alternateGovtId?.trim()) docErrors.alternateGovtId = 'Alternate Government ID is required';
-    if (!formData.govtIdNumber?.trim()) docErrors.govtIdNumber = 'Government ID number is required';
-    return docErrors;
-  };
+const validateDocuments = () => {
+  const docErrors = {};
+  const today = new Date();
+
+  // File uploads
+  const requiredFiles = [
+  'bgv_file', 'police_file', 'medical_file', 'training_file',
+  'eye_file', 'license_file', 'badge_file', 'alt_govt_id_file', 'induction_file'
+];
+
+
+  requiredFiles.forEach(file => {
+    if (!(formData[file] instanceof File) && typeof formData[file] !== 'string') {
+      docErrors[file] = 'This document is required';
+    }
+  });
+
+  // Text/date fields
+  if (!formData.licenseNumber?.trim()) docErrors.licenseNumber = 'License number is required';
+  if (!formData.licenseExpiryDate) docErrors.licenseExpiryDate = 'License expiry date is required';
+  else if (new Date(formData.licenseExpiryDate) < today)
+    docErrors.licenseExpiryDate = 'License expiry date cannot be in the past';
+
+  if (!formData.badgeNumber?.trim()) docErrors.badgeNumber = 'Badge number is required';
+  if (!formData.badgeExpiryDate) docErrors.badgeExpiryDate = 'Badge expiry date is required';
+  else if (new Date(formData.badgeExpiryDate) < today)
+    docErrors.badgeExpiryDate = 'Badge expiry date cannot be in the past';
+
+  if (!formData.inductionDate) docErrors.inductionDate = 'Induction date is required';
+
+  // Expiry dates for other verifications
+  const expiryFields = [
+    { key: 'bgvExpiryDate', label: 'BGV expiry date' },
+    { key: 'policeExpiryDate', label: 'Police verification expiry date' },
+    { key: 'medicalExpiryDate', label: 'Medical expiry date' },
+    { key: 'trainingExpiryDate', label: 'Training expiry date' },
+    { key: 'eyeTestExpiryDate', label: 'Eye test expiry date' }
+  ];
+
+  expiryFields.forEach(({ key, label }) => {
+    if (!formData[key]) docErrors[key] = `${label} is required`;
+    else if (new Date(formData[key]) < today) docErrors[key] = `${label} cannot be in the past`;
+  });
+
+  // Government ID
+  if (!formData.govtIdNumber?.trim()) docErrors.govtIdNumber = 'Alternate Government ID is required';
+  if (!formData.alternateGovtId?.trim()) docErrors.alternateGovtId = 'Alternate Government ID type is required';
+
+  return docErrors;
+};
+
 
   // --- Tab navigation ---
 const handleNext = () => {
   let currentErrors = {};
-  if (activeTab === 'personalDetails') currentErrors = validatePersonalDetails();
-  else if (activeTab === 'documents') currentErrors = validateDocuments();
 
-  if (Object.keys(currentErrors).length > 0) {
-    setErrors(prev => ({ ...prev, ...currentErrors }));
-    toast.error("Please fix errors before proceeding");
-    return; // ❌ Stop tab switch if errors exist
+  if (activeTab === 'personalDetails') {
+    currentErrors = validatePersonalDetails();
+    if (Object.keys(currentErrors).length > 0) {
+      setErrors(prev => ({ ...prev, personalDetails: currentErrors }));
+      console.log("Next clicked - personal details errors:", currentErrors);
+      toast.error("Please fix errors before proceeding");
+      return;
+    }
   }
+
+  // Clear current tab errors and do not touch next tab yet
+  setErrors(prev => ({ ...prev, [activeTab]: {} }));
 
   const currentIndex = tabs.indexOf(activeTab);
   if (currentIndex < tabs.length - 1) setActiveTab(tabs[currentIndex + 1]);
@@ -143,61 +199,81 @@ const handleNext = () => {
   };
 
   // --- Submit ---
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
 
-    // Validate all tabs before final submit
-    const personalErrors = validatePersonalDetails();
-    const documentErrors = validateDocuments();
-    const allErrors = { ...personalErrors, ...documentErrors };
-    if (Object.keys(allErrors).length > 0) {
-      setErrors(allErrors);
-      toast.error("Please fix errors before submitting");
-      setActiveTab(Object.keys(personalErrors).length > 0 ? "personalDetails" : "documents");
-      setIsSubmitting(false);
-      return;
-    }
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    try {
-      const formDataToSubmit = new FormData();
-      Object.keys(formData).forEach(key => {
-        if (formData[key] !== null && formData[key] !== undefined) {
-          const backendKey = fieldMapping[key] || key;
-          if (formData[key] instanceof File) formDataToSubmit.append(backendKey, formData[key]);
-          else if (formData[key] instanceof Date) formDataToSubmit.append(backendKey, formData[key].toISOString());
-          else if (typeof formData[key] === "boolean") formDataToSubmit.append(backendKey, formData[key] ? "true" : "false");
-          else formDataToSubmit.append(backendKey, formData[key]);
+  const personalErrors = validatePersonalDetails();
+  const documentErrors = validateDocuments();
+  const allErrors = { ...personalErrors, ...documentErrors };
+
+  if (Object.keys(allErrors).length > 0) {
+    setErrors(allErrors);
+    setActiveTab(Object.keys(personalErrors).length > 0 ? "personalDetails" : "documents");
+    console.log("Submit clicked - validation errors:", allErrors); // <-- Log validation errors
+    return;
+  }
+
+  try {
+    const formDataToSubmit = new FormData();
+console.log('--- Field mapping before submit ---');
+    Object.keys(formData).forEach(key => {
+      if (formData[key] !== null && formData[key] !== undefined) {
+        const backendKey = fieldMapping[key] || key;
+
+        // Date formatting as YYYY-MM-DD
+        if (formData[key] instanceof Date) {
+          const date = formData[key];
+          const formattedDate = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+          formDataToSubmit.append(backendKey, formattedDate);
+        } else if (typeof formData[key] === "string" && /^\d{4}-\d{2}-\d{2}T/.test(formData[key])) {
+          const date = new Date(formData[key]);
+          const formattedDate = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+          formDataToSubmit.append(backendKey, formattedDate);
+        } else if (formData[key] instanceof File) {
+          formDataToSubmit.append(backendKey, formData[key]);
+        } else if (typeof formData[key] === "boolean") {
+          formDataToSubmit.append(backendKey, formData[key] ? "true" : "false");
+        } else {
+          formDataToSubmit.append(backendKey, formData[key]);
         }
-      });
-
-      const vendorId = formData.vendorId || initialData?.vendor?.vendor_id;
-      let response;
-      if (mode === "edit") {
-        response = await API_CLIENT.put(`/vendors/${vendorId}/drivers/${initialData.driver_id}`, formDataToSubmit);
-        toast.success("Driver updated successfully!");
-      } else {
-        response = await API_CLIENT.post(`/vendors/${vendorId}/drivers/`, formDataToSubmit);
-        toast.success("Driver created successfully!");
       }
+    });
 
-      if (onClose) onClose();
-    } catch (error) {
-      console.error(error);
-      toast.error("Something went wrong, please try again.");
-    } finally {
-      setIsSubmitting(false);
+    // Log the FormData keys and values being submitted
+    console.log("Submitting driver data:");
+    for (let pair of formDataToSubmit.entries()) {
+      console.log(pair[0]+ ':', pair[1]);
     }
-  };
+
+    if (mode === "edit") {
+      await dispatch(updateDriverThunk({ driverId: initialData.driver_id, data: formDataToSubmit })).unwrap();
+      toast.success("Driver updated successfully!");
+    } else {
+      await dispatch(createDriverThunk(formDataToSubmit)).unwrap();
+      toast.success("Driver created successfully!");
+    }
+     await dispatch(fetchDriversThunk());
+    if (onClose) onClose();
+
+  } catch (error) {
+    console.error("Error during submit:", error);
+    toast.error(error?.message || "Something went wrong, please try again.");
+  }
+};
+
 
   // --- Render tab content ---
   const renderTabContent = () => {
+      if (activeTab === 'documents') {
+    console.log('--- Form Data for DocumentsTab ---', formData); // <-- Add this log
+  }
     switch (activeTab) {
       case 'personalDetails':
         return <DriverPersonalDetails
           formData={formData} errors={errors} onChange={handleChange}
           onImageChange={handleImageChange} onCheckboxChange={handleCheckboxChange}
-          vendors={vendors} loading={isSubmitting} mode={mode}
+          vendors={vendors} loading={driversLoading} mode={mode}
         />;
       case 'documents':
         return <DocumentsTab
@@ -213,16 +289,11 @@ const handleNext = () => {
     <div className="max-w-7xl mx-auto p-4">
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
 
-        {/* Tab Navigation */}
-        <DriverTabNavigation
+      <DriverTabNavigation
           activeTab={activeTab}
           errors={{
-            personalDetails: Object.keys(errors).some(key =>
-              ['name','dateOfBirth','mobileNumber','alternateMobileNumber','email','password','vendorId','driver_code','gender','city'].includes(key)
-            ),
-            documents: Object.keys(errors).some(key =>
-              ['bgvDocument','policeDocument','medicalDocument','trainingDocument','eyeTestDocument','licenseDocument','govtIdDocument','inductionDocument','badgeDocument','licenseNumber','licenseExpiryDate','bgvExpiryDate','policeExpiryDate','medicalExpiryDate','trainingExpiryDate','eyeTestExpiryDate','badgeExpiryDate','badgeNumber','alternateGovtId','govtIdNumber'].includes(key)
-            ),
+            personalDetails: errors.personalDetails && Object.keys(errors.personalDetails).length > 0,
+            documents: errors.documents && Object.keys(errors.documents).length > 0
           }}
           onTabChange={setActiveTab}
           validateTab={tabId => {
@@ -233,18 +304,16 @@ const handleNext = () => {
         />
 
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
           <div className="p-6">{renderTabContent()}</div>
 
-          {/* Form Actions */}
           <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between">
             {activeTab !== "personalDetails" && (
               <button
                 type="button"
                 onClick={handlePrevious}
                 className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                disabled={isSubmitting}
+                disabled={driversLoading}
               >
                 Previous
               </button>
@@ -256,7 +325,7 @@ const handleNext = () => {
                   type="button"
                   onClick={onClose}
                   className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                  disabled={isSubmitting}
+                  disabled={driversLoading}
                 >
                   Cancel
                 </button>
@@ -273,10 +342,10 @@ const handleNext = () => {
               ) : (
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={driversLoading}
                   className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
                 >
-                  {isSubmitting ? "Saving..." : mode === "edit" ? "Update Driver" : "Create Driver"}
+                  {driversLoading ? "Saving..." : mode === "edit" ? "Update Driver" : "Create Driver"}
                 </button>
               )}
             </div>

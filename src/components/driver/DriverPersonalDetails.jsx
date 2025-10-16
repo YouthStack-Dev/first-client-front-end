@@ -13,48 +13,56 @@ const DriverPersonalDetails = ({
 }) => {
   const [previewUrl, setPreviewUrl] = useState("");
 
-  useEffect(() => {
-    if (formData.photo instanceof File) {
-      // Local preview for uploaded file
-      const objectUrl = URL.createObjectURL(formData.photo);
-      setPreviewUrl(objectUrl);
-      return () => URL.revokeObjectURL(objectUrl);
-    } else if (formData.photo) {
-      // Backend image
-      setPreviewUrl(`https://api.gocab.tech/${formData.photo}`);
-    } else {
-      setPreviewUrl("");
-    }
-  }, [formData.photo]);
+useEffect(() => {
+  if (formData.photo instanceof File) {
+    // Local preview for newly uploaded file
+    const objectUrl = URL.createObjectURL(formData.photo);
+    setPreviewUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  } else if (formData.photo) {
+    // Backend string (URL or base64)
+    setPreviewUrl(typeof formData.photo === "string" ? `https://api.gocab.tech/${formData.photo}` : "");
+  } else {
+    setPreviewUrl("");
+  }
+}, [formData.photo]);
+
 
   return (
     <div className="p-6 bg-white rounded-md shadow-sm border border-gray-200">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
         {/* Profile Image */}
         <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center relative mx-auto">
-          {previewUrl ? (
-            <img
-              src={previewUrl}
-              alt="Profile"
-              className="w-full h-full object-cover rounded-lg"
-            />
-          ) : (
-            <div className="text-center p-4">
-              <Pencil className="w-8 h-8 mx-auto text-gray-400" />
-              <p className="text-xs text-gray-500 mt-2">
-                Add image (JPG, JPEG & PNG)
-              </p>
-            </div>
-          )}
-          <input
-            type="file"
-            accept="image/jpeg,image/png"
-            onChange={(e) =>
-              e.target.files?.[0] && onImageChange(e.target.files[0])
-            }
-            className="absolute inset-0 opacity-0 cursor-pointer"
-          />
-        </div>
+  {previewUrl ? (
+    <img
+      src={previewUrl}
+      alt="Profile"
+      className="w-full h-full object-cover rounded-lg"
+    />
+  ) : (
+    <div className="text-center p-4">
+      <Pencil className="w-8 h-8 mx-auto text-gray-400" />
+      <p className="text-xs text-gray-500 mt-2">
+        Add image (JPG, JPEG & PNG)
+      </p>
+    </div>
+  )}
+  <input
+    type="file"
+    accept="image/jpeg,image/png"
+    onChange={(e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        console.log("Selected file:", file);       // Log file for debugging
+        onImageChange(file);                        // Update parent formData
+        const objectUrl = URL.createObjectURL(file);
+        setPreviewUrl(objectUrl);                   // Update preview immediately
+      }
+    }}
+    className="absolute inset-0 opacity-0 cursor-pointer"
+  />
+</div>
+
 
         {/* Driver Name */}
         <FormField label="Driver Name" name="name" required error={errors.name}>
@@ -96,15 +104,20 @@ const DriverPersonalDetails = ({
           />
         </FormField>
 
-        {/* Phone */}
-        <FormField label="Phone" name="phone" required error={errors.phone}>
+         {/* Mobile Number */}
+        <FormField
+          label="Mobile Number"
+          name="mobileNumber"
+          required
+          error={errors.mobileNumber}
+        >
           <input
-            id="phone"
+            id="mobileNumber"
             type="tel"
-            name="phone"
-            value={formData.phone || ""}
+            name="mobileNumber"
+            value={formData.mobileNumber || ""}
             onChange={onChange}
-            placeholder="Enter phone number"
+            placeholder="Enter mobile number"
             className="w-full p-2 border border-gray-300 rounded-md"
           />
         </FormField>
@@ -151,17 +164,17 @@ const DriverPersonalDetails = ({
         </FormField>
 
         {/* Date of Birth */}
-        <FormField
+          <FormField
           label="Date of Birth"
-          name="date_of_birth"
+          name="dateOfBirth"
           required
-          error={errors.date_of_birth}
+          error={errors.dateOfBirth}
         >
           <input
-            id="date_of_birth"
+            id="dateOfBirth"
             type="date"
-            name="date_of_birth"
-            value={formData.date_of_birth || ""}
+            name="dateOfBirth"
+            value={formData.dateOfBirth || ""}
             onChange={onChange}
             className="w-full p-2 border border-gray-300 rounded-md"
           />

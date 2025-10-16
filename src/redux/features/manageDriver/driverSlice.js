@@ -1,5 +1,5 @@
 import { createSlice, createSelector } from '@reduxjs/toolkit';
-import { fetchDriversThunk  } from "./driverThunks";
+import { fetchDriversThunk,createDriverThunk  } from "./driverThunks";
 
 const initialState = {
   entities: {},
@@ -102,9 +102,23 @@ const driversSlice = createSlice({
       .addCase(fetchDriversThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to fetch drivers";
+      })
+        .addCase(createDriverThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createDriverThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        const driver = action.payload;
+        state.entities[driver.driver_id] = driver;
+        state.ids.push(driver.driver_id);
+      })
+      .addCase(createDriverThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Failed to create driver";
       });
-  }
-});
+    }
+  });
 
 // Selectors (same as before)
 const selectDriverState = state => state.drivers;

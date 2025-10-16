@@ -1,52 +1,55 @@
 import { API_CLIENT } from "../../Api/API_Client";
 
- export const fieldMapping = {
+export const fieldMapping = {
+  // Personal / basic info
+  name: "name",
+  code: "code",
+  email: "email",
+  password: "password",
+  mobileNumber: "phone", // was mobile_number
+  dateOfBirth: "date_of_birth",
+  dateOfJoining: "date_of_joining",
+  gender: "gender",
+  permanentAddress: "permanent_address",
+  currentAddress: "current_address",
+
+  // Verification & expiry
+  bgvStatus: "bg_verify_status",
+  bgvExpiryDate: "bg_expiry_date", // fixed
+  policeVerification: "police_verify_status",
+  policeExpiryDate: "police_expiry_date", // fixed
+  medicalVerification: "medical_verify_status",
+  medicalExpiryDate: "medical_expiry_date", // fixed
+  trainingVerification: "training_verify_status",
+  trainingExpiryDate: "training_expiry_date", // fixed
+  eyeTestStatus: "eye_verify_status",
+  eyeTestExpiryDate: "eye_expiry_date", // fixed
+
+  // License & induction
+  licenseNumber: "license_number",
+  licenseExpiryDate: "license_expiry_date",
+  inductionDate: "induction_date",
+  badgeNumber: "badge_number",
+  badgeExpiryDate: "badge_expiry_date",
+
+  // Govt IDs
+  govtIdNumber: "alt_govt_id_number", // fixed
+  alternateGovtId: "alt_govt_id_type", // fixed
+
+  // Files
+  bgv_file: "bgv_file",
+  police_file: "police_file",
+  medical_file: "medical_file",
+  training_file: "training_file",
+  eye_file: "eye_file",
+  license_file: "license_file",
+  induction_file: "induction_file",
+  badge_file: "badge_file",
+  alt_govt_id_file: "alt_govt_id_file",
+  photo: "photo_url",
+};
 
 
-    password: "hashed_password",        // backend expects hashed_password
-    mobileNumber: "mobile_number",
-    city: "city",
-    dateOfBirth: "date_of_birth",
-    gender: "gender",
-    alternateMobileNumber: "alternate_mobile_number",
-    permanentAddress: "permanent_address",
-    currentAddress: "current_address",
-    // Verification & expiry mappings
-    bgvStatus: "bgv_status",
-    bgvExpiryDate: "bgv_date",
-    policeVerification: "police_verification_status",
-    policeExpiryDate: "police_verification_date",
-    medicalVerification: "medical_verification_status",
-    medicalExpiryDate: "medical_verification_date",
-    trainingVerification: "training_verification_status",
-    trainingExpiryDate: "training_verification_date",
-    eyeTestStatus: "eye_test_verification_status",
-    eyeTestExpiryDate: "eye_test_verification_date",
-  
-    // License & induction
-    licenseNumber: "license_number",
-    licenseExpiryDate: "license_expiry_date",
-    inductionDate: "induction_date",
-    badgeNumber: "badge_number",
-    badgeExpiryDate: "badge_expiry_date",
-  
-    // Govt IDs
-    govtIdNumber: "alternate_govt_id",
-    alternateGovtId: "alternate_govt_id_doc_type",
-  
-    // Files (same logic applies)
-    bgvDocument: "bgv_doc_file",
-    policeDocument: "police_verification_doc_file",
-    medicalDocument: "medical_verification_doc_file",
-    trainingDocument: "training_verification_doc_file",
-    eyeTestDocument: "eye_test_verification_doc_file",
-    licenseDocument: "license_doc_file",
-    inductionDocument: "induction_doc_file",
-    badgeDocument: "badge_doc_file",
-    govtIdDocument: "alternate_govt_id_doc_file",
-    profileImage: "photo_image",
-  };
- 
   export const reverseFieldMapping = Object.fromEntries(
     Object.entries(fieldMapping).map(([frontend, backend]) => [backend, frontend])
   );
@@ -54,29 +57,29 @@ import { API_CLIENT } from "../../Api/API_Client";
 
   // Backend field -> Frontend field mapping
 export const backendToFrontendMapping = {
-  name:"name",
+  // Personal / basic info
+  name: "name",
+  code: "code",
   email: "email",
-  driver_code: "driver_code",
   hashed_password: "password",
-  mobile_number: "mobileNumber",
-  city: "city",
+  phone: "mobileNumber",
   date_of_birth: "dateOfBirth",
+  date_of_joining: "date_of_joining",
   gender: "gender",
-  alternate_mobile_number: "alternateMobileNumber",
-  permanent_address: "permanentAddress",
-  current_address: "currentAddress",
+  permanent_address: "permanent_address",
+  current_address: "current_address",
 
   // Verification & expiry
   bgv_status: "bgvStatus",
-  bgv_date: "bgvExpiryDate",
-  police_verification_status: "policeVerification",
-  police_verification_date: "policeExpiryDate",
-  medical_verification_status: "medicalVerification",
-  medical_verification_date: "medicalExpiryDate",
-  training_verification_status: "trainingVerification",
-  training_verification_date: "trainingExpiryDate",
-  eye_test_verification_status: "eyeTestStatus",
-  eye_test_verification_date: "eyeTestExpiryDate",
+  bg_expiry_date: "bgvExpiryDate",
+  police_verify_status: "policeVerification",
+  police_expiry_date: "policeExpiryDate",
+  medical_verify_status: "medicalVerification",
+  medical_expiry_date: "medicalExpiryDate",
+  training_verify_status: "trainingVerification",
+  training_expiry_date: "trainingExpiryDate",
+  eye_verify_status: "eyeTestStatus",
+  eye_expiry_date: "eyeTestExpiryDate",
 
   // License & induction
   license_number: "licenseNumber",
@@ -86,20 +89,20 @@ export const backendToFrontendMapping = {
   badge_expiry_date: "badgeExpiryDate",
 
   // Govt IDs
-  alternate_govt_id: "govtIdNumber",
-  alternate_govt_id_doc_type: "alternateGovtId",
+  alt_govt_id_number: "govtIdNumber",
+  alt_govt_id_type: "alternateGovtId",
 
-  // Docs (urls from backend, you can show in view mode)
-  bgv_doc_url: "bgvDocument",
-  police_verification_doc_url: "policeDocument",
-  medical_verification_doc_url: "medicalDocument",
-  training_verification_doc_url: "trainingDocument",
-  eye_test_verification_doc_url: "eyeTestDocument",
-  license_doc_url: "licenseDocument",
-  induction_doc_url: "inductionDocument",
-  badge_doc_url: "badgeDocument",
-  alternate_govt_id_doc_url: "govtIdDocument",
-  photo_url: "profileImage",
+  // Files (backend gives URLs)
+  bgv_file: "bgv_file",
+  police_file: "police_file",
+  medical_file: "medical_file",
+  training_file: "training_file",
+  eye_file: "eye_file",
+  license_file: "license_file",
+  induction_file: "induction_file",
+  badge_file: "badge_file",
+  alt_govt_id_file: "alt_govt_id_file",
+  photo_url: "photo",
 };
 
 
@@ -115,19 +118,32 @@ export const transformBackendToFormData = (backendData) => {
     }
   });
 
+  
+  // Map backend file URLs to frontend file fields
+  transformed.license_file = backendData.license_url || null;
+  transformed.badge_file = backendData.badge_url || null;
+  transformed.bgv_file = backendData.bg_verify_url || null;
+  transformed.police_file = backendData.police_verify_url || null;
+  transformed.medical_file = backendData.medical_verify_url || null;
+  transformed.training_file = backendData.training_verify_url || null;
+  transformed.eye_file = backendData.eye_verify_url || null;
+  transformed.induction_file = backendData.induction_url || null;
+  transformed.alt_govt_id_file = backendData.alt_govt_id_url || null;
+
   return transformed;
 };
 
 
 
+
 // Edit driver (PUT)
-export const editDriver = async (vendorId, driverId, formData) => {
-  return API_CLIENT.put(
-    `/vendors/${vendorId}/drivers/${driverId}/`,
-    {formData},
-    { headers: { "Content-Type": "multipart/form-data" } }
-  );
-};
+// export const editDriver = async (vendorId, driverId, formData) => {
+//   return API_CLIENT.put(
+//     `/vendors/${vendorId}/drivers/${driverId}/`,
+//     {formData},
+//     { headers: { "Content-Type": "multipart/form-data" } }
+//   );
+// };
 
 // Add this to your driverUtility.js file to debug field mapping
 export const logFieldMapping = (formData) => {

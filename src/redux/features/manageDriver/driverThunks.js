@@ -2,7 +2,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { API_CLIENT } from "../../../Api/API_Client";
 
-// Fetch all drivers for the logged-in vendor (vendor_id taken from session/token in backend)
+// Fetch all drivers 
 export const fetchDriversThunk = createAsyncThunk(
   "drivers/fetchAll",
   async (_, { rejectWithValue }) => {
@@ -22,16 +22,18 @@ export const fetchDriversThunk = createAsyncThunk(
 
 
 
-  export const createDriverThunk = createAsyncThunk(
-  'drivers/createDriver',
-  async ({ vendor_id, formData }, { rejectWithValue }) => {
+// --- Thunk for creating a driver ---
+export const createDriverThunk = createAsyncThunk(
+  'driver/createDriver',
+  async (formData, { rejectWithValue }) => {
     try {
-      const response = await createDriverAPI(vendor_id, formData);
-      return response.data;
+      const response = await API_CLIENT.post('/v1/drivers/create', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data.data.driver; // Return driver object
     } catch (error) {
-      const errorData = error.response?.data;
-      console.error('[Thunk] Failed to create driver:', error);
-      return rejectWithValue(errorData || error.message || 'Failed to create driver');
+      console.error(error);
+      return rejectWithValue(error.response?.data || { message: 'Something went wrong' });
     }
   }
 );
@@ -40,18 +42,18 @@ export const fetchDriversThunk = createAsyncThunk(
 /**
  * Update an existing driver
  */
-export const updateDriverThunk = createAsyncThunk(
-  'drivers/updateDriver',
-  async ({ vendor_id, driver_id, formData }, { rejectWithValue }) => {
-    try {
-      const response = await updateDriverAPI(vendor_id, driver_id, formData);
-      return response.data;
-    } catch (error) {
-      console.error('[Thunk] Failed to update driver:', error);
-      return rejectWithValue(error.response?.data || error.message || 'Failed to update driver');
-    }
-  }
-);
+// export const updateDriverThunk = createAsyncThunk(
+//   'drivers/updateDriver',
+//   async ({ vendor_id, driver_id, formData }, { rejectWithValue }) => {
+//     try {
+//       const response = await updateDriverAPI(vendor_id, driver_id, formData);
+//       return response.data;
+//     } catch (error) {
+//       console.error('[Thunk] Failed to update driver:', error);
+//       return rejectWithValue(error.response?.data || error.message || 'Failed to update driver');
+//     }
+//   }
+// );
 
 /**
  * Patch driver status (e.g., active/inactive)

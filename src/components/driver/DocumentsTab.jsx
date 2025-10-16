@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Eye, Upload, FileText, Calendar, Shield, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
+import { Eye, Upload, FileText,Download, Calendar, Shield, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 import FormField from '../../components/ui/FormFields';
 import { InputField } from '../SmallComponents';
 
@@ -20,7 +20,6 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
     }));
   }, []);
 
-
   const getStatusIcon = (status) => {
     switch (status) {
       case 'approved': return <CheckCircle className="w-4 h-4 text-green-500" />;
@@ -39,20 +38,60 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
     }
   };
 
-  const getDocName = (name) =>
-    formData[`${name}Name`] || formData[name]?.name || formData[name]?.split('/')?.pop() || '';
+  // const getDocName = (name) =>
+  //   formData[`${name}Name`] || formData[name]?.name || formData[name]?.split('/')?.pop() || '';
 
-  const getDocFile = (name) => formData[name];
+  const getDocName = (name) => {
+  const fileValue = formData[name];
 
-  const getDocumentUrl = (name) => {
-    const fileValue = getDocFile(name);
-    if (typeof fileValue === 'string' && fileValue) {
-      return fileValue.startsWith('http') ? fileValue : `https://api.gocab.tech/${fileValue}`;
-    } else if (fileValue instanceof File) {
-      return URL.createObjectURL(fileValue);
-    }
-    return null;
-  };
+  if (!fileValue) return '';
+
+  // If File object
+  if (fileValue instanceof File) return fileValue.name;
+
+  // If backend string path
+  if (typeof fileValue === 'string') {
+    return fileValue.split('/').pop(); // extract last part of URL
+  }
+
+  return '';
+};
+
+
+ const getDocFile = (name) => {
+  const fileValue = formData[name];
+  if (!fileValue) return null;
+
+  // Backend string path
+  if (typeof fileValue === "string") {
+    return fileValue; // This will be passed to getDocumentUrl
+  }
+
+  // Local file (File object)
+  if (fileValue instanceof File) return fileValue;
+
+  return null;
+};
+
+
+const getDocumentUrl = (name) => {
+  const fileValue = getDocFile(name);
+  if (!fileValue) return null;
+
+  // Local preview
+  if (fileValue instanceof File) return URL.createObjectURL(fileValue);
+
+  // Backend path
+  if (typeof fileValue === 'string') {
+    if (fileValue.startsWith('http')) return fileValue;
+
+    const encodedPath = encodeURIComponent(fileValue);
+    return `https://api.gocab.tech/api/v1/vehicles/files/${encodedPath}?download=true`;
+  }
+
+  return null;
+};
+
 
   const ViewDocumentButton = ({ name }) => {
     const documentUrl = getDocumentUrl(name);
@@ -74,6 +113,33 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
     );
   };
 
+  const DownloadDocumentButton = ({ name }) => {
+  const documentUrl = getDocumentUrl(name);
+  const documentName = getDocName(name);
+  if (!documentUrl || !documentName) return null;
+
+  const handleDownload = () => {
+    const link = document.createElement("a");
+    link.href = documentUrl;
+    link.download = documentName;
+    link.target = "_blank";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+  <button
+    type="button" // ✅ Prevents form submission
+    onClick={handleDownload}
+    className="inline-flex items-center px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition"
+  >
+    <Download className="w-3 h-3 mr-1" />
+    Download
+  </button>
+);
+};
+
   const FileUploadField = ({ name, label, required = false }) => {
     const documentName = getDocName(name);
     const hasDocument = !!documentName;
@@ -94,9 +160,14 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
             {label}
             {required && !isReadOnly && <span className="text-red-500 ml-1">*</span>}
           </label>
-          {hasDocument && <ViewDocumentButton name={name} />}
+          {hasDocument && (
+                <div className="flex items-center gap-2">
+                  <ViewDocumentButton name={name} />
+                  <DownloadDocumentButton name={name} />
+                </div>
+              )}
         </div>
-        
+
         <div className="flex items-center space-x-2">
           {!isReadOnly && (
             <label className="flex-1 cursor-pointer">
@@ -119,18 +190,18 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
                 type="file"
                 className="hidden"
                 onChange={handleFileUpload}
-                key={`${name}-${hasDocument}`} // Add key to reset input when file changes
+                key={`${name}-${hasDocument}`}
               />
             </label>
           )}
-          
+
           {isReadOnly && !hasDocument && (
             <div className="flex-1 p-3 bg-gray-50 border-2 border-gray-200 rounded-lg text-center">
               <span className="text-sm text-gray-500">No document uploaded</span>
             </div>
           )}
         </div>
-        
+
         {error && (
           <div className="text-red-500 text-xs flex items-center mt-1">
             <AlertCircle className="w-3 h-3 mr-1" />
@@ -143,9 +214,7 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
 
   const StatusField = ({ name, label }) => {
     const handleStatusChange = useCallback((e) => {
-      if (onChange) {
-        onChange(e);
-      }
+      if (onChange) onChange(e);
     }, [onChange]);
 
     return (
@@ -185,9 +254,9 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
 
   const DateField = ({ name, label, required = false }) => {
     const handleDateChange = useCallback((e) => {
-      if (onChange) {
-        onChange(e);
-      }
+      const { name, value } = e.target;
+      const formattedDate = value ? new Date(value).toISOString().split('T')[0] : ''; // → "YYYY-MM-DD"
+      if (onChange) onChange({ target: { name, value: formattedDate } });
     }, [onChange]);
 
     return (
@@ -217,12 +286,9 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
     );
   };
 
-
   const SelectField = ({ name, label, options, placeholder = "Select option" }) => {
     const handleSelectChange = useCallback((e) => {
-      if (onChange) {
-        onChange(e);
-      }
+      if (onChange) onChange(e);
     }, [onChange]);
 
     return (
@@ -276,47 +342,18 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
     </div>
   );
 
+  // ✅ Updated backend-aligned document field names
   const verificationDocuments = [
-    {
-      label: 'Background Verification',
-      statusName: 'bgvStatus',
-      dateName: 'bgvExpiryDate',
-      documentName: 'bgvDocument',
-      required: true
-    },
-    {
-      label: 'Police Verification',
-      statusName: 'policeVerification',
-      dateName: 'policeExpiryDate',
-      documentName: 'policeDocument',
-      required: true
-    },
-    {
-      label: 'Medical Verification',
-      statusName: 'medicalVerification',
-      dateName: 'medicalExpiryDate',
-      documentName: 'medicalDocument',
-      required: true
-    },
-    {
-      label: 'Training Verification',
-      statusName: 'trainingVerification',
-      dateName: 'trainingExpiryDate',
-      documentName: 'trainingDocument',
-      required: true
-    },
-    {
-      label: 'Eye Test',
-      statusName: 'eyeTestStatus',
-      dateName: 'eyeTestExpiryDate',
-      documentName: 'eyeTestDocument',
-      required: true
-    }
+    { label: 'Background Verification', statusName: 'bgvStatus', dateName: 'bgvExpiryDate', documentName: 'bgv_file', required: true },
+    { label: 'Police Verification', statusName: 'policeVerification', dateName: 'policeExpiryDate', documentName: 'police_file', required: true },
+    { label: 'Medical Verification', statusName: 'medicalVerification', dateName: 'medicalExpiryDate', documentName: 'medical_file', required: true },
+    { label: 'Training Verification', statusName: 'trainingVerification', dateName: 'trainingExpiryDate', documentName: 'training_file', required: true },
+    { label: 'Eye Test', statusName: 'eyeTestStatus', dateName: 'eyeTestExpiryDate', documentName: 'eye_file', required: true }
   ];
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      {/* Verification Documents Section */}
+      {/* ✅ Verification Documents Section */}
       <div className="border-b border-gray-200">
         <SectionHeader
           title="Verification Documents"
@@ -345,7 +382,7 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
         )}
       </div>
 
-      {/* Licensing Information Section */}
+      {/* ✅ Licensing Section */}
       <div className="border-b border-gray-200">
         <SectionHeader
           title="Licensing Information"
@@ -356,27 +393,29 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
         />
         {expandedSections.licensing && (
           <div className="p-6 space-y-6">
+            {/* License */}
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <h4 className="font-medium text-gray-900 mb-4 flex items-center">
                 <FileText className="w-4 h-4 mr-2 text-gray-600" />
                 Driver License
               </h4>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <FormField label="License Number" name="licenseNumber" required={!isReadOnly} error={errors.licenseNumber}>
-  <InputField
-    name="licenseNumber"
-    type="text"
-    placeholder="Enter license number"
-    value={formData.licenseNumber || ''}
-    onChange={onChange}
-    readOnly={isReadOnly}
-  />
-</FormField>
+                <FormField label="License Number" name="licenseNumber" required={!isReadOnly} error={errors.licenseNumber}>
+                  <InputField
+                    name="licenseNumber"
+                    type="text"
+                    placeholder="Enter license number"
+                    value={formData.licenseNumber || ''}
+                    onChange={onChange}
+                    readOnly={isReadOnly}
+                  />
+                </FormField>
                 <DateField name="licenseExpiryDate" label="Expiry Date" required={!isReadOnly} />
-                <FileUploadField name="licenseDocument" label="License Document" required={!isReadOnly} />
+                <FileUploadField name="license_file" label="License Document" required={!isReadOnly} />
               </div>
             </div>
 
+            {/* Induction */}
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <h4 className="font-medium text-gray-900 mb-4 flex items-center">
                 <FileText className="w-4 h-4 mr-2 text-gray-600" />
@@ -384,35 +423,36 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
               </h4>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <DateField name="inductionDate" label="Induction Date" />
-                <FileUploadField name="inductionDocument" label="Induction Document" />
+                <FileUploadField name="induction_file" label="Induction Document" />
               </div>
             </div>
 
+            {/* Badge */}
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <h4 className="font-medium text-gray-900 mb-4 flex items-center">
                 <FileText className="w-4 h-4 mr-2 text-gray-600" />
                 Badge Information
               </h4>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <FormField label="Badge Number" name="badgeNumber" error={errors.badgeNumber}>
-  <InputField
-    name="badgeNumber"
-    type="text"
-    placeholder="Enter badge number"
-    value={formData.badgeNumber || ''}
-    onChange={onChange}
-    readOnly={isReadOnly}
-  />
-</FormField>
+                <FormField label="Badge Number" name="badgeNumber" error={errors.badgeNumber}>
+                  <InputField
+                    name="badgeNumber"
+                    type="text"
+                    placeholder="Enter badge number"
+                    value={formData.badgeNumber || ''}
+                    onChange={onChange}
+                    readOnly={isReadOnly}
+                  />
+                </FormField>
                 <DateField name="badgeExpiryDate" label="Badge Expiry Date" />
-                <FileUploadField name="badgeDocument" label="Badge Document" />
+                <FileUploadField name="badge_file" label="Badge Document" />
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Identification Documents Section */}
+      {/* ✅ ID Section */}
       <div>
         <SectionHeader
           title="Identification Documents"
@@ -421,7 +461,7 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
           icon={FileText}
           count={1}
         />
-        
+
         {expandedSections.identification && (
           <div className="p-6">
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -430,9 +470,9 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
                 Government ID
               </h4>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <SelectField 
-                  name="alternateGovtId" 
-                  label="ID Type" 
+                <SelectField
+                  name="alternateGovtId"
+                  label="ID Type"
                   placeholder="Select ID type"
                   options={[
                     { value: 'aadhar', label: 'Aadhar Card' },
@@ -440,17 +480,17 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
                     { value: 'voter', label: 'Voter ID' }
                   ]}
                 />
-              <FormField label="ID Number" name="govtIdNumber" error={errors.govtIdNumber}>
-  <InputField
-    name="govtIdNumber"
-    type="text"
-    placeholder="Enter ID number"
-    value={formData.govtIdNumber || ''}
-    onChange={onChange}
-    readOnly={isReadOnly}
-  />
-</FormField>
-                <FileUploadField name="govtIdDocument" label="ID Document" />
+                <FormField label="ID Number" name="govtIdNumber" error={errors.govtIdNumber}>
+                  <InputField
+                    name="govtIdNumber"
+                    type="text"
+                    placeholder="Enter ID number"
+                    value={formData.govtIdNumber || ''}
+                    onChange={onChange}
+                    readOnly={isReadOnly}
+                  />
+                </FormField>
+                <FileUploadField name="alt_govt_id_file" label="ID Document" />
               </div>
             </div>
           </div>
