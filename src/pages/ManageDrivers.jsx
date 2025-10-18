@@ -121,14 +121,14 @@ useEffect(() => {
 
 
 
-  // useEffect(() => {
-  //   // Fetch drivers if:
-  //   // 1. We haven't fetched any data yet (initial load)
-  //   // 2. We're moving to a new page that hasn't been fetched before
-  //   if (!hasFetched || (currentPage > lastFetchedPage.current && !allDrivers.length)) {
-  //     fetchDrivers(currentPage);
-  //   }
-  // }, [currentPage, hasFetched, allDrivers.length, dispatch, paginationLimit]);
+  useEffect(() => {
+    // Fetch drivers if:
+    // 1. We haven't fetched any data yet (initial load)
+    // 2. We're moving to a new page that hasn't been fetched before
+    if (!hasFetched || (currentPage > lastFetchedPage.current && !allDrivers.length)) {
+      fetchDriversThunk(currentPage);
+    }
+  }, [currentPage, hasFetched, allDrivers.length, dispatch, paginationLimit]);
 
   // Modal handlers
   const openCreateModal = () => {
