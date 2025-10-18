@@ -232,7 +232,7 @@ const getDocumentUrl = (name) => {
               className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               {verificationStatuses.map((status) => (
-                <option key={status} value={status}>
+                 <option key={status} value={status.charAt(0).toUpperCase() + status.slice(1)}>
                   {status.charAt(0).toUpperCase() + status.slice(1)}
                 </option>
               ))}

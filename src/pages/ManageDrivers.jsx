@@ -6,7 +6,7 @@ import ToolBar from "@components/ui/ToolBar";
 import Pagination from "@components/ui/Pagination";
 import FilterBadges from "@components/ui/FilterBadges";
 import StatusIndicator from "@components/ui/StatusIndicator";
-import { API_CLIENT } from "../Api/API_Client";
+import { toast } from "react-toastify";
 import {
   setSearchTerm,
   setStatusFilter,
@@ -21,7 +21,7 @@ import {
   selectLoading,
   selectError,
   selectStatusOptions,
-  selectVerificationOptions,
+  // selectVerificationOptions,
   selectActiveFilters,
   selectCounts,
   selectFilteredDrivers,
@@ -29,7 +29,7 @@ import {
 import DriverForm from "@components/driver/DriverForm";
 import Modal from "@components/modals/Modal";
 import ConfirmationModal from "@components/modals/ConfirmationModal";
-import { fetchDriversThunk } from "../redux/features/manageDriver/driverThunks";
+import { fetchDriversThunk ,toggleDriverStatusThunk} from "../redux/features/manageDriver/driverThunks";
 
 function ManageDrivers() {
   const dispatch = useDispatch();
@@ -37,7 +37,7 @@ function ManageDrivers() {
   const loading = useSelector(selectLoading);
   const error = useSelector(selectError);
   const statusOptions = useSelector(selectStatusOptions);
-  const verificationOptions = useSelector(selectVerificationOptions);
+  // const verificationOptions = useSelector(selectVerificationOptions);
   const activeFilters = useSelector(selectActiveFilters);
   const counts = useSelector(selectCounts);
    const filters = useSelector((state) => state.drivers.filters);
@@ -157,42 +157,48 @@ useEffect(() => {
 
   const handleFormSuccess = () => {
     // Refresh drivers data after successful create/update
-    // fetchDrivers(currentPage);
+    fetchDrivers(currentPage);
     closeModal();
   };
 
-  const handleStatusToggle = (driver) => {
-    setConfirmationModal({
-      show: true,
-      title: "Confirm Status Change",
-      message: `Are you sure you want to ${
-        driver.is_active ? "deactivate" : "activate"
-      } this driver?`,
-      onConfirm: async () => {
-        try {
-          dispatch(setDriversLoading(true));
-          // await API_CLIENT.patch(
-          //   `/vendors/${driver.vendor.vendor_id}/drivers/${driver.driver_id}/status`
-          // );
-          dispatch(
-            updateDriverStatus({
-              driverId: driver.driver_id,
-              isActive: !driver.is_active,
-            })
-          );
-          // Show success message
-        } catch (err) {
-          dispatch(setDriversError(err.message));
-        } finally {
-          dispatch(setDriversLoading(false));
-          setConfirmationModal({ ...confirmationModal, show: false });
-        }
-      },
-      onCancel: () => {
+ const handleStatusToggle = (driver) => {
+  setConfirmationModal({
+    show: true,
+    title: "Confirm Status Change",
+    message: `Are you sure you want to ${
+      driver.is_active ? "deactivate" : "activate"
+    } this driver?`,
+    onConfirm: async () => {
+      try {
+        // Dispatch the thunk and unwrap result
+        const updatedDriver = await dispatch(toggleDriverStatusThunk(driver.driver_id)).unwrap();
+
+        // Update local Redux state if needed
+        dispatch(
+          updateDriverStatus({
+            driverId: updatedDriver.driver_id,
+            isActive: updatedDriver.is_active,
+          })
+        );
+
+        // Show success toast
+        toast.success(
+          `Driver has been ${
+            updatedDriver.is_active ? "activated" : "deactivated"
+          } successfully!`
+        );
+      } catch (err) {
+        toast.error(err.message || "Failed to update driver status.");
+      } finally {
         setConfirmationModal({ ...confirmationModal, show: false });
-      },
-    });
-  };
+      }
+    },
+    onCancel: () => {
+      setConfirmationModal({ ...confirmationModal, show: false });
+    },
+  });
+};
+
 
   const handlePageChange = (page) => {
     dispatch(setPage(page));
@@ -267,7 +273,7 @@ useEffect(() => {
             </div>
 
             {/* Verification filter dropdown */}
-            <div className="relative">
+            {/* <div className="relative">
               <select
                 className="appearance-none border border-gray-300 rounded-md pl-3 pr-8 py-2 text-sm 
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
@@ -298,7 +304,7 @@ useEffect(() => {
                   />
                 </svg>
               </div>
-            </div>
+            </div> */}
           </div>
         }
         rightElements={
@@ -329,7 +335,7 @@ useEffect(() => {
             </div>
             <input
               type="text"
-              placeholder="Search by name, email, phone or license..."
+              placeholder="Search by name,Driver Code, license..."
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md 
                 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 
                 focus:border-blue-500"

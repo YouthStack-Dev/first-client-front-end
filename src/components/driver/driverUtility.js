@@ -6,7 +6,7 @@ export const fieldMapping = {
   code: "code",
   email: "email",
   password: "password",
-  mobileNumber: "phone", // was mobile_number
+  mobileNumber: "phone", 
   dateOfBirth: "date_of_birth",
   dateOfJoining: "date_of_joining",
   gender: "gender",
@@ -110,7 +110,6 @@ export const transformBackendToFormData = (backendData) => {
   if (!backendData) return {};
 
   const transformed = {};
-
   Object.entries(backendData).forEach(([backendKey, value]) => {
     const frontendKey = backendToFrontendMapping[backendKey];
     if (frontendKey) {
@@ -118,7 +117,6 @@ export const transformBackendToFormData = (backendData) => {
     }
   });
 
-  
   // Map backend file URLs to frontend file fields
   transformed.license_file = backendData.license_url || null;
   transformed.badge_file = backendData.badge_url || null;

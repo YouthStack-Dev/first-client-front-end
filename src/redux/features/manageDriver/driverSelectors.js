@@ -43,11 +43,12 @@ export const selectDriverById = createSelector(
 // --- Filters ---
 const verificationFields = [
   'bgv_status',
-  'police_verification_status',
-  'medical_verification_status',
-  'training_verification_status',
-  'eye_test_verification_status'
+  'police_verify_status',
+  'medical_verify_status',
+  'training_verify_status',
+  'eye_verify_status'
 ];
+
 
 export const selectFilteredDrivers = createSelector(
   [selectAllDrivers, selectFilters],
@@ -124,21 +125,21 @@ export const selectStatusOptions = createSelector(
 );
 
 // --- Verification options ---
-export const selectVerificationOptions = createSelector(
-  selectDriverCounts,
-  counts => {
-    const options = [{ value: 'all', label: 'All Verification Statuses' }];
+// export const selectVerificationOptions = createSelector(
+//   selectDriverCounts,
+//   counts => {
+//     const options = [{ value: 'all', label: 'All Verification Statuses' }];
 
-    verificationFields.forEach(f => {
-      const fieldCounts = counts.verifications[f] || {};
-      Object.entries(fieldCounts).forEach(([status, cnt]) => {
-        options.push({ value: status.toLowerCase(), label: `${status} (${cnt})` });
-      });
-    });
+//     verificationFields.forEach(f => {
+//       const fieldCounts = counts.verifications[f] || {};
+//       Object.entries(fieldCounts).forEach(([status, cnt]) => {
+//         options.push({ value: status.toLowerCase(), label: `${status} (${cnt})` });
+//       });
+//     });
 
-    return options;
-  }
-);
+//     return options;
+//   }
+// );
 
 // --- Selected drivers ---
 export const selectSelectedDriversData = createSelector(

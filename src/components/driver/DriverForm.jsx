@@ -5,7 +5,7 @@ import DocumentsTab from './DocumentsTab';
 import { toast } from 'react-toastify';
 import { useDispatch, useSelector } from 'react-redux';
 import { fieldMapping, transformBackendToFormData } from './driverUtility';
-import { createDriverThunk,fetchDriversThunk } from '../../redux/features/manageDriver/driverThunks';
+import { createDriverThunk,fetchDriversThunk,updateDriverThunk  } from '../../redux/features/manageDriver/driverThunks';
 
 const defaultFormData = {
   name: '',
@@ -203,57 +203,84 @@ const handleNext = () => {
 const handleSubmit = async (e) => {
   e.preventDefault();
 
+  // 1️⃣ Validate form
   const personalErrors = validatePersonalDetails();
   const documentErrors = validateDocuments();
   const allErrors = { ...personalErrors, ...documentErrors };
-
   if (Object.keys(allErrors).length > 0) {
     setErrors(allErrors);
     setActiveTab(Object.keys(personalErrors).length > 0 ? "personalDetails" : "documents");
-    console.log("Submit clicked - validation errors:", allErrors); // <-- Log validation errors
     return;
   }
 
   try {
+    // 2️⃣ Create FormData
     const formDataToSubmit = new FormData();
-console.log('--- Field mapping before submit ---');
-    Object.keys(formData).forEach(key => {
-      if (formData[key] !== null && formData[key] !== undefined) {
-        const backendKey = fieldMapping[key] || key;
 
-        // Date formatting as YYYY-MM-DD
-        if (formData[key] instanceof Date) {
-          const date = formData[key];
-          const formattedDate = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-          formDataToSubmit.append(backendKey, formattedDate);
-        } else if (typeof formData[key] === "string" && /^\d{4}-\d{2}-\d{2}T/.test(formData[key])) {
-          const date = new Date(formData[key]);
-          const formattedDate = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-          formDataToSubmit.append(backendKey, formattedDate);
-        } else if (formData[key] instanceof File) {
-          formDataToSubmit.append(backendKey, formData[key]);
-        } else if (typeof formData[key] === "boolean") {
-          formDataToSubmit.append(backendKey, formData[key] ? "true" : "false");
-        } else {
-          formDataToSubmit.append(backendKey, formData[key]);
-        }
-      }
-    });
+// File fields
+const fileFields = [
+  "license_file", "badge_file", "alt_govt_id_file",
+  "bgv_file", "police_file", "medical_file",
+  "training_file", "eye_file", "induction_file"
+];
+
+// Map regular fields (strings, booleans, dates, status)
+Object.keys(formData).forEach((key) => {
+  if (formData[key] !== null && formData[key] !== undefined) {
+    const backendKey = fieldMapping[key] || key;
+
+    // Capitalize status fields
+    if (["bgvStatus","policeVerification","medicalVerification","trainingVerification","eyeTestStatus"].includes(key)) {
+      const value = formData[key];
+      const capitalized = value ? value.charAt(0).toUpperCase() + value.slice(1) : "Pending";
+      formDataToSubmit.append(backendKey, capitalized);
+    }
+    // Dates
+    else if (formData[key] instanceof Date) {
+      const date = formData[key];
+      const formattedDate = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+      formDataToSubmit.append(backendKey, formattedDate);
+    }
+    else if (typeof formData[key] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(formData[key])) {
+      // Already in YYYY-MM-DD format from input
+      formDataToSubmit.append(backendKey, formData[key]);
+    }
+    // Booleans
+    else if (typeof formData[key] === "boolean") {
+      formDataToSubmit.append(backendKey, formData[key] ? "true" : "false");
+    }
+    // Strings / other
+    else if (!(fileFields.includes(key))) { // skip files here
+      formDataToSubmit.append(backendKey, formData[key]);
+    }
+  }
+});
+
+// Append file uploads ONLY if they are File objects
+fileFields.forEach((key) => {
+  const file = formData[key];
+  if (file instanceof File) {
+    formDataToSubmit.append(fieldMapping[key] || key, file);
+  }
+});
+
+
 
     // Log the FormData keys and values being submitted
-    console.log("Submitting driver data:");
-    for (let pair of formDataToSubmit.entries()) {
-      console.log(pair[0]+ ':', pair[1]);
-    }
+    // console.log("Submitting driver data:");
+    // for (let pair of formDataToSubmit.entries()) {
+    //   console.log(pair[0]+ ':', pair[1]);
+    // }
 
     if (mode === "edit") {
-      await dispatch(updateDriverThunk({ driverId: initialData.driver_id, data: formDataToSubmit })).unwrap();
+       await dispatch(
+    updateDriverThunk({driverId: initialData.driver_id, formData: formDataToSubmit, })).unwrap();
       toast.success("Driver updated successfully!");
     } else {
       await dispatch(createDriverThunk(formDataToSubmit)).unwrap();
       toast.success("Driver created successfully!");
     }
-     await dispatch(fetchDriversThunk());
+      dispatch(fetchDriversThunk());
     if (onClose) onClose();
 
   } catch (error) {
@@ -295,7 +322,18 @@ console.log('--- Field mapping before submit ---');
             personalDetails: errors.personalDetails && Object.keys(errors.personalDetails).length > 0,
             documents: errors.documents && Object.keys(errors.documents).length > 0
           }}
-          onTabChange={setActiveTab}
+          onTabChange={(tabId) => {
+            // Validate personal details before moving to Documents tab
+            if (tabId === 'documents') {
+              const personalErrors = validatePersonalDetails();
+              if (Object.keys(personalErrors).length > 0) {
+                setErrors(prev => ({ ...prev, personalDetails: personalErrors }));
+                toast.error("Please fix Personal Details before moving to Documents");
+                return; // prevent tab change
+              }
+            }
+            setActiveTab(tabId);
+          }}
           validateTab={tabId => {
             if (tabId === 'personalDetails') return validatePersonalDetails();
             if (tabId === 'documents') return validateDocuments();
@@ -304,52 +342,33 @@ console.log('--- Field mapping before submit ---');
         />
 
 
+
         <form onSubmit={handleSubmit}>
           <div className="p-6">{renderTabContent()}</div>
 
           <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between">
-            {activeTab !== "personalDetails" && (
+  {/* Remove Previous button */}
+          <div className="flex space-x-3 ml-auto">
+            {onClose && (
               <button
                 type="button"
-                onClick={handlePrevious}
+                onClick={onClose}
                 className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                 disabled={driversLoading}
               >
-                Previous
+                Cancel
               </button>
             )}
-
-            <div className="flex space-x-3 ml-auto">
-              {onClose && (
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                  disabled={driversLoading}
-                >
-                  Cancel
-                </button>
-              )}
-
-              {activeTab !== "documents" ? (
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-                >
-                  Next
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  disabled={driversLoading}
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-                >
-                  {driversLoading ? "Saving..." : mode === "edit" ? "Update Driver" : "Create Driver"}
-                </button>
-              )}
-            </div>
+            <button
+              type="submit"
+              disabled={driversLoading}
+              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+            >
+              {driversLoading ? "Saving..." : mode === "edit" ? "Update Driver" : "Create Driver"}
+            </button>
           </div>
+        </div>
+
         </form>
       </div>
     </div>

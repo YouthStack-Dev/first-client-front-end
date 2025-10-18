@@ -42,73 +42,57 @@ export const createDriverThunk = createAsyncThunk(
 /**
  * Update an existing driver
  */
-// export const updateDriverThunk = createAsyncThunk(
-//   'drivers/updateDriver',
-//   async ({ vendor_id, driver_id, formData }, { rejectWithValue }) => {
-//     try {
-//       const response = await updateDriverAPI(vendor_id, driver_id, formData);
-//       return response.data;
-//     } catch (error) {
-//       console.error('[Thunk] Failed to update driver:', error);
-//       return rejectWithValue(error.response?.data || error.message || 'Failed to update driver');
-//     }
-//   }
-// );
 
-/**
- * Patch driver status (e.g., active/inactive)
- */
-export const patchDriverStatusThunk = createAsyncThunk(
-  'drivers/patchDriverStatus',
-  async ({ vendor_id, driver_id, status }, { rejectWithValue }) => {
+export const updateDriverThunk = createAsyncThunk(
+  "driver/updateDriver",
+  async ({ driverId, formData }, { rejectWithValue }) => {
     try {
-      const response = await patchDriverStatusAPI(vendor_id, driver_id, { status });
-      return response.data;
+      const response = await API_CLIENT.put(
+        `/v1/drivers/update?driver_id=${driverId}`, // ✅ no trailing slash needed
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      // ✅ Assuming backend returns something like { data: { driver: {...} } }
+      return response.data?.data?.driver || response.data;
     } catch (error) {
-      console.error('[Thunk] Failed to patch driver status:', error);
-      return rejectWithValue(error.response?.data || error.message || 'Failed to patch status');
+      console.error("❌ Error updating driver:", error);
+
+      return rejectWithValue(
+        error.response?.data || {
+          message: "Something went wrong while updating the driver.",
+        }
+      );
     }
   }
 );
 
 /**
- * Put driver status (full update)
+ * Toggle driver active/inactive status
  */
-export const putDriverStatusThunk = createAsyncThunk(
-  'drivers/putDriverStatus',
-  async ({ vendor_id, driver_id, status }, { rejectWithValue }) => {
+export const toggleDriverStatusThunk = createAsyncThunk(
+  'driver/toggleDriver',
+  async (driver_id, { rejectWithValue }) => {
     try {
-      const response = await putDriverStatusAPI(vendor_id, driver_id, { status });
-      return response.data;
+      const response = await API_CLIENT.patch(
+        `/v1/drivers/${driver_id}/toggle-active`,
+        {}, // empty body
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      // Return the driver object from response.data.data
+      return response.data.data;
     } catch (error) {
-      console.error('[Thunk] Failed to update driver status (PUT):', error);
-      return rejectWithValue(error.response?.data || error.message || 'Failed to update status');
+      console.error('[Thunk] Failed to toggle driver status:', error);
+      return rejectWithValue(error.response?.data || { message: 'Something went wrong' });
     }
   }
 );
 
-/**
- * Get drivers based on filters (vendor, driver_code, bgv_status)
- */
-export const getFilteredDriversThunk = createAsyncThunk(
-  'drivers/getFilteredDrivers',
-  async ({ vendor_id, driver_code = '', bgv_status = '' }, { rejectWithValue }) => {
-    try {
-      let response;
-
-      if (vendor_id === 'all') {
-        response = await getTenantDriversAPI();
-      } else {
-        const params = new URLSearchParams({ skip: 0, limit: 100 });
-        if (driver_code) params.append('driver_code', driver_code);
-        if (bgv_status) params.append('bgv_status', bgv_status);
-
-        response = await API_CLIENT.get(`/vendors/${vendor_id}/drivers/?${params.toString()}`);
-      }
-      return response.data?.data || [];
-    } catch (error) {
-      console.error('[Thunk] Failed to fetch filtered drivers:', error);
-      return rejectWithValue(error.response?.data || 'Failed to fetch drivers');
-    }
-  }
-);

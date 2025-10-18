@@ -1,5 +1,5 @@
 import { createSlice, createSelector } from '@reduxjs/toolkit';
-import { fetchDriversThunk,createDriverThunk  } from "./driverThunks";
+import { fetchDriversThunk,createDriverThunk ,updateDriverThunk  } from "./driverThunks";
 
 const initialState = {
   entities: {},
@@ -116,7 +116,23 @@ const driversSlice = createSlice({
       .addCase(createDriverThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || "Failed to create driver";
-      });
+      })
+        .addCase(updateDriverThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        })
+        .addCase(updateDriverThunk.fulfilled, (state, action) => {
+          state.loading = false;
+          const updatedDriver = action.payload;
+          if (updatedDriver && state.entities[updatedDriver.driver_id]) {
+            // Replace the existing driver data with updated data
+            state.entities[updatedDriver.driver_id] = updatedDriver;
+          }
+        })
+        .addCase(updateDriverThunk.rejected, (state, action) => {
+          state.loading = false;
+          state.error = action.payload?.message || "Failed to update driver";
+        });
     }
   });
 
@@ -137,24 +153,25 @@ export const selectPagination = state => state.drivers.pagination;
 
 
 export const selectStatusOptions = createSelector(
-  (state) => state.drivers, // input selector
-  (driversState) => [
-    { value: 'ALL', label: 'ALL ' },
-    { value: 'ACTIVE', label: 'Active' },
-    { value: 'INACTIVE', label: 'Inactive' }
+  (state) => state.drivers,
+  () => [
+    { value: 'all', label: 'ALL' },
+    { value: 'active', label: 'Active' },
+    { value: 'inactive', label: 'Inactive' }
   ]
 );
 
-// Example for verification options
-export const selectVerificationOptions = createSelector(
-  (state) => state.drivers,
-  (driversState) => [
-    { value: 'ALL', label: 'ALL' },
-    { value: 'VERIFIED', label: 'Verified' },
-    { value: 'PENDING', label: 'Pending' },
-    { value: 'REJECTED', label: 'Rejected' }
-  ]
-);
+// export const selectVerificationOptions = createSelector(
+//   (state) => state.drivers,
+//   () => [
+//     { value: 'all', label: 'ALL' },
+//     { value: 'pending', label: 'Pending' },
+//     { value: 'approved', label: 'Approved' },
+//     { value: 'rejected', label: 'Rejected' }
+//   ]
+// );
+
+
 
 export const selectFilteredDrivers = createSelector(
   [selectAllDrivers, selectFilters],
@@ -182,7 +199,6 @@ export const selectPaginatedDrivers = createSelector(
   (filteredDrivers, pagination) => 
     filteredDrivers.slice(pagination.skip, pagination.skip + pagination.limit)
 );
-
 export const selectCounts = createSelector(
   [selectAllDrivers],
   (drivers) => {
@@ -190,20 +206,28 @@ export const selectCounts = createSelector(
     return {
       total: drivers.length,
       active: drivers.filter(d => d.is_active).length,
+      
       pendingVerifications: drivers.filter(driver => 
-        ['bgv_status', 'police_verification_status', 'medical_verification_status', 
-         'training_verification_status', 'eye_test_verification_status']
-          .some(field => driver[field] === 'Pending')).length,
+        ['bg_verify_status', 'police_verify_status', 'medical_verify_status', 
+         'training_verify_status', 'eye_verify_status']
+          .some(field => driver[field]?.toLowerCase() === 'pending')
+      ).length,
+      
       expiredDocuments: drivers.filter(driver => 
         (driver.license_expiry_date && new Date(driver.license_expiry_date) < now) ||
-        (driver.badge_expiry_date && new Date(driver.badge_expiry_date) < now)).length,
+        (driver.badge_expiry_date && new Date(driver.badge_expiry_date) < now)
+      ).length,
+      
       rejectedDocuments: drivers.filter(driver => 
-        ['bgv_status', 'police_verification_status', 'medical_verification_status', 
-         'training_verification_status', 'eye_test_verification_status']
-          .some(field => driver[field] === 'Rejected')).length
+        ['bg_verify_status', 'police_verify_status', 'medical_verify_status', 
+         'training_verify_status', 'eye_verify_status']
+          .some(field => driver[field]?.toLowerCase() === 'rejected')
+      ).length
     };
   }
 );
+
+
 
 export const selectActiveFilters = createSelector(
   [selectFilters],
