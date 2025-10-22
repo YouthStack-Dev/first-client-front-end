@@ -157,7 +157,7 @@ useEffect(() => {
 
   const handleFormSuccess = () => {
     // Refresh drivers data after successful create/update
-    fetchDrivers(currentPage);
+    fetchDriversThunk(currentPage);
     closeModal();
   };
 

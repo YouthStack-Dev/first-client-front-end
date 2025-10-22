@@ -16,6 +16,7 @@ const handleTabClick = (tabId) => {
   if (activeTab === 'personalDetails' && validateTab) {
     const currentErrors = validateTab(activeTab);
     if (Object.keys(currentErrors).length > 0) {
+      console.log("Attempting tab switch from:", activeTab, "Errors:", currentErrors);
       toast.error("Please fix errors in this tab before switching");
       return; // Block tab switch
     }

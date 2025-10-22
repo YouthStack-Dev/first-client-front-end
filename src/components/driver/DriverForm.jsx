@@ -113,7 +113,7 @@ useEffect(() => {
   if (!formData.mobileNumber?.trim()) personalErrors.mobileNumber = 'Mobile number is required';
   else if (!/^\d{10}$/.test(formData.mobileNumber)) personalErrors.mobileNumber = 'Mobile number must be exactly 10 digits';
   if (!formData.email?.trim()) personalErrors.email = 'Email is required';
-  if (!formData.password?.trim() && mode !== 'edit') personalErrors.password = 'Password is required';
+  if (mode === 'create' && !formData.password?.trim()) {personalErrors.password = 'Password is required';}
   if (!formData.code?.trim()) personalErrors.code = 'Driver code is required';
   if (!formData.gender) personalErrors.gender = 'Gender is required';
   return personalErrors;
@@ -219,7 +219,7 @@ const handleSubmit = async (e) => {
 
 // File fields
 const fileFields = [
-  "license_file", "badge_file", "alt_govt_id_file",
+   "photo","license_file", "badge_file", "alt_govt_id_file",
   "bgv_file", "police_file", "medical_file",
   "training_file", "eye_file", "induction_file"
 ];

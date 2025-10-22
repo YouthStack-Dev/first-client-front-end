@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Eye, Upload, FileText,Download, Calendar, Shield, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 import FormField from '../../components/ui/FormFields';
 import { InputField } from '../SmallComponents';
+import { downloadFile } from '../../utils/downloadfile';
 
 const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode = 'create' }) => {
   const [expandedSections, setExpandedSections] = useState({
@@ -119,14 +120,24 @@ const getDocumentUrl = (name) => {
   if (!documentUrl || !documentName) return null;
 
   const handleDownload = () => {
+  const fileValue = getDocFile(name);
+  const fileName = getDocName(name);
+
+  if (!fileValue) return;
+
+  if (fileValue instanceof File) {
+    // local file
+    const url = URL.createObjectURL(fileValue);
     const link = document.createElement("a");
-    link.href = documentUrl;
-    link.download = documentName;
-    link.target = "_blank";
-    document.body.appendChild(link);
+    link.href = url;
+    link.download = fileName;
     link.click();
-    document.body.removeChild(link);
-  };
+    URL.revokeObjectURL(url);
+  } else {
+    // backend path → use downloadFile util
+    downloadFile(fileValue, fileName);
+  }
+};
 
   return (
   <button

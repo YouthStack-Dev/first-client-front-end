@@ -21,9 +21,9 @@ export const selectPagination = (state) => state.drivers.pagination || {
 
 // API status
 export const selectApiStatus = (state) => state.drivers.apiStatus || {
-  fetchDrivers: { status: 'idle', error: null },
-  createDriver: { status: 'idle', error: null },
-  updateDriver: { status: 'idle', error: null },
+  fetchDriversThunk: { status: 'idle', error: null },
+  createDriverThunk: { status: 'idle', error: null },
+  updateDriverThunk: { status: 'idle', error: null },
   patchDriverStatus: { status: 'idle', error: null }
 };
 
