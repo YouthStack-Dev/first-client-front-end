@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect ,useMemo } from "react";
 import { Upload, Eye, Download } from "lucide-react";
 import Select from "react-select";
 import { useDispatch, useSelector } from "react-redux";
+import {fetchDriversThunk} from "../../redux/features/manageDriver/driverThunks";
 import { fetchVehicleTypes } from "../../redux/features/managevehicletype/vehicleTypeThunks";
 
 const TABS = ["BASIC INFO", "DOCUMENTS"];
@@ -76,10 +77,25 @@ const VehicleForm = ({ isEdit = false, initialData = {}, onFormChange }) => {
   const vehicleTypes = allIds.map((id) => byId[id]);
 
   useEffect(() => {
-    if (!vehicleTypes || vehicleTypes.length === 0) {
+    if ( vehicleTypes.length === 0) {
       dispatch(fetchVehicleTypes());
     }
-  }, [dispatch, vehicleTypes]);
+  }, [dispatch]);
+
+    const { entities: driverEntities, ids: driverIds, loading: driversLoading } =
+    useSelector((state) => state.drivers);
+
+  useEffect(() => {
+    if (driverIds.length === 0) dispatch(fetchDriversThunk());
+  }, [dispatch]);
+
+  const driverOptions = useMemo(() => {
+    if (!driverEntities || !driverIds) return [];
+    return driverIds.map((id) => ({
+      value: driverEntities[id].driver_id,
+      label: driverEntities[id].name,
+    }));
+  }, [driverEntities, driverIds]);
 
   const updateFormData = (updated) => {
     setFormData(updated);
@@ -271,11 +287,13 @@ const VehicleForm = ({ isEdit = false, initialData = {}, onFormChange }) => {
             )}
             {renderField("RC Number", "rc_number", "text", true)}
             {renderField("RC Expiry Date", "rc_expiry_date", "date", true)}
-            {renderSearchableSelect(
+             {renderSearchableSelect(
               "Driver",
               "driver_id",
-              DUMMY_DRIVERS.map((d) => ({ value: d.driver_id, label: d.driver_name })),
-              true
+              driverOptions,
+              true,
+              false,
+              driversLoading
             )}
             {renderField("Description", "description")}
           </>
