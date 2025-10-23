@@ -268,12 +268,12 @@ const ManageVehicles = () => {
         onClose={() => setVehicleModal(false)}
         title={editVehicle ? "Edit Vehicle" : "Add Vehicle"}
         size="xl"
+        hideFooter={true} // ✅ Add this prop if your Modal supports hiding footer buttons
       >
         <VehicleForm
-          defaultValues={editVehicle}
-          onSuccess={() => {
-            setVehicleModal(false);
-            dispatch(fetchVehiclesThunk());
+          initialData={editVehicle} // Changed from defaultValues to match VehicleForm
+          onFormChange={(data) => {
+            // Optional: handle live changes if needed
           }}
         />
       </Modal>

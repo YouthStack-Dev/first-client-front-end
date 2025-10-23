@@ -27,10 +27,6 @@ const initialState = {
   is_active: true,
 };
 
-const DUMMY_DRIVERS = [
-  { driver_id: "1", driver_name: "John Doe" },
-  { driver_id: "2", driver_name: "Jane Smith" },
-];
 
 const VehicleForm = ({ isEdit = false, initialData = {}, onFormChange }) => {
   const dispatch = useDispatch();
@@ -200,63 +196,82 @@ const VehicleForm = ({ isEdit = false, initialData = {}, onFormChange }) => {
     </div>
   );
 
-  const renderFileWithExpiry = (label, fileField, expiryField) => {
-    const existingFilePath = initialData[`${fileField.replace("_file", "_url")}`];
-    const fileUrl = formData[fileField] instanceof File
+const renderFileWithExpiry = (label, fileField, expiryField) => {
+  const existingFilePath = initialData?.[`${fileField.replace("_file", "_url")}`] || null;
+  const fileUrl =
+    formData[fileField] instanceof File
       ? URL.createObjectURL(formData[fileField])
       : existingFilePath
       ? `/api/v1/vehicles/files/${existingFilePath}`
       : null;
 
-    console.log(`File URL for ${fileField}:`, fileUrl);
-
-    const handleUpload = (e) => {
-      const selectedFile = e.target.files[0];
-      if (selectedFile) handleFileChange(fileField, selectedFile);
-    };
-
-    const handleView = () => fileUrl && window.open(fileUrl, "_blank");
-    const handleDownload = () => fileUrl && (window.location.href = fileUrl + "?download=true");
-    const handleRemove = () => handleFileChange(fileField, null);
-
-    return (
-      <div className="border rounded-lg p-4 bg-gray-50 shadow-sm flex flex-col gap-3">
-        <label className="block font-semibold text-gray-700">{label}</label>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 text-sm text-gray-700 bg-white border rounded px-3 py-2 truncate">
-            {formData[fileField]?.name || existingFilePath ? "Existing File" : "No file chosen"}
-          </div>
-          <label htmlFor={`${fileField}-input`} className="flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-400 px-2 py-1 rounded cursor-pointer hover:bg-blue-200">
-            <Upload size={16} />
-          </label>
-          <input type="file" id={`${fileField}-input`} className="hidden" onChange={handleUpload} />
-          {fileUrl && (
-            <>
-              <button type="button" onClick={handleView} className="flex items-center gap-1 bg-green-100 text-green-700 border border-green-400 px-2 py-1 rounded hover:bg-green-200">
-                <Eye size={16} />
-              </button>
-              <button type="button" onClick={handleDownload} className="flex items-center gap-1 bg-gray-100 text-gray-700 border border-gray-400 px-2 py-1 rounded hover:bg-gray-200">
-                <Download size={16} />
-              </button>
-              <button type="button" onClick={handleRemove} className="flex items-center gap-1 bg-red-100 text-red-600 border border-red-400 px-2 py-1 rounded hover:bg-red-200">
-                ❌
-              </button>
-            </>
-          )}
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-600">Expiry Date</label>
-          <input
-            type="date"
-            value={formData[expiryField] || initialData[expiryField] || ""}
-            onChange={(e) => handleInputChange(expiryField, e.target.value)}
-            className="w-full border rounded px-3 py-1.5 text-sm mt-1"
-          />
-        </div>
-        {errors[fileField] && <p className="text-red-500 text-sm mt-1">{errors[fileField]}</p>}
-      </div>
-    );
+  const handleUpload = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) handleFileChange(fileField, selectedFile);
   };
+
+  const handleView = () => fileUrl && window.open(fileUrl, "_blank");
+  const handleDownload = () => fileUrl && (window.location.href = fileUrl + "?download=true");
+  const handleRemove = () => handleFileChange(fileField, null);
+
+  return (
+    <div className="border rounded-lg p-4 bg-gray-50 shadow-sm flex flex-col gap-3">
+      <label className="block font-semibold text-gray-700">{label}</label>
+
+      <div className="flex items-center gap-2">
+        <div className="flex-1 text-sm text-gray-700 bg-white border rounded px-3 py-2 truncate">
+          {formData[fileField]?.name || existingFilePath ? "Existing File" : "No file chosen"}
+        </div>
+
+        <label
+          htmlFor={`${fileField}-input`}
+          className="flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-400 px-2 py-1 rounded cursor-pointer hover:bg-blue-200"
+        >
+          <Upload size={16} />
+        </label>
+        <input type="file" id={`${fileField}-input`} className="hidden" onChange={handleUpload} />
+
+        {fileUrl && (
+          <>
+            <button
+              type="button"
+              onClick={handleView}
+              className="flex items-center gap-1 bg-green-100 text-green-700 border border-green-400 px-2 py-1 rounded hover:bg-green-200"
+            >
+              <Eye size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={handleDownload}
+              className="flex items-center gap-1 bg-gray-100 text-gray-700 border border-gray-400 px-2 py-1 rounded hover:bg-gray-200"
+            >
+              <Download size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={handleRemove}
+              className="flex items-center gap-1 bg-red-100 text-red-600 border border-red-400 px-2 py-1 rounded hover:bg-red-200"
+            >
+              ❌
+            </button>
+          </>
+        )}
+      </div>
+
+      <div>
+        <label className="text-sm font-medium text-gray-600">Expiry Date</label>
+        <input
+          type="date"
+          value={formData[expiryField] || initialData?.[expiryField] || ""}
+          onChange={(e) => handleInputChange(expiryField, e.target.value)}
+          className="w-full border rounded px-3 py-1.5 text-sm mt-1"
+        />
+      </div>
+
+      {errors[fileField] && <p className="text-red-500 text-sm mt-1">{errors[fileField]}</p>}
+    </div>
+  );
+};
 
   return (
     <>
