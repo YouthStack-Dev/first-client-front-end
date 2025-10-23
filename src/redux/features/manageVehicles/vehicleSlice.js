@@ -1,7 +1,7 @@
 // src/redux/features/manageVehicles/vehicleSlice.js
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 import { API_CLIENT } from '../../../Api/API_Client'; // adjust path
-import { fetchVehiclesThunk,updateVehicleThunk  } from './vehicleThunk'; // your thunk
+import { fetchVehiclesThunk, updateVehicleThunk, createVehicleThunk } from './vehicleThunk'; // ✅ include create thunk
 
 export const initialState = {
   entities: {},      // vehicle_id -> vehicle object
@@ -87,8 +87,10 @@ const vehicleSlice = createSlice({
       }
     },
   },
+
   extraReducers: (builder) => {
     builder
+      // --- Fetch vehicles ---
       .addCase(fetchVehiclesThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -118,32 +120,58 @@ const vehicleSlice = createSlice({
         state.loading = false;
         state.hasFetched = true;
       })
-      
       .addCase(fetchVehiclesThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to fetch vehicles';
       })
-       .addCase(updateVehicleThunk.pending, (state) => {
+
+      // --- Create vehicle ---
+      .addCase(createVehicleThunk.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
-      .addCase(updateVehicleThunk.fulfilled, (state, action) => {
+      .addCase(createVehicleThunk.fulfilled, (state, action) => {
         state.loading = false;
-        const updatedVehicle = action.payload;
+        const newVehicle = action.payload;
 
-        if (updatedVehicle?.vehicle_id) {
-          state.entities[updatedVehicle.vehicle_id] = updatedVehicle;
-
-          if (!state.ids.includes(updatedVehicle.vehicle_id)) {
-            state.ids.push(updatedVehicle.vehicle_id);
-          }
-
-          console.log("✅ Vehicle updated in state:", updatedVehicle.vehicle_id);
+        if (newVehicle?.vehicle_id) {
+          state.entities[newVehicle.vehicle_id] = newVehicle;
+          if (!state.ids.includes(newVehicle.vehicle_id)) state.ids.push(newVehicle.vehicle_id);
+          console.log("✅ Vehicle created in state:", newVehicle.vehicle_id);
         }
       })
-      .addCase(updateVehicleThunk.rejected, (state, action) => {
+      .addCase(createVehicleThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Failed to update vehicle";
-      });
+        state.error = action.payload || "Failed to create vehicle";
+      })
+
+     // --- Update vehicle ---
+    .addCase(updateVehicleThunk.pending, (state) => {
+      state.loading = true;
+      state.error = null; // reset previous errors
+    })
+    .addCase(updateVehicleThunk.fulfilled, (state, action) => {
+      state.loading = false;
+      const updatedVehicle = action.payload;
+
+      if (updatedVehicle?.vehicle_id) {
+        // ensure entities object exists
+        if (!state.entities) state.entities = {};
+        state.entities[updatedVehicle.vehicle_id] = updatedVehicle;
+
+        // ensure ids array exists
+        if (!state.ids) state.ids = [];
+        if (!state.ids.includes(updatedVehicle.vehicle_id)) {
+          state.ids.push(updatedVehicle.vehicle_id);
+        }
+
+        console.log("✅ Vehicle updated in state:", updatedVehicle.vehicle_id);
+      }
+    })
+    .addCase(updateVehicleThunk.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload || "Failed to update vehicle";
+    });
   },
 });
 

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Edit, Eye } from "lucide-react";
 import ReusableButton from "../ui/ReusableButton";
 import ReusableToggleButton from "../ui/ReusableToggleButton";
-import { Modal } from "../SmallComponents";
+import Modal from "@components/modals/Modal";
 import VehicleForm from "./VehicleForm";
 
 import { fetchVehiclesThunk } from "../../redux/features/manageVehicles/vehicleThunk";
@@ -264,19 +264,19 @@ const ManageVehicles = () => {
 
       {/* Modal */}
       <Modal
-        isOpen={vehicleModal}
-        onClose={() => setVehicleModal(false)}
-        title={editVehicle ? "Edit Vehicle" : "Add Vehicle"}
-        size="xl"
-        hideFooter={true} // ✅ Add this prop if your Modal supports hiding footer buttons
-      >
-        <VehicleForm
-          initialData={editVehicle} // Changed from defaultValues to match VehicleForm
-          onFormChange={(data) => {
-            // Optional: handle live changes if needed
-          }}
-        />
-      </Modal>
+          isOpen={vehicleModal}
+          onClose={() => setVehicleModal(false)}
+          title={editVehicle ? "Edit Vehicle" : "Add Vehicle"}
+          size="xl"
+          hideFooter={true}
+        >
+          <VehicleForm
+            initialData={editVehicle}
+            onFormChange={() => {}}
+            onClose={() => setVehicleModal(false)} // <-- important
+            isEdit={!!editVehicle}
+          />
+        </Modal>
     </div>
   );
 };

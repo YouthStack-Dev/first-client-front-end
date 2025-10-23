@@ -2,7 +2,7 @@
 
 /**
  * Vehicle data transformer for backend ↔ frontend
- * Handles conversion between form data and API structure
+ * Ensures all required fields are appended properly, even if empty
  */
 
 // -------- FRONTEND → BACKEND --------
@@ -11,7 +11,7 @@ export const transformFormDataToBackend = (formData) => {
 
   const backendData = new FormData();
 
-  // ✅ Map only allowed fields
+  // ✅ All required text/date/boolean fields
   const fieldMap = {
     vendor_id: "vendor_id",
     vehicle_type_id: "vehicle_type_id",
@@ -19,35 +19,39 @@ export const transformFormDataToBackend = (formData) => {
     driver_id: "driver_id",
     description: "description",
     rc_expiry_date: "rc_expiry_date",
-    insurance_expiry_date: "insurance_expiry_date",
-    permit_expiry_date: "permit_expiry_date",
     puc_expiry_date: "puc_expiry_date",
     fitness_expiry_date: "fitness_expiry_date",
     tax_receipt_date: "tax_receipt_date",
+    insurance_expiry_date: "insurance_expiry_date",
+    permit_expiry_date: "permit_expiry_date",
     is_active: "is_active",
   };
 
-  // Append text/date/boolean fields
+  // Append every field (even if empty string)
   Object.entries(fieldMap).forEach(([frontendKey, backendKey]) => {
-    const value = formData[frontendKey];
-    if (value !== null && value !== undefined && value !== "") {
-      backendData.append(backendKey, value);
-    }
+    const value =
+      formData[frontendKey] !== undefined && formData[frontendKey] !== null
+        ? formData[frontendKey]
+        : "";
+    backendData.append(backendKey, value);
   });
 
-  // ✅ Append files only if user selected a new one
+  // ✅ File fields (required by backend even if null)
   const fileFields = [
-    "insurance_file",
-    "permit_file",
     "puc_file",
     "fitness_file",
     "tax_receipt_file",
+    "insurance_file",
+    "permit_file",
   ];
 
   fileFields.forEach((field) => {
     const file = formData[field];
     if (file instanceof File) {
       backendData.append(field, file);
+    } else {
+      // append empty value if no file selected
+      backendData.append(field, "");
     }
   });
 
@@ -66,26 +70,26 @@ export const transformBackendToFormData = (backendData) => {
     rc_number: backendData.rc_number || "",
     description: backendData.description || "",
     rc_expiry_date: backendData.rc_expiry_date || "",
-    insurance_expiry_date: backendData.insurance_expiry_date || "",
-    permit_expiry_date: backendData.permit_expiry_date || "",
     puc_expiry_date: backendData.puc_expiry_date || "",
     fitness_expiry_date: backendData.fitness_expiry_date || "",
     tax_receipt_date: backendData.tax_receipt_date || "",
+    insurance_expiry_date: backendData.insurance_expiry_date || "",
+    permit_expiry_date: backendData.permit_expiry_date || "",
     is_active: backendData.is_active ?? true,
 
-    // ✅ URLs from backend (for viewing/downloading)
-    insurance_url: backendData.insurance_url || "",
-    permit_url: backendData.permit_url || "",
+    // ✅ Backend file URLs for preview/download
     puc_url: backendData.puc_url || "",
     fitness_url: backendData.fitness_url || "",
     tax_receipt_url: backendData.tax_receipt_url || "",
+    insurance_url: backendData.insurance_url || "",
+    permit_url: backendData.permit_url || "",
 
-    // ✅ Initialize upload fields as null
-    insurance_file: null,
-    permit_file: null,
+    // ✅ Initialize file upload fields
     puc_file: null,
     fitness_file: null,
     tax_receipt_file: null,
+    insurance_file: null,
+    permit_file: null,
   };
 
   return transformed;
