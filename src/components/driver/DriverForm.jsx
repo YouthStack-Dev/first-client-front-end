@@ -96,14 +96,21 @@ useEffect(() => {
     setFormData(prev => ({ ...prev, profileImage: file }));
   };
 
-  const handleCheckboxChange = (name, checked) => {
-    if (mode === 'view') return;
-    setFormData(prev => {
-      const newData = { ...prev, [name]: checked };
-      if (name === 'isSameAddress' && checked) newData.current_address = prev.permanent_address;
-      return newData;
-    });
-  };
+const handleCheckboxChange = (name, checked) => {
+  if (mode === "view") return;
+  setFormData((prev) => {
+    const newData = { ...prev, [name]: checked };
+
+    // If checked, copy permanent address into current address
+    if (name === "isSameAddress" && checked) {
+      newData.current_address = prev.permanent_address;
+    }
+
+    return newData;
+  });
+};
+
+
 
   // --- Validations ---
   const validatePersonalDetails = () => {
@@ -259,10 +266,11 @@ Object.keys(formData).forEach((key) => {
 // Append file uploads ONLY if they are File objects
 fileFields.forEach((key) => {
   const file = formData[key];
-  if (file instanceof File) {
+  if (file instanceof File) {          // ONLY if new file is selected
     formDataToSubmit.append(fieldMapping[key] || key, file);
   }
 });
+
 
 
 
@@ -359,13 +367,15 @@ fileFields.forEach((key) => {
                 Cancel
               </button>
             )}
-            <button
-              type="submit"
-              disabled={driversLoading}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-            >
-              {driversLoading ? "Saving..." : mode === "edit" ? "Update Driver" : "Create Driver"}
-            </button>
+              {mode !== 'view' && (
+                <button
+                  type="submit"
+                  disabled={driversLoading}
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  {driversLoading ? "Saving..." : mode === "edit" ? "Update Driver" : "Create Driver"}
+                </button>
+              )}
           </div>
         </div>
 
