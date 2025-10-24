@@ -121,12 +121,18 @@ const driversSlice = createSlice({
         state.loading = true;
         state.error = null;
         })
-        .addCase(updateDriverThunk.fulfilled, (state, action) => {
+       .addCase(updateDriverThunk.fulfilled, (state, action) => {
           state.loading = false;
           const updatedDriver = action.payload;
-          if (updatedDriver && state.entities[updatedDriver.driver_id]) {
-            // Replace the existing driver data with updated data
+
+          if (updatedDriver) {
+            // Map backend fields to frontend fields if needed
             state.entities[updatedDriver.driver_id] = updatedDriver;
+
+            // Also add to ids if not present
+            if (!state.ids.includes(updatedDriver.driver_id)) {
+              state.ids.push(updatedDriver.driver_id);
+            }
           }
         })
         .addCase(updateDriverThunk.rejected, (state, action) => {

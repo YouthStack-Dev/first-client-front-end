@@ -70,7 +70,7 @@ export const backendToFrontendMapping = {
   current_address: "current_address",
 
   // Verification & expiry
-  bgv_status: "bgvStatus",
+  bg_verify_status: "bgvStatus",
   bg_expiry_date: "bgvExpiryDate",
   police_verify_status: "policeVerification",
   police_expiry_date: "policeExpiryDate",

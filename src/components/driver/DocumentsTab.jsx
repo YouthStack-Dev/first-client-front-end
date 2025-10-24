@@ -42,6 +42,7 @@ const DocumentsTab = ({ formData = {}, errors = {}, onChange, onFileChange, mode
   // const getDocName = (name) =>
   //   formData[`${name}Name`] || formData[name]?.name || formData[name]?.split('/')?.pop() || '';
 
+  
   const getDocName = (name) => {
   const fileValue = formData[name];
 

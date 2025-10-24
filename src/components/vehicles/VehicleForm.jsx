@@ -14,6 +14,7 @@ import {
   fetchVehiclesThunk,
 } from "../../redux/features/manageVehicles/vehicleThunk";
 import { toast } from "react-toastify";
+import { downloadFile } from '../../utils/downloadfile';
 
 const TABS = ["BASIC INFO", "DOCUMENTS"];
 
@@ -297,7 +298,40 @@ const handleSubmit = async (e) => {
       const file = e.target.files[0];
       if (file) handleFileChange(fileField, file);
     };
-    const handleDownload = () => fileUrl && (window.location.href = fileUrl + "?download=true");
+
+const handleDownload = async () => {
+  if (!fileUrl) return;
+
+  try {
+    const response = await fetch(fileUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        Accept: "application/octet-stream",
+      },
+    });
+
+    if (!response.ok) throw new Error("Failed to download file");
+
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const filename =
+      fileUrl.split("/").pop() || `${label.replace(/\s+/g, "_").toLowerCase()}.pdf`;
+
+    link.href = downloadUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (error) {
+    console.error("File download failed:", error);
+    toast.error("Failed to download file. Please try again.");
+  }
+};
+
+
     const handleRemove = () => handleFileChange(fileField, null);
 
     return (

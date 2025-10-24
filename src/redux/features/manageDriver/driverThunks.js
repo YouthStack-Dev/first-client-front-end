@@ -56,7 +56,6 @@ export const updateDriverThunk = createAsyncThunk(
           },
         }
       );
-
       // ✅ Assuming backend returns something like { data: { driver: {...} } }
       return response.data?.data?.driver || response.data;
     } catch (error) {
