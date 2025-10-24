@@ -76,13 +76,26 @@ const Layout = ({ type }) => {
       </div>
     );
   }
-
   if (type !== user.type) {
+    const handleRefresh = () => {
+      window.location.reload();
+    };
+
     return (
-      <div className="flex items-center justify-center h-screen">
-        <h2 className="text-xl font-semibold animate-pulse">
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+        <h2 className="text-2xl font-semibold text-red-600 mb-4 animate-pulse">
           Unauthorized Access
         </h2>
+        <p className="text-gray-600 mb-6">
+          You don’t have permission to access this page. Please refresh and try
+          again.
+        </p>
+        <button
+          onClick={handleRefresh}
+          className="px-5 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-all"
+        >
+          🔄 Refresh & Try Again
+        </button>
       </div>
     );
   }

@@ -156,6 +156,8 @@ function App() {
             <Route path="/manage-vendors" element={<VendorManagement />} />
             <Route path="/vehicles" element={<VehicleManagement />} />
             <Route path="/vendors" element={<VendorManagement />} />
+            <Route path="/profile" element={<h1> the profile page</h1>} />
+
             <Route
               path="/employee/create-employee"
               element={<EmployeeForm />}
