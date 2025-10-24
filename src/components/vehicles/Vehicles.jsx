@@ -5,12 +5,13 @@ import ReusableButton from "../ui/ReusableButton";
 import ReusableToggleButton from "../ui/ReusableToggleButton";
 import Modal from "@components/modals/Modal";
 import VehicleForm from "./VehicleForm";
-
-import { fetchVehiclesThunk } from "../../redux/features/manageVehicles/vehicleThunk";
+import { toast } from "react-toastify";
+import { fetchVehiclesThunk, toggleVehicleStatus} from "../../redux/features/manageVehicles/vehicleThunk";
 import {
   setRcNumberFilter,
   setStatusFilter,
   setPage,
+   updateVehicle, 
 } from "../../redux/features/manageVehicles/vehicleSlice";
 
 import {
@@ -31,6 +32,7 @@ const VehicleList = ({
   isLoading,
   handleEdit,
   handleView,
+ 
   handleToggle,
 }) => (
   <div className="rounded-lg border bg-white shadow-sm mt-4">
@@ -193,11 +195,30 @@ const ManageVehicles = () => {
     setEditVehicle(vehicle);
     setVehicleModal(true);
   };
+const handleToggle = (vehicleId) => {
+  const vehicle = vehicles.find((v) => v.vehicle_id === vehicleId);
+  if (!vehicle) return;
 
-  const handleToggle = (vehicleId) => {
-    console.log("Toggle vehicle active/inactive:", vehicleId);
-    // Add toggle thunk logic here (updateVehicleStatusThunk)
-  };
+  const newStatus = !vehicle.is_active;
+
+  // Optimistically update state
+  dispatch(updateVehicle({ ...vehicle, is_active: newStatus }));
+
+  // Call API
+  dispatch(toggleVehicleStatus({ vehicleId, isActive: newStatus }))
+    .unwrap()
+    .then(() => {
+      toast.success(
+        `Vehicle ${vehicle.rc_number || vehicleId} is now ${newStatus ? "Active" : "Inactive"}`
+      );
+    })
+    .catch((err) => {
+      // Revert state if API fails
+      dispatch(updateVehicle(vehicle));
+      toast.error(err || "Failed to update vehicle status");
+    });
+};
+
 
   const onPrev = () => {
     const prevPage = pagination.skip / pagination.limit;

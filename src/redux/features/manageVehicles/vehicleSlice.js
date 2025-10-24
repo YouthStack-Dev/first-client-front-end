@@ -1,7 +1,6 @@
 // src/redux/features/manageVehicles/vehicleSlice.js
 import { createSlice } from '@reduxjs/toolkit';
-import { API_CLIENT } from '../../../Api/API_Client'; // adjust path
-import { fetchVehiclesThunk, updateVehicleThunk, createVehicleThunk } from './vehicleThunk'; // ✅ include create thunk
+import { fetchVehiclesThunk, updateVehicleThunk, createVehicleThunk, toggleVehicleStatus } from './vehicleThunk'; // ✅ include create thunk
 
 export const initialState = {
   entities: {},      // vehicle_id -> vehicle object
@@ -171,7 +170,30 @@ const vehicleSlice = createSlice({
     .addCase(updateVehicleThunk.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload || "Failed to update vehicle";
-    });
+    })
+    // --- Toggle Vehicle Status ---
+.addCase(toggleVehicleStatus.pending, (state) => {
+  state.loading = true;
+  state.error = null;
+})
+.addCase(toggleVehicleStatus.fulfilled, (state, action) => {
+  state.loading = false;
+  const updatedVehicle = action.payload.vehicle;
+
+  if (updatedVehicle?.vehicle_id) {
+    state.entities[updatedVehicle.vehicle_id] = updatedVehicle;
+
+    // ensure IDs array includes this vehicle
+    if (!state.ids.includes(updatedVehicle.vehicle_id)) {
+      state.ids.push(updatedVehicle.vehicle_id);
+    }
+  }
+})
+.addCase(toggleVehicleStatus.rejected, (state, action) => {
+  state.loading = false;
+  state.error = action.payload || "Failed to toggle vehicle status";
+});
+
   },
 });
 

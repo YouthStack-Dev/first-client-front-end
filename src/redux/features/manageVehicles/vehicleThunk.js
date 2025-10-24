@@ -60,3 +60,25 @@ export const updateVehicleThunk = createAsyncThunk(
     }
   }
 );
+
+export const toggleVehicleStatus = createAsyncThunk(
+  "vehicles/toggleVehicleStatus",
+  async ({ vehicleId, isActive }, { rejectWithValue }) => {
+    try {
+      const response = await API_CLIENT.patch(
+        `/v1/vehicles/${vehicleId}/status?is_active=${isActive}`
+      );
+
+      if (!response.data?.success) {
+        return rejectWithValue(response.data?.message || "Failed to toggle vehicle status");
+      }
+
+      return {
+        vehicle: response.data?.data?.vehicle,
+        message: response.data?.message || "Status updated successfully",
+      };
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
