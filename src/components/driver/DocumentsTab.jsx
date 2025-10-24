@@ -100,18 +100,18 @@ const getDocumentUrl = (name) => {
 
     if (!documentUrl || !documentName) return null;
 
-    return (
-      <a
-        href={documentUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
-        title="View document"
-      >
-        <Eye className="w-3 h-3 mr-1" />
-        View
-      </a>
-    );
+    // return (
+    //   <a
+    //     href={documentUrl}
+    //     target="_blank"
+    //     rel="noopener noreferrer"
+    //     className="inline-flex items-center px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
+    //     title="View document"
+    //   >
+    //     <Eye className="w-3 h-3 mr-1" />
+    //     View
+    //   </a>
+    // );
   };
 
   const DownloadDocumentButton = ({ name }) => {

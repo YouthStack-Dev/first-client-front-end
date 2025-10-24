@@ -195,28 +195,33 @@ const ManageVehicles = () => {
     setEditVehicle(vehicle);
     setVehicleModal(true);
   };
-const handleToggle = (vehicleId) => {
+
+const handleToggle = async (vehicleId) => {
   const vehicle = vehicles.find((v) => v.vehicle_id === vehicleId);
   if (!vehicle) return;
 
   const newStatus = !vehicle.is_active;
 
-  // Optimistically update state
+  // --- 1️⃣ Optimistically update Redux state ---
   dispatch(updateVehicle({ ...vehicle, is_active: newStatus }));
 
-  // Call API
-  dispatch(toggleVehicleStatus({ vehicleId, isActive: newStatus }))
-    .unwrap()
-    .then(() => {
-      toast.success(
-        `Vehicle ${vehicle.rc_number || vehicleId} is now ${newStatus ? "Active" : "Inactive"}`
-      );
-    })
-    .catch((err) => {
-      // Revert state if API fails
-      dispatch(updateVehicle(vehicle));
-      toast.error(err || "Failed to update vehicle status");
-    });
+  // --- 2️⃣ Call API ---
+  try {
+    const result = await dispatch(
+      toggleVehicleStatus({ vehicleId, isActive: newStatus })
+    ).unwrap(); // unwrap will throw if rejected
+
+    // --- 3️⃣ Success toast ---
+    toast.success(
+      `Vehicle ${vehicle.rc_number || vehicleId} is now ${
+        newStatus ? "Active" : "Inactive"
+      }`
+    );
+  } catch (err) {
+    // --- 4️⃣ Revert state on failure ---
+    dispatch(updateVehicle(vehicle));
+    toast.error(err?.message || "Failed to update vehicle status");
+  }
 };
 
 
