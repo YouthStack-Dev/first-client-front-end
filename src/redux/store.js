@@ -9,6 +9,7 @@ import permissionsReducer from "./features/Permissions/permisssionsSlice";
 import companyVendorReducer from  "./features/companyVendor/companyVendorSlice";
 import vehicleTypeReducer from "./features/managevehicletype/vehicleTypeSlice";
 import cutoffReducer from "./features/cutoff/cutoffSlice";
+import vehicleReducer from "./features/manageVehicles/vehicleSlice"
 
 const store = configureStore({
   reducer: {
@@ -22,6 +23,7 @@ const store = configureStore({
     companyVendor:companyVendorReducer,
     vehicleType: vehicleTypeReducer,
     cutoff: cutoffReducer,
+    vehicles:vehicleReducer,
   },
 });
 
