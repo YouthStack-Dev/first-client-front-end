@@ -40,7 +40,7 @@ const initialState = {
 
 const fieldMapping = {
   vendor_id: "vendor",
-   vehicle_type_id: "vehicle_type_id",
+  vehicle_type_id: "vehicle_type_id",
   driver_id: "driver_id",
   rc_number: "rc_number",
   rc_expiry_date: "rc_expiry_date",
@@ -149,10 +149,10 @@ const VehicleForm = ({ isEdit = false, initialData = {}, onFormChange, onClose }
   };
 
   const validateDocuments = () => {
-    const requiredDocs = ["insurance_file","permit_file","puc_file","fitness_file","tax_receipt_file"];
+    const requiredDocs = ["insurance_file", "permit_file", "puc_file", "fitness_file", "tax_receipt_file"];
     const newErrors = {};
     requiredDocs.forEach(doc => {
-      if (!formData[doc] && !initialData[`${doc.replace("_file","_url")}`]) {
+      if (!formData[doc] && !initialData[`${doc.replace("_file", "_url")}`]) {
         newErrors[doc] = "This document is required";
       }
     });
@@ -175,84 +175,84 @@ const VehicleForm = ({ isEdit = false, initialData = {}, onFormChange, onClose }
   };
 
   // --- Submit ---
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  // 1️⃣ Validate all fields
-  const allErrors = { ...validateBasicInfo(), ...validateDocuments() };
-  if (Object.keys(allErrors).length > 0) {
-    setErrors(allErrors);
-    setActiveTab("BASIC INFO");
-    return;
-  }
-
-  // 2️⃣ Prepare FormData
-  const submitData = new FormData();
-  Object.keys(formData).forEach((key) => {
-    const backendKey = fieldMapping[key] || key;
-    const value = formData[key];
-
-    if (value instanceof File) {
-      submitData.append(backendKey, value);
-    } else if (typeof value === "boolean") {
-      submitData.append(backendKey, value ? "true" : "false");
-    } else if (value) {
-      submitData.append(backendKey, value);
+    // 1️⃣ Validate all fields
+    const allErrors = { ...validateBasicInfo(), ...validateDocuments() };
+    if (Object.keys(allErrors).length > 0) {
+      setErrors(allErrors);
+      setActiveTab("BASIC INFO");
+      return;
     }
-  });
+
+    // 2️⃣ Prepare FormData
+    const submitData = new FormData();
+    Object.keys(formData).forEach((key) => {
+      const backendKey = fieldMapping[key] || key;
+      const value = formData[key];
+
+      if (value instanceof File) {
+        submitData.append(backendKey, value);
+      } else if (typeof value === "boolean") {
+        submitData.append(backendKey, value ? "true" : "false");
+      } else if (value) {
+        submitData.append(backendKey, value);
+      }
+    });
 
 
-  try {
-    // 3️⃣ Create or Update vehicle
-    if (isEdit) {
-      const vehicleId = Number(formData.vehicle_id);
+    try {
+      // 3️⃣ Create or Update vehicle
+      if (isEdit) {
+        const vehicleId = Number(formData.vehicle_id);
         if (!vehicleId) {
           toast.error("Vehicle ID is missing or invalid.");
           return;
         }
-      await dispatch(
-        updateVehicleThunk({ vehicle_id: formData.vehicle_id, data: submitData })
-      ).unwrap();
-      toast.success("✅ Vehicle updated successfully!");
-    } else {
-      await dispatch(createVehicleThunk(submitData)).unwrap();
-      toast.success("✅ Vehicle created successfully!");
-    }
+        await dispatch(
+          updateVehicleThunk({ vehicle_id: formData.vehicle_id, data: submitData })
+        ).unwrap();
+        toast.success("✅ Vehicle updated successfully!");
+      } else {
+        await dispatch(createVehicleThunk(submitData)).unwrap();
+        toast.success("✅ Vehicle created successfully!");
+      }
       // 5️⃣ Close modal
-    onClose?.();  // ✅ Call only once, after everything is done
+      onClose?.();  // ✅ Call only once, after everything is done
 
-    // 4️⃣ Refresh vehicle list
-    dispatch(fetchVehiclesThunk());
-    onFormChange?.(formData);
+      // 4️⃣ Refresh vehicle list
+      dispatch(fetchVehiclesThunk());
+      onFormChange?.(formData);
 
 
-  } catch (err) {
-  console.error("❌ Vehicle operation failed:", err);
+    } catch (err) {
+      console.error("❌ Vehicle operation failed:", err);
 
-  const parseError = (detail) => {
-    if (!detail) return "Something went wrong";
-    if (typeof detail === "string") return detail;
-    if (Array.isArray(detail)) return detail.join(", ");
-    if (typeof detail === "object") {
-      return Object.values(detail)
-        .map(parseError)
-        .join(", ");
+      const parseError = (detail) => {
+        if (!detail) return "Something went wrong";
+        if (typeof detail === "string") return detail;
+        if (Array.isArray(detail)) return detail.join(", ");
+        if (typeof detail === "object") {
+          return Object.values(detail)
+            .map(parseError)
+            .join(", ");
+        }
+        return String(detail);
+      };
+
+      const backendMessage = parseError(err?.response?.data?.detail || err?.detail || err?.message);
+
+      toast.error(`❌ ${backendMessage}`);
+
+      // Highlight driver field if backend mentions driver
+      if (backendMessage.toLowerCase().includes("driver")) {
+        setErrors((prev) => ({ ...prev, driver_id: backendMessage }));
+        setActiveTab("BASIC INFO");
+      }
     }
-    return String(detail);
+
   };
-
-  const backendMessage = parseError(err?.response?.data?.detail || err?.detail || err?.message);
-
-  toast.error(`❌ ${backendMessage}`);
-
-  // Highlight driver field if backend mentions driver
-  if (backendMessage.toLowerCase().includes("driver")) {
-    setErrors((prev) => ({ ...prev, driver_id: backendMessage }));
-    setActiveTab("BASIC INFO");
-  }
-}
-
-};
 
 
   // --- Render helpers ---
@@ -286,87 +286,87 @@ const handleSubmit = async (e) => {
   );
 
   const renderFileWithExpiry = (label, fileField, expiryField) => {
-  const existingFilePath = initialData?.[`${fileField.replace("_file", "_url")}`] || null;
-  const fileName = formData[fileField]?.name || (existingFilePath ? existingFilePath.split("/").pop() : "");
-  const fileUrl = formData[fileField] instanceof File
-    ? URL.createObjectURL(formData[fileField])
-    : existingFilePath
-    ? `/api/v1/vehicles/files/${existingFilePath}`
-    : null;
+    const existingFilePath = initialData?.[`${fileField.replace("_file", "_url")}`] || null;
+    const fileName = formData[fileField]?.name || (existingFilePath ? existingFilePath.split("/").pop() : "");
+    const fileUrl = formData[fileField] instanceof File
+      ? URL.createObjectURL(formData[fileField])
+      : existingFilePath
+        ? `/api/v1/vehicles/files/${existingFilePath}`
+        : null;
 
-  const handleUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) handleFileChange(fileField, file);
-  };
+    const handleUpload = (e) => {
+      const file = e.target.files[0];
+      if (file) handleFileChange(fileField, file);
+    };
 
-  const handleDownload = () => {
-    const fileValue = formData[fileField];
-    const fileName = fileValue?.name || (existingFilePath ? existingFilePath.split("/").pop() : `${label}.pdf`);
+    const handleDownload = () => {
+      const fileValue = formData[fileField];
+      const fileName = fileValue?.name || (existingFilePath ? existingFilePath.split("/").pop() : `${label}.pdf`);
 
-    if (fileValue instanceof File) {
-      const localUrl = URL.createObjectURL(fileValue);
-      const link = document.createElement("a");
-      link.href = localUrl;
-      link.download = fileName;
-      link.click();
-      URL.revokeObjectURL(localUrl);
-    } else if (existingFilePath) {
-      downloadFile(existingFilePath, fileName);
-    } else {
-      toast.warn("No file available to download");
-    }
-  };
+      if (fileValue instanceof File) {
+        const localUrl = URL.createObjectURL(fileValue);
+        const link = document.createElement("a");
+        link.href = localUrl;
+        link.download = fileName;
+        link.click();
+        URL.revokeObjectURL(localUrl);
+      } else if (existingFilePath) {
+        downloadFile(existingFilePath, fileName);
+      } else {
+        toast.warn("No file available to download");
+      }
+    };
 
-  const handleRemove = () => handleFileChange(fileField, null);
+    const handleRemove = () => handleFileChange(fileField, null);
 
-  return (
-    <div className="border rounded-lg p-4 bg-gray-50 shadow-sm flex flex-col gap-3">
-      <label className="block font-semibold text-gray-700">{label}</label>
-      <div className="flex items-center gap-2">
-        <div className="flex-1 text-sm text-gray-700 bg-white border rounded px-3 py-2 truncate">
-          {fileName || "No file chosen"}
+    return (
+      <div className="border rounded-lg p-4 bg-gray-50 shadow-sm flex flex-col gap-3">
+        <label className="block font-semibold text-gray-700">{label}</label>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 text-sm text-gray-700 bg-white border rounded px-3 py-2 truncate">
+            {fileName || "No file chosen"}
+          </div>
+          <label
+            htmlFor={`${fileField}-input`}
+            className="flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-400 px-2 py-1 rounded cursor-pointer hover:bg-blue-200"
+          >
+            <Upload size={16} />
+          </label>
+          <input type="file" id={`${fileField}-input`} className="hidden" onChange={handleUpload} />
+          {fileUrl && (
+            <>
+              <button
+                type="button"
+                onClick={handleDownload}
+                className="flex items-center gap-1 bg-gray-100 text-gray-700 border border-gray-400 px-2 py-1 rounded hover:bg-gray-200"
+              >
+                <Download size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={handleRemove}
+                className="flex items-center gap-1 bg-red-100 text-red-600 border border-red-400 px-2 py-1 rounded hover:bg-red-200"
+              >
+                ❌
+              </button>
+            </>
+          )}
         </div>
-        <label
-          htmlFor={`${fileField}-input`}
-          className="flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-400 px-2 py-1 rounded cursor-pointer hover:bg-blue-200"
-        >
-          <Upload size={16} />
-        </label>
-        <input type="file" id={`${fileField}-input`} className="hidden" onChange={handleUpload} />
-        {fileUrl && (
-          <>
-            <button
-              type="button"
-              onClick={handleDownload}
-              className="flex items-center gap-1 bg-gray-100 text-gray-700 border border-gray-400 px-2 py-1 rounded hover:bg-gray-200"
-            >
-              <Download size={16} />
-            </button>
-            <button
-              type="button"
-              onClick={handleRemove}
-              className="flex items-center gap-1 bg-red-100 text-red-600 border border-red-400 px-2 py-1 rounded hover:bg-red-200"
-            >
-              ❌
-            </button>
-          </>
-        )}
-      </div>
 
-      <div>
-        <label className="text-sm font-medium text-gray-600">Expiry Date</label>
-        <input
-          type="date"
-          value={formData[expiryField] || initialData?.[expiryField] || ""}
-          onChange={(e) => handleInputChange(expiryField, e.target.value)}
-          className="w-full border rounded px-3 py-1.5 text-sm mt-1"
-        />
-      </div>
+        <div>
+          <label className="text-sm font-medium text-gray-600">Expiry Date</label>
+          <input
+            type="date"
+            value={formData[expiryField] || initialData?.[expiryField] || ""}
+            onChange={(e) => handleInputChange(expiryField, e.target.value)}
+            className="w-full border rounded px-3 py-1.5 text-sm mt-1"
+          />
+        </div>
 
-      {errors[fileField] && <p className="text-red-500 text-sm mt-1">{errors[fileField]}</p>}
-    </div>
-  );
-};
+        {errors[fileField] && <p className="text-red-500 text-sm mt-1">{errors[fileField]}</p>}
+      </div>
+    );
+  };
 
 
   return (

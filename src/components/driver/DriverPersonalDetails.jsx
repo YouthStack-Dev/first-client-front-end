@@ -1,6 +1,7 @@
 import { Pencil } from "lucide-react";
 import FormField from "../../components/ui/FormFields";
 import { useEffect, useState } from "react";
+import { previewFile } from '../../utils/downloadfile';
 
 const DriverPersonalDetails = ({
   formData,
@@ -12,20 +13,42 @@ const DriverPersonalDetails = ({
   mode,
 }) => {
   const [previewUrl, setPreviewUrl] = useState("");
+  const [lastFetchedPhoto, setLastFetchedPhoto] = useState(null);
 
-    useEffect(() => {
-      if (formData.photo instanceof File) {
-        // Local preview for newly uploaded file
-        const objectUrl = URL.createObjectURL(formData.photo);
+  useEffect(() => {
+    let isMounted = true;
+    let objectUrl;
+
+    const loadPreview = async () => {
+      if (formData.profileImage instanceof File) {
+        objectUrl = URL.createObjectURL(formData.profileImage);
         setPreviewUrl(objectUrl);
-        return () => URL.revokeObjectURL(objectUrl);
       } else if (formData.photo) {
-        // Backend string (URL or base64)
-        setPreviewUrl(typeof formData.photo === "string" ? `https://api.gocab.tech/api/v1/${formData.photo}` : "");
+        const filePath = formData.photo || formData.photo_url;
+
+        // Only fetch if the file path changed
+        if (filePath !== lastFetchedPhoto) {
+          try {
+            const url = await previewFile(filePath, "vehicles");
+            if (isMounted && url) setPreviewUrl(url);
+            setLastFetchedPhoto(filePath); // remember fetched file
+          } catch (err) {
+            console.error("Preview failed:", err);
+            if (isMounted) setPreviewUrl("");
+          }
+        }
       } else {
         setPreviewUrl("");
       }
-    }, [formData.photo]);
+    };
+
+    loadPreview();
+
+    return () => {
+      isMounted = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [formData.profileImage, formData.photo, formData.photo_url, lastFetchedPhoto]);
 
 
   return (
@@ -33,35 +56,41 @@ const DriverPersonalDetails = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
         {/* Profile Image */}
         <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center relative mx-auto">
-        {previewUrl ? (
-          <img
-            src={previewUrl}
-            alt="Profile"
-            className="w-full h-full object-cover rounded-lg"
-          />
-        ) : (
-          <div className="text-center p-4">
-            <Pencil className="w-8 h-8 mx-auto text-gray-400" />
-            <p className="text-xs text-gray-500 mt-2">
-              Add image (JPG, JPEG & PNG)
-            </p>
-          </div>
-        )}
-        <input
-          type="file"
-          accept="image/jpeg,image/png"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              console.log("Selected file:", file);       // Log file for debugging
-              onImageChange(file);                        // Update parent formData
+          {previewUrl ? (
+            <img
+              src={previewUrl}
+              alt="Profile"
+              className="w-full h-full object-cover rounded-lg"
+              onError={() => setPreviewUrl("")}
+            />
+          ) : formData.photo || formData.photo_url ? (
+            // Show loading placeholder while backend image is being fetched
+            <div className="animate-pulse w-full h-full bg-gray-200 rounded-lg" />
+          ) : (
+            // Show Pencil icon if no image exists
+            <div className="text-center p-4">
+              <Pencil className="w-8 h-8 mx-auto text-gray-400" />
+              <p className="text-xs text-gray-500 mt-2">
+                Add image (JPG, JPEG & PNG)
+              </p>
+            </div>
+          )}
+
+          <input
+            type="file"
+            accept="image/jpeg,image/png"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              console.log("Selected file:", file);
+              onImageChange(file); // update parent state
               const objectUrl = URL.createObjectURL(file);
-              setPreviewUrl(objectUrl);                   // Update preview immediately
-            }
-          }}
-          className="absolute inset-0 opacity-0 cursor-pointer"
-        />
-      </div>
+              setPreviewUrl(objectUrl); // live preview immediately
+            }}
+            className="absolute inset-0 opacity-0 cursor-pointer"
+          />
+        </div>
+
 
 
         {/* Driver Name */}
@@ -104,7 +133,7 @@ const DriverPersonalDetails = ({
           />
         </FormField>
 
-         {/* Mobile Number */}
+        {/* Mobile Number */}
         <FormField
           label="Mobile Number"
           name="mobileNumber"
@@ -164,7 +193,7 @@ const DriverPersonalDetails = ({
         </FormField>
 
         {/* Date of Birth */}
-          <FormField
+        <FormField
           label="Date of Birth"
           name="dateOfBirth"
           required

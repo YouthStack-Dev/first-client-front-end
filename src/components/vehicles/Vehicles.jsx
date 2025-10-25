@@ -6,12 +6,12 @@ import ReusableToggleButton from "../ui/ReusableToggleButton";
 import Modal from "@components/modals/Modal";
 import VehicleForm from "./VehicleForm";
 import { toast } from "react-toastify";
-import { fetchVehiclesThunk, toggleVehicleStatus} from "../../redux/features/manageVehicles/vehicleThunk";
+import { fetchVehiclesThunk, toggleVehicleStatus } from "../../redux/features/manageVehicles/vehicleThunk";
 import {
   setRcNumberFilter,
   setStatusFilter,
   setPage,
-   updateVehicle, 
+  updateVehicle,
 } from "../../redux/features/manageVehicles/vehicleSlice";
 
 import {
@@ -32,7 +32,7 @@ const VehicleList = ({
   isLoading,
   handleEdit,
   handleView,
- 
+
   handleToggle,
 }) => (
   <div className="rounded-lg border bg-white shadow-sm mt-4">
@@ -139,11 +139,10 @@ const VehicleList = ({
       <button
         onClick={onPrev}
         disabled={currentPage === 1}
-        className={`flex items-center gap-2 px-4 py-2 rounded ${
-          currentPage === 1
+        className={`flex items-center gap-2 px-4 py-2 rounded ${currentPage === 1
             ? "bg-gray-100 text-gray-400 cursor-not-allowed"
             : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-        }`}
+          }`}
       >
         Prev
       </button>
@@ -153,11 +152,10 @@ const VehicleList = ({
       <button
         onClick={onNext}
         disabled={currentPage === totalPages}
-        className={`flex items-center gap-2 px-4 py-2 rounded ${
-          currentPage === totalPages
+        className={`flex items-center gap-2 px-4 py-2 rounded ${currentPage === totalPages
             ? "bg-gray-100 text-gray-400 cursor-not-allowed"
             : "bg-blue-600 text-white hover:bg-blue-700"
-        }`}
+          }`}
       >
         Next
       </button>
@@ -196,33 +194,32 @@ const ManageVehicles = () => {
     setVehicleModal(true);
   };
 
-const handleToggle = async (vehicleId) => {
-  const vehicle = vehicles.find((v) => v.vehicle_id === vehicleId);
-  if (!vehicle) return;
+  const handleToggle = async (vehicleId) => {
+    const vehicle = vehicles.find((v) => v.vehicle_id === vehicleId);
+    if (!vehicle) return;
 
-  const newStatus = !vehicle.is_active;
+    const newStatus = !vehicle.is_active;
 
-  // --- 1️⃣ Optimistically update Redux state ---
-  dispatch(updateVehicle({ ...vehicle, is_active: newStatus }));
+    // --- 1️⃣ Optimistically update Redux state ---
+    dispatch(updateVehicle({ ...vehicle, is_active: newStatus }));
 
-  // --- 2️⃣ Call API ---
-  try {
-    const result = await dispatch(
-      toggleVehicleStatus({ vehicleId, isActive: newStatus })
-    ).unwrap(); // unwrap will throw if rejected
+    // --- 2️⃣ Call API ---
+    try {
+      const result = await dispatch(
+        toggleVehicleStatus({ vehicleId, isActive: newStatus })
+      ).unwrap(); // unwrap will throw if rejected
 
-    // --- 3️⃣ Success toast ---
-    toast.success(
-      `Vehicle ${vehicle.rc_number || vehicleId} is now ${
-        newStatus ? "Active" : "Inactive"
-      }`
-    );
-  } catch (err) {
-    // --- 4️⃣ Revert state on failure ---
-    dispatch(updateVehicle(vehicle));
-    toast.error(err?.message || "Failed to update vehicle status");
-  }
-};
+      // --- 3️⃣ Success toast ---
+      toast.success(
+        `Vehicle ${vehicle.rc_number || vehicleId} is now ${newStatus ? "Active" : "Inactive"
+        }`
+      );
+    } catch (err) {
+      // --- 4️⃣ Revert state on failure ---
+      dispatch(updateVehicle(vehicle));
+      toast.error(err?.message || "Failed to update vehicle status");
+    }
+  };
 
 
   const onPrev = () => {
@@ -290,19 +287,19 @@ const handleToggle = async (vehicleId) => {
 
       {/* Modal */}
       <Modal
-          isOpen={vehicleModal}
-          onClose={() => setVehicleModal(false)}
-          title={editVehicle ? "Edit Vehicle" : "Add Vehicle"}
-          size="xl"
-          hideFooter={true}
-        >
-          <VehicleForm
-            initialData={editVehicle}
-            onFormChange={() => {}}
-            onClose={() => setVehicleModal(false)} // <-- important
-            isEdit={!!editVehicle}
-          />
-        </Modal>
+        isOpen={vehicleModal}
+        onClose={() => setVehicleModal(false)}
+        title={editVehicle ? "Edit Vehicle" : "Add Vehicle"}
+        size="xl"
+        hideFooter={true}
+      >
+        <VehicleForm
+          initialData={editVehicle}
+          onFormChange={() => { }}
+          onClose={() => setVehicleModal(false)} // <-- important
+          isEdit={!!editVehicle}
+        />
+      </Modal>
     </div>
   );
 };

@@ -71,8 +71,8 @@ export const downloadFile = async (
     const contentDisposition = response.headers["content-disposition"];
     const suggestedFileName = contentDisposition
       ? decodeURIComponent(
-          contentDisposition.split("filename=")[1]?.replace(/['"]/g, "") || ""
-        )
+        contentDisposition.split("filename=")[1]?.replace(/['"]/g, "") || ""
+      )
       : "";
 
     const finalFileName =
@@ -96,5 +96,67 @@ export const downloadFile = async (
     console.error("❌ File download failed:", error);
     alert("Failed to download file. Please check file path or permissions.");
     onError?.(error);
+  }
+};
+
+
+/**
+ * Fetch file and return a preview URL for <img> or <object> display
+ *
+ * @param {string} filePath - Backend file path
+ * @param {string} [module="vehicles"] - Backend module (vehicles, drivers, etc.)
+ * @returns {Promise<string|null>} - Object URL for preview or null on error
+ */
+/**
+ * Fetch file and return a preview URL for <img> or <object> display
+ *
+ * @param {string} filePath - Backend file path (relative or absolute)
+ * @param {string} [module="vehicles"] - Module name: vehicles, drivers, etc.
+ * @param {boolean} [download=false] - If true, append ?download=true
+ * @returns {Promise<string|null>} - Object URL for preview or null on error
+ */
+
+export const previewFile = async (filePath, module = "vehicles", download = false) => {
+  if (!filePath) return null;
+
+  try {
+    const baseURL =
+      import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "https://api.gocab.tech/api";
+
+    // Encode each segment of path to handle special characters
+    let url;
+    if (filePath.startsWith("http")) {
+      url = filePath;
+    } else {
+      const parts = filePath.split("/").map(encodeURIComponent);
+      url = `${baseURL}/v1/${module}/files/${parts.join("/")}${download ? "?download=false" : ""}`;
+    }
+
+    // Get auth token
+    const token =
+      localStorage.getItem("auth_token") ||
+      sessionStorage.getItem("auth_token") ||
+      (() => {
+        const match = document.cookie.match(/(^| )auth_token=([^;]+)/);
+        return match ? match[2] : null;
+      })();
+
+    if (!token) throw new Error("Auth token not found");
+
+    // Fetch file as blob
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/octet-stream",
+      },
+    });
+
+    if (!response.ok) throw new Error(`Failed to fetch file: ${response.statusText}`);
+
+    const blob = await response.blob();
+    return URL.createObjectURL(blob); // Use this as src in <img>
+  } catch (err) {
+    console.error("❌ File preview failed:", err);
+    return null;
   }
 };
