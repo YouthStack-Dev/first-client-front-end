@@ -200,10 +200,8 @@ const ManageVehicles = () => {
 
     const newStatus = !vehicle.is_active;
 
-    // --- 1️⃣ Optimistically update Redux state ---
     dispatch(updateVehicle({ ...vehicle, is_active: newStatus }));
 
-    // --- 2️⃣ Call API ---
     try {
       const result = await dispatch(
         toggleVehicleStatus({ vehicleId, isActive: newStatus })
@@ -294,6 +292,7 @@ const ManageVehicles = () => {
         hideFooter={true}
       >
         <VehicleForm
+          mode="view"
           initialData={editVehicle}
           onFormChange={() => { }}
           onClose={() => setVehicleModal(false)} // <-- important
