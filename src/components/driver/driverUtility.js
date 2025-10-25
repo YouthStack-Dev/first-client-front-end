@@ -133,16 +133,6 @@ export const transformBackendToFormData = (backendData) => {
 
 
 
-
-// Edit driver (PUT)
-// export const editDriver = async (vendorId, driverId, formData) => {
-//   return API_CLIENT.put(
-//     `/vendors/${vendorId}/drivers/${driverId}/`,
-//     {formData},
-//     { headers: { "Content-Type": "multipart/form-data" } }
-//   );
-// };
-
 // Add this to your driverUtility.js file to debug field mapping
 export const logFieldMapping = (formData) => {
   console.log('=== FIELD MAPPING DEBUG ===');

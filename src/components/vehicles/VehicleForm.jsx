@@ -286,81 +286,88 @@ const handleSubmit = async (e) => {
   );
 
   const renderFileWithExpiry = (label, fileField, expiryField) => {
-    const existingFilePath = initialData?.[`${fileField.replace("_file","_url")}`] || null;
-    const fileName = formData[fileField]?.name || (existingFilePath ? existingFilePath.split("/").pop() : "");
-    const fileUrl = formData[fileField] instanceof File
-      ? URL.createObjectURL(formData[fileField])
-      : existingFilePath
-      ? `/api/v1/vehicles/files/${existingFilePath}`
-      : null;
+  const existingFilePath = initialData?.[`${fileField.replace("_file", "_url")}`] || null;
+  const fileName = formData[fileField]?.name || (existingFilePath ? existingFilePath.split("/").pop() : "");
+  const fileUrl = formData[fileField] instanceof File
+    ? URL.createObjectURL(formData[fileField])
+    : existingFilePath
+    ? `/api/v1/vehicles/files/${existingFilePath}`
+    : null;
 
-    const handleUpload = (e) => {
-      const file = e.target.files[0];
-      if (file) handleFileChange(fileField, file);
-    };
+  const handleUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) handleFileChange(fileField, file);
+  };
 
-const handleDownload = async () => {
-  if (!fileUrl) return;
+  const handleDownload = () => {
+    const fileValue = formData[fileField];
+    const fileName = fileValue?.name || (existingFilePath ? existingFilePath.split("/").pop() : `${label}.pdf`);
 
-  try {
-    const response = await fetch(fileUrl, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-        Accept: "application/octet-stream",
-      },
-    });
+    if (fileValue instanceof File) {
+      const localUrl = URL.createObjectURL(fileValue);
+      const link = document.createElement("a");
+      link.href = localUrl;
+      link.download = fileName;
+      link.click();
+      URL.revokeObjectURL(localUrl);
+    } else if (existingFilePath) {
+      downloadFile(existingFilePath, fileName);
+    } else {
+      toast.warn("No file available to download");
+    }
+  };
 
-    if (!response.ok) throw new Error("Failed to download file");
+  const handleRemove = () => handleFileChange(fileField, null);
 
-    const blob = await response.blob();
-    const downloadUrl = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    const filename =
-      fileUrl.split("/").pop() || `${label.replace(/\s+/g, "_").toLowerCase()}.pdf`;
+  return (
+    <div className="border rounded-lg p-4 bg-gray-50 shadow-sm flex flex-col gap-3">
+      <label className="block font-semibold text-gray-700">{label}</label>
+      <div className="flex items-center gap-2">
+        <div className="flex-1 text-sm text-gray-700 bg-white border rounded px-3 py-2 truncate">
+          {fileName || "No file chosen"}
+        </div>
+        <label
+          htmlFor={`${fileField}-input`}
+          className="flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-400 px-2 py-1 rounded cursor-pointer hover:bg-blue-200"
+        >
+          <Upload size={16} />
+        </label>
+        <input type="file" id={`${fileField}-input`} className="hidden" onChange={handleUpload} />
+        {fileUrl && (
+          <>
+            <button
+              type="button"
+              onClick={handleDownload}
+              className="flex items-center gap-1 bg-gray-100 text-gray-700 border border-gray-400 px-2 py-1 rounded hover:bg-gray-200"
+            >
+              <Download size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={handleRemove}
+              className="flex items-center gap-1 bg-red-100 text-red-600 border border-red-400 px-2 py-1 rounded hover:bg-red-200"
+            >
+              ❌
+            </button>
+          </>
+        )}
+      </div>
 
-    link.href = downloadUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(downloadUrl);
-  } catch (error) {
-    console.error("File download failed:", error);
-    toast.error("Failed to download file. Please try again.");
-  }
+      <div>
+        <label className="text-sm font-medium text-gray-600">Expiry Date</label>
+        <input
+          type="date"
+          value={formData[expiryField] || initialData?.[expiryField] || ""}
+          onChange={(e) => handleInputChange(expiryField, e.target.value)}
+          className="w-full border rounded px-3 py-1.5 text-sm mt-1"
+        />
+      </div>
+
+      {errors[fileField] && <p className="text-red-500 text-sm mt-1">{errors[fileField]}</p>}
+    </div>
+  );
 };
 
-
-    const handleRemove = () => handleFileChange(fileField, null);
-
-    return (
-      <div className="border rounded-lg p-4 bg-gray-50 shadow-sm flex flex-col gap-3">
-        <label className="block font-semibold text-gray-700">{label}</label>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 text-sm text-gray-700 bg-white border rounded px-3 py-2 truncate">{fileName || "No file chosen"}</div>
-          <label htmlFor={`${fileField}-input`} className="flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-400 px-2 py-1 rounded cursor-pointer hover:bg-blue-200">
-            <Upload size={16} />
-          </label>
-          <input type="file" id={`${fileField}-input`} className="hidden" onChange={handleUpload} />
-          {fileUrl && <>
-            <button type="button" onClick={handleDownload} className="flex items-center gap-1 bg-gray-100 text-gray-700 border border-gray-400 px-2 py-1 rounded hover:bg-gray-200"><Download size={16} /></button>
-            <button type="button" onClick={handleRemove} className="flex items-center gap-1 bg-red-100 text-red-600 border border-red-400 px-2 py-1 rounded hover:bg-red-200">❌</button>
-          </>}
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-600">Expiry Date</label>
-          <input
-            type="date"
-            value={formData[expiryField] || initialData?.[expiryField] || ""}
-            onChange={(e) => handleInputChange(expiryField, e.target.value)}
-            className="w-full border rounded px-3 py-1.5 text-sm mt-1"
-          />
-        </div>
-        {errors[fileField] && <p className="text-red-500 text-sm mt-1">{errors[fileField]}</p>}
-      </div>
-    );
-  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
