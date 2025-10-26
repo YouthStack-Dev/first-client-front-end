@@ -284,21 +284,22 @@ const ManageVehicles = () => {
       />
 
       {/* Modal */}
-      <Modal
-        isOpen={vehicleModal}
-        onClose={() => setVehicleModal(false)}
-        title={editVehicle ? "Edit Vehicle" : "Add Vehicle"}
-        size="xl"
-        hideFooter={true}
-      >
-        <VehicleForm
-          mode="view"
-          initialData={editVehicle}
-          onFormChange={() => { }}
-          onClose={() => setVehicleModal(false)} // <-- important
-          isEdit={!!editVehicle}
-        />
-      </Modal>
+     <Modal
+          isOpen={vehicleModal}
+          onClose={() => setVehicleModal(false)}
+          title={editVehicle ? "Edit Vehicle" : "Add Vehicle"}
+          size="xl"
+          hideFooter={true}
+        >
+          <VehicleForm
+            mode={editVehicle ? "edit" : "create"}  // <-- dynamic mode
+            initialData={editVehicle || {}}
+            onFormChange={() => {}}
+            onClose={() => setVehicleModal(false)}
+            isEdit={!!editVehicle}
+          />
+        </Modal>
+
     </div>
   );
 };

@@ -101,9 +101,13 @@ const VehicleForm = ({
   );
   const vehicleTypes = allIds.map((id) => byId[id] || {});
 
-  useEffect(() => {
-    if (vehicleTypes.length === 0) dispatch(fetchVehicleTypes());
-  }, [dispatch, vehicleTypes.length]);
+ const { fetched } = useSelector((state) => state.vehicleType);
+
+useEffect(() => {
+  if (!fetched) {
+    dispatch(fetchVehicleTypes());
+  }
+}, [dispatch, fetched]);
 
   // --- Fetch drivers ---
   const { entities: driverEntities, ids: driverIds } = useSelector(
