@@ -111,8 +111,8 @@ const VehicleForm = ({
   );
 
   useEffect(() => {
-    if (!driverIds || driverIds.length === 0) dispatch(fetchDriversThunk());
-  }, [dispatch, driverIds]);
+    if ( driverIds.length === 0) dispatch(fetchDriversThunk());
+  }, [dispatch]);
 
   const driverOptions = useMemo(() => {
     if (!driverEntities || !driverIds) return [];
