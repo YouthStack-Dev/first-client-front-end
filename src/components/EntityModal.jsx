@@ -53,6 +53,8 @@ const EntityModal = ({
   useEffect(() => {
     if (!isOpen || permissions.length === 0) return;
 
+     console.log("🧭 entityData received in modal:", entityData);
+
     const groupedPermissions = {};
     permissions.forEach((p) => {
       if (!groupedPermissions[p.module]) groupedPermissions[p.module] = {};
@@ -125,9 +127,9 @@ const EntityModal = ({
     Object.entries(formData.company).forEach(([key, value]) => {
       if (!value && key !== "is_active") newErrors[key] = `${key} is required`;
     });
-    ["employee_email", "employee_phone"].forEach((key) => {
-      if (!formData[key]) newErrors[key] = `${key} is required`;
-    });
+    // ["employee_email", "employee_phone"].forEach((key) => {
+    //   if (!formData[key]) newErrors[key] = `${key} is required`;
+    // });
     if (mode === "create") {
       const password = formData.employee_password;
       const passwordRegex =

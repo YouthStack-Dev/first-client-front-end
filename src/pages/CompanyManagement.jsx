@@ -59,6 +59,8 @@ const CompanyManagement = () => {
           tenant_id: response.tenant.tenant_id,
           name: response.tenant.name,
           address: response.tenant.address,
+           latitude: response.tenant.latitude,     // ✅ Added
+          longitude: response.tenant.longitude, 
           is_active: response.tenant.is_active,
         },
         employee_email: response.tenant.employee?.email || "",
