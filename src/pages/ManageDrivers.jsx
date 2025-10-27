@@ -245,8 +245,8 @@ function ManageDrivers() {
             <div className="relative">
               <select
                 className="appearance-none border border-gray-300 rounded-md pl-3 pr-8 py-2 text-sm 
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-            bg-white text-gray-700 shadow-sm"
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                bg-white text-gray-700 shadow-sm"
                 onChange={(e) => dispatch(setStatusFilter(e.target.value))}
                 value={statusFilterValue}
               >

@@ -7,7 +7,7 @@ import CompanyList from "../companies/CompanyList";
 import {
   fetchCompaniesThunk,
   createCompanyThunk,
-  updateCompanyThunk,
+  updateTenantThunk,
   fetchCompanyByIdThunk, // fetch full tenant details including permissions
 } from "../redux/features/company/companyThunks";
 
@@ -81,29 +81,47 @@ const CompanyManagement = () => {
   };
 
   // Handle form submission from modal
-  const handleSubmit = async (formData) => {
-    try {
-      if (modalMode === "create") {
-        await dispatch(createCompanyThunk(formData)).unwrap();
-      } else if (modalMode === "edit" && selectedEntity) {
-        await dispatch(
-          updateCompanyThunk({ companyId: selectedEntity.id, formData })
-        ).unwrap();
+const handleSubmit = async (formData) => {
+  try {
+    if (modalMode === "create") {
+      await dispatch(createCompanyThunk(formData)).unwrap();
+    } else if (modalMode === "edit" && selectedEntity) {
+      // 🟢 Dispatch the update request
+      const updatedTenant = await dispatch(
+        updateTenantThunk({
+          tenantId: selectedEntity?.company?.tenant_id,
+          data: formData,
+        })
+      ).unwrap();
 
-        // Update cached tenant if edited
-        setTenantCache((prev) => ({
+      const tenantId = selectedEntity?.company?.tenant_id;
+
+      // 🟢 Safely update tenantCache (avoid undefined errors)
+      setTenantCache((prev) => {
+        const existingTenant = prev[tenantId] || { company: {} };
+
+        return {
           ...prev,
-          [selectedEntity.company.tenant_id]: {
-            ...prev[selectedEntity.company.tenant_id],
-            company: { ...prev[selectedEntity.company.tenant_id].company, ...formData },
+          [tenantId]: {
+            ...existingTenant,
+            company: {
+              ...existingTenant.company,
+              ...updatedTenant,
+            },
           },
-        }));
-      }
-      setIsModalOpen(false);
-    } catch (err) {
-      console.error("Failed to save company:", err);
+        };
+      });
     }
-  };
+
+    // 🟢 Close modal after success
+    setIsModalOpen(false);
+  } catch (err) {
+    console.error("Failed to save company:", err);
+  }
+};
+
+
+
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">

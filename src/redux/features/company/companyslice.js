@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import { 
   fetchCompaniesThunk, 
   createCompanyThunk, 
-  updateCompanyThunk,
+  updateTenantThunk,
   fetchCompanyByIdThunk,
   toggleCompanyStatusThunk
 } from "./companyThunks";
@@ -59,24 +59,25 @@ const companySlice = createSlice({
       });
 
     // Update company
-    builder
-      .addCase(updateCompanyThunk.pending, (state) => {
-        state.updating = true;
+     builder
+      .addCase(updateTenantThunk.pending, (state) => {
+        state.loading = true;
         state.error = null;
       })
-      .addCase(updateCompanyThunk.fulfilled, (state, action) => {
-        state.updating = false;
-        const updatedTenantId = action.payload?.data?.tenant?.tenant_id;
-        if (!updatedTenantId) return;
+      .addCase(updateTenantThunk.fulfilled, (state, action) => {
+        state.loading = false;
 
-        const index = state.data.findIndex(c => c.tenant_id === updatedTenantId);
-        if (index !== -1) {
-          state.data[index] = action.payload.data.tenant; // update tenant only
+        const tenant = action.payload;
+        const tenantId = tenant?.tenant_id || tenant?.id || action.meta?.arg?.tenantId;
+        // 🟢 Ensure state.entities exists
+        if (!state.entities) {
+          state.entities = {};
         }
+        state.error = null;
       })
-      .addCase(updateCompanyThunk.rejected, (state, action) => {
-        state.updating = false;
-        state.error = action.payload;
+      .addCase(updateTenantThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to update tenant";
       });
 
           // ✅ Toggle company active/inactive status
