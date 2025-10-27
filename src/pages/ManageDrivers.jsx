@@ -223,14 +223,21 @@ function ManageDrivers() {
     }
   };
 
-  if (loading)
-    return (
-      <div className="flex justify-center items-center h-64">Loading...</div>
-    );
-  if (error) return <div className="text-red-500 p-4">Error: {error}</div>;
+  if (loading) {
+  return (
+    <div className="flex justify-center items-center h-64">
+      Loading...
+    </div>
+  );
+}
 
   return (
     <div className="space-y-4">
+      {/* {error && (
+          <div className="p-3 mb-4 text-sm bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-md">
+            {error}
+          </div>
+      )} */}
       <ToolBar
         leftElements={
           <div className="flex flex-wrap gap-2">

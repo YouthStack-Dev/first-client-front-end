@@ -284,7 +284,7 @@ const ManageVehicles = () => {
       />
 
       {/* Modal */}
-     <Modal
+        <Modal
           isOpen={vehicleModal}
           onClose={() => setVehicleModal(false)}
           title={editVehicle ? "Edit Vehicle" : "Add Vehicle"}
@@ -292,7 +292,7 @@ const ManageVehicles = () => {
           hideFooter={true}
         >
           <VehicleForm
-            mode={editVehicle ? "edit" : "create"}  // <-- dynamic mode
+            mode={editVehicle ? "edit" : "create"}  
             initialData={editVehicle || {}}
             onFormChange={() => {}}
             onClose={() => setVehicleModal(false)}

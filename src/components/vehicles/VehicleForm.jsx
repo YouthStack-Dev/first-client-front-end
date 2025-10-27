@@ -110,13 +110,17 @@ useEffect(() => {
 }, [dispatch, fetched]);
 
   // --- Fetch drivers ---
-  const { entities: driverEntities, ids: driverIds } = useSelector(
-    (state) => state.drivers || { entities: {}, ids: [] }
-  );
+ const { entities: driverEntities, ids: driverIds, hasFetched = false, loading = false } = useSelector(
+  (state) => state.drivers || { entities: {}, ids: [], hasFetched: false, loading: false }
+);
 
-  useEffect(() => {
-    if ( driverIds.length === 0) dispatch(fetchDriversThunk());
-  }, [dispatch]);
+useEffect(() => {
+  // ✅ Only fetch if not fetched already
+  if (!hasFetched && !loading) {
+    dispatch(fetchDriversThunk());
+  }
+}, [dispatch, hasFetched, loading]);
+
 
   const driverOptions = useMemo(() => {
     if (!driverEntities || !driverIds) return [];

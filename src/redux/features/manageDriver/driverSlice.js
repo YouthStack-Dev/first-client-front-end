@@ -103,6 +103,7 @@ const driversSlice = createSlice({
         state.loading = false;
         state.error = action.payload || "Failed to fetch drivers";
       })
+      
         .addCase(createDriverThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -115,6 +116,7 @@ const driversSlice = createSlice({
       })
       .addCase(createDriverThunk.rejected, (state, action) => {
         state.loading = false;
+        state.hasFetched = true;
         state.error = action.payload?.message || "Failed to create driver";
       })
         .addCase(updateDriverThunk.pending, (state) => {
