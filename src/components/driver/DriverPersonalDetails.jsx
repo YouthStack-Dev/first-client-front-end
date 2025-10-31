@@ -1,74 +1,71 @@
 import { Pencil } from "lucide-react";
-import FormField from '../../components/ui/FormFields';
-import { useDispatch, useSelector } from 'react-redux';
-import { logDebug } from "../../utils/logger";
+import FormField from "../../components/ui/FormFields";
 import { useEffect, useState } from "react";
-// import { fetchVendors } from "@features/manageVendors/vendorThunks";
 
-const DriverPersonalDetails = ({formData,errors,onChange, onImageChange,onCheckboxChange,loading = false,mode}) => {
-const [previewUrl, setPreviewUrl] = useState("");
-  const dispatch = useDispatch();
-  const {vendors }  = useSelector((state)=>state.vendor)
+const DriverPersonalDetails = ({
+  formData,
+  errors,
+  onChange,
+  onImageChange,
+  onCheckboxChange,
+  loading = false,
+  mode,
+}) => {
+  const [previewUrl, setPreviewUrl] = useState("");
 
-  //  useEffect(() => {
-  //     if (vendors.length === 0) {
-  //       console.log("fetching vendors...");
-  //       dispatch(fetchVendors());  
-  //     }
-  //   },[vendors,dispatch]);
+    useEffect(() => {
+      if (formData.photo instanceof File) {
+        // Local preview for newly uploaded file
+        const objectUrl = URL.createObjectURL(formData.photo);
+        setPreviewUrl(objectUrl);
+        return () => URL.revokeObjectURL(objectUrl);
+      } else if (formData.photo) {
+        // Backend string (URL or base64)
+        setPreviewUrl(typeof formData.photo === "string" ? `https://api.gocab.tech/api/v1/${formData.photo}` : "");
+      } else {
+        setPreviewUrl("");
+      }
+    }, [formData.photo]);
 
-useEffect(() => {
-  if (formData.profileImage instanceof File) {
-    // Local preview for uploaded file
-    const objectUrl = URL.createObjectURL(formData.profileImage);
-    setPreviewUrl(objectUrl);
-
-    // Clean up
-    return () => URL.revokeObjectURL(objectUrl);
-  } else if (formData.profileImage) {
-    // Backend image
-    setPreviewUrl(`https://api.gocab.tech/${formData.profileImage}`);
-  } else {
-    setPreviewUrl("");
-  }
-}, [formData.profileImage]);
 
   return (
     <div className="p-6 bg-white rounded-md shadow-sm border border-gray-200">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
         {/* Profile Image */}
         <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center relative mx-auto">
-          {formData.profileImage ? (
-            <img  
-              src={previewUrl}
-              alt="Profile"
-              className="w-full h-full object-cover rounded-lg"
-            />
-          ) : (
-            <div className="text-center p-4">
-              <Pencil className="w-8 h-8 mx-auto text-gray-400" />
-              <p className="text-xs text-gray-500 mt-2">
-                Add image (JPG, JPEG & PNG)
-              </p>
-            </div>
-          )}
-          <input
-            type="file"
-            accept="image/jpeg,image/png"
-            onChange={(e) =>
-              e.target.files?.[0] && onImageChange(e.target.files[0])
-            }
-            className="absolute inset-0 opacity-0 cursor-pointer"
+        {previewUrl ? (
+          <img
+            src={previewUrl}
+            alt="Profile"
+            className="w-full h-full object-cover rounded-lg"
           />
-        </div>
+        ) : (
+          <div className="text-center p-4">
+            <Pencil className="w-8 h-8 mx-auto text-gray-400" />
+            <p className="text-xs text-gray-500 mt-2">
+              Add image (JPG, JPEG & PNG)
+            </p>
+          </div>
+        )}
+        <input
+          type="file"
+          accept="image/jpeg,image/png"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              console.log("Selected file:", file);       // Log file for debugging
+              onImageChange(file);                        // Update parent formData
+              const objectUrl = URL.createObjectURL(file);
+              setPreviewUrl(objectUrl);                   // Update preview immediately
+            }
+          }}
+          className="absolute inset-0 opacity-0 cursor-pointer"
+        />
+      </div>
+
 
         {/* Driver Name */}
-        <FormField
-          label="Driver Name"
-          name="name"
-          required
-          error={errors.driverName}
-        >
+        <FormField label="Driver Name" name="name" required error={errors.name}>
           <input
             id="name"
             type="text"
@@ -80,67 +77,15 @@ useEffect(() => {
           />
         </FormField>
 
-        {/* City */}
-        <FormField label="City" name="city" required error={errors.city}>
+        {/* Driver Code */}
+        <FormField label="Driver Code" name="code" required error={errors.code}>
           <input
-            id="city"
+            id="code"
             type="text"
-            name="city"
-            value={formData.city || ""}
+            name="code"
+            value={formData.code || ""}
             onChange={onChange}
-            placeholder="Enter city"
-            className="w-full p-2 border border-gray-300 rounded-md"
-          />
-        </FormField>
-
-        {/* Date of Birth */}
-        <FormField
-          label="Date of Birth"
-          name="dateOfBirth"
-          required
-          error={errors.dateOfBirth}
-        >
-          <input
-            id="dateOfBirth"
-            type="date"
-            name="dateOfBirth"
-            value={formData.dateOfBirth || ""}
-            onChange={onChange}
-            className="w-full p-2 border border-gray-300 rounded-md"
-          />
-        </FormField>
-
-        {/* Alternate Mobile Number */}
-        <FormField
-          label="Alternate Mobile Number"
-          name="alternateMobileNumber"
-          error={errors.alternateMobileNumber}
-        >
-          <input
-            id="alternateMobileNumber"
-            type="tel"
-            name="alternateMobileNumber"
-            value={formData.alternateMobileNumber || ""}
-            onChange={onChange}
-            placeholder="Enter alternate mobile number"
-            className="w-full p-2 border border-gray-300 rounded-md"
-          />
-        </FormField>
-
-        {/* Mobile Number */}
-        <FormField
-          label="Mobile Number"
-          name="mobileNumber"
-          required
-          error={errors.mobileNumber}
-        >
-          <input
-            id="mobileNumber"
-            type="tel"
-            name="mobileNumber"
-            value={formData.mobileNumber || ""}
-            onChange={onChange}
-            placeholder="Enter mobile number"
+            placeholder="Enter driver code"
             className="w-full p-2 border border-gray-300 rounded-md"
           />
         </FormField>
@@ -159,69 +104,95 @@ useEffect(() => {
           />
         </FormField>
 
-        {/* Password */}
-
-        {(mode === "create" || mode === "edit") && (
-  <FormField
-    label="Password"
-    name="password"
-    required
-    error={errors.password}
-  >
-    <input
-      id="password"
-      type="password"
-      name="password"
-      value={formData.password || ""}
-      autoComplete="new-password"
-      onChange={onChange}
-      placeholder="Enter password"
-      className="w-full p-2 border border-gray-300 rounded-md"
-    />
-  </FormField>
-)}
-
-       
-
-        {/* Vendor */}
-        <FormField label="Vendor" name="vendor" required error={errors.vendor}>
-          <select
-            id="vendor"
-            name="vendorId"
-            value={formData.vendorId || ""}
-            onChange={onChange}
-            className="w-full p-2 border border-gray-300 rounded-md"
-            disabled={loading}
-          >
-            <option value="">Select Vendor</option>
-            {loading ? (
-              <option disabled>Loading vendors...</option>
-            ) : vendors?.length > 0 ? (
-              vendors.map((v) => (
-                <option key={v.vendor_id} value={v.vendor_id}>
-                  {v.vendor_name}
-                </option>
-              ))
-            ) : (
-              <option disabled>No vendors found</option>
-            )}
-          </select>
-        </FormField>
-
-        {/* Driver Code */}
+         {/* Mobile Number */}
         <FormField
-          label="Driver Code"
-          name="driver_code"
+          label="Mobile Number"
+          name="mobileNumber"
           required
-          error={errors.driver_code}
+          error={errors.mobileNumber}
         >
           <input
-            id="driver_code"
-            type="text"
-            name="driver_code"
-            value={formData.driver_code || ""}
+            id="mobileNumber"
+            type="tel"
+            name="mobileNumber"
+            value={formData.mobileNumber || ""}
             onChange={onChange}
-            placeholder="Enter driver code"
+            placeholder="Enter mobile number"
+            className="w-full p-2 border border-gray-300 rounded-md"
+          />
+        </FormField>
+
+        {/* Password (only on create/edit) */}
+        {(mode === "create" || mode === "edit") && (
+          <FormField
+            label="Password"
+            name="password"
+            required
+            error={errors.password}
+          >
+            <input
+              id="password"
+              type="password"
+              name="password"
+              value={formData.password || ""}
+              autoComplete="new-password"
+              onChange={onChange}
+              placeholder="Enter password"
+              className="w-full p-2 border border-gray-300 rounded-md"
+            />
+          </FormField>
+        )}
+
+        {/* Gender */}
+        <FormField label="Gender" name="gender" required error={errors.gender}>
+          <div className="flex space-x-4">
+            {["Male", "Female"].map((g) => (
+              <label key={g} className="flex items-center space-x-2">
+                <input
+                  id={`gender-${g}`}
+                  type="radio"
+                  name="gender"
+                  value={g}
+                  checked={formData.gender === g}
+                  onChange={onChange}
+                  className="text-blue-600"
+                />
+                <span className="capitalize">{g}</span>
+              </label>
+            ))}
+          </div>
+        </FormField>
+
+        {/* Date of Birth */}
+          <FormField
+          label="Date of Birth"
+          name="dateOfBirth"
+          required
+          error={errors.dateOfBirth}
+        >
+          <input
+            id="dateOfBirth"
+            type="date"
+            name="dateOfBirth"
+            value={formData.dateOfBirth || ""}
+            onChange={onChange}
+            className="w-full p-2 border border-gray-300 rounded-md"
+          />
+        </FormField>
+
+        {/* Date of Joining */}
+        <FormField
+          label="Date of Joining"
+          name="date_of_joining"
+          required
+          error={errors.date_of_joining}
+        >
+          <input
+            id="date_of_joining"
+            type="date"
+            name="date_of_joining"
+            value={formData.date_of_joining || ""}
+            onChange={onChange}
             className="w-full p-2 border border-gray-300 rounded-md"
           />
         </FormField>
@@ -230,13 +201,14 @@ useEffect(() => {
         <div className="flex flex-col md:grid md:grid-cols-2 md:gap-4">
           <FormField
             label="Permanent Address"
-            name="permanentAddress"
-            error={errors.permanentAddress}
+            name="permanent_address"
+            required
+            error={errors.permanent_address}
           >
             <textarea
-              id="permanentAddress"
-              name="permanentAddress"
-              value={formData.permanentAddress || ""}
+              id="permanent_address"
+              name="permanent_address"
+              value={formData.permanent_address || ""}
               onChange={onChange}
               rows={3}
               className="w-full p-2 border border-gray-300 rounded-md"
@@ -245,15 +217,16 @@ useEffect(() => {
 
           <FormField
             label="Current Address"
-            name="currentAddress"
-            error={errors.currentAddress}
+            name="current_address"
+            required
+            error={errors.current_address}
           >
             <div className="space-y-2">
               {!formData.isSameAddress && (
                 <textarea
-                  id="currentAddress"
-                  name="currentAddress"
-                  value={formData.currentAddress || ""}
+                  id="current_address"
+                  name="current_address"
+                  value={formData.current_address || ""}
                   onChange={onChange}
                   rows={3}
                   className="w-full p-2 border border-gray-300 rounded-md"
@@ -276,26 +249,6 @@ useEffect(() => {
             </div>
           </FormField>
         </div>
-
-        {/* Gender */}
-        <FormField label="Gender" name="gender" required error={errors.gender}>
-          <div className="flex space-x-4">
-            {["male", "female"].map((g) => (
-              <label key={g} className="flex items-center space-x-2">
-                <input
-                  id={`gender-${g}`}
-                  type="radio"
-                  name="gender"
-                  value={g}
-                  checked={formData.gender === g}
-                  onChange={onChange}
-                  className="text-blue-600"
-                />
-                <span className="capitalize">{g}</span>
-              </label>
-            ))}
-          </div>
-        </FormField>
       </div>
     </div>
   );

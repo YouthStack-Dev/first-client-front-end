@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState,useMemo } from "react";
 import { Plus } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { DriverList } from "@components/driver/DriverList";
@@ -6,10 +6,9 @@ import ToolBar from "@components/ui/ToolBar";
 import Pagination from "@components/ui/Pagination";
 import FilterBadges from "@components/ui/FilterBadges";
 import StatusIndicator from "@components/ui/StatusIndicator";
-import { API_CLIENT } from "../Api/API_Client";
+import { toast } from "react-toastify";
 import {
   setSearchTerm,
-  setVendorFilter,
   setStatusFilter,
   setVerificationFilter,
   resetFilters,
@@ -22,7 +21,7 @@ import {
   selectLoading,
   selectError,
   selectStatusOptions,
-  selectVerificationOptions,
+  // selectVerificationOptions,
   selectActiveFilters,
   selectCounts,
   selectFilteredDrivers,
@@ -30,19 +29,22 @@ import {
 import DriverForm from "@components/driver/DriverForm";
 import Modal from "@components/modals/Modal";
 import ConfirmationModal from "@components/modals/ConfirmationModal";
-import { fetchDriversByVendorThunk } from "../redux/features/manageDriver/driverThunks";
+import { fetchDriversThunk ,toggleDriverStatusThunk} from "../redux/features/manageDriver/driverThunks";
 
 function ManageDrivers() {
   const dispatch = useDispatch();
   const drivers = useSelector(selectPaginatedDrivers);
   const loading = useSelector(selectLoading);
   const error = useSelector(selectError);
-  // const vendorOptions = useSelector(selectVendorOptions);
   const statusOptions = useSelector(selectStatusOptions);
-  const verificationOptions = useSelector(selectVerificationOptions);
+  // const verificationOptions = useSelector(selectVerificationOptions);
   const activeFilters = useSelector(selectActiveFilters);
   const counts = useSelector(selectCounts);
-  const { vendorId } = useSelector((state) => state.vendor);
+   const filters = useSelector((state) => state.drivers.filters);
+  const pagination = useSelector((state) => state.drivers.pagination);
+  const driversEntities = useSelector((state) => state.drivers.entities);
+  const driversIds = useSelector((state) => state.drivers.ids);
+
   // Modal and form state
   const [showModal, setShowModal] = useState(false);
   const [formMode, setFormMode] = useState("create"); // 'create', 'edit', 'view'
@@ -77,31 +79,56 @@ function ManageDrivers() {
     onConfirm: () => {},
     onCancel: () => {},
   });
+
   // Track the last fetched page to prevent refetching when going back
   const lastFetchedPage = useRef(0);
-  const lastFetchedVendor = useRef(null);
+ 
+    // Fetch drivers once
+useEffect(() => {
+  if (!hasFetched) {
+    dispatch(fetchDriversThunk());
+  }
+}, [dispatch]);
+
+  // Local filtered drivers
+  const filteredDrivers = useMemo(() => {
+    return driversIds
+      .map((id) => driversEntities[id])
+      .filter((driver) => {
+        const matchesStatus =
+          filters.statusFilter === "all" ||
+          (filters.statusFilter === "active" && driver.is_active) ||
+          (filters.statusFilter === "inactive" && !driver.is_active);
+
+        const matchesVerification =
+          filters.verificationFilter === "all" ||
+          (filters.verificationFilter === "pending" &&
+            driver.verification_status?.toLowerCase() === "pending") ||
+          (filters.verificationFilter === "verified" &&
+            driver.verification_status?.toLowerCase() === "verified");
+
+        const term = filters.searchTerm.toLowerCase();
+        const matchesSearch =
+          !term ||
+          driver.name?.toLowerCase().includes(term) ||
+          driver.email?.toLowerCase().includes(term) ||
+          driver.phone?.toLowerCase().includes(term) ||
+          driver.license_number?.toLowerCase().includes(term);
+
+        return matchesStatus && matchesVerification && matchesSearch;
+      });
+  }, [driversEntities, driversIds, filters]);
+
+
 
   useEffect(() => {
-    // Example using sessionStorage
-    const sessionStr = sessionStorage.getItem("userPermissions"); // or your actual key
-    const session = sessionStr ? JSON.parse(sessionStr) : null;
-    const vendorId = session?.user?.vendor_user?.vendor_id;
-
-    if (vendorId) {
-      dispatch(fetchDriversByVendorThunk({ vendor_id: vendorId }));
+    // Fetch drivers if:
+    // 1. We haven't fetched any data yet (initial load)
+    // 2. We're moving to a new page that hasn't been fetched before
+    if (!hasFetched || (currentPage > lastFetchedPage.current && !allDrivers.length)) {
+      fetchDriversThunk(currentPage);
     }
-  }, [dispatch, vendorId]);
-
-  const [vendors, setVendors] = useState([]);
-
-  // useEffect(() => {
-  //   // Fetch drivers if:
-  //   // 1. We haven't fetched any data yet (initial load)
-  //   // 2. We're moving to a new page that hasn't been fetched before
-  //   if (!hasFetched || (currentPage > lastFetchedPage.current && !allDrivers.length)) {
-  //     fetchDrivers(currentPage);
-  //   }
-  // }, [currentPage, hasFetched, allDrivers.length, dispatch, paginationLimit]);
+  }, [currentPage, hasFetched, allDrivers.length, dispatch, paginationLimit]);
 
   // Modal handlers
   const openCreateModal = () => {
@@ -130,42 +157,48 @@ function ManageDrivers() {
 
   const handleFormSuccess = () => {
     // Refresh drivers data after successful create/update
-    // fetchDrivers(currentPage);
+    fetchDriversThunk(currentPage);
     closeModal();
   };
 
-  const handleStatusToggle = (driver) => {
-    setConfirmationModal({
-      show: true,
-      title: "Confirm Status Change",
-      message: `Are you sure you want to ${
-        driver.is_active ? "deactivate" : "activate"
-      } this driver?`,
-      onConfirm: async () => {
-        try {
-          dispatch(setDriversLoading(true));
-          await API_CLIENT.patch(
-            `/vendors/${driver.vendor.vendor_id}/drivers/${driver.driver_id}/status`
-          );
-          dispatch(
-            updateDriverStatus({
-              driverId: driver.driver_id,
-              isActive: !driver.is_active,
-            })
-          );
-          // Show success message
-        } catch (err) {
-          dispatch(setDriversError(err.message));
-        } finally {
-          dispatch(setDriversLoading(false));
-          setConfirmationModal({ ...confirmationModal, show: false });
-        }
-      },
-      onCancel: () => {
+ const handleStatusToggle = (driver) => {
+  setConfirmationModal({
+    show: true,
+    title: "Confirm Status Change",
+    message: `Are you sure you want to ${
+      driver.is_active ? "deactivate" : "activate"
+    } this driver?`,
+    onConfirm: async () => {
+      try {
+        // Dispatch the thunk and unwrap result
+        const updatedDriver = await dispatch(toggleDriverStatusThunk(driver.driver_id)).unwrap();
+
+        // Update local Redux state if needed
+        dispatch(
+          updateDriverStatus({
+            driverId: updatedDriver.driver_id,
+            isActive: updatedDriver.is_active,
+          })
+        );
+
+        // Show success toast
+        toast.success(
+          `Driver has been ${
+            updatedDriver.is_active ? "activated" : "deactivated"
+          } successfully!`
+        );
+      } catch (err) {
+        toast.error(err.message || "Failed to update driver status.");
+      } finally {
         setConfirmationModal({ ...confirmationModal, show: false });
-      },
-    });
-  };
+      }
+    },
+    onCancel: () => {
+      setConfirmationModal({ ...confirmationModal, show: false });
+    },
+  });
+};
+
 
   const handlePageChange = (page) => {
     dispatch(setPage(page));
@@ -240,7 +273,7 @@ function ManageDrivers() {
             </div>
 
             {/* Verification filter dropdown */}
-            <div className="relative">
+            {/* <div className="relative">
               <select
                 className="appearance-none border border-gray-300 rounded-md pl-3 pr-8 py-2 text-sm 
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
@@ -271,7 +304,7 @@ function ManageDrivers() {
                   />
                 </svg>
               </div>
-            </div>
+            </div> */}
           </div>
         }
         rightElements={
@@ -302,7 +335,7 @@ function ManageDrivers() {
             </div>
             <input
               type="text"
-              placeholder="Search by name, email, phone or license..."
+              placeholder="Search by name,Driver Code, license..."
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md 
                 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 
                 focus:border-blue-500"
@@ -372,7 +405,6 @@ function ManageDrivers() {
         <DriverForm
           initialData={selectedDriver}
           mode={formMode}
-          vendors={vendors}
           onClose={handleFormSuccess}
         />
       </Modal>

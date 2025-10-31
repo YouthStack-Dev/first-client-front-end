@@ -1,14 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ManageVehicleTypes from "@components/vehicles/VehicleType";
 import ManageVehicles from "@components/vehicles/Vehicles";
 
 const VehicleManagement = () => {
-  const [activeTab, setActiveTab] = useState("types");
+  // Load last active tab from sessionStorage, fallback to "types"
+  const [activeTab, setActiveTab] = useState(() => {
+    return sessionStorage.getItem("activeVehicleTab") || "types";
+  });
 
   const tabs = [
     { key: "types", label: "Vehicle Types" },
     { key: "list", label: "Vehicles" },
   ];
+
+  // Persist tab selection to sessionStorage whenever it changes
+  useEffect(() => {
+    sessionStorage.setItem("activeVehicleTab", activeTab);
+  }, [activeTab]);
 
   return (
     <div className="w-full min-h-screen bg-gray-50 p-6">

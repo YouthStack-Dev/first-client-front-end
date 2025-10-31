@@ -1,5 +1,5 @@
 const ScheduleBooks = {
-  "2025-08-19": {
+  "2025-10-27": {
     TimeShifts: [
       {
         office: "STONEX",
@@ -12,13 +12,23 @@ const ScheduleBooks = {
         bookings: [
           {
             id: 1,
-            customer: { name: "John Doe", phoneNo: "1234567890", gender: "Male", address: "Office A" },
+            customer: {
+              name: "John Doe",
+              phoneNo: "1234567890",
+              gender: "Male",
+              address: "Office A",
+            },
             pickupAddress: "Pickup Point 1",
             dropAddress: "Drop Point 1",
           },
           {
             id: 2,
-            customer: { name: "Jane Smith", phoneNo: "9876543210", gender: "Female", address: "Office A" },
+            customer: {
+              name: "Jane Smith",
+              phoneNo: "9876543210",
+              gender: "Female",
+              address: "Office A",
+            },
             pickupAddress: "Pickup Point 2",
             dropAddress: "Drop Point 2",
           },
@@ -47,13 +57,16 @@ const ScheduleBooks = {
         office: "STONEX",
         shift: "Morning",
         bookingType: "LOGIN",
-        routes: [
-          { vehicleId: 3, vendorId: 101 },
-        ],
+        routes: [{ vehicleId: 3, vendorId: 101 }],
         bookings: [
           {
             id: 3,
-            customer: { name: "Alice Brown", phoneNo: "5551234567", gender: "Female", address: "Office B" },
+            customer: {
+              name: "Alice Brown",
+              phoneNo: "5551234567",
+              gender: "Female",
+              address: "Office B",
+            },
             pickupAddress: "Pickup Point 3",
             dropAddress: "Drop Point 3",
           },

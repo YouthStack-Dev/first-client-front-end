@@ -19,5 +19,8 @@ const endpoint = {
 
   //  Boookings
   booking: "/v1/bookings/",
+
+  routesuggestion: "/v1/grouping/bookings/routesuggestion",
+  savedRoutes: "/v1/routes/",
 };
 export default endpoint;

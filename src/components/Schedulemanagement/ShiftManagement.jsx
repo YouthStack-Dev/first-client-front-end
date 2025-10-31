@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Modal from "../modals/Modal";
-import { Plus, ToggleLeft, ToggleRight } from "lucide-react";
+import { Edit,Plus } from "lucide-react";
 import ShiftForm from "./ShiftForm";
 import ConfirmationModal from "../modals/ConfirmationModal";
 import { useDispatch, useSelector } from "react-redux";
@@ -9,8 +9,15 @@ import {
   selectAllShifts,
   selectLoading,
 } from "../../redux/features/shift/shiftSlice";
-import { fetchShiftTrunk, createShiftTrunk, toggleShiftStatus,updateShiftTrunk  } from "../../redux/features/shift/shiftTrunk";
+import {
+  fetchShiftTrunk,
+  createShiftTrunk,
+  toggleShiftStatus,
+  updateShiftTrunk,
+} from "../../redux/features/shift/shiftTrunk";
 import { toast } from "react-toastify";
+import ReusableButton from "../ui/ReusableButton";
+import ReusableToggleButton from "../ui/ReusableToggleButton";
 
 const ShiftManagement = () => {
   const dispatch = useDispatch();
@@ -18,6 +25,7 @@ const ShiftManagement = () => {
   const shiftCategories = useSelector(selectAllShiftCategories);
   const categories = useSelector((state) => state.shift.shiftCategories.byId);
   const loading = useSelector(selectLoading);
+  const loaded = useSelector((state) => state.shift.loaded);
 
   const [activeTab, setActiveTab] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,16 +34,11 @@ const ShiftManagement = () => {
   const [shiftToDelete, setShiftToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedShifts, setSelectedShifts] = useState([]);
-const loaded = useSelector((state) => state.shift.loaded);
 
-useEffect(() => {
-  if (!loaded) {
-    dispatch(fetchShiftTrunk());
-  }
-}, [dispatch, loaded]);
+  useEffect(() => {
+    if (!loaded) dispatch(fetchShiftTrunk());
+  }, [dispatch, loaded]);
 
-
-  // Handlers
   const handleAddClick = () => {
     setEditingShift(null);
     setIsModalOpen(true);
@@ -46,11 +49,6 @@ useEffect(() => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (shift) => {
-    setShiftToDelete(shift);
-    setIsDeleteModalOpen(true);
-  };
-
   const handleStatusToggle = async (shift) => {
     try {
       const result = await dispatch(toggleShiftStatus(shift.shift_id));
@@ -59,56 +57,47 @@ useEffect(() => {
       } else {
         toast.error(result.payload || "Failed to toggle shift status");
       }
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong while updating shift status");
     }
   };
 
- const handleFormSubmit = async (data) => {
-  try {
-    // ✅ Format shift_time to HH:MM only (remove seconds)
-    const formattedData = {
-      ...data,
-      shift_time: data.shift_time.includes(":") 
-        ? data.shift_time.split(":").slice(0, 2).join(":") // converts 09:00:00 → 09:00
-        : data.shift_time,
-    };
+  const handleFormSubmit = async (data) => {
+    try {
+      const formattedData = {
+        ...data,
+        shift_time: data.shift_time.includes(":")
+          ? data.shift_time.split(":").slice(0, 2).join(":")
+          : data.shift_time,
+      };
 
-    if (editingShift && editingShift.shift_id) {
-      // console.log("🟢 Updating shift with ID:", editingShift.shift_id);
-      // console.log("🟢 Formatted shift data:", formattedData);
-      await dispatch(updateShiftTrunk({ shift_id: editingShift.shift_id, data: formattedData })).unwrap();
-      toast.success("Shift updated successfully!");
-    } else {
-      await dispatch(createShiftTrunk(formattedData)).unwrap();
-      toast.success("Shift created successfully!");
+      if (editingShift && editingShift.shift_id) {
+        await dispatch(
+          updateShiftTrunk({
+            shift_id: editingShift.shift_id,
+            data: formattedData,
+          })
+        ).unwrap();
+        toast.success("Shift updated successfully!");
+      } else {
+        await dispatch(createShiftTrunk(formattedData)).unwrap();
+        toast.success("Shift created successfully!");
+      }
+
+      setIsModalOpen(false);
+      setEditingShift(null);
+      dispatch(fetchShiftTrunk());
+    } catch {
+      toast.error("Failed to save shift");
     }
-
-    setIsModalOpen(false);
-    setEditingShift(null);
-    dispatch(fetchShiftTrunk());
-  } catch (err) {
-    // console.error("Error submitting shift:", err);
-    toast.error("Failed to save shift");
-  }
-};
-
-  const handleDeleteConfirm = () => {
-    setIsDeleteModalOpen(false);
-    setShiftToDelete(null);
-    // TODO: dispatch delete shift
   };
 
   const handleSearchChange = (e) => setSearchTerm(e.target.value);
+  const formatTime = (t) => t?.slice(0, 5) || "N/A";
 
-  const formatTime = (shift_time) => shift_time?.slice(0, 5) || "N/A";
-
-  // Selection handlers
-  const handleSelectShift = (shiftId) => {
+  const handleSelectShift = (id) => {
     setSelectedShifts((prev) =>
-      prev.includes(shiftId)
-        ? prev.filter((id) => id !== shiftId)
-        : [...prev, shiftId]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   };
 
@@ -126,7 +115,6 @@ useEffect(() => {
     { key: "logout", label: "Logout Shifts" },
   ];
 
-  // Filtering
   const filteredByTab = shifts.filter((shift) => {
     if (activeTab === "login") return shift.log_type?.toLowerCase() === "in";
     if (activeTab === "logout") return shift.log_type?.toLowerCase() === "out";
@@ -135,7 +123,8 @@ useEffect(() => {
 
   const filteredShifts = filteredByTab.filter((shift) => {
     const query = searchTerm.toLowerCase();
-    const categoryName = categories?.[shift.shiftCategoryId]?.name?.toLowerCase() || "";
+    const categoryName =
+      categories?.[shift.shiftCategoryId]?.name?.toLowerCase() || "";
     return (
       shift.shift_code?.toLowerCase().includes(query) ||
       shift.log_type?.toLowerCase().includes(query) ||
@@ -157,12 +146,15 @@ useEffect(() => {
           className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-64"
         />
         <div className="flex items-center gap-3">
-          <button
+          <ReusableButton
+            module="shift"
+            action="create"
+            buttonName="Add Shift"
+            icon={Plus} // now uses the same icon as Employee button
+            title="Create Shift"
             onClick={handleAddClick}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition-all"
-          >
-            <Plus size={16} /> Add Shift
-          </button>
+            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+          />
         </div>
       </div>
 
@@ -195,17 +187,32 @@ useEffect(() => {
                   <th className="px-6 py-3 text-center">
                     <input
                       type="checkbox"
-                      checked={selectedShifts.length === filteredShifts.length && filteredShifts.length > 0}
+                      checked={
+                        selectedShifts.length === filteredShifts.length &&
+                        filteredShifts.length > 0
+                      }
                       onChange={handleSelectAll}
                       className="h-4 w-4 text-blue-600 rounded"
                     />
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift Code</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Log Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift Time</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pickup Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Active</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Shift Code
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Log Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Shift Time
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Pickup Type
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Active
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -218,7 +225,7 @@ useEffect(() => {
                 ) : (
                   filteredShifts.map((shift) => (
                     <tr key={shift.shift_id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <td className="px-6 py-4 text-center">
                         <input
                           type="checkbox"
                           checked={selectedShifts.includes(shift.shift_id)}
@@ -226,37 +233,29 @@ useEffect(() => {
                           className="h-4 w-4 text-blue-600 rounded"
                         />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">{shift.shift_code}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{shift.log_type}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{formatTime(shift.shift_time)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{shift.pickup_type}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <span className="inline-flex items-center justify-center text-lg">
-                          {shift.is_active ? "✅" : "❌"}
-                        </span>
+                      <td className="px-6 py-4">{shift.shift_code}</td>
+                      <td className="px-6 py-4">{shift.log_type}</td>
+                      <td className="px-6 py-4">{formatTime(shift.shift_time)}</td>
+                      <td className="px-6 py-4">{shift.pickup_type}</td>
+                      <td className="px-6 py-4 text-center">
+                        <ReusableToggleButton
+                          module="shift"
+                          action="update"
+                          isChecked={shift.is_active}
+                          onToggle={() => handleStatusToggle(shift)}
+                          labels={{ on: "Active", off: "Inactive" }}
+                          size="small"
+                        />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center ">
-                           {/* Edit Button */}
-                            <button
-                              onClick={() => handleEdit(shift)}
-                              className="p-2 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors"
-                              title="Edit Shift"
-                            >
-                              ✏️
-                            </button>
-                          <button
-                            onClick={() => handleStatusToggle(shift)}
-                            className={`p-2 rounded-lg transition-colors ${
-                              shift.is_active
-                                ? "text-green-600 hover:text-green-800 hover:bg-green-50"
-                                : "text-red-600 hover:text-red-800 hover:bg-red-50"
-                            }`}
-                            title={shift.is_active ? "Deactivate" : "Activate"}
-                          >
-                            {shift.is_active ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
-                          </button>
-                        </div>
+                      <td className="px-6 py-4 flex items-center gap-2">
+                        <ReusableButton
+                          module="shift"
+                          action="update"
+                          icon={Edit} // Lucide Edit icon
+                          title="Edit Shift"
+                          onClick={() => handleEdit(shift)}
+                          className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all"
+                        />
                       </td>
                     </tr>
                   ))
@@ -298,16 +297,12 @@ useEffect(() => {
         />
       </Modal>
 
-      {/* Delete Confirmation */}
       <ConfirmationModal
         show={isDeleteModalOpen}
         title="Confirm Delete"
-        message={`Are you sure you want to delete this shift "${shiftToDelete?.shift_code}"?`}
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => {
-          setIsDeleteModalOpen(false);
-          setShiftToDelete(null);
-        }}
+        message={`Are you sure you want to delete "${shiftToDelete?.shift_code}"?`}
+        onConfirm={() => setIsDeleteModalOpen(false)}
+        onCancel={() => setIsDeleteModalOpen(false)}
       />
     </div>
   );

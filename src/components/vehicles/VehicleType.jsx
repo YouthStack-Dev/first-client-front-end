@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Edit, Trash2, Search } from "lucide-react";
+import { Edit, Search } from "lucide-react";
 import DynamicTable from "../DynamicTable";
 import ToolBar from "../ui/ToolBar";
 import { Modal } from "../../components/SmallComponents";
@@ -12,6 +12,8 @@ import {
   toggleVehicleTypeStatus
 } from "../../redux/features/managevehicletype/vehicleTypeThunks";
 import { toast } from "react-toastify";
+import ReusableButton from "../ui/ReusableButton";
+import ReusableToggleButton from "../ui/ReusableToggleButton";
 
 const ManageVehicleTypes = () => {
   const dispatch = useDispatch();
@@ -116,20 +118,21 @@ useEffect(() => {
     }
   };
 
-  const handleDelete = async (row) => {
-    if (!row || !row.id) return;
-    if (window.confirm(`Are you sure you want to delete "${row.name}"?`)) {
-      try {
-        await dispatch(deleteVehicleType(row.id)).unwrap();
-        toast.success("Vehicle type deleted successfully");
-      } catch (error) {
-        toast.error(error?.message || "Failed to delete vehicle type");
-      }
-    }
-  };
+  // const handleDelete = async (row) => {
+  //   if (!row || !row.id) return;
+  //   if (window.confirm(`Are you sure you want to delete "${row.name}"?`)) {
+  //     try {
+  //       await dispatch(deleteVehicleType(row.id)).unwrap();
+  //       toast.success("Vehicle type deleted successfully");
+  //     } catch (error) {
+  //       toast.error(error?.message || "Failed to delete vehicle type");
+  //     }
+  //   }
+  // };
 
   const renderActions = (row) => {
     const isActive = localStatus[row.id] ?? row.is_active;
+
     return (
       <div className="flex justify-center items-center gap-2">
         {/* Toggle switch */}
@@ -153,15 +156,6 @@ useEffect(() => {
           title="Edit"
         >
           <Edit size={18} />
-        </button>
-
-        {/* Delete */}
-        <button
-          onClick={() => handleDelete(row)}
-          className="text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors"
-          title="Delete"
-        >
-          <Trash2 size={18} />
         </button>
       </div>
     );
