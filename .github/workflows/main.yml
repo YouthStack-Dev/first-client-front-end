@@ -20,6 +20,12 @@ jobs:
         with:
           node-version: 18
 
+      - name: Create .env file
+        run: |
+          echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" >> .env
+          echo "VITE_DEBUG=${{ secrets.VITE_DEBUG }}" >> .env
+          echo "VITE_GOOGLE_API=${{ secrets.VITE_GOOGLE_API }}" >> .env
+
       - name: Clean install dependencies
         run: |
           rm -rf node_modules package-lock.json
@@ -29,10 +35,10 @@ jobs:
       - name: Copy build to VPS
         uses: appleboy/scp-action@v0.1.4
         with:
-          host: ${{ secrets.VPS_HOST }} 
+          host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
-          port: ${{ secrets.VPS_PORT }}   
+          port: ${{ secrets.VPS_PORT }}
           source: "dist/*"
           target: "/var/www/euronext-client-front-end/"
 
@@ -42,5 +48,5 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASS }}
-          port: ${{ secrets.VPS_PORT }}   
+          port: ${{ secrets.VPS_PORT }}
           script: sudo systemctl reload nginx

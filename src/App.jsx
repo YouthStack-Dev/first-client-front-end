@@ -23,9 +23,10 @@ import RoleManagement from "./pages/RoleManagement";
 import RouteManagement from "./pages/RouteManagement";
 import Schedulemanagement from "./pages/Schedulemanagement";
 import CutoffManagement from "./components/Schedulemanagement/CutoffManagement";
-import ScheduledBookings from "./components/RouteManagement/ScheduledBookings";
+import ScheduledBookings from "./components/RouteManagement/RouteScheduledBookings";
 import ProfilePage from "./pages/ProfilePage";
 import BookingManagement from "./pages/BookingManagement";
+import ClusterMapViewer from "./components/RouteManagement/ClusterMapViewer";
 
 function App() {
   const dispatch = useDispatch();
@@ -183,6 +184,18 @@ function App() {
               element={<h1> This is the screen of Booking </h1>}
             />
             <Route path="/routing" element={<RouteManagement />} />
+            <Route
+              path="/shift/:shiftId/:date/suggestions-route"
+              element={<ClusterMapViewer mode="suggestions" />}
+            />
+            <Route
+              path="/shift/:shiftId/:date/saved-routes"
+              element={<ClusterMapViewer mode="saved" />}
+            />
+            <Route
+              path="/shift/:shiftId/:date/pending-routes"
+              element={<ClusterMapViewer />}
+            />
             <Route
               path="/employee/:employee_id/bookings"
               element={<BookingManagement />}

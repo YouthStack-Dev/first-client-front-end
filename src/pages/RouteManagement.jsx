@@ -1,12 +1,8 @@
-
-
-import { useState } from "react";
-import ScheduledBookings from "@components/RouteManagement/ScheduledBookings";
-  const RouteManagement = () => {
-
+import RouteScheduledBookings from "@components/RouteManagement/RouteScheduledBookings";
+const RouteManagement = () => {
   return (
-    <div >  
-   <ScheduledBookings/>
+    <div>
+      <RouteScheduledBookings />
     </div>
   );
 };

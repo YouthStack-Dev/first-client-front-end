@@ -1,21 +1,30 @@
-import React, { useEffect, useState } from "react";
-import ScheduleBooks from "../../staticData/ScheduleBooks";
+import React, { useState, useEffect, useRef } from "react";
 import ToolBar from "../ui/ToolBar";
 import ScheduleList from "./ScheduleList";
 import { API_CLIENT } from "../../Api/API_Client";
 
-const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate: initialSelectedDate }) => {
-  const [selectedDate, setSelectedDate] = useState(initialSelectedDate || new Date().toISOString().split('T')[0]);
+const RouteScheduledBookings = ({
+  toggleRouting,
+  setRoutingData,
+  selectedDate: initialSelectedDate,
+}) => {
+  const [selectedDate, setSelectedDate] = useState(
+    initialSelectedDate || new Date().toISOString().split("T")[0]
+  );
   const [selectedShiftType, setSelectedShiftType] = useState("All");
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedShift, setSelectedShift] = useState(null);
-  const [shiftBookings, setShiftBookings] = useState([]);
+  const [allShiftBookings, setAllShiftBookings] = useState([]); // Store original data
+  const [filteredShiftBookings, setFilteredShiftBookings] = useState([]); // Store filtered data
   const [selectedOption, setSelectedOption] = useState("Select option");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const [hasRoutesPermission] = useState(true);
   const [hasTripSheetsPermission] = useState(false);
+
+  // Prevent double calls in strict mode
+  const hasFetchedRef = useRef(false);
 
   const shiftOptions = [
     "Select option",
@@ -27,61 +36,71 @@ const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate: initia
     "Upload Vehicle",
   ];
 
-  // 🔹 Fetch shifts data from backend API
+  // 🔹 Fetch shifts data from API
   const fetchShiftsData = async (date) => {
     setLoading(true);
     setError(null);
-    
-    try {
-      // Replace with your actual API endpoint
-      const response = await API_CLIENT.get(`/admin/shift-bookings/?date=${date}`);
-      
-     
-      
-      const {data} = await response.data
 
-      if (response.status === 200) {
-        // Transform the API response to match the expected format
-        
-        setShiftBookings(data.shifts || []);
+    try {
+      const tenantId = "1";
+      const response = await API_CLIENT.get(
+        `/v1/bookings/tenant/${tenantId}/shifts/bookings?booking_date=${date}`
+      );
+
+      if (response.data.success) {
+        // Use backend data directly without transformation
+        const apiData = response.data.data?.shifts || [];
+        setAllShiftBookings(apiData); // Store original data
+        setFilteredShiftBookings(apiData); // Initialize filtered data
       } else {
-        throw new Error(data.message || "Failed to fetch shifts data");
+        setError(response.data.message || "Failed to fetch shifts data");
+        setAllShiftBookings([]);
+        setFilteredShiftBookings([]);
       }
     } catch (err) {
       console.error("Error fetching shifts data:", err);
-      setError(err.message);
-      // Fallback to static data if API fails
-      if (ScheduleBooks[selectedDate]?.TimeShifts) {
-        setShiftBookings(ScheduleBooks[selectedDate].TimeShifts);
-      } else {
-        setShiftBookings([]);
-      }
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to load shifts data from server"
+      );
+      setAllShiftBookings([]);
+      setFilteredShiftBookings([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔹 Load shifts when selected date changes
+  // 🔹 Load shifts from API when selected date changes - FIXED: Prevent double calls
   useEffect(() => {
-    fetchShiftsData(selectedDate);
+    // Reset ref when date changes
+    hasFetchedRef.current = false;
+
+    // Prevent duplicate calls in strict mode
+    if (!hasFetchedRef.current) {
+      hasFetchedRef.current = true;
+      fetchShiftsData(selectedDate);
+    }
   }, [selectedDate]);
 
-  // 🔹 Apply filter: In / Out
+  // 🔹 Apply filter: In / Out - FIXED: No longer mutates state
   useEffect(() => {
-    if (ScheduleBooks[selectedDate]?.TimeShifts) {
-      let shifts = ScheduleBooks[selectedDate].TimeShifts;
-
-      if (selectedShiftType !== "All") {
-        shifts = shifts.filter((shift) =>
-          selectedShiftType === "In"
-            ? shift.bookingType === "LOGIN"
-            : shift.bookingType === "LOGOUT"
-        );
-      }
-
-      setShiftBookings(shifts);
+    if (allShiftBookings.length === 0) {
+      setFilteredShiftBookings([]);
+      return;
     }
-  }, [selectedDate, selectedShiftType]);
+
+    if (selectedShiftType === "All") {
+      setFilteredShiftBookings(allShiftBookings);
+    } else {
+      const filtered = allShiftBookings.filter((shift) =>
+        selectedShiftType === "In"
+          ? shift.log_type === "IN"
+          : shift.log_type === "OUT"
+      );
+      setFilteredShiftBookings(filtered);
+    }
+  }, [selectedShiftType, allShiftBookings]);
 
   const handleButtonClick = (shift) => {
     setSelectedShift(shift);
@@ -98,25 +117,28 @@ const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate: initia
   const getVehicleCount = (routes = []) =>
     routes.filter((r) => r.vehicleId).length;
 
-  const totalLogin = shiftBookings
-    .filter((s) => s.bookingType === "LOGIN")
+  const totalLogin = filteredShiftBookings
+    .filter((s) => s.log_type === "IN")
     .reduce((sum, s) => sum + (s.bookings?.length || 0), 0);
 
-  const totalLogout = shiftBookings
-    .filter((s) => s.bookingType === "LOGOUT")
+  const totalLogout = filteredShiftBookings
+    .filter((s) => s.log_type === "OUT")
     .reduce((sum, s) => sum + (s.bookings?.length || 0), 0);
 
   const handleShiftOption = (option, shift) => {
     if (!shift) return;
     switch (option) {
       case "Generate Route":
-        console.log("Generating route for", shift.shift);
+        console.log("Generating route for", shift.shift_code);
+        alert(`Generating route for ${shift.shift_code} shift`);
         break;
       case "Delete Route":
-        console.log("Deleting route for", shift.shift);
+        console.log("Deleting route for", shift.shift_code);
+        alert(`Deleting route for ${shift.shift_code} shift`);
         break;
       default:
-        console.log(option, shift.shift);
+        console.log(option, shift.shift_code);
+        alert(`${option} for ${shift.shift_code} shift`);
     }
   };
 
@@ -139,7 +161,7 @@ const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate: initia
               className="border border-gray-300 rounded-md px-3 py-1 text-sm"
             />
           </div>
-          
+
           {/* Shift Type Dropdown */}
           <div className="flex items-center gap-2">
             <label className="text-sm text-gray-600">Shift Type</label>
@@ -153,6 +175,18 @@ const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate: initia
               <option value="Out">LogOut</option>
             </select>
           </div>
+
+          {/* Refresh Button */}
+          <button
+            onClick={() => {
+              hasFetchedRef.current = false;
+              fetchShiftsData(selectedDate);
+            }}
+            disabled={loading}
+            className="bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600 disabled:bg-blue-300"
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
         </div>
       }
     />
@@ -167,13 +201,16 @@ const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate: initia
         {/* Loading and Error States */}
         {loading && (
           <div className="text-center py-4">
-            <p>Loading shifts data...</p>
+            <div className="inline-flex items-center">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
+              <p>Loading shifts data...</p>
+            </div>
           </div>
         )}
-        
+
         {error && (
           <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-            <p>Error: {error}. Using fallback data.</p>
+            <p>Note: {error}</p>
           </div>
         )}
 
@@ -186,7 +223,8 @@ const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate: initia
           >
             {hasRoutesPermission && (
               <ScheduleList
-                shiftBookings={shiftBookings}
+                selectedDate={selectedDate}
+                shiftBookings={filteredShiftBookings}
                 totalLogin={totalLogin}
                 totalLogout={totalLogout}
                 hasRoutesPermission={hasRoutesPermission}
@@ -220,8 +258,8 @@ const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate: initia
               {/* Modal Header */}
               <div className="p-4 border-b flex justify-between items-center bg-gray-50">
                 <h3 className="text-lg font-semibold text-gray-800">
-                  Booking Details - {selectedShift.shift} (
-                  {selectedShift.bookingType})
+                  Booking Details - {selectedShift.shift_code} (
+                  {selectedShift.log_type})
                 </h3>
                 <button
                   onClick={() => setShowBookingModal(false)}
@@ -238,12 +276,12 @@ const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate: initia
                     <tr>
                       {[
                         "ID",
-                        "Name",
-                        "Phone",
-                        "Gender",
-                        "Actual Office",
+                        "Employee Code",
+                        "Employee ID",
+                        "Status",
                         "Pickup Location",
                         "Drop Location",
+                        "Coordinates",
                       ].map((col) => (
                         <th
                           key={col}
@@ -255,24 +293,55 @@ const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate: initia
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {selectedShift.bookings.length === 0 ? (
+                    {selectedShift.bookings?.length === 0 ? (
                       <tr>
-                        <td colSpan={7}
-                          className="text-center py-4 text-gray-500" >
+                        <td
+                          colSpan={7}
+                          className="text-center py-4 text-gray-500"
+                        >
                           No bookings available
                         </td>
                       </tr>
                     ) : (
-                      selectedShift.bookings.map((booking) => (
-                        <tr key={booking.id}
-                          className="hover:bg-gray-50 transition">
-                          <td className="px-4 py-3 text-sm">{booking.id}</td>
-                          <td className="px-4 py-3 text-sm">{booking.customer?.name}</td>
-                          <td className="px-4 py-3 text-sm">{booking.customer?.phoneNo} </td>
-                          <td className="px-4 py-3 text-sm">{booking.customer?.gender} </td>
-                          <td className="px-4 py-3 text-sm break-words max-w-xs">{booking.customer?.address}</td>
-                          <td className="px-4 py-3 text-sm break-words max-w-xs">{booking.pickupAddress}</td>
-                          <td className="px-4 py-3 text-sm break-words max-w-xs"> {booking.dropAddress}</td>
+                      selectedShift.bookings?.map((booking) => (
+                        <tr
+                          key={booking.booking_id}
+                          className="hover:bg-gray-50 transition"
+                        >
+                          <td className="px-4 py-3 text-sm">
+                            {booking.booking_id}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            {booking.employee_code}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            {booking.employee_id}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs ${
+                                booking.status === "Pending"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-green-100 text-green-800"
+                              }`}
+                            >
+                              {booking.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm break-words max-w-xs">
+                            {booking.pickup_location ||
+                              "Location not specified"}
+                          </td>
+                          <td className="px-4 py-3 text-sm break-words max-w-xs">
+                            {booking.drop_location || "Location not specified"}
+                          </td>
+                          <td className="px-4 py-3 text-sm break-words max-w-xs text-xs">
+                            Pickup: {booking.pickup_latitude?.toFixed(4)},{" "}
+                            {booking.pickup_longitude?.toFixed(4)}
+                            <br />
+                            Drop: {booking.drop_latitude?.toFixed(4)},{" "}
+                            {booking.drop_longitude?.toFixed(4)}
+                          </td>
                         </tr>
                       ))
                     )}
@@ -287,4 +356,4 @@ const ScheduledBookings = ({ toggleRouting, setRoutingData, selectedDate: initia
   );
 };
 
-export default ScheduledBookings;
+export default RouteScheduledBookings;
