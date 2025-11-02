@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import {
   APIProvider,
@@ -7,203 +7,29 @@ import {
   InfoWindow,
   useMap,
 } from "@vis.gl/react-google-maps";
-import {
-  ChevronDown,
-  ChevronUp,
-  Users,
-  X,
-  MapPin,
-  Route,
-  Navigation,
-} from "lucide-react";
+import { Users, Merge, Split, Trash2, Route } from "lucide-react";
 import { API_CLIENT } from "../../Api/API_Client";
 import endpoint from "../../Api/Endpoints";
 
-// Component to handle route drawing using Directions API
-const RouteRenderer = ({ routes, showRoutes, routeWidth }) => {
-  const map = useMap();
-  const directionsRenderersRef = useRef([]);
-  const directionsServiceRef = useRef(new google.maps.DirectionsService());
+// Import components
+import RouteRenderer from "./RouteRenderer";
+import MapToolbar from "./MapToolbar";
+import ClusterCard from "./ClusterCard";
+import MergedRouteCard from "./MergedRouteCard";
+import MergeConfirmationModal from "../modals/MergeConfirmationModal";
+import ClusterDetailsModal from "../modals/ClusterDetailsModal";
 
-  useEffect(() => {
-    // Clear existing directions renderers
-    directionsRenderersRef.current.forEach((renderer) => {
-      renderer.setMap(null);
-    });
-    directionsRenderersRef.current = [];
-
-    if (!map || !showRoutes || routes.length === 0) return;
-
-    // Get width settings
-    const widths = getWidthSettings(routeWidth);
-
-    // Create optimized routes for each cluster
-    routes.forEach((clusterRoute) => {
-      if (clusterRoute.optimizedPath && clusterRoute.optimizedPath.length > 1) {
-        const waypoints = clusterRoute.optimizedPath
-          .slice(1, -1)
-          .map((location) => ({
-            location: location,
-            stopover: false,
-          }));
-
-        const request = {
-          origin: clusterRoute.optimizedPath[0],
-          destination:
-            clusterRoute.optimizedPath[clusterRoute.optimizedPath.length - 1],
-          waypoints: waypoints,
-          travelMode: google.maps.TravelMode.DRIVING,
-          optimizeWaypoints: false,
-        };
-
-        directionsServiceRef.current.route(request, (result, status) => {
-          if (status === google.maps.DirectionsStatus.OK) {
-            const directionsRenderer = new google.maps.DirectionsRenderer({
-              map: map,
-              directions: result,
-              suppressMarkers: true,
-              preserveViewport: true,
-              polylineOptions: {
-                strokeColor: getClusterColor(clusterRoute.clusterId),
-                strokeOpacity: 0.9,
-                strokeWeight: widths.optimized,
-              },
-            });
-
-            directionsRenderersRef.current.push(directionsRenderer);
-          } else {
-            console.warn(
-              `Directions request failed for cluster ${clusterRoute.clusterId}:`,
-              status
-            );
-
-            // Fallback to polyline
-            const polyline = new google.maps.Polyline({
-              path: clusterRoute.optimizedPath,
-              geodesic: true,
-              strokeColor: getClusterColor(clusterRoute.clusterId),
-              strokeOpacity: 0.9,
-              strokeWeight: widths.optimized,
-              map: map,
-            });
-          }
-        });
-      }
-    });
-
-    // Cleanup function
-    return () => {
-      directionsRenderersRef.current.forEach((renderer) => {
-        renderer.setMap(null);
-      });
-      directionsRenderersRef.current = [];
-    };
-  }, [map, routes, showRoutes, routeWidth]);
-
-  return null;
-};
-
-// Helper function to calculate distance between two points
-const calculateDistance = (point1, point2) => {
-  const R = 6371; // Earth's radius in km
-  const dLat = ((point2.lat - point1.lat) * Math.PI) / 180;
-  const dLng = ((point2.lng - point1.lng) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((point1.lat * Math.PI) / 180) *
-      Math.cos((point2.lat * Math.PI) / 180) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
-
-// Find optimal route sequence using nearest neighbor algorithm starting from destination
-const findOptimalRouteSequence = (pickupPoints, destination) => {
-  if (pickupPoints.length === 0) return [];
-
-  const points = [...pickupPoints];
-  const sequence = [];
-
-  // Start from the destination
-  let currentPoint = destination;
-
-  while (points.length > 0) {
-    // Find nearest point to current point
-    let nearestIndex = 0;
-    let nearestDistance = calculateDistance(currentPoint, points[0]);
-
-    for (let i = 1; i < points.length; i++) {
-      const distance = calculateDistance(currentPoint, points[i]);
-      if (distance < nearestDistance) {
-        nearestDistance = distance;
-        nearestIndex = i;
-      }
-    }
-
-    // Add nearest point to sequence and remove from available points
-    sequence.push(points[nearestIndex]);
-    currentPoint = points[nearestIndex];
-    points.splice(nearestIndex, 1);
-  }
-
-  return sequence;
-};
-
-const getClusterColor = (clusterId) => {
-  const colors = [
-    "#3B82F6",
-    "#EF4444",
-    "#10B981",
-    "#F59E0B",
-    "#8B5CF6",
-    "#EC4899",
-    "#14B8A6",
-    "#F97316",
-    "#6366F1",
-    "#84CC16",
-    "#06B6D4",
-    "#F43F5E",
-  ];
-  return colors[(clusterId - 1) % colors.length];
-};
-
-const getWidthSettings = (routeWidth) => {
-  switch (routeWidth) {
-    case "thin":
-      return { optimized: 4, normal: 3 };
-    case "medium":
-      return { optimized: 8, normal: 6 };
-    case "thick":
-      return { optimized: 12, normal: 8 };
-    case "very-thick":
-      return { optimized: 16, normal: 12 };
-    default:
-      return { optimized: 8, normal: 6 };
-  }
-};
-
-// Helper function to check if data is empty
-const isEmptyData = (data) => {
-  if (!data) return true;
-
-  // Check for empty clusters array
-  if (data.route_clusters && Array.isArray(data.route_clusters)) {
-    return data.route_clusters.length === 0;
-  }
-
-  // Check for empty shifts array (from your API response example)
-  if (data.shifts && Array.isArray(data.shifts)) {
-    return data.shifts.length === 0;
-  }
-
-  // Check for empty data object
-  if (Object.keys(data).length === 0) {
-    return true;
-  }
-
-  return false;
-};
+// Import utilities
+import {
+  calculateDistance,
+  findOptimalRouteSequence,
+  getClusterColor,
+  getWidthSettings,
+  isEmptyData,
+  optimizeMergedRoute,
+} from "../../utils/routeHelpers";
+import { useSelector } from "react-redux";
+import { selectBookingsByShift } from "../../redux/features/routes/roureSlice";
 
 const ClusterMapViewer = ({ mode = "suggestions" }) => {
   const { shiftId, date } = useParams();
@@ -211,15 +37,33 @@ const ClusterMapViewer = ({ mode = "suggestions" }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [apiMessage, setApiMessage] = useState("");
-
+  const [selectedMergedRoutes, setSelectedMergedRoutes] = useState(new Set());
   const [selectedClusters, setSelectedClusters] = useState(new Set());
-  const [expandedCluster, setExpandedCluster] = useState(null);
   const [selectedMarker, setSelectedMarker] = useState(null);
   const [showRoutes, setShowRoutes] = useState(true);
   const [routeWidth, setRouteWidth] = useState("medium");
   const [commonDestination, setCommonDestination] = useState(null);
   const [selectedClusterDetails, setSelectedClusterDetails] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // New states for merge functionality
+  const [showMergeModal, setShowMergeModal] = useState(false);
+  const [mergedRoutes, setMergedRoutes] = useState({});
+  const [savedRoutes, setSavedRoutes] = useState({});
+  const [mergeOptimization, setMergeOptimization] = useState(true);
+
+  const bookings = useSelector(selectBookingsByShift(shiftId));
+
+  const handleToggleMergedRouteSelection = (mergedRouteId) => {
+    const newSelected = new Set(selectedMergedRoutes);
+    if (newSelected.has(mergedRouteId)) {
+      newSelected.delete(mergedRouteId);
+    } else {
+      newSelected.add(mergedRouteId);
+    }
+    setSelectedMergedRoutes(newSelected);
+  };
+
   // Fetch data based on mode using Axios
   useEffect(() => {
     const fetchRouteData = async () => {
@@ -328,51 +172,222 @@ const ClusterMapViewer = ({ mode = "suggestions" }) => {
     }
   }, [mode, shiftId, date]);
 
-  // Toggle booking details
-  const handleExpandToggle = (clusterId) => {
-    setExpandedCluster(expandedCluster === clusterId ? null : clusterId);
+  // Handle cluster selection toggle
+  const handleClusterToggle = (clusterId) => {
+    const newSelected = new Set(selectedClusters);
+    if (newSelected.has(clusterId)) {
+      newSelected.delete(clusterId);
+    } else {
+      newSelected.add(clusterId);
+    }
+    setSelectedClusters(newSelected);
   };
 
-  // Get all markers for selected clusters
-  const getMarkers = () => {
-    if (
-      !routeData ||
-      !routeData.route_clusters ||
-      routeData.route_clusters.length === 0
-    )
-      return [];
+  // Handle merge clusters
+  const handleMergeClusters = () => {
+    if (selectedClusters.size < 2) {
+      alert("Please select at least 2 clusters to merge");
+      return;
+    }
+    setShowMergeModal(true);
+  };
 
-    const markers = [];
-    routeData.route_clusters.forEach((cluster) => {
-      if (selectedClusters.has(cluster.cluster_id)) {
-        cluster.bookings.forEach((booking) => {
-          // Pickup point marker
-          markers.push({
-            clusterId: cluster.cluster_id,
-            booking,
-            position: {
-              lat: booking.pickup_latitude,
-              lng: booking.pickup_longitude,
-            },
-            type: "pickup",
-          });
-        });
+  // Calculate route efficiency before merging
+  const calculateRouteEfficiency = (clusterIds) => {
+    if (!routeData || !commonDestination)
+      return { totalDistance: 0, optimizedDistance: 0 };
 
-        // Common destination marker (only add once per cluster)
-        if (commonDestination) {
-          markers.push({
-            clusterId: cluster.cluster_id,
-            booking: null,
-            position: commonDestination,
-            type: "destination",
-          });
-        }
+    let totalDistance = 0;
+    const allPickupPoints = [];
+
+    clusterIds.forEach((clusterId) => {
+      const cluster = routeData.route_clusters.find(
+        (c) => c.cluster_id === clusterId
+      );
+      if (cluster) {
+        const pickupPoints = cluster.bookings.map((booking) => ({
+          lat: booking.pickup_latitude,
+          lng: booking.pickup_longitude,
+          bookingId: booking.booking_id,
+        }));
+
+        // Calculate individual cluster distance
+        const clusterSequence = findOptimalRouteSequence(
+          pickupPoints,
+          commonDestination
+        );
+        const clusterDistance = calculateRouteDistance([
+          ...clusterSequence,
+          commonDestination,
+        ]);
+        totalDistance += clusterDistance;
+
+        allPickupPoints.push(...pickupPoints);
       }
     });
-    return markers;
+
+    // Calculate optimized merged distance
+    const mergedSequence = findOptimalRouteSequence(
+      allPickupPoints,
+      commonDestination
+    );
+    const optimizedDistance = calculateRouteDistance([
+      ...mergedSequence,
+      commonDestination,
+    ]);
+
+    return { totalDistance, optimizedDistance };
   };
 
-  // Generate single optimized route for each cluster
+  // Calculate distance for a route path
+  const calculateRouteDistance = (path) => {
+    let distance = 0;
+    for (let i = 0; i < path.length - 1; i++) {
+      distance += calculateDistance(path[i], path[i + 1]);
+    }
+    return distance;
+  };
+
+  // Confirm merge with optimized route
+  const handleConfirmMerge = () => {
+    const selectedClusterArray = Array.from(selectedClusters);
+    const mergedId = `merged-${Date.now()}`;
+
+    // Get all bookings from selected clusters
+    const allBookings = [];
+    const allPickupPoints = [];
+
+    selectedClusterArray.forEach((clusterId) => {
+      const cluster = routeData.route_clusters.find(
+        (c) => c.cluster_id === clusterId
+      );
+      if (cluster) {
+        allBookings.push(...cluster.bookings);
+        cluster.bookings.forEach((booking) => {
+          allPickupPoints.push({
+            lat: booking.pickup_latitude,
+            lng: booking.pickup_longitude,
+            bookingId: booking.booking_id,
+            employeeCode: booking.employee_code,
+          });
+        });
+      }
+    });
+
+    // Calculate optimized route
+    let optimalSequence;
+    if (mergeOptimization) {
+      optimalSequence = findOptimalRouteSequence(
+        allPickupPoints,
+        commonDestination
+      );
+    } else {
+      // Simple concatenation without optimization
+      optimalSequence = allPickupPoints;
+    }
+
+    // Create merged route with optimization data
+    const { totalDistance, optimizedDistance } =
+      calculateRouteEfficiency(selectedClusterArray);
+    const efficiencyImprovement = totalDistance - optimizedDistance;
+
+    const mergedRoute = {
+      clusterId: mergedId,
+      originalClusterIds: selectedClusterArray,
+      bookings: allBookings,
+      optimizedPath: [...optimalSequence, commonDestination],
+      optimalSequence: optimalSequence,
+      createdAt: new Date().toISOString(),
+      efficiencyData: {
+        originalDistance: totalDistance,
+        optimizedDistance: optimizedDistance,
+        improvement: efficiencyImprovement,
+        improvementPercentage: (
+          (efficiencyImprovement / totalDistance) *
+          100
+        ).toFixed(1),
+      },
+    };
+
+    // Update merged routes state
+    setMergedRoutes((prev) => ({
+      ...prev,
+      [mergedId]: mergedRoute,
+    }));
+
+    // Automatically select the newly merged route for display
+    setSelectedMergedRoutes((prev) => new Set(prev).add(mergedId));
+
+    // Remove original clusters from selected
+    setSelectedClusters(new Set());
+
+    setShowMergeModal(false);
+  };
+
+  // Handle unmerge
+  const handleUnmerge = (mergedRouteId) => {
+    setMergedRoutes((prev) => {
+      const newMergedRoutes = { ...prev };
+      delete newMergedRoutes[mergedRouteId];
+      return newMergedRoutes;
+    });
+
+    // Remove from selected merged routes
+    setSelectedMergedRoutes((prev) => {
+      const newSelected = new Set(prev);
+      newSelected.delete(mergedRouteId);
+      return newSelected;
+    });
+  };
+
+  // Handle delete merged route
+  const handleDeleteMergedRoute = (mergedRouteId) => {
+    if (window.confirm("Are you sure you want to delete this merged route?")) {
+      setMergedRoutes((prev) => {
+        const newMergedRoutes = { ...prev };
+        delete newMergedRoutes[mergedRouteId];
+        return newMergedRoutes;
+      });
+
+      // Remove from selected merged routes
+      setSelectedMergedRoutes((prev) => {
+        const newSelected = new Set(prev);
+        newSelected.delete(mergedRouteId);
+        return newSelected;
+      });
+    }
+  };
+
+  // Save route
+  const handleSaveRoute = (routeId) => {
+    const routeToSave = mergedRoutes[routeId];
+    if (!routeToSave) return;
+
+    setSavedRoutes((prev) => ({
+      ...prev,
+      [routeId]: {
+        ...routeToSave,
+        savedAt: new Date().toISOString(),
+      },
+    }));
+    console.log(" this are the saved routes :", savedRoutes);
+
+    alert("Route saved successfully!");
+  };
+
+  // Show cluster details in modal
+  const handleShowClusterDetails = (cluster) => {
+    console.log(" this is the cluseter:", cluster);
+
+    const routes = getRoutes();
+    const clusterRoute = routes.find((r) => r.clusterId === cluster.cluster_id);
+    setSelectedClusterDetails({
+      cluster,
+      clusterRoute,
+    });
+    setIsModalOpen(true);
+  };
+
   const getRoutes = () => {
     if (
       !routeData ||
@@ -384,9 +399,9 @@ const ClusterMapViewer = ({ mode = "suggestions" }) => {
 
     const routes = [];
 
+    // Original cluster routes
     routeData.route_clusters.forEach((cluster) => {
       if (selectedClusters.has(cluster.cluster_id)) {
-        // Get all pickup points for this cluster
         const pickupPoints = cluster.bookings.map((booking) => ({
           lat: booking.pickup_latitude,
           lng: booking.pickup_longitude,
@@ -394,13 +409,11 @@ const ClusterMapViewer = ({ mode = "suggestions" }) => {
           employeeCode: booking.employee_code,
         }));
 
-        // Find optimal sequence starting from destination
         const optimalSequence = findOptimalRouteSequence(
           pickupPoints,
           commonDestination
         );
 
-        // Create single optimized route: destination -> pickup1 -> pickup2 -> ... -> back to destination
         const optimizedPath = [...optimalSequence, commonDestination];
 
         routes.push({
@@ -411,11 +424,212 @@ const ClusterMapViewer = ({ mode = "suggestions" }) => {
       }
     });
 
+    // Merged routes
+    Object.values(mergedRoutes).forEach((mergedRoute) => {
+      const pickupPoints = mergedRoute.bookings.map((booking) => ({
+        lat: booking.pickup_latitude,
+        lng: booking.pickup_longitude,
+        bookingId: booking.booking_id,
+        employeeCode: booking.employee_code,
+      }));
+
+      const optimalSequence = findOptimalRouteSequence(
+        pickupPoints,
+        commonDestination
+      );
+
+      const optimizedPath = [...optimalSequence, commonDestination];
+
+      routes.push({
+        clusterId: mergedRoute.clusterId,
+        optimizedPath: optimizedPath,
+        optimalSequence: optimalSequence,
+        isMerged: true,
+      });
+    });
+
     return routes;
   };
+  // Close modal
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedClusterDetails(null);
+  };
 
-  const markers = getMarkers();
-  const routes = getRoutes();
+  // Get all markers including merged routes - Memoized for performance
+  const markers = useMemo(() => {
+    if (
+      !routeData ||
+      !routeData.route_clusters ||
+      routeData.route_clusters.length === 0
+    )
+      return [];
+
+    const markers = [];
+
+    // Add markers from original clusters (only if selected)
+    routeData.route_clusters.forEach((cluster) => {
+      if (selectedClusters.has(cluster.cluster_id)) {
+        cluster.bookings.forEach((booking) => {
+          markers.push({
+            clusterId: cluster.cluster_id,
+            booking,
+            position: {
+              lat: booking.pickup_latitude,
+              lng: booking.pickup_longitude,
+            },
+            type: "pickup",
+          });
+        });
+      }
+    });
+
+    // Add markers from merged routes (only if selected)
+    Object.values(mergedRoutes).forEach((mergedRoute) => {
+      if (selectedMergedRoutes.has(mergedRoute.clusterId)) {
+        mergedRoute.bookings.forEach((booking) => {
+          markers.push({
+            clusterId: mergedRoute.clusterId,
+            booking,
+            position: {
+              lat: booking.pickup_latitude,
+              lng: booking.pickup_longitude,
+            },
+            type: "pickup",
+            isMerged: true,
+          });
+        });
+      }
+    });
+
+    // Common destination marker
+    if (commonDestination) {
+      markers.push({
+        clusterId: "destination",
+        booking: null,
+        position: commonDestination,
+        type: "destination",
+      });
+    }
+
+    return markers;
+  }, [
+    routeData,
+    selectedClusters,
+    mergedRoutes,
+    commonDestination,
+    selectedMergedRoutes,
+  ]);
+
+  // Generate routes including merged routes - Memoized for performance
+  const routes = useMemo(() => {
+    if (
+      !routeData ||
+      !routeData.route_clusters ||
+      routeData.route_clusters.length === 0 ||
+      !commonDestination
+    )
+      return [];
+
+    const routes = [];
+
+    // Original cluster routes (only if selected)
+    routeData.route_clusters.forEach((cluster) => {
+      if (selectedClusters.has(cluster.cluster_id)) {
+        const pickupPoints = cluster.bookings.map((booking) => ({
+          lat: booking.pickup_latitude,
+          lng: booking.pickup_longitude,
+          bookingId: booking.booking_id,
+          employeeCode: booking.employee_code,
+        }));
+
+        const optimalSequence = findOptimalRouteSequence(
+          pickupPoints,
+          commonDestination
+        );
+
+        const optimizedPath = [...optimalSequence, commonDestination];
+
+        routes.push({
+          clusterId: cluster.cluster_id,
+          optimizedPath: optimizedPath,
+          optimalSequence: optimalSequence,
+          isSelected: true,
+        });
+      }
+    });
+
+    // Merged routes (only if selected for display)
+    Object.values(mergedRoutes).forEach((mergedRoute) => {
+      if (selectedMergedRoutes.has(mergedRoute.clusterId)) {
+        routes.push({
+          clusterId: mergedRoute.clusterId,
+          optimizedPath: mergedRoute.optimizedPath,
+          optimalSequence: mergedRoute.optimalSequence,
+          isMerged: true,
+          efficiencyData: mergedRoute.efficiencyData,
+          isSelected: true,
+        });
+      }
+    });
+
+    return routes;
+  }, [
+    routeData,
+    selectedClusters,
+    mergedRoutes,
+    commonDestination,
+    selectedMergedRoutes,
+  ]);
+
+  // Helper function to create marker icon configuration
+  const getMarkerIcon = (marker) => {
+    if (marker.type === "destination") {
+      return {
+        path: "M 0, 0 m -5, 0 a 5,5 0 1,0 10,0 a 5,5 0 1,0 -10,0", // Circle
+        scale: 2,
+        fillColor: "#DC2626", // Red for destination
+        fillOpacity: 0.9,
+        strokeColor: "#ffffff",
+        strokeWeight: 2,
+      };
+    }
+
+    // For pickup markers
+    return {
+      path: "M 0, 0 m -5, 0 a 5,5 0 1,0 10,0 a 5,5 0 1,0 -10,0", // Circle
+      scale: 1.6,
+      fillColor: marker.isMerged
+        ? "#8B5CF6" // Purple for merged clusters
+        : getClusterColor(marker.clusterId),
+      fillOpacity: 0.9,
+      strokeColor: "#ffffff",
+      strokeWeight: 2,
+    };
+  };
+
+  // Helper function to create marker label
+  const getMarkerLabel = (marker) => {
+    if (marker.type === "destination") {
+      return {
+        text: "DEST",
+        color: "#ffffff",
+        fontSize: "10px",
+        fontWeight: "bold",
+      };
+    }
+
+    if (marker.type === "pickup") {
+      return {
+        text: marker.isMerged ? "M" : "P",
+        color: "#ffffff",
+        fontSize: "10px",
+        fontWeight: "bold",
+      };
+    }
+
+    return undefined;
+  };
 
   const API_KEY = import.meta.env.VITE_GOOGLE_API || "";
 
@@ -442,7 +656,7 @@ const ClusterMapViewer = ({ mode = "suggestions" }) => {
     );
   }
 
-  // No data state - handles both empty data and the specific API response you provided
+  // No data state
   if (
     !routeData ||
     isEmptyData(routeData) ||
@@ -470,34 +684,90 @@ const ClusterMapViewer = ({ mode = "suggestions" }) => {
       </div>
     );
   }
-  const handleClusterToggle = (clusterId) => {
-    const newSelected = new Set(selectedClusters);
-    if (newSelected.has(clusterId)) {
-      newSelected.delete(clusterId);
-    } else {
-      newSelected.add(clusterId);
-    }
-    setSelectedClusters(newSelected);
-  };
-
-  // Show cluster details in modal
-  const handleShowClusterDetails = (cluster) => {
-    const clusterRoute = routes.find((r) => r.clusterId === cluster.cluster_id);
-    setSelectedClusterDetails({
-      cluster,
-      clusterRoute,
-    });
-    setIsModalOpen(true);
-  };
-
-  // Close modal
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedClusterDetails(null);
-  };
 
   return (
     <div className="flex h-screen bg-gray-50">
+      {/* Left Sidebar - Compact Cluster List */}
+      <div className="w-1/3 bg-white border-r border-gray-200 overflow-y-auto flex flex-col">
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 z-10">
+          <h2 className="text-xl font-semibold text-gray-800">
+            {mode === "suggestions" ? "Suggested Routes" : "Saved Routes"}
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">
+            {routeData.total_clusters} clusters · {routeData.total_bookings}{" "}
+            bookings
+            {Object.keys(mergedRoutes).length > 0 &&
+              ` · ${Object.keys(mergedRoutes).length} merged`}
+          </p>
+        </div>
+
+        {/* Enhanced Toolbar */}
+        <MapToolbar
+          selectedClusters={selectedClusters}
+          routeWidth={routeWidth}
+          showRoutes={showRoutes}
+          onMergeClusters={handleMergeClusters}
+          onRouteWidthChange={setRouteWidth}
+          onToggleRoutes={() => setShowRoutes(!showRoutes)}
+          mergeOptimization={mergeOptimization}
+          onToggleOptimization={() => setMergeOptimization(!mergeOptimization)}
+        />
+
+        {/* Cluster List */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {/* Merged Routes Section */}
+          {Object.keys(mergedRoutes).length > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <Merge className="w-4 h-4 text-purple-600" />
+                  Merged Routes
+                </h3>
+                <span className="text-xs text-gray-500 bg-purple-100 px-2 py-1 rounded">
+                  {Object.keys(mergedRoutes).length} merged
+                </span>
+              </div>
+              <div className="space-y-2">
+                {Object.values(mergedRoutes).map((mergedRoute) => (
+                  <MergedRouteCard
+                    key={mergedRoute.clusterId}
+                    mergedRoute={mergedRoute}
+                    onSaveRoute={handleSaveRoute}
+                    onUnmerge={handleUnmerge}
+                    onDelete={handleDeleteMergedRoute}
+                    isSaved={!!savedRoutes[mergedRoute.clusterId]}
+                    isSelected={selectedMergedRoutes.has(mergedRoute.clusterId)}
+                    onToggleSelect={handleToggleMergedRouteSelection}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Original Clusters Section */}
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-gray-700">Clusters</h3>
+            <span className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded">
+              {routeData.route_clusters.length} total
+            </span>
+          </div>
+          {routeData.route_clusters.map((cluster) => (
+            <ClusterCard
+              key={cluster.cluster_id}
+              cluster={cluster}
+              isSelected={selectedClusters.has(cluster.cluster_id)}
+              onToggleSelect={handleClusterToggle}
+              onShowDetails={handleShowClusterDetails}
+              getClusterColor={getClusterColor}
+              isMerged={Object.values(mergedRoutes).some((merged) =>
+                merged.originalClusterIds.includes(cluster.cluster_id)
+              )}
+            />
+          ))}
+        </div>
+      </div>
+
       {/* Right Side - Map */}
       <div className="flex-1 relative">
         <APIProvider apiKey={API_KEY}>
@@ -514,41 +784,12 @@ const ClusterMapViewer = ({ mode = "suggestions" }) => {
                 key={`${marker.clusterId}-${marker.type}-${index}`}
                 position={marker.position}
                 onClick={() => setSelectedMarker(marker)}
-                icon={{
-                  path:
-                    marker.type === "destination"
-                      ? google.maps.SymbolPath.CIRCLE
-                      : google.maps.SymbolPath.CIRCLE,
-                  scale: marker.type === "destination" ? 10 : 8,
-                  fillColor:
-                    marker.type === "destination"
-                      ? "#DC2626"
-                      : getClusterColor(marker.clusterId),
-                  fillOpacity: 0.9,
-                  strokeColor: "#ffffff",
-                  strokeWeight: 2,
-                }}
-                label={
-                  marker.type === "destination"
-                    ? {
-                        text: "DEST",
-                        color: "#ffffff",
-                        fontSize: "10px",
-                        fontWeight: "bold",
-                      }
-                    : marker.type === "pickup"
-                    ? {
-                        text: "P",
-                        color: "#ffffff",
-                        fontSize: "10px",
-                        fontWeight: "bold",
-                      }
-                    : undefined
-                }
+                icon={getMarkerIcon(marker)}
+                label={getMarkerLabel(marker)}
               />
             ))}
 
-            {/* Render single optimized route for each cluster */}
+            {/* Render routes */}
             {showRoutes && (
               <RouteRenderer
                 routes={routes}
@@ -579,7 +820,10 @@ const ClusterMapViewer = ({ mode = "suggestions" }) => {
                   ) : (
                     <>
                       <p className="font-semibold text-sm mb-1">
-                        Cluster {selectedMarker.clusterId} - Pickup
+                        {selectedMarker.isMerged
+                          ? "Merged Cluster"
+                          : `Cluster ${selectedMarker.clusterId}`}{" "}
+                        - Pickup
                       </p>
                       <p className="text-xs text-gray-600 mb-1">
                         {selectedMarker.booking.employee_code}
@@ -587,6 +831,11 @@ const ClusterMapViewer = ({ mode = "suggestions" }) => {
                       <p className="text-xs text-gray-500">
                         Booking ID: {selectedMarker.booking.booking_id}
                       </p>
+                      {selectedMarker.isMerged && (
+                        <p className="text-xs text-purple-600 font-medium mt-1">
+                          Merged Route
+                        </p>
+                      )}
                     </>
                   )}
                 </div>
@@ -596,252 +845,25 @@ const ClusterMapViewer = ({ mode = "suggestions" }) => {
         </APIProvider>
       </div>
 
-      {/* Left Sidebar - Compact Cluster List */}
-      <div className="w-2/4 bg-white border-r border-gray-200 overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 z-10">
-          <h2 className="text-xl font-semibold text-gray-800">
-            {mode === "suggestions" ? "Suggested Routes" : "Saved Routes"}
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            {routeData.total_clusters} clusters · {routeData.total_bookings}{" "}
-            bookings
-          </p>
+      {/* Enhanced Merge Confirmation Modal */}
+      <MergeConfirmationModal
+        showMergeModal={showMergeModal}
+        setShowMergeModal={setShowMergeModal}
+        selectedClusters={selectedClusters}
+        onConfirmMerge={handleConfirmMerge}
+        routeData={routeData}
+        commonDestination={commonDestination}
+        mergeOptimization={mergeOptimization}
+        onToggleOptimization={() => setMergeOptimization(!mergeOptimization)}
+      />
 
-          <div className="mt-3 flex flex-col gap-2">
-            <button
-              onClick={() => setShowRoutes(!showRoutes)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                showRoutes
-                  ? "bg-blue-100 text-blue-700 border border-blue-200"
-                  : "bg-gray-100 text-gray-700 border border-gray-200"
-              }`}
-            >
-              <Route className="w-4 h-4" />
-              {showRoutes ? "Hide Routes" : "Show Routes"}
-            </button>
-
-            {showRoutes && (
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-medium text-gray-700">
-                  Route Width:
-                </label>
-                <select
-                  value={routeWidth}
-                  onChange={(e) => setRouteWidth(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="thin">Thin</option>
-                  <option value="medium">Medium</option>
-                  <option value="thick">Thick</option>
-                  <option value="very-thick">Very Thick</option>
-                </select>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="p-4 space-y-2">
-          {routeData.route_clusters.map((cluster) => {
-            const isSelected = selectedClusters.has(cluster.cluster_id);
-            const clusterColor = getClusterColor(cluster.cluster_id);
-            const clusterRoute = routes.find(
-              (r) => r.clusterId === cluster.cluster_id
-            );
-
-            return (
-              <div
-                key={cluster.cluster_id}
-                className={`border rounded-lg p-3 transition-all ${
-                  isSelected
-                    ? "border-blue-500 shadow-md bg-blue-50"
-                    : "border-gray-200 bg-white"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => handleClusterToggle(cluster.cluster_id)}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-800 truncate">
-                      Cluster {cluster.cluster_id}
-                    </h3>
-                    <div className="flex items-center gap-4 mt-1">
-                      <div className="flex items-center gap-1">
-                        <Users className="w-3 h-3 text-gray-500" />
-                        <span className="text-xs text-gray-600">
-                          {cluster.bookings.length} bookings
-                        </span>
-                      </div>
-                      {clusterRoute?.optimalSequence && (
-                        <span className="text-xs text-green-600 font-medium">
-                          {clusterRoute.optimalSequence.length + 1} stops
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleShowClusterDetails(cluster)}
-                    className="flex items-center gap-1 px-2 py-1 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors text-xs font-medium text-gray-700"
-                  >
-                    <span>{cluster.bookings.length}</span>
-                    <ChevronDown className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Cluster Details Modal */}
-      {isModalOpen && selectedClusterDetails && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
-                  style={{
-                    backgroundColor: getClusterColor(
-                      selectedClusterDetails.cluster.cluster_id
-                    ),
-                  }}
-                >
-                  {selectedClusterDetails.cluster.cluster_id}
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    Cluster {selectedClusterDetails.cluster.cluster_id} Details
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {selectedClusterDetails.cluster.bookings.length} bookings
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={handleCloseModal}
-                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-
-            <div className="overflow-y-auto max-h-[60vh] p-4">
-              {/* Optimized Sequence Section */}
-              {selectedClusterDetails.clusterRoute?.optimalSequence &&
-                selectedClusterDetails.clusterRoute.optimalSequence.length >
-                  0 && (
-                  <div className="mb-6 bg-green-50 rounded-lg p-4 border border-green-200">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Route className="w-4 h-4 text-green-600" />
-                      <p className="text-sm font-medium text-green-800">
-                        Optimized Pickup Sequence
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      {selectedClusterDetails.clusterRoute.optimalSequence.map(
-                        (point, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center gap-3 p-2 bg-white rounded border border-green-100"
-                          >
-                            <div className="w-6 h-6 rounded-full bg-green-500 text-white text-xs flex items-center justify-center font-semibold flex-shrink-0">
-                              {index + 1}
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-800">
-                                Employee {point.employeeCode}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {point.lat.toFixed(4)}, {point.lng.toFixed(4)}
-                              </p>
-                            </div>
-                          </div>
-                        )
-                      )}
-                      <div className="flex items-center gap-3 p-2 bg-blue-50 rounded border border-blue-200">
-                        <div className="w-6 h-6 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center font-semibold flex-shrink-0">
-                          {selectedClusterDetails.clusterRoute.optimalSequence
-                            .length + 1}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-blue-800">
-                            Destination
-                          </p>
-                          <p className="text-xs text-blue-600">
-                            {commonDestination?.address}
-                          </p>
-                          <p className="text-xs text-blue-500">
-                            {commonDestination?.lat.toFixed(4)},{" "}
-                            {commonDestination?.lng.toFixed(4)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-              {/* Bookings List */}
-              <div className="space-y-3">
-                <h4 className="font-medium text-gray-800 mb-3">Bookings</h4>
-                {selectedClusterDetails.cluster.bookings.map((booking) => (
-                  <div
-                    key={booking.booking_id}
-                    className="bg-gray-50 rounded-lg p-3 border border-gray-200"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-sm font-medium text-gray-800">
-                            {booking.employee_code}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Booking ID: {booking.booking_id}
-                          </p>
-                        </div>
-                      </div>
-                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
-                        {booking.status}
-                      </span>
-                    </div>
-
-                    <div className="text-xs text-gray-600 space-y-1 ml-6">
-                      <div className="flex justify-between">
-                        <span className="font-medium">Pickup:</span>
-                        <span>
-                          {booking.pickup_latitude.toFixed(4)},{" "}
-                          {booking.pickup_longitude.toFixed(4)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Drop:</span>
-                        <span className="text-right max-w-[200px] truncate">
-                          {commonDestination?.address || booking.drop_location}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 p-4 border-t border-gray-200">
-              <button
-                onClick={handleCloseModal}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ClusterDetailsModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        selectedClusterDetails={selectedClusterDetails}
+        commonDestination={commonDestination}
+        getClusterColor={getClusterColor}
+      />
     </div>
   );
 };

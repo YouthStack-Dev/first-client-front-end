@@ -2,6 +2,20 @@ import React, { useState, useEffect, useRef } from "react";
 import ToolBar from "../ui/ToolBar";
 import ScheduleList from "./ScheduleList";
 import { API_CLIENT } from "../../Api/API_Client";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addShiftsFromAPI,
+  setLoading,
+  setError,
+  selectShiftsWithBookings,
+  selectRouteLoading,
+  selectRouteError,
+  selectPendingBookingsByShift,
+  selectSavedRoutesByShift,
+  selectSuggestedRoutesByShift,
+  clearAllRouteData,
+} from "@features/routes/roureSlice";
+import { addSavedRoutes } from "../../redux/features/routes/roureSlice";
 
 const RouteScheduledBookings = ({
   toggleRouting,
@@ -11,14 +25,16 @@ const RouteScheduledBookings = ({
   const [selectedDate, setSelectedDate] = useState(
     initialSelectedDate || new Date().toISOString().split("T")[0]
   );
+  const dispatch = useDispatch();
   const [selectedShiftType, setSelectedShiftType] = useState("All");
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedShift, setSelectedShift] = useState(null);
-  const [allShiftBookings, setAllShiftBookings] = useState([]); // Store original data
-  const [filteredShiftBookings, setFilteredShiftBookings] = useState([]); // Store filtered data
   const [selectedOption, setSelectedOption] = useState("Select option");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+
+  // Get data from Redux
+  const shiftsWithBookings = useSelector(selectShiftsWithBookings);
+  const loading = useSelector(selectRouteLoading);
+  const error = useSelector(selectRouteError);
 
   const [hasRoutesPermission] = useState(true);
   const [hasTripSheetsPermission] = useState(false);
@@ -36,10 +52,9 @@ const RouteScheduledBookings = ({
     "Upload Vehicle",
   ];
 
-  // 🔹 Fetch shifts data from API
+  // 🔹 Fetch shifts data from API and store in Redux
   const fetchShiftsData = async (date) => {
-    setLoading(true);
-    setError(null);
+    dispatch(setLoading(true));
 
     try {
       const tenantId = "1";
@@ -48,34 +63,77 @@ const RouteScheduledBookings = ({
       );
 
       if (response.data.success) {
-        // Use backend data directly without transformation
-        const apiData = response.data.data?.shifts || [];
-        setAllShiftBookings(apiData); // Store original data
-        setFilteredShiftBookings(apiData); // Initialize filtered data
+        // Store everything in Redux
+        dispatch(
+          addShiftsFromAPI({
+            date: response.data.data?.date || date,
+            shifts: response.data.data?.shifts || [],
+          })
+        );
       } else {
-        setError(response.data.message || "Failed to fetch shifts data");
-        setAllShiftBookings([]);
-        setFilteredShiftBookings([]);
+        const errorMsg = response.data.message || "Failed to fetch shifts data";
+        dispatch(setError(errorMsg));
       }
     } catch (err) {
       console.error("Error fetching shifts data:", err);
-      setError(
+      const errorMsg =
         err.response?.data?.message ||
-          err.message ||
-          "Failed to load shifts data from server"
-      );
-      setAllShiftBookings([]);
-      setFilteredShiftBookings([]);
+        err.message ||
+        "Failed to load shifts data from server";
+      dispatch(setError(errorMsg));
     } finally {
-      setLoading(false);
+      dispatch(setLoading(false));
     }
   };
 
-  // 🔹 Load shifts from API when selected date changes - FIXED: Prevent double calls
+  const fetchSavedRoutesData = async (tenantId, bookingDate) => {
+    dispatch(setLoading(true));
+
+    try {
+      const response = await API_CLIENT.get(
+        `/v1/routes/?tenant_id=${tenantId}&booking_date=${bookingDate}`
+      );
+
+      if (response.data.success) {
+        const shifts = response.data.data?.shifts || [];
+
+        // Iterate through shifts to extract routes
+        shifts.forEach((shift) => {
+          const shiftId = shift.shift_id;
+          const routes = shift.routes || [];
+
+          // Dispatch each shift’s routes to Redux
+          if (routes.length > 0) {
+            dispatch(
+              addSavedRoutes({
+                shiftId,
+                routes,
+              })
+            );
+          }
+        });
+      } else {
+        const errorMsg =
+          response.data.message || "Failed to fetch saved routes data";
+        dispatch(setError(errorMsg));
+      }
+    } catch (err) {
+      console.error("Error fetching saved routes:", err);
+      const errorMsg =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to load saved routes from server";
+      dispatch(setError(errorMsg));
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
+
+  // 🔹 Load shifts from API when selected date changes
   useEffect(() => {
     // Reset ref when date changes
     hasFetchedRef.current = false;
-
+    fetchSavedRoutesData("SAM001", "2025-11-01");
     // Prevent duplicate calls in strict mode
     if (!hasFetchedRef.current) {
       hasFetchedRef.current = true;
@@ -83,24 +141,29 @@ const RouteScheduledBookings = ({
     }
   }, [selectedDate]);
 
-  // 🔹 Apply filter: In / Out - FIXED: No longer mutates state
-  useEffect(() => {
-    if (allShiftBookings.length === 0) {
-      setFilteredShiftBookings([]);
-      return;
-    }
+  // 🔹 Apply filter: In / Out
+  const filteredShiftBookings = React.useMemo(() => {
+    if (shiftsWithBookings.length === 0) return [];
 
     if (selectedShiftType === "All") {
-      setFilteredShiftBookings(allShiftBookings);
+      return shiftsWithBookings;
     } else {
-      const filtered = allShiftBookings.filter((shift) =>
+      return shiftsWithBookings.filter((shift) =>
         selectedShiftType === "In"
           ? shift.log_type === "IN"
           : shift.log_type === "OUT"
       );
-      setFilteredShiftBookings(filtered);
     }
-  }, [selectedShiftType, allShiftBookings]);
+  }, [selectedShiftType, shiftsWithBookings]);
+
+  // Calculate totals from filtered data
+  const totalLogin = filteredShiftBookings
+    .filter((s) => s.log_type === "IN")
+    .reduce((sum, s) => sum + (s.bookings?.length || 0), 0);
+
+  const totalLogout = filteredShiftBookings
+    .filter((s) => s.log_type === "OUT")
+    .reduce((sum, s) => sum + (s.bookings?.length || 0), 0);
 
   const handleButtonClick = (shift) => {
     setSelectedShift(shift);
@@ -112,18 +175,28 @@ const RouteScheduledBookings = ({
     toggleRouting("routing");
   };
 
+  // Handler functions using Redux selectors
+  const handleViewSuggestions = (shift) => {
+    // You can dispatch actions or use selectors here
+    console.log("View suggestions for shift:", shift.shift_id);
+    // Example: const suggestions = useSelector(selectSuggestedRoutesByShift(shift.shift_id));
+  };
+
+  const handleSaveRoute = (shift) => {
+    // Your save route logic here
+    console.log("Save route for shift:", shift.shift_id);
+  };
+
+  const handlePendingRouteBookings = (shift) => {
+    // Your pending bookings logic here
+    console.log("Pending bookings for shift:", shift.shift_id);
+    // Example: const pendingBookings = useSelector(selectPendingBookingsByShift(shift.shift_id));
+  };
+
   const getVendorCount = (routes = []) =>
     routes.filter((r) => r.vendorId).length;
   const getVehicleCount = (routes = []) =>
     routes.filter((r) => r.vehicleId).length;
-
-  const totalLogin = filteredShiftBookings
-    .filter((s) => s.log_type === "IN")
-    .reduce((sum, s) => sum + (s.bookings?.length || 0), 0);
-
-  const totalLogout = filteredShiftBookings
-    .filter((s) => s.log_type === "OUT")
-    .reduce((sum, s) => sum + (s.bookings?.length || 0), 0);
 
   const handleShiftOption = (option, shift) => {
     if (!shift) return;
@@ -144,6 +217,14 @@ const RouteScheduledBookings = ({
 
   const visiblePanelsCount =
     Number(hasRoutesPermission) + Number(hasTripSheetsPermission);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Optional: Clear Redux data when component unmounts
+      // dispatch(clearAllRouteData());
+    };
+  }, [dispatch]);
 
   // ---------------- Toolbar ----------------
   const topToolbar = (
@@ -186,6 +267,15 @@ const RouteScheduledBookings = ({
             className="bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600 disabled:bg-blue-300"
           >
             {loading ? "Refreshing..." : "Refresh"}
+          </button>
+
+          {/* Clear Data Button (optional) */}
+          <button
+            onClick={() => dispatch(clearAllRouteData())}
+            className="bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600"
+            title="Clear all route data"
+          >
+            Clear Data
           </button>
         </div>
       }
@@ -237,6 +327,8 @@ const RouteScheduledBookings = ({
                 getVendorCount={getVendorCount}
                 getVehicleCount={getVehicleCount}
                 selectedShift={selectedShift}
+                isLoading={loading}
+                emptyMessage="No shifts available for selected date"
               />
             )}
           </div>

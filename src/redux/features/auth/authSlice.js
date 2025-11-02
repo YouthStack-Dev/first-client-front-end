@@ -6,7 +6,6 @@ import { logDebug } from "../../../utils/logger";
 
 // Utility function to get token expiration
 const getTokenExpiration = (token) => {
-
   logDebug("Decoding token for expiration:", token);
   try {
     const decoded = jwtDecode(token);
@@ -15,12 +14,10 @@ const getTokenExpiration = (token) => {
     }
     return null;
   } catch (error) {
-    console.error('Failed to decode JWT:', error);
+    console.error("Failed to decode JWT:", error);
     return null;
   }
 };
-
-
 
 const initialState = {
   user: null,
@@ -29,8 +26,8 @@ const initialState = {
   loading: false,
   error: null,
   isAuthenticated: false,
-  authloading:false,
-  lastLogin: null
+  authloading: false,
+  lastLogin: null,
 };
 
 const authSlice = createSlice({
@@ -42,36 +39,36 @@ const authSlice = createSlice({
     },
     logout: (state) => {
       // Clear all client-side storage
-      Cookies.remove('auth_token', { path: '/' });
-      Cookies.remove('refresh_token', { path: '/' });
-      sessionStorage.removeItem('userPermissions');
-      localStorage.removeItem('persist:root'); // More specific clearing
-      
+      Cookies.remove("auth_token", { path: "/" });
+      Cookies.remove("refresh_token", { path: "/" });
+      sessionStorage.removeItem("userPermissions");
+      localStorage.removeItem("persist:root"); // More specific clearing
+
       // Reset state
       Object.assign(state, initialState);
     },
     setAuthCredentials: (state, action) => {
       const { user, token } = action.payload;
-    
+
       let userType = "admin"; // default type
-    
+
       if (user.employee) {
         userType = "employee";
       } else if (user.vendor_user) {
         userType = "vendor";
       }
-    
+
       // Assign the type to the user object
       const userWithType = { ...user, type: userType };
-    
+
       // Update state
       state.user = userWithType;
       state.token = token;
       state.isAuthenticated = true;
-    
+
       logDebug("Setting auth credentials:", { user: userWithType, token });
     },
-    
+
     // New reducer to handle token-based state restoration
     setAuthFromToken: (state, action) => {
       state.user = action.payload.user;
@@ -85,10 +82,10 @@ const authSlice = createSlice({
     // Add a reducer to explicitly set loading state
     setLoading: (state, action) => {
       state.loading = action.payload;
-    }
-    ,   setAuthLoading: (state, action) => {
+    },
+    setAuthLoading: (state, action) => {
       state.authloading = action.payload;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -98,7 +95,7 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         const { user, token, allowedModules } = action.payload;
-        logDebug(" this is the payload " , action.payload)
+        logDebug(" this is the payload ", action.payload);
         state.user = user;
         state.token = token;
         state.permissions = allowedModules;
@@ -106,82 +103,91 @@ const authSlice = createSlice({
         state.lastLogin = new Date().toISOString();
         state.loading = false;
         state.error = null;
-        
+
         // Set cookie with proper expiration based on token
         const tokenExpiration = getTokenExpiration(token);
         const cookieOptions = {
           expires: tokenExpiration ? tokenExpiration : 7, // Use token expiration or fallback to 7 days
-          path: '/',
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict'
+          path: "/",
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
         };
-        
-        Cookies.set('auth_token', token, cookieOptions);
-        
+
+        Cookies.set("auth_token", token, cookieOptions);
+
         // Persist to session storage
-        sessionStorage.setItem('userPermissions', JSON.stringify({
-          user,
-          permissions: allowedModules,
-          lastUpdated: new Date().toISOString()
-        }));
+        sessionStorage.setItem(
+          "userPermissions",
+          JSON.stringify({
+            user,
+            permissions: allowedModules,
+            lastUpdated: new Date().toISOString(),
+          })
+        );
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.isAuthenticated = false;
         state.error = {
-          message: action.payload?.message || 'Authentication failed',
+          message: action.payload?.message || "Authentication failed",
           status: action.payload?.status || 500,
           errors: action.payload?.errors || null,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         };
         logDebug("This is the error ", action.payload?.errors);
-        
+
         // Clear any partial auth data
-        Cookies.remove('auth_token', { path: '/' });
-        sessionStorage.removeItem('userPermissions');
+        Cookies.remove("auth_token", { path: "/" });
+        sessionStorage.removeItem("userPermissions");
       })
       // Handle token-based user fetching
       .addCase(fetchUserFromToken.pending, (state) => {
         state.loading = true;
       })
       .addCase(fetchUserFromToken.fulfilled, (state, action) => {
-        const { user, permissions:allowedModules } = action.payload;
-        logDebug(" this is the refresh payload user " , action.payload)
+        const { user, permissions: allowedModules } = action.payload;
+        logDebug(" this is the refresh payload user ", action.payload);
         state.user = user;
         state.permissions = allowedModules;
         state.isAuthenticated = true;
         state.loading = false;
         state.error = null;
-        
+
         // Update session storage
-        sessionStorage.setItem('userPermissions', JSON.stringify({
-          user,
-          permissions: allowedModules,
-          lastUpdated: new Date().toISOString()
-        }));
+        sessionStorage.setItem(
+          "userPermissions",
+          JSON.stringify({
+            user,
+            permissions: allowedModules,
+            lastUpdated: new Date().toISOString(),
+          })
+        );
       })
       .addCase(fetchUserFromToken.rejected, (state, action) => {
         state.loading = false;
         state.isAuthenticated = false;
         state.error = action.payload;
-        console.log(" this is the error when fetching the permission " , action.payload);
-        
+        console.log(
+          " this is the error when fetching the permission ",
+          action.payload
+        );
+
         // Clear invalid token
-        Cookies.remove('auth_token', { path: '/' });
-        sessionStorage.removeItem('userPermissions');
+        Cookies.remove("auth_token", { path: "/" });
+        sessionStorage.removeItem("userPermissions");
       });
-  }
+  },
 });
 
 // Action creators
-export const { 
-  resetAuthState, 
-  logout, 
+export const {
+  resetAuthState,
+  logout,
   setAuthCredentials,
   setAuthFromToken,
   clearError,
   setLoading,
-  setAuthLoading
+  setAuthLoading,
 } = authSlice.actions;
 
 // Selectors
@@ -195,29 +201,27 @@ export const selectLastLogin = (state) => state.auth.lastLogin;
 
 // Utility function to initialize auth state
 export const initializeAuth = () => async (dispatch) => {
-  const token = Cookies.get("auth_token")||"";
+  const token = Cookies.get("auth_token") || "";
   // logDebug("Decoded token:", token);
   dispatch(setAuthLoading(true));
   if (!token) {
-    
     // No token → reset auth state
     dispatch(resetAuthState());
     return;
-  }else{
-  dispatch(setAuthLoading(false));
-
+  } else {
+    dispatch(setAuthLoading(false));
   }
   try {
     // Verify token is still valid
-   
 
     // Decode token and set basic user info
     const decoded = jwtDecode(token);
-  
+
     const user = {
-      email: decoded.email||"dummy@gmail.com",
+      email: decoded.email || "dummy@gmail.com",
       type: decoded.user_type,
       companyName: decoded.companyName || "Demo Company",
+      tenant_id: decoded.tenant_id || null,
     };
 
     const storedData = sessionStorage.getItem("userPermissions");
@@ -225,21 +229,19 @@ export const initializeAuth = () => async (dispatch) => {
     if (storedData) {
       try {
         const parsedData = JSON.parse(storedData);
-        const { permissions=[] } = parsedData;
-        
+        const { permissions = [] } = parsedData;
+
         dispatch(
           setAuthFromToken({
             user,
             permissions,
           })
         );
-  dispatch(setAuthLoading(false));
-
+        dispatch(setAuthLoading(false));
       } catch (error) {
         console.error("Failed to parse stored permissions:", error);
         // If parsing fails, fetch from server
         await dispatch(fetchUserFromToken());
-
       }
     } else {
       // If no session storage → fetch from server
@@ -247,7 +249,7 @@ export const initializeAuth = () => async (dispatch) => {
     }
   } catch (error) {
     console.error("Failed to initialize auth state:", error);
-    dispatch(setAuthLoading(false));  
+    dispatch(setAuthLoading(false));
     dispatch(resetAuthState());
   }
 };
