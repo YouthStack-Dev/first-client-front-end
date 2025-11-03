@@ -17,8 +17,9 @@
     "test:regression": "npm run cy:regression"
   },
   "dependencies": {
+    "@react-google-maps/api": "^2.20.7",
     "@reduxjs/toolkit": "^2.6.1",
-    "@vis.gl/react-google-maps": "^1.5.4",
+    "@vis.gl/react-google-maps": "^1.7.0",
     "axios": "^1.11.0",
     "date-fns": "^4.1.0",
     "firebase": "^11.10.0",
