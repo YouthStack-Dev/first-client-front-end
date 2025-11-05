@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { icons } from "lucide-react";
-import { logDebug } from "@utils/logger";
 
 const DefaultIcon = icons.AlertCircle || icons.Info;
 
