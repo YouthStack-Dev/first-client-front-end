@@ -3,23 +3,33 @@ import axios from "axios";
 
 /**
  * Get a cookie value by name
- * @param {string} name - cookie name
- * @returns {string|null} cookie value or null if not found
+ * @param {string} name - Cookie name
+ * @returns {string|null} Cookie value or null if not found
  */
 const getCookie = (name) => {
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-  if (match) return match[2];
-  return null;
+  const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
+  return match ? match[2] : null;
 };
 
 /**
- * Download a file from the backend
- * @param {string} filePath - Path of the file on the server
- * @param {string} fileName - Optional filename for download
- * @param {function} onSuccess - Optional callback after successful download
- * @param {function} onError - Optional callback if download fails
+ * Universal File Downloader
+ *
+ * Handles downloading files securely from any backend module:
+ * vehicles, drivers, vendors, etc.
+ *
+ * @param {string} filePath - Relative or full file path from backend.
+ * @param {string} [fileName] - Optional: Name for downloaded file.
+ * @param {string} [module="vehicles"] - Module name for path building (vehicles, drivers, etc.)
+ * @param {function} [onSuccess] - Optional callback on success.
+ * @param {function} [onError] - Optional callback on error.
  */
-export const downloadFile = async (filePath, fileName = "", onSuccess, onError) => {
+export const downloadFile = async (
+  filePath,
+  fileName = "",
+  module = "vehicles",
+  onSuccess,
+  onError
+) => {
   if (!filePath) {
     console.error("No file path provided for download.");
     onError?.("No file path provided.");
@@ -27,15 +37,16 @@ export const downloadFile = async (filePath, fileName = "", onSuccess, onError) 
   }
 
   try {
-    // Base URL from env or fallback
-    const baseURL = import.meta.env.VITE_API_URL
-      ? `${import.meta.env.VITE_API_URL}/v1`
-      : "https://api.gocab.tech/api/v1";
+    // ✅ Use environment API base URL if available
+    const baseURL =
+      import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "https://api.gocab.tech/api";
 
-    // Construct full URL safely
-    const url = `${baseURL}/vehicles/files/${encodeURIComponent(filePath)}?download=true`;
+    // ✅ If filePath is absolute (e.g., http...), use it directly
+    let url = filePath.startsWith("http")
+      ? filePath
+      : `${baseURL}/v1/${module}/files/${encodeURIComponent(filePath)}?download=true`;
 
-    // Get token from localStorage, sessionStorage, or cookie
+    // ✅ Get token (localStorage → sessionStorage → cookie)
     const token =
       localStorage.getItem("auth_token") ||
       sessionStorage.getItem("auth_token") ||
@@ -47,7 +58,7 @@ export const downloadFile = async (filePath, fileName = "", onSuccess, onError) 
       return;
     }
 
-    // Fetch file as blob
+    // ✅ Fetch the file as Blob
     const response = await axios.get(url, {
       responseType: "blob",
       headers: {
@@ -56,20 +67,27 @@ export const downloadFile = async (filePath, fileName = "", onSuccess, onError) 
       },
     });
 
-    // Determine download file name
-    const finalFileName = fileName || filePath.split("/").pop() || "downloaded_file";
+    // ✅ Extract filename from header if provided
+    const contentDisposition = response.headers["content-disposition"];
+    const suggestedFileName = contentDisposition
+      ? decodeURIComponent(
+        contentDisposition.split("filename=")[1]?.replace(/['"]/g, "") || ""
+      )
+      : "";
 
-    // Create blob and trigger download
+    const finalFileName =
+      fileName || suggestedFileName || filePath.split("/").pop() || "downloaded_file";
+
+    // ✅ Trigger download
     const blob = new Blob([response.data]);
     const downloadUrl = window.URL.createObjectURL(blob);
-
     const link = document.createElement("a");
     link.href = downloadUrl;
     link.download = finalFileName;
     document.body.appendChild(link);
     link.click();
 
-    // Cleanup
+    // ✅ Cleanup
     document.body.removeChild(link);
     window.URL.revokeObjectURL(downloadUrl);
 
@@ -78,5 +96,67 @@ export const downloadFile = async (filePath, fileName = "", onSuccess, onError) 
     console.error("❌ File download failed:", error);
     alert("Failed to download file. Please check file path or permissions.");
     onError?.(error);
+  }
+};
+
+
+/**
+ * Fetch file and return a preview URL for <img> or <object> display
+ *
+ * @param {string} filePath - Backend file path
+ * @param {string} [module="vehicles"] - Backend module (vehicles, drivers, etc.)
+ * @returns {Promise<string|null>} - Object URL for preview or null on error
+ */
+/**
+ * Fetch file and return a preview URL for <img> or <object> display
+ *
+ * @param {string} filePath - Backend file path (relative or absolute)
+ * @param {string} [module="vehicles"] - Module name: vehicles, drivers, etc.
+ * @param {boolean} [download=false] - If true, append ?download=true
+ * @returns {Promise<string|null>} - Object URL for preview or null on error
+ */
+
+export const previewFile = async (filePath, module = "vehicles", download = false) => {
+  if (!filePath) return null;
+
+  try {
+    const baseURL =
+      import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "https://api.gocab.tech/api";
+
+    // Encode each segment of path to handle special characters
+    let url;
+    if (filePath.startsWith("http")) {
+      url = filePath;
+    } else {
+      const parts = filePath.split("/").map(encodeURIComponent);
+      url = `${baseURL}/v1/${module}/files/${parts.join("/")}${download ? "?download=false" : ""}`;
+    }
+
+    // Get auth token
+    const token =
+      localStorage.getItem("auth_token") ||
+      sessionStorage.getItem("auth_token") ||
+      (() => {
+        const match = document.cookie.match(/(^| )auth_token=([^;]+)/);
+        return match ? match[2] : null;
+      })();
+
+    if (!token) throw new Error("Auth token not found");
+
+    // Fetch file as blob
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/octet-stream",
+      },
+    });
+
+    if (!response.ok) throw new Error(`Failed to fetch file: ${response.statusText}`);
+
+    const blob = await response.blob();
+    return URL.createObjectURL(blob); // Use this as src in <img>
+  } catch (err) {
+    console.error("❌ File preview failed:", err);
+    return null;
   }
 };

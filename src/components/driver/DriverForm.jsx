@@ -5,7 +5,7 @@ import DocumentsTab from './DocumentsTab';
 import { toast } from 'react-toastify';
 import { useDispatch, useSelector } from 'react-redux';
 import { fieldMapping, transformBackendToFormData } from './driverUtility';
-import { createDriverThunk,fetchDriversThunk,updateDriverThunk  } from '../../redux/features/manageDriver/driverThunks';
+import { createDriverThunk, fetchDriversThunk, updateDriverThunk } from '../../redux/features/manageDriver/driverThunks';
 
 const defaultFormData = {
   name: '',
@@ -62,18 +62,18 @@ const DriverForm = ({ initialData = null, mode, onClose, vendors = [] }) => {
   const dispatch = useDispatch();
   const driversLoading = useSelector(state => state.drivers.loading);
 
-useEffect(() => {
-  if (initialData && (mode === "edit" || mode === "view")) {
-    console.log('--- Initial Data from Backend ---', initialData); // <-- Add this log
-    const transformedData = transformBackendToFormData(initialData);
-    console.log('--- Transformed Data for Form ---', transformedData); // <-- Add this log
-    setFormData(prev => ({
-      ...prev,
-      ...transformedData,
-      vendorId: initialData.vendor?.vendor_id || '',
-    }));
-  }
-}, [initialData, mode]);
+  useEffect(() => {
+    if (initialData && (mode === "edit" || mode === "view")) {
+      console.log('--- Initial Data from Backend ---', initialData); // <-- Add this log
+      const transformedData = transformBackendToFormData(initialData);
+      console.log('--- Transformed Data for Form ---', transformedData); // <-- Add this log
+      setFormData(prev => ({
+        ...prev,
+        ...transformedData,
+        vendorId: initialData.vendor?.vendor_id || '',
+      }));
+    }
+  }, [initialData, mode]);
 
 
   // --- Handlers ---
@@ -86,7 +86,7 @@ useEffect(() => {
 
   const handleFileChange = (name, file) => {
     if (mode === 'view') return;
-      console.log(`--- File Changed --- name: ${name}, file:`, file);
+    console.log(`--- File Changed --- name: ${name}, file:`, file);
     setFormData(prev => ({ ...prev, [name]: file }));
     setErrors(prev => ({ ...prev, [name]: '' }));
   };
@@ -97,100 +97,107 @@ useEffect(() => {
   };
 
   const handleCheckboxChange = (name, checked) => {
-    if (mode === 'view') return;
-    setFormData(prev => {
+    if (mode === "view") return;
+    setFormData((prev) => {
       const newData = { ...prev, [name]: checked };
-      if (name === 'isSameAddress' && checked) newData.current_address = prev.permanent_address;
+
+      // If checked, copy permanent address into current address
+      if (name === "isSameAddress" && checked) {
+        newData.current_address = prev.permanent_address;
+      }
+
       return newData;
     });
   };
 
+
+
   // --- Validations ---
   const validatePersonalDetails = () => {
-  const personalErrors = {};
-  if (!formData.name?.trim()) personalErrors.name = 'Driver name is required';
-  if (!formData.dateOfBirth) personalErrors.dateOfBirth = 'Date of birth is required';
-  if (!formData.mobileNumber?.trim()) personalErrors.mobileNumber = 'Mobile number is required';
-  else if (!/^\d{10}$/.test(formData.mobileNumber)) personalErrors.mobileNumber = 'Mobile number must be exactly 10 digits';
-  if (!formData.email?.trim()) personalErrors.email = 'Email is required';
-  if (mode === 'create' && !formData.password?.trim()) {personalErrors.password = 'Password is required';}
-  if (!formData.code?.trim()) personalErrors.code = 'Driver code is required';
-  if (!formData.gender) personalErrors.gender = 'Gender is required';
-  return personalErrors;
-};
+    const personalErrors = {};
+    if (!formData.name?.trim()) personalErrors.name = 'Driver name is required';
+    if (!formData.dateOfBirth) personalErrors.dateOfBirth = 'Date of birth is required';
+    if (!formData.mobileNumber?.trim()) personalErrors.mobileNumber = 'Mobile number is required';
+    else if (!/^\d{10}$/.test(formData.mobileNumber)) personalErrors.mobileNumber = 'Mobile number must be exactly 10 digits';
+    if (!formData.email?.trim()) personalErrors.email = 'Email is required';
+    if (mode === 'create' && !formData.password?.trim()) { personalErrors.password = 'Password is required'; }
+    if (!formData.code?.trim()) personalErrors.code = 'Driver code is required';
+    if (!formData.gender) personalErrors.gender = 'Gender is required';
+    return personalErrors;
+  };
 
-const validateDocuments = () => {
-  const docErrors = {};
-  const today = new Date();
+  const validateDocuments = () => {
+    const docErrors = {};
+    const today = new Date();
 
-  // File uploads
-  const requiredFiles = [
-  'bgv_file', 'police_file', 'medical_file', 'training_file',
-  'eye_file', 'license_file', 'badge_file', 'alt_govt_id_file', 'induction_file'
-];
+    // File uploads
+    const requiredFiles = [
+      'bgv_file', 'police_file', 'medical_file', 'training_file',
+      'eye_file', 'license_file', 'badge_file', 'alt_govt_id_file', 'induction_file'
+    ];
 
 
-  requiredFiles.forEach(file => {
-    if (!(formData[file] instanceof File) && typeof formData[file] !== 'string') {
-      docErrors[file] = 'This document is required';
-    }
-  });
+    requiredFiles.forEach(file => {
+      if (!(formData[file] instanceof File) && typeof formData[file] !== 'string') {
+        docErrors[file] = 'This document is required';
+      }
+    });
 
-  // Text/date fields
-  if (!formData.licenseNumber?.trim()) docErrors.licenseNumber = 'License number is required';
-  if (!formData.licenseExpiryDate) docErrors.licenseExpiryDate = 'License expiry date is required';
-  else if (new Date(formData.licenseExpiryDate) < today)
-    docErrors.licenseExpiryDate = 'License expiry date cannot be in the past';
+    // Text/date fields
+    if (!formData.licenseNumber?.trim()) docErrors.licenseNumber = 'License number is required';
+    if (!formData.licenseExpiryDate) docErrors.licenseExpiryDate = 'License expiry date is required';
+    else if (new Date(formData.licenseExpiryDate) < today)
+      docErrors.licenseExpiryDate = 'License expiry date cannot be in the past';
 
-  if (!formData.badgeNumber?.trim()) docErrors.badgeNumber = 'Badge number is required';
-  if (!formData.badgeExpiryDate) docErrors.badgeExpiryDate = 'Badge expiry date is required';
-  else if (new Date(formData.badgeExpiryDate) < today)
-    docErrors.badgeExpiryDate = 'Badge expiry date cannot be in the past';
+    if (!formData.badgeNumber?.trim()) docErrors.badgeNumber = 'Badge number is required';
+    if (!formData.badgeExpiryDate) docErrors.badgeExpiryDate = 'Badge expiry date is required';
+    else if (new Date(formData.badgeExpiryDate) < today)
+      docErrors.badgeExpiryDate = 'Badge expiry date cannot be in the past';
 
-  if (!formData.inductionDate) docErrors.inductionDate = 'Induction date is required';
+    if (!formData.inductionDate) docErrors.inductionDate = 'Induction date is required';
 
-  // Expiry dates for other verifications
-  const expiryFields = [
-    { key: 'bgvExpiryDate', label: 'BGV expiry date' },
-    { key: 'policeExpiryDate', label: 'Police verification expiry date' },
-    { key: 'medicalExpiryDate', label: 'Medical expiry date' },
-    { key: 'trainingExpiryDate', label: 'Training expiry date' },
-    { key: 'eyeTestExpiryDate', label: 'Eye test expiry date' }
-  ];
+    // Expiry dates for other verifications
+    const expiryFields = [
+      { key: 'bgvExpiryDate', label: 'BGV expiry date' },
+      { key: 'policeExpiryDate', label: 'Police verification expiry date' },
+      { key: 'medicalExpiryDate', label: 'Medical expiry date' },
+      { key: 'trainingExpiryDate', label: 'Training expiry date' },
+      { key: 'eyeTestExpiryDate', label: 'Eye test expiry date' }
+    ];
 
-  expiryFields.forEach(({ key, label }) => {
-    if (!formData[key]) docErrors[key] = `${label} is required`;
-    else if (new Date(formData[key]) < today) docErrors[key] = `${label} cannot be in the past`;
-  });
+    expiryFields.forEach(({ key, label }) => {
+      if (!formData[key]) docErrors[key] = `${label} is required`;
+      else if (new Date(formData[key]) < today) docErrors[key] = `${label} cannot be in the past`;
+    });
 
-  // Government ID
-  if (!formData.govtIdNumber?.trim()) docErrors.govtIdNumber = 'Alternate Government ID is required';
-  if (!formData.alternateGovtId?.trim()) docErrors.alternateGovtId = 'Alternate Government ID type is required';
+    // Government ID
+    if (!formData.govtIdNumber?.trim()) docErrors.govtIdNumber = 'Alternate Government ID is required';
+    if (!formData.alternateGovtId?.trim()) docErrors.alternateGovtId = 'Alternate Government ID type is required';
 
-  return docErrors;
-};
+    return docErrors;
+  };
 
 
   // --- Tab navigation ---
-const handleNext = () => {
-  let currentErrors = {};
+  const handleNext = () => {
+    let currentErrors = {};
 
-  if (activeTab === 'personalDetails') {
-    currentErrors = validatePersonalDetails();
-    if (Object.keys(currentErrors).length > 0) {
-      setErrors(prev => ({ ...prev, personalDetails: currentErrors }));
-      console.log("Next clicked - personal details errors:", currentErrors);
-      toast.error("Please fix errors before proceeding");
-      return;
+    if (activeTab === 'personalDetails') {
+      currentErrors = validatePersonalDetails();
+      if (Object.keys(currentErrors).length > 0) {
+        setErrors(prev => ({ ...prev, personalDetails: currentErrors }));
+        console.log("Next clicked - personal details errors:", currentErrors);
+        toast.error("Please fix errors before proceeding");
+        return;
+      }
     }
-  }
 
-  // Clear current tab errors and do not touch next tab yet
-  setErrors(prev => ({ ...prev, [activeTab]: {} }));
+    // Clear current tab errors and do not touch next tab yet
+    setErrors(prev => ({ ...prev, [activeTab]: {} }));
 
-  const currentIndex = tabs.indexOf(activeTab);
-  if (currentIndex < tabs.length - 1) setActiveTab(tabs[currentIndex + 1]);
-};
+    const currentIndex = tabs.indexOf(activeTab);
+    if (currentIndex < tabs.length - 1) setActiveTab(tabs[currentIndex + 1]);
+  };
 
 
   const handlePrevious = () => {
@@ -200,101 +207,102 @@ const handleNext = () => {
 
   // --- Submit ---
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  // 1️⃣ Validate form
-  const personalErrors = validatePersonalDetails();
-  const documentErrors = validateDocuments();
-  const allErrors = { ...personalErrors, ...documentErrors };
-  if (Object.keys(allErrors).length > 0) {
-    setErrors(allErrors);
-    setActiveTab(Object.keys(personalErrors).length > 0 ? "personalDetails" : "documents");
-    return;
-  }
-
-  try {
-    // 2️⃣ Create FormData
-    const formDataToSubmit = new FormData();
-
-// File fields
-const fileFields = [
-   "photo","license_file", "badge_file", "alt_govt_id_file",
-  "bgv_file", "police_file", "medical_file",
-  "training_file", "eye_file", "induction_file"
-];
-
-// Map regular fields (strings, booleans, dates, status)
-Object.keys(formData).forEach((key) => {
-  if (formData[key] !== null && formData[key] !== undefined) {
-    const backendKey = fieldMapping[key] || key;
-
-    // Capitalize status fields
-    if (["bgvStatus","policeVerification","medicalVerification","trainingVerification","eyeTestStatus"].includes(key)) {
-      const value = formData[key];
-      const capitalized = value ? value.charAt(0).toUpperCase() + value.slice(1) : "Pending";
-      formDataToSubmit.append(backendKey, capitalized);
+    // 1️⃣ Validate form
+    const personalErrors = validatePersonalDetails();
+    const documentErrors = validateDocuments();
+    const allErrors = { ...personalErrors, ...documentErrors };
+    if (Object.keys(allErrors).length > 0) {
+      setErrors(allErrors);
+      setActiveTab(Object.keys(personalErrors).length > 0 ? "personalDetails" : "documents");
+      return;
     }
-    // Dates
-    else if (formData[key] instanceof Date) {
-      const date = formData[key];
-      const formattedDate = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-      formDataToSubmit.append(backendKey, formattedDate);
-    }
-    else if (typeof formData[key] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(formData[key])) {
-      // Already in YYYY-MM-DD format from input
-      formDataToSubmit.append(backendKey, formData[key]);
-    }
-    // Booleans
-    else if (typeof formData[key] === "boolean") {
-      formDataToSubmit.append(backendKey, formData[key] ? "true" : "false");
-    }
-    // Strings / other
-    else if (!(fileFields.includes(key))) { // skip files here
-      formDataToSubmit.append(backendKey, formData[key]);
-    }
-  }
-});
 
-// Append file uploads ONLY if they are File objects
-fileFields.forEach((key) => {
-  const file = formData[key];
-  if (file instanceof File) {
-    formDataToSubmit.append(fieldMapping[key] || key, file);
-  }
-});
+    try {
+      // 2️⃣ Create FormData
+      const formDataToSubmit = new FormData();
+
+      // File fields
+      const fileFields = [
+        "photo", "license_file", "badge_file", "alt_govt_id_file",
+        "bgv_file", "police_file", "medical_file",
+        "training_file", "eye_file", "induction_file"
+      ];
+
+      // Map regular fields (strings, booleans, dates, status)
+      Object.keys(formData).forEach((key) => {
+        if (formData[key] !== null && formData[key] !== undefined) {
+          const backendKey = fieldMapping[key] || key;
+
+          // Capitalize status fields
+          if (["bgvStatus", "policeVerification", "medicalVerification", "trainingVerification", "eyeTestStatus"].includes(key)) {
+            const value = formData[key];
+            const capitalized = value ? value.charAt(0).toUpperCase() + value.slice(1) : "Pending";
+            formDataToSubmit.append(backendKey, capitalized);
+          }
+          // Dates
+          else if (formData[key] instanceof Date) {
+            const date = formData[key];
+            const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            formDataToSubmit.append(backendKey, formattedDate);
+          }
+          else if (typeof formData[key] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(formData[key])) {
+            // Already in YYYY-MM-DD format from input
+            formDataToSubmit.append(backendKey, formData[key]);
+          }
+          // Booleans
+          else if (typeof formData[key] === "boolean") {
+            formDataToSubmit.append(backendKey, formData[key] ? "true" : "false");
+          }
+          // Strings / other
+          else if (!(fileFields.includes(key))) { // skip files here
+            formDataToSubmit.append(backendKey, formData[key]);
+          }
+        }
+      });
+
+      // Append file uploads ONLY if they are File objects
+      fileFields.forEach((key) => {
+        const file = formData[key];
+        if (file instanceof File) {          // ONLY if new file is selected
+          formDataToSubmit.append(fieldMapping[key] || key, file);
+        }
+      });
 
 
 
-    // Log the FormData keys and values being submitted
-    // console.log("Submitting driver data:");
-    // for (let pair of formDataToSubmit.entries()) {
-    //   console.log(pair[0]+ ':', pair[1]);
-    // }
 
-    if (mode === "edit") {
-       await dispatch(
-    updateDriverThunk({driverId: initialData.driver_id, formData: formDataToSubmit, })).unwrap();
-      toast.success("Driver updated successfully!");
-    } else {
-      await dispatch(createDriverThunk(formDataToSubmit)).unwrap();
-      toast.success("Driver created successfully!");
-    }
+      // Log the FormData keys and values being submitted
+      console.log("Submitting driver data:");
+      for (let pair of formDataToSubmit.entries()) {
+        console.log(pair[0]+ ':', pair[1]);
+      }
+
+      if (mode === "edit") {
+        await dispatch(
+          updateDriverThunk({ driverId: initialData.driver_id, formData: formDataToSubmit, })).unwrap();
+        toast.success("Driver updated successfully!");
+      } else {
+        await dispatch(createDriverThunk(formDataToSubmit)).unwrap();
+        toast.success("Driver created successfully!");
+      }
       dispatch(fetchDriversThunk());
-    if (onClose) onClose();
+      if (onClose) onClose();
 
-  } catch (error) {
-    console.error("Error during submit:", error);
-    toast.error(error?.message || "Something went wrong, please try again.");
-  }
-};
+    } catch (error) {
+      console.error("Error during submit:", error);
+      toast.error(error?.message || "Something went wrong, please try again.");
+    }
+  };
 
 
   // --- Render tab content ---
   const renderTabContent = () => {
-      if (activeTab === 'documents') {
-    console.log('--- Form Data for DocumentsTab ---', formData); // <-- Add this log
-  }
+    if (activeTab === 'documents') {
+      console.log('--- Form Data for DocumentsTab ---', formData); // <-- Add this log
+    }
     switch (activeTab) {
       case 'personalDetails':
         return <DriverPersonalDetails
@@ -316,7 +324,7 @@ fileFields.forEach((key) => {
     <div className="max-w-7xl mx-auto p-4">
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
 
-      <DriverTabNavigation
+        <DriverTabNavigation
           activeTab={activeTab}
           errors={{
             personalDetails: errors.personalDetails && Object.keys(errors.personalDetails).length > 0,
@@ -347,27 +355,29 @@ fileFields.forEach((key) => {
           <div className="p-6">{renderTabContent()}</div>
 
           <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between">
-  {/* Remove Previous button */}
-          <div className="flex space-x-3 ml-auto">
-            {onClose && (
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                disabled={driversLoading}
-              >
-                Cancel
-              </button>
-            )}
-            <button
-              type="submit"
-              disabled={driversLoading}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-            >
-              {driversLoading ? "Saving..." : mode === "edit" ? "Update Driver" : "Create Driver"}
-            </button>
+            {/* Remove Previous button */}
+            <div className="flex space-x-3 ml-auto">
+              {onClose && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  disabled={driversLoading}
+                >
+                  Cancel
+                </button>
+              )}
+              {mode !== 'view' && (
+                <button
+                  type="submit"
+                  disabled={driversLoading}
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  {driversLoading ? "Saving..." : mode === "edit" ? "Update Driver" : "Create Driver"}
+                </button>
+              )}
+            </div>
           </div>
-        </div>
 
         </form>
       </div>

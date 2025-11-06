@@ -31,11 +31,13 @@ const ManageVehicleTypes = () => {
   // Local state for optimistic toggle
   const [localStatus, setLocalStatus] = useState({});
 
+const { fetched } = useSelector((state) => state.vehicleType);
+
 useEffect(() => {
-  if (!vehicleTypes || vehicleTypes.length === 0) {
+  if (!fetched) {
     dispatch(fetchVehicleTypes());
   }
-}, [dispatch]);
+}, [dispatch, fetched]);
 
   const filteredVehicleTypes = vehicleTypes.filter((vt) => {
     if (!vt) return false;
@@ -229,14 +231,21 @@ useEffect(() => {
         </div>
 
         <ToolBar
-          className="bg-transparent shadow-none p-0"
-          onAddClick={() => {
-            setFormData({ is_active: true });
-            setEditingId(null);
-            setIsModalOpen(true);
-          }}
-          addButtonLabel="Add Vehicle Type"
-        />
+            className="bg-transparent shadow-none p-0"
+            leftElements={null} // or any search/filters you have
+            rightElements={
+              <button
+                onClick={() => {
+                  setFormData({ is_active: true });
+                  setEditingId(null);
+                  setIsModalOpen(true);
+                }}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 w-full sm:w-auto"
+              >
+                Add Vehicle Type
+              </button>
+            }
+          />
       </div>
 
       {/* Table */}

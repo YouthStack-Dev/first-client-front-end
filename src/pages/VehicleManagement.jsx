@@ -27,10 +27,9 @@ const VehicleManagement = () => {
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`relative flex-1 text-center py-3 text-sm font-semibold transition-all duration-300
-              ${
-                activeTab === tab.key
-                  ? "text-blue-600"
-                  : "text-gray-500 hover:text-blue-600"
+              ${activeTab === tab.key
+                ? "text-blue-600"
+                : "text-gray-500 hover:text-blue-600"
               }`}
           >
             {tab.label}

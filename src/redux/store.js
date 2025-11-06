@@ -6,10 +6,11 @@ import vendorReducer from "./features/vendors/vendorSlice";
 import driverReducer from "./features/manageDriver/driverSlice";
 import companyReducer from "./features/company/companyslice";
 import permissionsReducer from "./features/Permissions/permisssionsSlice";
-import companyVendorReducer from  "./features/companyVendor/companyVendorSlice";
+import companyVendorReducer from "./features/companyVendor/companyVendorSlice";
 import vehicleTypeReducer from "./features/managevehicletype/vehicleTypeSlice";
 import cutoffReducer from "./features/cutoff/cutoffSlice";
-import vehicleReducer from "./features/manageVehicles/vehicleSlice"
+import vehicleReducer from "./features/manageVehicles/vehicleSlice";
+import routeReducer from "./features/routes/roureSlice";
 
 const store = configureStore({
   reducer: {
@@ -18,12 +19,13 @@ const store = configureStore({
     user: userReducer,
     vendor: vendorReducer,
     drivers: driverReducer,
-    company: companyReducer, 
+    company: companyReducer,
     permissions: permissionsReducer,
-    companyVendor:companyVendorReducer,
+    companyVendor: companyVendorReducer,
     vehicleType: vehicleTypeReducer,
     cutoff: cutoffReducer,
-    vehicles:vehicleReducer,
+    vehicles: vehicleReducer,
+    route: routeReducer,
   },
 });
 

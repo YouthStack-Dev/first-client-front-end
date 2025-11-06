@@ -6,6 +6,7 @@ const initialState = {
   allIds: [],      // list of ids for ordering
   loading: false,
   error: null,
+   fetched: false,
 };
 
 const vehicleTypeSlice = createSlice({
@@ -28,6 +29,7 @@ const vehicleTypeSlice = createSlice({
       })
       .addCase(fetchVehicleTypes.fulfilled, (state, action) => {
         state.loading = false;
+        state.fetched = true; 
 
         const byId = {};
         const allIds = [];

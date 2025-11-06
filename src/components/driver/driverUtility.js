@@ -6,7 +6,7 @@ export const fieldMapping = {
   code: "code",
   email: "email",
   password: "password",
-  mobileNumber: "phone", 
+  mobileNumber: "phone",
   dateOfBirth: "date_of_birth",
   dateOfJoining: "date_of_joining",
   gender: "gender",
@@ -46,16 +46,16 @@ export const fieldMapping = {
   induction_file: "induction_file",
   badge_file: "badge_file",
   alt_govt_id_file: "alt_govt_id_file",
-  photo: "photo_url",
+  profileImage: "photo",
 };
 
 
-  export const reverseFieldMapping = Object.fromEntries(
-    Object.entries(fieldMapping).map(([frontend, backend]) => [backend, frontend])
-  );
+export const reverseFieldMapping = Object.fromEntries(
+  Object.entries(fieldMapping).map(([frontend, backend]) => [backend, frontend])
+);
 
 
-  // Backend field -> Frontend field mapping
+// Backend field -> Frontend field mapping
 export const backendToFrontendMapping = {
   // Personal / basic info
   name: "name",
@@ -70,7 +70,7 @@ export const backendToFrontendMapping = {
   current_address: "current_address",
 
   // Verification & expiry
-  bgv_status: "bgvStatus",
+  bg_verify_status: "bgvStatus",
   bg_expiry_date: "bgvExpiryDate",
   police_verify_status: "policeVerification",
   police_expiry_date: "policeExpiryDate",
@@ -118,6 +118,8 @@ export const transformBackendToFormData = (backendData) => {
   });
 
   // Map backend file URLs to frontend file fields
+ // Preserve local file if selected, otherwise map backend URL
+  transformed.photo = transformed.photo instanceof File ? transformed.photo : backendData.photo_url || null;
   transformed.license_file = backendData.license_url || null;
   transformed.badge_file = backendData.badge_url || null;
   transformed.bgv_file = backendData.bg_verify_url || null;
@@ -132,16 +134,6 @@ export const transformBackendToFormData = (backendData) => {
 };
 
 
-
-
-// Edit driver (PUT)
-// export const editDriver = async (vendorId, driverId, formData) => {
-//   return API_CLIENT.put(
-//     `/vendors/${vendorId}/drivers/${driverId}/`,
-//     {formData},
-//     { headers: { "Content-Type": "multipart/form-data" } }
-//   );
-// };
 
 // Add this to your driverUtility.js file to debug field mapping
 export const logFieldMapping = (formData) => {
@@ -166,11 +158,11 @@ const debugAPIClient = () => {
   console.log('Timeout:', API_CLIENT.defaults?.timeout);
   console.log('Headers:', API_CLIENT.defaults?.headers);
   console.log('Auth Token from localStorage:', localStorage.getItem('access_token'));
-  
+
   // Check if interceptors are working
   console.log('Request Interceptors:', API_CLIENT.interceptors.request.handlers.length);
   console.log('Response Interceptors:', API_CLIENT.interceptors.response.handlers.length);
-  
+
   // Test a simple GET request to see if connection works
   API_CLIENT.get('/vendors/')
     .then(response => {

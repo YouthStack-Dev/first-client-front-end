@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState,useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Plus } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { DriverList } from "@components/driver/DriverList";
@@ -29,7 +29,7 @@ import {
 import DriverForm from "@components/driver/DriverForm";
 import Modal from "@components/modals/Modal";
 import ConfirmationModal from "@components/modals/ConfirmationModal";
-import { fetchDriversThunk ,toggleDriverStatusThunk} from "../redux/features/manageDriver/driverThunks";
+import { fetchDriversThunk, toggleDriverStatusThunk } from "../redux/features/manageDriver/driverThunks";
 
 function ManageDrivers() {
   const dispatch = useDispatch();
@@ -40,7 +40,7 @@ function ManageDrivers() {
   // const verificationOptions = useSelector(selectVerificationOptions);
   const activeFilters = useSelector(selectActiveFilters);
   const counts = useSelector(selectCounts);
-   const filters = useSelector((state) => state.drivers.filters);
+  const filters = useSelector((state) => state.drivers.filters);
   const pagination = useSelector((state) => state.drivers.pagination);
   const driversEntities = useSelector((state) => state.drivers.entities);
   const driversIds = useSelector((state) => state.drivers.ids);
@@ -76,19 +76,19 @@ function ManageDrivers() {
     show: false,
     title: "",
     message: "",
-    onConfirm: () => {},
-    onCancel: () => {},
+    onConfirm: () => { },
+    onCancel: () => { },
   });
 
   // Track the last fetched page to prevent refetching when going back
   const lastFetchedPage = useRef(0);
- 
-    // Fetch drivers once
-useEffect(() => {
-  if (!hasFetched) {
-    dispatch(fetchDriversThunk());
-  }
-}, [dispatch]);
+
+  // Fetch drivers once
+  useEffect(() => {
+    if (!hasFetched) {
+      dispatch(fetchDriversThunk());
+    }
+  }, [dispatch]);
 
   // Local filtered drivers
   const filteredDrivers = useMemo(() => {
@@ -161,43 +161,41 @@ useEffect(() => {
     closeModal();
   };
 
- const handleStatusToggle = (driver) => {
-  setConfirmationModal({
-    show: true,
-    title: "Confirm Status Change",
-    message: `Are you sure you want to ${
-      driver.is_active ? "deactivate" : "activate"
-    } this driver?`,
-    onConfirm: async () => {
-      try {
-        // Dispatch the thunk and unwrap result
-        const updatedDriver = await dispatch(toggleDriverStatusThunk(driver.driver_id)).unwrap();
+  const handleStatusToggle = (driver) => {
+    setConfirmationModal({
+      show: true,
+      title: "Confirm Status Change",
+      message: `Are you sure you want to ${driver.is_active ? "deactivate" : "activate"
+        } this driver?`,
+      onConfirm: async () => {
+        try {
+          // Dispatch the thunk and unwrap result
+          const updatedDriver = await dispatch(toggleDriverStatusThunk(driver.driver_id)).unwrap();
 
-        // Update local Redux state if needed
-        dispatch(
-          updateDriverStatus({
-            driverId: updatedDriver.driver_id,
-            isActive: updatedDriver.is_active,
-          })
-        );
+          // Update local Redux state if needed
+          dispatch(
+            updateDriverStatus({
+              driverId: updatedDriver.driver_id,
+              isActive: updatedDriver.is_active,
+            })
+          );
 
-        // Show success toast
-        toast.success(
-          `Driver has been ${
-            updatedDriver.is_active ? "activated" : "deactivated"
-          } successfully!`
-        );
-      } catch (err) {
-        toast.error(err.message || "Failed to update driver status.");
-      } finally {
+          // Show success toast
+          toast.success(
+            `Driver has been ${updatedDriver.is_active ? "activated" : "deactivated"
+            } successfully!`
+          );
+        } catch (err) {
+          toast.error(err.message || "Failed to update driver status.");
+        } finally {
+          setConfirmationModal({ ...confirmationModal, show: false });
+        }
+      },
+      onCancel: () => {
         setConfirmationModal({ ...confirmationModal, show: false });
-      }
-    },
-    onCancel: () => {
-      setConfirmationModal({ ...confirmationModal, show: false });
-    },
-  });
-};
+      },
+    });
+  };
 
 
   const handlePageChange = (page) => {
@@ -225,27 +223,30 @@ useEffect(() => {
     }
   };
 
-  if (loading)
-    return (
-      <div className="flex justify-center items-center h-64">Loading...</div>
-    );
-  if (error) return <div className="text-red-500 p-4">Error: {error}</div>;
+  if (loading) {
+  return (
+    <div className="flex justify-center items-center h-64">
+      Loading...
+    </div>
+  );
+}
 
   return (
     <div className="space-y-4">
+      {/* {error && (
+          <div className="p-3 mb-4 text-sm bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-md">
+            {error}
+          </div>
+      )} */}
       <ToolBar
-        addButtonLabel="Add Driver"
-        addButtonIcon={<Plus size={16} />}
-        onAddClick={openCreateModal}
-        className="mb-6"
         leftElements={
           <div className="flex flex-wrap gap-2">
             {/* Status filter dropdown */}
             <div className="relative">
               <select
                 className="appearance-none border border-gray-300 rounded-md pl-3 pr-8 py-2 text-sm 
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                  bg-white text-gray-700 shadow-sm"
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                bg-white text-gray-700 shadow-sm"
                 onChange={(e) => dispatch(setStatusFilter(e.target.value))}
                 value={statusFilterValue}
               >
@@ -271,50 +272,27 @@ useEffect(() => {
                 </svg>
               </div>
             </div>
-
-            {/* Verification filter dropdown */}
-            {/* <div className="relative">
-              <select
-                className="appearance-none border border-gray-300 rounded-md pl-3 pr-8 py-2 text-sm 
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                  bg-white text-gray-700 shadow-sm"
-                onChange={(e) =>
-                  dispatch(setVerificationFilter(e.target.value))
-                }
-                value={verificationFilterValue}
-              >
-                {verificationOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </div>
-            </div> */}
           </div>
         }
         rightElements={
-          <button
-            onClick={handleFilterReset}
-            className="px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 
-              hover:bg-blue-50 rounded-md transition-colors"
-          >
-            Reset Filters
-          </button>
+          <div className="flex gap-2 items-center">
+            {/* Reset Filters Button */}
+            <button
+              onClick={handleFilterReset}
+              className="px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 
+          hover:bg-blue-50 rounded-md transition-colors"
+            >
+              Reset Filters
+            </button>
+
+            {/* Add Driver Button */}
+            <button
+              onClick={openCreateModal}
+              className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+            >
+              <Plus size={16} /> Add Driver
+            </button>
+          </div>
         }
         searchBar={
           <div className="relative">
@@ -335,16 +313,17 @@ useEffect(() => {
             </div>
             <input
               type="text"
-              placeholder="Search by name,Driver Code, license..."
+              placeholder="Search by name, Driver Code, license..."
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md 
-                text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 
-                focus:border-blue-500"
+          text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 
+          focus:border-blue-500"
               onChange={(e) => handleSearch(e.target.value)}
               value={searchTermValue}
             />
           </div>
         }
       />
+
 
       {/* Active filters display */}
       {activeFilters.length > 0 && (
