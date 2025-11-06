@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect ,useCallback} from "react";
 import {
   X,
   Building2,
@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPermissionsThunk } from "../redux/features/Permissions/permissionsThunk";
+import CompanyAddressMap from "../companies/CompanyAddressMap";
 
 const initialFormState = {
   company: {
@@ -52,6 +53,8 @@ const EntityModal = ({
   // Populate data when editing
   useEffect(() => {
     if (!isOpen || permissions.length === 0) return;
+
+     console.log("🧭 entityData received in modal:", entityData);
 
     const groupedPermissions = {};
     permissions.forEach((p) => {
@@ -125,9 +128,9 @@ const EntityModal = ({
     Object.entries(formData.company).forEach(([key, value]) => {
       if (!value && key !== "is_active") newErrors[key] = `${key} is required`;
     });
-    ["employee_email", "employee_phone"].forEach((key) => {
-      if (!formData[key]) newErrors[key] = `${key} is required`;
-    });
+    // ["employee_email", "employee_phone"].forEach((key) => {
+    //   if (!formData[key]) newErrors[key] = `${key} is required`;
+    // });
     if (mode === "create") {
       const password = formData.employee_password;
       const passwordRegex =
@@ -176,6 +179,14 @@ const EntityModal = ({
     const payload = preparePayload();
     onSubmit(payload);
   };
+
+  // ✅ NEW: Wrapper for map's setFormData to ensure it updates the company object correctly
+  const setCompanyData = useCallback((updater) => {
+    setFormData((prev) => ({
+      ...prev,
+      company: typeof updater === "function" ? updater(prev.company) : updater,
+    }));
+  }, []);
 
   if (!isOpen) return null;
 
@@ -298,11 +309,13 @@ const EntityModal = ({
               <span>Is Active</span>
             </div>
 
-            <div className="border rounded-xl min-h-[350px] flex flex-col items-center justify-center bg-gray-50 text-gray-500">
-              <MapPin className="w-6 h-6 mb-2 text-blue-600" />
-              <span className="text-gray-600 font-medium">
-                Map Integration Area
-              </span>
+            {/* ✅ UPDATED: Pass setCompanyData as the functional updater for map */}
+            <div className="mt-4">
+              <CompanyAddressMap
+                formData={formData.company}
+                setFormData={setCompanyData}
+                isReadOnly={false} // Allow editing; set to true for view-only if needed
+              />
             </div>
 
             <div className="flex justify-end pt-4 border-t border-gray-200">

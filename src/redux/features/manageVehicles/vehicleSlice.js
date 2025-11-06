@@ -144,55 +144,55 @@ const vehicleSlice = createSlice({
         state.error = action.payload || "Failed to create vehicle";
       })
 
-     // --- Update vehicle ---
-    .addCase(updateVehicleThunk.pending, (state) => {
-      state.loading = true;
-      state.error = null; // reset previous errors
-    })
-    .addCase(updateVehicleThunk.fulfilled, (state, action) => {
-      state.loading = false;
-      const updatedVehicle = action.payload;
+      // --- Update vehicle ---
+      .addCase(updateVehicleThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null; // reset previous errors
+      })
+      .addCase(updateVehicleThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        const updatedVehicle = action.payload;
 
-      if (updatedVehicle?.vehicle_id) {
-        // ensure entities object exists
-        if (!state.entities) state.entities = {};
-        state.entities[updatedVehicle.vehicle_id] = updatedVehicle;
+        if (updatedVehicle?.vehicle_id) {
+          // ensure entities object exists
+          if (!state.entities) state.entities = {};
+          state.entities[updatedVehicle.vehicle_id] = updatedVehicle;
 
-        // ensure ids array exists
-        if (!state.ids) state.ids = [];
-        if (!state.ids.includes(updatedVehicle.vehicle_id)) {
-          state.ids.push(updatedVehicle.vehicle_id);
+          // ensure ids array exists
+          if (!state.ids) state.ids = [];
+          if (!state.ids.includes(updatedVehicle.vehicle_id)) {
+            state.ids.push(updatedVehicle.vehicle_id);
+          }
+
+          console.log("✅ Vehicle updated in state:", updatedVehicle.vehicle_id);
         }
+      })
+      .addCase(updateVehicleThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to update vehicle";
+      })
+      // --- Toggle Vehicle Status ---
+      .addCase(toggleVehicleStatus.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(toggleVehicleStatus.fulfilled, (state, action) => {
+        state.loading = false;
+        const updatedVehicle = action.payload.vehicle;
 
-        console.log("✅ Vehicle updated in state:", updatedVehicle.vehicle_id);
-      }
-    })
-    .addCase(updateVehicleThunk.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.payload || "Failed to update vehicle";
-    })
-    // --- Toggle Vehicle Status ---
-.addCase(toggleVehicleStatus.pending, (state) => {
-  state.loading = true;
-  state.error = null;
-})
-.addCase(toggleVehicleStatus.fulfilled, (state, action) => {
-  state.loading = false;
-  const updatedVehicle = action.payload.vehicle;
+        if (updatedVehicle?.vehicle_id) {
+          state.entities[updatedVehicle.vehicle_id] = updatedVehicle;
 
-  if (updatedVehicle?.vehicle_id) {
-    state.entities[updatedVehicle.vehicle_id] = updatedVehicle;
-
-    // ensure IDs array includes this vehicle
-    if (!state.ids.includes(updatedVehicle.vehicle_id)) {
-      state.ids.push(updatedVehicle.vehicle_id);
-    }
-  }
-})
-.addCase(toggleVehicleStatus.rejected, (state, action) => {
-  state.loading = false;
-  state.error = action.payload || "Failed to toggle vehicle status";
-});
+          // ensure IDs array includes this vehicle
+          if (!state.ids.includes(updatedVehicle.vehicle_id)) {
+            state.ids.push(updatedVehicle.vehicle_id);
+          }
+        }
+      })
+      .addCase(toggleVehicleStatus.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to toggle vehicle status";
+      });
 
   },
 });

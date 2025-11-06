@@ -54,10 +54,9 @@ const ToolBar = ({
            title="Create Employee"
            onClick={onAddClick}
            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
-
-         />
-         
+            />
           )}
+          
         </div>
       </div>
     </div>
