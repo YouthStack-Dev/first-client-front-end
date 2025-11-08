@@ -64,24 +64,24 @@ export const vendorSidebarConfig = [
         path: "/vendor/vehicles",
         permission: "vehicle.read",
       },
-      {
-        title: "Vehicle Types",
-        icon: Truck,
-        subItems: [
-          {
-            title: "Type List",
-            path: "/vendor/vehicle-types",
-            permission: "vehicle-type.read",
-            icon: Truck,
-          },
-          {
-            title: "Add Type",
-            path: "/vendor/vehicle-types/add",
-            permission: "vehicle-type.create",
-            icon: Truck,
-          },
-        ],
-      },
+      // {
+      //   title: "Vehicle Types",
+      //   icon: Truck,
+      //   subItems: [
+      //     {
+      //       title: "Type List",
+      //       path: "/vendor/vehicle-types",
+      //       permission: "vehicle-type.read",
+      //       icon: Truck,
+      //     },
+      //     {
+      //       title: "Add Type",
+      //       path: "/vendor/vehicle-types/add",
+      //       permission: "vehicle-type.create",
+      //       icon: Truck,
+      //     },
+      //   ],
+      // },
     ],
   },
   {

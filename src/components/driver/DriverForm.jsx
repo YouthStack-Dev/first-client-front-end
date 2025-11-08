@@ -86,7 +86,7 @@ const DriverForm = ({ initialData = null, mode, onClose, vendors = [] }) => {
 
   const handleFileChange = (name, file) => {
     if (mode === 'view') return;
-    console.log(`--- File Changed --- name: ${name}, file:`, file);
+    // console.log(`--- File Changed --- name: ${name}, file:`, file);
     setFormData(prev => ({ ...prev, [name]: file }));
     setErrors(prev => ({ ...prev, [name]: '' }));
   };
@@ -271,11 +271,8 @@ const DriverForm = ({ initialData = null, mode, onClose, vendors = [] }) => {
         }
       });
 
-
-
-
       // Log the FormData keys and values being submitted
-      console.log("Submitting driver data:");
+      // console.log("Submitting driver data:");
       for (let pair of formDataToSubmit.entries()) {
         console.log(pair[0]+ ':', pair[1]);
       }
@@ -301,7 +298,7 @@ const DriverForm = ({ initialData = null, mode, onClose, vendors = [] }) => {
   // --- Render tab content ---
   const renderTabContent = () => {
     if (activeTab === 'documents') {
-      console.log('--- Form Data for DocumentsTab ---', formData); // <-- Add this log
+      // console.log('--- Form Data for DocumentsTab ---', formData); // <-- Add this log
     }
     switch (activeTab) {
       case 'personalDetails':
