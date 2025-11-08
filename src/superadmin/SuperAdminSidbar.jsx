@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { BarChart3, Crown, Eye, Link2, Building2, Truck, Users, Settings, Monitor, FileText, Shield, CreditCard, HeadphonesIcon, Globe, Zap, Database, Lock, Activity, AlertTriangle, TrendingUp, Receipt, MessageSquare, Search, UserPlus, Plus } from "lucide-react";
+import { BarChart3, Building2, Truck } from "lucide-react";
 import SidebarHeader from "./SidebarHeader";
 import SidebarMenuItem from "./SidebarMenuItem";
 import SidebarFooter from "./SidebarFooter";
@@ -17,32 +17,25 @@ export const superAdminMenuItems = [
   {
     name: "Dashboard",
     path: "/superadmin/dashboard",
-    icon: BarChart3
+    icon: BarChart3,
   },
   {
     name: "Companies",
     path: "/superadmin/manage-companies",
-    icon: Building2
+    icon: Building2,
   },
   {
     name: "Vendors",
     path: "/superadmin/manage-vendors",
-    icon: Truck
+    icon: Truck,
   },
-  {
-    name: "IAM Permissions",
-    path: "/superadmin/iam-permissions",
-    icon: Truck
-  },
-
-
 ];
 
 const SuperAdminSidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
   const location = useLocation();
   const [openDropdown, setOpenDropdown] = useState({});
   const [isMobile, setIsMobile] = useState(false);
-const dispatch = useDispatch()
+  const dispatch = useDispatch();
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024);
@@ -86,15 +79,14 @@ const dispatch = useDispatch()
     if (window.confirm("Are you sure you want to logout from Super Admin?")) {
       // Dispatch logout first
       dispatch(logout());
-  
+
       // Optional alert for user feedback
       alert("Logging out from Super Admin...");
-  
+
       // Redirect after logout
-      window.location.href = '/superadmin';
+      window.location.href = "/superadmin";
     }
   };
-  
 
   const sidebarWidth = isOpen ? "w-sidebar" : "w-sidebar-collapsed";
   const sidebarClass = `h-screen ${sidebarWidth} bg-gradient-to-b from-sidebar-primary-900 via-sidebar-primary-800 to-sidebar-primary-900 text-white flex flex-col fixed left-0 transition-all duration-400 ease-in-out z-50 border-r border-sidebar-primary-700 shadow-sidebar`;
@@ -128,10 +120,7 @@ const dispatch = useDispatch()
         ))}
       </nav>
 
-      <SidebarFooter
-        isOpen={isOpen}
-        handleLogout={handleLogout}
-      />
+      <SidebarFooter isOpen={isOpen} handleLogout={handleLogout} />
     </aside>
   );
 };

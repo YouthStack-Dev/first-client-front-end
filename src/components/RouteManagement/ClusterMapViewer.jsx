@@ -1,155 +1,26 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import {
-  APIProvider,
-  Map,
-  Marker,
-  useMap,
-  useMapsLibrary,
-} from "@vis.gl/react-google-maps";
+import React, { useState, useEffect, useCallback } from "react";
+import { APIProvider, Map } from "@vis.gl/react-google-maps";
 import { API_CLIENT } from "../../Api/API_Client";
-import endpoint from "../../Api/Endpoints";
-import ClusterCard from "./ClusterCard";
 import SavedRouteCard from "./SavedRouteCard";
 import { useParams } from "react-router-dom";
 import MapToolbar from "./MapToolbar";
-
-// DirectionsRenderer component (unchanged)
-const DirectionsRenderer = ({ routes, showRoutes, onRouteCalculated }) => {
-  const map = useMap();
-  const routesLibrary = useMapsLibrary("routes");
-  const [directionsRenderers, setDirectionsRenderers] = useState([]);
-  const [directionsServices, setDirectionsServices] = useState(null);
-  const [isCalculating, setIsCalculating] = useState(false);
-
-  useEffect(() => {
-    if (!routesLibrary) return;
-    setDirectionsServices(new routesLibrary.DirectionsService());
-  }, [routesLibrary]);
-
-  useEffect(() => {
-    if (
-      !map ||
-      !routesLibrary ||
-      !directionsServices ||
-      !showRoutes ||
-      routes.length === 0
-    ) {
-      directionsRenderers.forEach((renderer) => renderer.setMap(null));
-      setDirectionsRenderers([]);
-      setIsCalculating(false);
-      return;
-    }
-
-    directionsRenderers.forEach((renderer) => renderer.setMap(null));
-
-    const newRenderers = [];
-    let totalDistanceSum = 0;
-    let totalDurationSum = 0;
-    let completedRoutes = 0;
-
-    setIsCalculating(true);
-
-    routes.forEach((route, index) => {
-      if (route.path.length < 2) {
-        completedRoutes++;
-        return;
-      }
-
-      const origin = route.path[0];
-      const destination = route.path[route.path.length - 1];
-
-      const waypoints = route.path.slice(1, -1).map((point) => ({
-        location: new google.maps.LatLng(point.lat, point.lng),
-        stopover: true,
-      }));
-
-      const renderer = new routesLibrary.DirectionsRenderer({
-        map: map,
-        suppressMarkers: true,
-        polylineOptions: {
-          strokeColor: route.color || "#3B82F6",
-          strokeWeight: 4,
-          strokeOpacity: 0.8,
-        },
-        preserveViewport: true,
-      });
-
-      directionsServices.route(
-        {
-          origin: new google.maps.LatLng(origin.lat, origin.lng),
-          destination: new google.maps.LatLng(destination.lat, destination.lng),
-          waypoints: waypoints,
-          optimizeWaypoints: route.optimize || false,
-          travelMode: google.maps.TravelMode.DRIVING,
-          provideRouteAlternatives: false,
-          avoidHighways: route.preferLocalRoads || false,
-          avoidTolls: false,
-          avoidFerries: false,
-        },
-        (result, status) => {
-          completedRoutes++;
-
-          if (status === google.maps.DirectionsStatus.OK) {
-            renderer.setDirections(result);
-
-            let totalDistance = 0;
-            let totalDuration = 0;
-
-            result.routes[0].legs.forEach((leg) => {
-              totalDistance += leg.distance.value;
-              totalDuration += leg.duration.value;
-            });
-
-            const distanceKm = (totalDistance / 1000).toFixed(2);
-            const durationMin = Math.round(totalDuration / 60);
-
-            totalDistanceSum += parseFloat(distanceKm);
-            totalDurationSum += durationMin;
-
-            if (completedRoutes === routes.length && onRouteCalculated) {
-              onRouteCalculated({
-                routeId: route.id,
-                distance: distanceKm,
-                duration: durationMin,
-                totalDistance: totalDistanceSum,
-                totalDuration: totalDurationSum,
-                waypointOrder: result.routes[0].waypoint_order,
-              });
-              setIsCalculating(false);
-            }
-          } else {
-            console.error(
-              `❌ Directions request failed for route ${route.id}:`,
-              status
-            );
-            if (completedRoutes === routes.length) {
-              setIsCalculating(false);
-            }
-          }
-        }
-      );
-
-      newRenderers.push(renderer);
-    });
-
-    setDirectionsRenderers(newRenderers);
-
-    return () => {
-      newRenderers.forEach((renderer) => renderer.setMap(null));
-    };
-  }, [map, routesLibrary, directionsServices, routes, showRoutes]);
-
-  return null;
-};
-
-const ClusterMapViewer = ({ mode }) => {
+import UnroutedBookingsSection from "./UnroutedBookingsSection";
+import VendorAssignModal from "./VendorAssignModal";
+import DirectionsRenderer from "./DirectionsRenderer";
+import RouteMarkers from "./RouteMarkers";
+import { logDebug } from "@utils/logger";
+const ClusterMapViewer = () => {
   const [routeData, setRouteData] = useState(null);
+  const [unroutedBookings, setUnroutedBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [unroutedLoading, setUnroutedLoading] = useState(true);
   const [error, setError] = useState(null);
   const [commonDestination, setCommonDestination] = useState(null);
 
+  const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
+  const [isAssigningVendor, setIsAssigningVendor] = useState(false);
+
   // Selection states
-  const [selectedClusters, setSelectedClusters] = useState(new Set());
   const [selectedBookings, setSelectedBookings] = useState(new Set());
   const [selectedRoutes, setSelectedRoutes] = useState(new Set());
 
@@ -158,324 +29,174 @@ const ClusterMapViewer = ({ mode }) => {
   const [shortPath, setShortPath] = useState(true);
   const [preferLocalRoads, setPreferLocalRoads] = useState(false);
 
-  // Route metrics
-  const [totalDistance, setTotalDistance] = useState(0);
-  const [totalDuration, setTotalDuration] = useState(0);
-  const [optimizedOrder, setOptimizedOrder] = useState(null);
-
-  const [isSaving, setIsSaving] = useState(false);
   const [isMerging, setIsMerging] = useState(false);
 
   const { shiftId, date } = useParams();
-  const handleDeleteRoute = async (routeId) => {
+
+  // Transform API stops to bookings format for compatibility
+  const transformStopsToBookings = (stops) => {
+    return stops.map((stop) => ({
+      booking_id: stop.booking_id,
+      tenant_id: stop.tenant_id,
+      employee_id: stop.employee_id,
+      employee_code: stop.employee_code,
+      shift_id: stop.shift_id,
+      team_id: stop.team_id,
+      booking_date: stop.booking_date,
+      pickup_latitude: stop.pickup_latitude,
+      pickup_longitude: stop.pickup_longitude,
+      pickup_location: stop.pickup_location,
+      drop_latitude: stop.drop_latitude,
+      drop_longitude: stop.drop_longitude,
+      drop_location: stop.drop_location,
+      status: stop.status,
+      reason: stop.reason,
+      is_active: stop.is_active,
+      created_at: stop.created_at,
+      updated_at: stop.updated_at,
+      order_id: stop.order_id,
+      estimated_pick_up_time: stop.estimated_pick_up_time,
+      estimated_drop_time: stop.estimated_drop_time,
+      estimated_distance: stop.estimated_distance,
+      actual_pick_up_time: stop.actual_pick_up_time,
+      actual_drop_time: stop.actual_drop_time,
+      actual_distance: stop.actual_distance,
+    }));
+  };
+
+  // Fetch unrouted bookings
+  const fetchUnroutedBookings = async () => {
     try {
-      // API call to delete the route
-      await API_CLIENT.delete(`/v1/routes/${routeId}`);
+      setUnroutedLoading(true);
+      const apiEndpoint = `/v1/routes/unrouted?shift_id=${shiftId}&booking_date=${date}`;
+      const response = await API_CLIENT.get(apiEndpoint);
 
-      // Update local state
-      setRouteData((prev) => ({
-        ...prev,
-        routes: prev.routes.filter((route) => route.route_id !== routeId),
-      }));
-
-      // Also remove from selected routes if it was selected
-      setSelectedRoutes((prev) => {
-        const newSelected = new Set(prev);
-        newSelected.delete(routeId);
-        return newSelected;
-      });
-
-      console.log(`Route ${routeId} deleted successfully`);
-    } catch (error) {
-      console.error("Failed to delete route:", error);
-      alert("Failed to delete route. Please try again.");
+      if (response.data?.success) {
+        setUnroutedBookings(response.data.data?.bookings || []);
+      } else {
+        throw new Error("Invalid response format from unrouted bookings API");
+      }
+    } catch (err) {
+      console.error("Error fetching unrouted bookings:", err);
+    } finally {
+      setUnroutedLoading(false);
     }
   };
+
   // Fetch route data
-  useEffect(() => {
-    const fetchRouteData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const fetchRouteData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        let apiEndpoint = "";
+      const apiEndpoint = `/v1/routes/?&shift_id=${shiftId}&booking_date=${date}`;
+      const response = await API_CLIENT.get(apiEndpoint);
 
-        if (mode === "suggestions") {
-          apiEndpoint = `${endpoint.routesuggestion}?booking_date=${date}&shift_id=${shiftId}&tenant_id=SAM001`;
-        } else if (mode === "saved") {
-          apiEndpoint = `${endpoint.savedRoutes}?tenant_id=SAM001&booking_date=${date}&shift_id=${shiftId}`;
-        }
+      if (response.data?.success && response.data?.data?.shifts) {
+        const allRoutes = [];
 
-        const response = await API_CLIENT.get(apiEndpoint);
+        response.data.data.shifts.forEach((shift) => {
+          if (shift.routes?.length > 0) {
+            shift.routes.forEach((route) => {
+              const transformedRoute = {
+                ...route,
+                shift_id: shift.shift_id,
+                shift_time: shift.shift_time,
+                log_type: shift.log_type,
+                bookings: transformStopsToBookings(route.stops || []),
+                original_stops: route.stops || [],
+              };
 
-        if (mode === "suggestions") {
-          if (response.data?.success && response.data?.data) {
-            const { clusters, total_clusters, total_bookings } =
-              response.data.data;
-
-            setRouteData({
-              route_clusters: clusters || [],
-              total_clusters: total_clusters || 0,
-              total_bookings: total_bookings || 0,
+              allRoutes.push(transformedRoute);
             });
-
-            if (clusters?.length > 0 && clusters[0].bookings?.length > 0) {
-              const firstBooking = clusters[0].bookings[0];
-              setCommonDestination({
-                lat: firstBooking.drop_latitude,
-                lng: firstBooking.drop_longitude,
-                address: firstBooking.drop_location,
-              });
-            }
-          } else {
-            throw new Error("Invalid response format from suggestions API");
           }
-        } else {
-          if (response.data?.success && response.data?.data?.shifts) {
-            const allRoutes = [];
+        });
 
-            response.data.data.shifts.forEach((shift) => {
-              if (shift.routes?.length > 0) {
-                shift.routes.forEach((route) => {
-                  allRoutes.push({
-                    ...route,
-                    shift_id: shift.shift_id,
-                    shift_time: shift.shift_time,
-                    log_type: shift.log_type,
-                  });
-                });
-              }
-            });
+        const transformedData = {
+          routes: allRoutes,
+          total_routes: response.data.data.total_routes || 0,
+          total_shifts: response.data.data.total_shifts || 0,
+          original_data: response.data.data,
+        };
 
-            setRouteData({
-              routes: allRoutes,
-              total_routes: response.data.data.total_routes || 0,
-              total_shifts: response.data.data.total_shifts || 0,
-            });
+        setRouteData(transformedData);
 
-            if (allRoutes.length > 0 && allRoutes[0].bookings?.length > 0) {
-              const firstBooking = allRoutes[0].bookings[0];
-              setCommonDestination({
-                lat: firstBooking.drop_latitude,
-                lng: firstBooking.drop_longitude,
-                address: firstBooking.drop_location,
-              });
-            }
-          } else {
-            throw new Error("Invalid response format from saved routes API");
-          }
+        // Set common destination from first stop if available
+        if (allRoutes.length > 0 && allRoutes[0].stops?.length > 0) {
+          const firstStop = allRoutes[0].stops[0];
+          setCommonDestination({
+            lat: firstStop.drop_latitude,
+            lng: firstStop.drop_longitude,
+            address: firstStop.drop_location,
+          });
         }
-      } catch (err) {
-        console.error("Error fetching route data:", err);
-        setError(
-          err.response?.data?.message ||
-            err.message ||
-            "Failed to fetch route data"
-        );
-      } finally {
-        setLoading(false);
+      } else {
+        throw new Error("Invalid response format from saved routes API");
       }
+    } catch (err) {
+      console.error("Error fetching route data:", err);
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to fetch route data"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch both route data and unrouted bookings
+  useEffect(() => {
+    const fetchAllData = async () => {
+      await Promise.all([fetchRouteData(), fetchUnroutedBookings()]);
     };
 
-    fetchRouteData();
-  }, [mode, shiftId, date]);
+    fetchAllData();
+  }, [shiftId, date]);
 
-  // Calculate markers
-  const markers = useMemo(() => {
-    if (!routeData || !commonDestination) return [];
-
-    const markers = [];
-
-    if (mode === "suggestions" && routeData.route_clusters) {
-      routeData.route_clusters.forEach((cluster) => {
-        cluster.bookings?.forEach((booking) => {
-          markers.push({
-            id: `cluster-${cluster.cluster_id}-${booking.booking_id}`,
-            booking,
-            clusterId: cluster.cluster_id,
-            position: {
-              lat: booking.pickup_latitude,
-              lng: booking.pickup_longitude,
-            },
-            type: "pickup",
-          });
-        });
-      });
-    } else if (mode === "saved" && routeData.routes) {
-      routeData.routes.forEach((route) => {
-        route.bookings?.forEach((booking) => {
-          markers.push({
-            id: `route-${route.route_id}-${booking.booking_id}`,
-            booking,
-            routeId: route.route_id,
-            position: {
-              lat: booking.pickup_latitude,
-              lng: booking.pickup_longitude,
-            },
-            type: "pickup",
-          });
-        });
-      });
+  const handleAssignVendor = async (assignmentData) => {
+    if (assignmentData.routeIds.length > 1) {
+      alert(
+        "Multiple route assignment is not possible. Please select only one route to assign to a vendor."
+      );
+      return;
     }
 
-    markers.push({
-      id: "destination",
-      position: commonDestination,
-      type: "destination",
-    });
-
-    return markers;
-  }, [routeData, commonDestination, mode]);
-
-  // Calculate active routes
-  const activeRoutes = useMemo(() => {
-    if (!routeData || !commonDestination) return [];
-
-    const routes = [];
-
-    if (mode === "suggestions" && routeData.route_clusters) {
-      const allSelectedBookings = [];
-
-      routeData.route_clusters.forEach((cluster) => {
-        cluster.bookings?.forEach((booking) => {
-          if (selectedBookings.has(booking.booking_id)) {
-            allSelectedBookings.push(booking);
-          }
-        });
-      });
-
-      if (allSelectedBookings.length > 0) {
-        const path = allSelectedBookings.map((booking) => ({
-          lat: booking.pickup_latitude,
-          lng: booking.pickup_longitude,
-        }));
-
-        path.push(commonDestination);
-
-        routes.push({
-          id: `optimized-route`,
-          path: path,
-          color: "#10B981",
-          bookingCount: allSelectedBookings.length,
-          optimize: shortPath,
-          preferLocalRoads: preferLocalRoads,
-        });
-      }
-    } else if (mode === "saved" && routeData.routes) {
-      const allSelectedBookings = [];
-
-      selectedRoutes.forEach((routeId) => {
-        const route = routeData.routes.find((r) => r.route_id === routeId);
-        if (route) {
-          allSelectedBookings.push(...route.bookings);
-        }
-      });
-
-      if (allSelectedBookings.length > 0) {
-        const path = allSelectedBookings.map((booking) => ({
-          lat: booking.pickup_latitude,
-          lng: booking.pickup_longitude,
-        }));
-
-        path.push(commonDestination);
-
-        routes.push({
-          id: `combined-optimized-route`,
-          path: path,
-          color: "#8B5CF6",
-          bookingCount: allSelectedBookings.length,
-          optimize: shortPath,
-          preferLocalRoads: preferLocalRoads,
-        });
-      }
+    if (assignmentData.routeIds.length === 0) {
+      alert("Please select at least one route to assign to a vendor.");
+      return;
     }
 
-    return routes;
-  }, [
-    selectedBookings,
-    selectedRoutes,
-    routeData,
-    commonDestination,
-    mode,
-    shortPath,
-    preferLocalRoads,
-  ]);
+    try {
+      setIsAssigningVendor(true);
+      const routeId = assignmentData.routeIds[0];
+      const vendorId = assignmentData.vendor.vendor_id;
 
-  const handleRouteCalculated = useCallback((routeInfo) => {
-    setTotalDistance(routeInfo.totalDistance);
-    setTotalDuration(routeInfo.totalDuration);
-    setOptimizedOrder(routeInfo.waypointOrder);
-  }, []);
-
-  const getMarkerIcon = useCallback(
-    (marker) => {
-      if (marker.type === "destination") {
-        return {
-          path: "M 0, 0 m -5, 0 a 5,5 0 1,0 10,0 a 5,5 0 1,0 -10,0",
-          scale: 2,
-          fillColor: "#DC2626",
-          fillOpacity: 0.9,
-          strokeColor: "#ffffff",
-          strokeWeight: 2,
-        };
-      }
-
-      let isSelected = false;
-      if (mode === "suggestions") {
-        isSelected =
-          selectedClusters.has(marker.clusterId) ||
-          selectedBookings.has(marker.booking?.booking_id);
-      } else {
-        isSelected = selectedRoutes.has(marker.routeId);
-      }
-
-      return {
-        path: "M 0, 0 m -5, 0 a 5,5 0 1,0 10,0 a 5,5 0 1,0 -10,0",
-        scale: isSelected ? 2 : 1.6,
-        fillColor: isSelected ? "#10B981" : "#3B82F6",
-        fillOpacity: 0.9,
-        strokeColor: "#ffffff",
-        strokeWeight: 2,
-      };
-    },
-    [mode, selectedClusters, selectedBookings, selectedRoutes]
-  );
-
-  const handleClusterSelect = useCallback((clusterId, bookings) => {
-    setSelectedClusters((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(clusterId)) {
-        newSet.delete(clusterId);
-      } else {
-        newSet.add(clusterId);
-      }
-      return newSet;
-    });
-
-    setSelectedBookings((prev) => {
-      const newSet = new Set(prev);
-      bookings.forEach((booking) => {
-        if (prev.has(booking.booking_id)) {
-          newSet.delete(booking.booking_id);
-        } else {
-          newSet.add(booking.booking_id);
+      const response = await API_CLIENT.put(
+        `/v1/routes/assign-vendor?vendor_id=${vendorId}&route_id=${routeId}`,
+        {
+          notes: assignmentData.notes,
+          tenant_id: "SAM001",
         }
-      });
-      return newSet;
-    });
-  }, []);
+      );
 
-  const handleBookingSelect = useCallback((bookingId) => {
-    setSelectedBookings((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(bookingId)) {
-        newSet.delete(bookingId);
-      } else {
-        newSet.add(bookingId);
+      if (response.data?.success) {
+        alert(
+          `Successfully assigned ${assignmentData.vendor.name} to route #${routeId}!`
+        );
+        setIsVendorModalOpen(false);
+        await fetchRouteData();
       }
-      return newSet;
-    });
-  }, []);
+    } catch (error) {
+      console.error("Failed to assign vendor:", error);
+      const message =
+        error.response?.data?.message ||
+        "Failed to assign vendor. Please try again.";
+      alert(message);
+    } finally {
+      setIsAssigningVendor(false);
+    }
+  };
 
   const handleRouteSelect = useCallback((routeId) => {
     setSelectedRoutes((prev) => {
@@ -499,16 +220,27 @@ const ClusterMapViewer = ({ mode }) => {
         const updatedRoutes = prev.routes
           .map((route) => {
             if (route.route_id === routeId) {
+              const updatedStops =
+                route.stops?.filter((stop) => stop.booking_id !== bookingId) ||
+                [];
+              const updatedBookings =
+                route.bookings?.filter(
+                  (booking) => booking.booking_id !== bookingId
+                ) || [];
+
               return {
                 ...route,
-                bookings: route.bookings.filter(
-                  (booking) => booking.booking_id !== bookingId
-                ),
+                stops: updatedStops,
+                bookings: updatedBookings,
               };
             }
             return route;
           })
-          .filter((route) => route.bookings.length > 0);
+          .filter(
+            (route) =>
+              (route.stops && route.stops.length > 0) ||
+              (route.bookings && route.bookings.length > 0)
+          );
 
         return {
           ...prev,
@@ -517,75 +249,33 @@ const ClusterMapViewer = ({ mode }) => {
         };
       });
 
-      console.log(`Booking ${bookingId} removed from route ${routeId}`);
+      fetchUnroutedBookings();
     } catch (error) {
       console.error("Failed to delete booking:", error);
       alert("Failed to remove booking. Please try again.");
     }
   }, []);
 
-  const handleSave = useCallback(async () => {
-    if (selectedBookings.size === 0) {
-      alert("Please select at least one booking to save.");
-      return;
-    }
-
-    const selectedBookingIds = Array.from(selectedBookings);
-
-    const requestData = {
-      groups: [
-        {
-          booking_ids: selectedBookingIds,
-        },
-      ],
-    };
-
+  const handleDeleteRoute = async (routeId) => {
     try {
-      setIsSaving(true);
+      await API_CLIENT.delete(`/v1/routes/${routeId}`);
 
-      const response = await API_CLIENT.post("/v1/routes/", requestData);
+      setRouteData((prev) => ({
+        ...prev,
+        routes: prev.routes.filter((route) => route.route_id !== routeId),
+      }));
 
-      console.log("Response from server:", response.data);
-
-      if (routeData?.route_clusters) {
-        const updatedClusters = routeData.route_clusters
-          .map((cluster) => ({
-            ...cluster,
-            bookings: cluster.bookings.filter(
-              (booking) => !selectedBookings.has(booking.booking_id)
-            ),
-          }))
-          .filter((cluster) => cluster.bookings.length > 0);
-
-        setRouteData((prev) => ({
-          ...prev,
-          route_clusters: updatedClusters,
-          total_clusters: updatedClusters.length,
-          total_bookings: updatedClusters.reduce(
-            (sum, cluster) => sum + cluster.bookings.length,
-            0
-          ),
-        }));
-      }
-
-      setSelectedClusters(new Set());
-      setSelectedBookings(new Set());
-
-      alert(
-        `Successfully saved ${selectedBookingIds.length} booking(s)! Route distance: ${totalDistance} km`
-      );
+      setSelectedRoutes((prev) => {
+        const newSelected = new Set(prev);
+        newSelected.delete(routeId);
+        return newSelected;
+      });
     } catch (error) {
-      console.error("Save failed:", error);
-      const message =
-        error.response?.data?.message ||
-        "Failed to save bookings. Please try again.";
-      alert(message);
-    } finally {
-      setIsSaving(false);
+      console.error("Failed to delete route:", error);
+      alert("Failed to delete route. Please try again.");
     }
-  }, [selectedBookings, routeData, totalDistance]);
+  };
 
-  // ✅ UPDATED: Handle merge with proper state update
   const handleMerge = useCallback(async () => {
     if (selectedRoutes.size < 2) {
       alert("Please select at least two routes to merge.");
@@ -593,52 +283,37 @@ const ClusterMapViewer = ({ mode }) => {
     }
 
     const routeIds = Array.from(selectedRoutes);
-
-    const requestData = {
-      route_ids: routeIds,
-    };
-
-    console.log("Merging routes:", requestData);
-
+    const requestData = { route_ids: routeIds };
+    logDebug("Merging routes with data:", requestData);
     try {
       setIsMerging(true);
-
-      // Call the merge API
       const response = await API_CLIENT.post(
         "/v1/routes/merge?tenant_id=SAM001",
         requestData
       );
 
-      console.log("Merge response:", response.data);
-
       if (response.data?.success && response.data?.data) {
         const mergedRoute = response.data.data;
-
-        // Extract shift info from the first selected route
         const firstSelectedRoute = routeData.routes.find((r) =>
           selectedRoutes.has(r.route_id)
         );
 
-        // Create the new merged route with all necessary fields
         const newMergedRoute = {
           route_id: mergedRoute.route_id,
-          bookings: mergedRoute.bookings || [],
+          stops: mergedRoute.stops || [],
+          bookings: transformStopsToBookings(mergedRoute.stops || []),
           estimations: mergedRoute.estimations || null,
+          summary: mergedRoute.summary || null,
           shift_id: firstSelectedRoute?.shift_id || shiftId,
           shift_time: firstSelectedRoute?.shift_time || "",
           log_type: firstSelectedRoute?.log_type || "Login",
         };
 
-        // Update route data: remove merged routes and add the new one
         setRouteData((prev) => {
           if (!prev?.routes) return prev;
-
-          // Filter out the merged routes
           const remainingRoutes = prev.routes.filter(
             (route) => !selectedRoutes.has(route.route_id)
           );
-
-          // Add the new merged route
           const updatedRoutes = [...remainingRoutes, newMergedRoute];
 
           return {
@@ -648,10 +323,7 @@ const ClusterMapViewer = ({ mode }) => {
           };
         });
 
-        // Clear selection
         setSelectedRoutes(new Set());
-
-        // Show success message
         alert(
           `Successfully merged ${routeIds.length} routes into route #${mergedRoute.route_id}!`
         );
@@ -667,14 +339,26 @@ const ClusterMapViewer = ({ mode }) => {
     }
   }, [selectedRoutes, routeData, shiftId]);
 
+  const handleBookingSelect = useCallback((bookingId) => {
+    setSelectedBookings((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(bookingId)) {
+        newSet.delete(bookingId);
+      } else {
+        newSet.add(bookingId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const API_KEY = import.meta.env.VITE_GOOGLE_API || "";
+
   if (loading) {
     return (
       <div className="flex h-screen bg-gray-50 items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <div className="text-lg text-gray-700">
-            Loading {mode === "suggestions" ? "suggested" : "saved"} routes...
-          </div>
+          <div className="text-lg text-gray-700">Loading routes...</div>
         </div>
       </div>
     );
@@ -696,25 +380,6 @@ const ClusterMapViewer = ({ mode }) => {
     );
   }
 
-  const totalItems =
-    mode === "suggestions"
-      ? routeData?.route_clusters?.length || 0
-      : routeData?.routes?.length || 0;
-
-  const totalBookings =
-    mode === "suggestions"
-      ? routeData?.total_bookings || 0
-      : routeData?.routes?.reduce((sum, r) => sum + r.bookings.length, 0) || 0;
-
-  const selectedStops =
-    mode === "suggestions"
-      ? selectedBookings.size
-      : routeData?.routes
-          ?.filter((r) => selectedRoutes.has(r.route_id))
-          .reduce((sum, r) => sum + r.bookings.length, 0) || 0;
-
-  const API_KEY = import.meta.env.VITE_GOOGLE_API || "";
-
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <div className="flex-1 relative">
@@ -723,77 +388,62 @@ const ClusterMapViewer = ({ mode }) => {
             defaultCenter={commonDestination || { lat: 12.9716, lng: 77.5946 }}
             defaultZoom={12}
             mapId="route-cluster-map"
-            gestureHandling="greedy"
             disableDefaultUI={false}
+            gestureHandling={"greedy"}
           >
-            {markers.map((marker) => (
-              <Marker
-                key={marker.id}
-                position={marker.position}
-                icon={getMarkerIcon(marker)}
+            {/* Directions Renderer - Just shows the path */}
+            {routeData?.routes && (
+              <DirectionsRenderer
+                routes={routeData.routes}
+                selectedRouteIds={selectedRoutes}
+                showRoutes={showRoutes}
+                shortPath={shortPath}
+                preferLocalRoads={preferLocalRoads}
               />
-            ))}
+            )}
 
-            <DirectionsRenderer
-              routes={activeRoutes}
-              showRoutes={showRoutes}
-              onRouteCalculated={handleRouteCalculated}
-            />
+            {/* Route Markers */}
+            {routeData?.routes && (
+              <RouteMarkers
+                routes={routeData.routes}
+                selectedRouteIds={selectedRoutes}
+              />
+            )}
           </Map>
         </APIProvider>
       </div>
 
-      <div className="w-1/3 bg-gradient-to-b from-gray-50 to-white border-l border-gray-200 shadow-2xl flex flex-col h-full">
+      <div className="w-2/1 bg-gradient-to-b from-gray-50 to-white border-l border-gray-200 shadow-2xl flex flex-col h-full">
         <div className="flex-shrink-0 bg-white border-b border-gray-200 z-20">
           <div className="p-6 pb-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {mode === "suggestions" ? "Suggested Routes" : "Saved Routes"}
-              </h2>
-              <span className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm font-bold rounded-full shadow-lg">
-                {totalItems} {mode === "suggestions" ? "clusters" : "routes"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-sm text-gray-600">
-              <span className="font-medium">
-                {totalBookings} total bookings
-              </span>
-              {mode === "suggestions" && selectedBookings.size > 0 && (
-                <div className="text-right">
-                  <div className="text-green-600 font-bold">
-                    {selectedBookings.size} selected
-                  </div>
-                  {totalDistance > 0 && (
-                    <div className="text-xs text-gray-500">
-                      {totalDistance.toFixed(2)} km • {totalDuration} min
-                    </div>
-                  )}
-                </div>
-              )}
-              {mode === "saved" && selectedRoutes.size > 0 && (
-                <div className="text-right">
-                  <div className="text-purple-600 font-bold">
-                    {selectedRoutes.size} routes selected
-                  </div>
-                </div>
-              )}
-            </div>
+            <h1 className="text-2xl font-bold text-gray-800">
+              Route Management
+            </h1>
+            {selectedRoutes.size > 0 && (
+              <div className="mt-2 text-sm text-gray-600">
+                Showing directions for {selectedRoutes.size} selected route(s)
+              </div>
+            )}
           </div>
 
           <div className="px-6 pb-4">
             <MapToolbar
-              mode={mode}
-              selectedBookings={selectedBookings.size}
               selectedRoutes={selectedRoutes}
               showRoutes={showRoutes}
               shortPath={shortPath}
-              totalDistance={totalDistance}
-              onSave={handleSave}
               onMerge={handleMerge}
+              onAssignVendor={() => setIsVendorModalOpen(true)}
               onToggleRoutes={() => setShowRoutes(!showRoutes)}
               onToggleShortPath={() => setShortPath(!shortPath)}
-              isSaving={isSaving}
               isMerging={isMerging}
+            />
+
+            <VendorAssignModal
+              isOpen={isVendorModalOpen}
+              onClose={() => setIsVendorModalOpen(false)}
+              selectedRoutes={selectedRoutes}
+              onAssignVendor={handleAssignVendor}
+              isAssigning={isAssigningVendor}
             />
 
             <div className="mt-3 pt-3 border-t border-gray-200">
@@ -813,86 +463,50 @@ const ClusterMapViewer = ({ mode }) => {
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {mode === "suggestions" && routeData?.route_clusters ? (
-            <div className="p-4 space-y-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-bold text-gray-800">Clusters</h3>
-                {selectedClusters.size > 0 && (
-                  <span className="text-sm text-blue-600 font-bold px-3 py-1 bg-blue-50 rounded-full">
-                    {selectedClusters.size} selected
-                  </span>
-                )}
+          <UnroutedBookingsSection
+            unroutedBookings={unroutedBookings}
+            unroutedLoading={unroutedLoading}
+            selectedBookings={selectedBookings}
+            onBookingSelect={handleBookingSelect}
+          />
+
+          <div className="p-4 space-y-4">
+            {selectedRoutes.size > 0 && (
+              <div className="flex items-center justify-end mb-2">
+                <span className="text-sm text-purple-600 font-bold px-3 py-1 bg-purple-50 rounded-full">
+                  {selectedRoutes.size} selected
+                </span>
               </div>
+            )}
 
-              {routeData.route_clusters.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <div className="text-6xl mb-4">✅</div>
-                  <p className="text-lg font-semibold text-gray-700">
-                    All bookings saved!
-                  </p>
-                  <p className="text-sm mt-2">No clusters remaining.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {routeData.route_clusters.map((cluster) => (
-                    <ClusterCard
-                      key={cluster.cluster_id}
-                      cluster={cluster}
-                      onClusterSelect={handleClusterSelect}
-                      onBookingSelect={handleBookingSelect}
-                      selectedClusters={selectedClusters}
-                      selectedBookings={selectedBookings}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : mode === "saved" && routeData?.routes ? (
-            <div className="p-4 space-y-4">
-              {selectedRoutes.size > 0 && (
-                <div className="flex items-center justify-end mb-2">
-                  <span className="text-sm text-purple-600 font-bold px-3 py-1 bg-purple-50 rounded-full">
-                    {selectedRoutes.size} selected
-                  </span>
-                </div>
-              )}
-
-              {routeData.routes.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <div className="text-6xl mb-4">📭</div>
-                  <p className="text-lg font-semibold text-gray-700">
-                    No saved routes found
-                  </p>
-                  <p className="text-sm mt-2">
-                    Create routes from suggestions first.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {routeData.routes.map((route) => (
-                    <SavedRouteCard
-                      route={route}
-                      isSelected={selectedRoutes.has(route.route_id)}
-                      onRouteSelect={handleRouteSelect}
-                      onDeleteBooking={handleDeleteBooking}
-                      onDeleteRoute={handleDeleteRoute}
-                      selectedBookings={selectedBookings}
-                      onBookingSelect={handleBookingSelect}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex-1 flex items-center justify-center p-8">
-              <div className="text-center text-gray-500">
+            {(!routeData?.routes || routeData.routes.length === 0) &&
+            unroutedBookings.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
                 <div className="text-6xl mb-4">📭</div>
                 <p className="text-lg font-semibold text-gray-700">
-                  No {mode === "suggestions" ? "clusters" : "routes"} found
+                  No routes or bookings found
+                </p>
+                <p className="text-sm mt-2">
+                  Create routes from suggestions first.
                 </p>
               </div>
-            </div>
-          )}
+            ) : routeData?.routes && routeData.routes.length > 0 ? (
+              <div className="space-y-4">
+                {routeData.routes.map((route) => (
+                  <SavedRouteCard
+                    key={route.route_id}
+                    route={route}
+                    isSelected={selectedRoutes.has(route.route_id)}
+                    onRouteSelect={handleRouteSelect}
+                    onDeleteBooking={handleDeleteBooking}
+                    onDeleteRoute={handleDeleteRoute}
+                    selectedBookings={selectedBookings}
+                    onBookingSelect={handleBookingSelect} // ✅ This was missing
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>
