@@ -38,7 +38,7 @@ export const Login = () => {
       return "/vendor/dashboard";
     }
 
-    return "/dashboard"; // Default for company login
+    return "/profile"; // Default for company login
   };
 
   // Check if ID field is required based on login type

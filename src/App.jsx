@@ -41,7 +41,7 @@ function App() {
 
       <Routes>
         {/* ================= PRACTICE ROUTE ================= */}
-        <Route path="/practice" element={<RoleManagement />} />
+        <Route path="/practice" element={<ClusterMapViewer />} />
 
         {/* ================= PUBLIC LOGIN ROUTES ================= */}
         {/* Company Login */}
@@ -98,7 +98,6 @@ function App() {
             <Route path="dashboard" element={<SuperAdminDashboard />} />
             <Route path="manage-companies" element={<CompanyManagement />} />
             <Route path="manage-vendors" element={<VendorManagement />} />
-            <Route path="iam-permissions" element={<VendorManagement />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Route>
@@ -184,6 +183,10 @@ function App() {
               element={<h1> This is the screen of Booking </h1>}
             />
             <Route path="/routing" element={<RouteManagement />} />
+            <Route
+              path="/shift/:shiftId/:date/routing-map"
+              element={<ClusterMapViewer />}
+            />
             <Route
               path="/shift/:shiftId/:date/suggestions-route"
               element={<ClusterMapViewer mode="suggestions" />}

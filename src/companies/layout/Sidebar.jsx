@@ -175,9 +175,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
         <div className="p-4 border-b border-sidebar-primary-200/30 flex items-center justify-between bg-sidebar-primary-800/50 backdrop-blur-sm">
           {isOpen && (
             <>
-              <h2 className="text-xl font-bold text-white">
-                Company Management
-              </h2>
+              <h2 className="text-xl font-bold text-white">Company Name</h2>
               {!isMobile && (
                 <button
                   onClick={togglePin}
