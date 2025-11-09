@@ -156,7 +156,9 @@ function App() {
             <Route path="/cutoff" element={<CutoffManagement />} />
             <Route path="/manage-vendors" element={<VendorManagement />} />
             <Route path="/vehicles" element={<VehicleManagement />} />
+
             <Route path="/vendors" element={<VendorManagement />} />
+            
             <Route path="/profile" element={<ProfilePage />} />
 
             <Route
