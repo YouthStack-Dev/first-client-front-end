@@ -284,6 +284,18 @@ const BookingHistory = ({
                       </span>
                       {getShiftType(booking.shift_id)}
                     </div>
+
+                    {/* ✅ Show OTP only if it exists */}
+                    {booking.OTP && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-sm font-medium text-gray-700">
+                          OTP:
+                        </span>
+                        <span className="text-sm text-blue-600 font-semibold">
+                          {booking.OTP}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
