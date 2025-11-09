@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { LogOut, ChevronDown, Pin, PinOff, Building2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-// import { getFilteredVendorSidebar } from "../companies/layout/sidebarConfig";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "@features/auth/authSlice";
 import { getFilteredVendorSidebar } from "./vendorSidebarConfig";

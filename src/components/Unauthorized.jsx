@@ -1,8 +1,35 @@
-import { useNavigate } from 'react-router-dom';
-import { AlertTriangle } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { AlertTriangle } from "lucide-react";
+import { logDebug } from "../utils/logger";
 
 const Unauthorized = () => {
   const navigate = useNavigate();
+
+  // Access user info from Redux
+  const { user } = useSelector((state) => state.auth); // adjust slice name if different
+
+  logDebug("Unauthorized access attempt by user:", user);
+
+  // Determine the dashboard path based on user type
+  const getDashboardPath = () => {
+    if (!user?.type) return "/login"; // fallback if user not found
+
+    switch (user.type.toLowerCase()) {
+      case "employee":
+        return "/dashboard";
+      case "vendor":
+        return "/vendor/dashboard";
+      case "superadmin":
+        return "/superadmin/dashboard";
+      default:
+        return "/dashboard";
+    }
+  };
+
+  const handleReturn = () => {
+    navigate(getDashboardPath());
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -13,7 +40,7 @@ const Unauthorized = () => {
           You don't have permission to access this page.
         </p>
         <button
-          onClick={() => navigate('/dashboard')}
+          onClick={handleReturn}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
         >
           Return to Dashboard
@@ -23,4 +50,4 @@ const Unauthorized = () => {
   );
 };
 
-export default Unauthorized
+export default Unauthorized;

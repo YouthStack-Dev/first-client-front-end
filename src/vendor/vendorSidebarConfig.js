@@ -7,48 +7,35 @@ import {
   Route,
   Clock,
   Users2,
-  Settings,
   Car,
   Truck,
   Store,
   UserCog,
   CalendarOff,
-  Shield,
-  FileText,
-  Key,
 } from "lucide-react";
 
 // Vendor-specific sidebar configuration
 export const vendorSidebarConfig = [
-  {
-    title: "Operations",
-    items: [
-      {
-        title: "Bookings",
-        icon: Calendar,
-        path: "/vendor/bookings",
-        permission: "booking.read",
-      },
-      {
-        title: "Route Bookings",
-        icon: Route,
-        subItems: [
-          {
-            title: "Route Booking List",
-            path: "/vendor/route-bookings",
-            permission: "route-booking.read",
-            icon: Route,
-          },
-          {
-            title: "Create Route Booking",
-            path: "/vendor/route-bookings/create",
-            permission: "route-booking.create",
-            icon: Route,
-          },
-        ],
-      },
-    ],
-  },
+  // {
+  //   title: 'Operations',
+  //   items: [
+  //     {
+  //       title: 'Bookings',
+  //       icon: Calendar,
+  //        path: '/vendor/bookings',
+  //        permission: 'booking.read',
+  //        icon: Calendar
+  //     },
+  //     {
+  //       title: 'Route Bookings',
+  //       icon: Route,
+  //       subItems: [
+  //         { title: 'Route Booking List', path: '/vendor/route-bookings', permission: 'route-booking.read', icon: Route },
+  //         { title: 'Create Route Booking', path: '/vendor/route-bookings/create', permission: 'route-booking.create', icon: Route }
+  //       ]
+  //     }
+  //   ]
+  // },
   {
     title: "Resources",
     items: [
@@ -64,46 +51,24 @@ export const vendorSidebarConfig = [
         path: "/vendor/vehicles",
         permission: "vehicle.read",
       },
-      {
-        title: "Vehicle Types",
-        icon: Truck,
-        subItems: [
-          {
-            title: "Type List",
-            path: "/vendor/vehicle-types",
-            permission: "vehicle-type.read",
-            icon: Truck,
-          },
-          {
-            title: "Add Type",
-            path: "/vendor/vehicle-types/add",
-            permission: "vehicle-type.create",
-            icon: Truck,
-          },
-        ],
-      },
+      // {
+      //   title: 'Vehicle Types',
+      //   icon: Truck,
+      //   subItems: [
+      //     { title: 'Type List', path: '/vendor/vehicle-types', permission: 'vehicle-type.read', icon: Truck },
+      //     { title: 'Add Type', path: '/vendor/vehicle-types/add', permission: 'vehicle-type.create', icon: Truck }
+      //   ]
+      // }
     ],
   },
   {
     title: "Management",
     items: [
       {
-        title: "Routes",
+        title: "Route Management",
+        path: "/vendor/routing",
+        permission: "route.read",
         icon: MapPin,
-        subItems: [
-          {
-            title: "Route Management",
-            path: "/vendor/routing",
-            permission: "route.read",
-            icon: MapPin,
-          },
-          {
-            title: "Create Route",
-            path: "/vendor/routes/create",
-            permission: "route.create",
-            icon: MapPin,
-          },
-        ],
       },
       {
         title: "Shift Management",
@@ -112,72 +77,110 @@ export const vendorSidebarConfig = [
         permission: "shift.read",
       },
       {
+        title: "Cutoff Management",
+        icon: Clock,
+        path: "/vendor/cutoff",
+        permission: "cutoff.read",
+      },
+      {
         title: "Teams",
         icon: Users2,
         path: "/vendor/departments",
         permission: "team.read",
       },
-    ],
-  },
-  {
-    title: "Administration",
-    items: [
       {
-        title: "Vendor Profile",
+        title: "Vendor",
+        path: "/vendor/vendors",
+        permission: "vendor.read",
         icon: Store,
-        subItems: [
-          {
-            title: "Profile Details",
-            path: "/vendor/profile",
-            permission: "vendor.read",
-            icon: Store,
-          },
-          {
-            title: "Update Profile",
-            path: "/vendor/profile/update",
-            permission: "vendor.update",
-            icon: Store,
-          },
-        ],
-      },
-      {
-        title: "Vendor Users",
-        icon: UserCog,
-        subItems: [
-          {
-            title: "User List",
-            path: "/vendor/vendor-users",
-            permission: "vendor-user.read",
-            icon: UserCog,
-          },
-          {
-            title: "Add User",
-            path: "/vendor/vendor-users/add",
-            permission: "vendor-user.create",
-            icon: UserCog,
-          },
-        ],
-      },
-      {
-        title: "Weekoff Config",
-        icon: CalendarOff,
-        subItems: [
-          {
-            title: "Configuration",
-            path: "/vendor/weekoff-config",
-            permission: "weekoff-config.read",
-            icon: CalendarOff,
-          },
-          {
-            title: "Manage Config",
-            path: "/vendor/weekoff-config/manage",
-            permission: "weekoff-config.create",
-            icon: CalendarOff,
-          },
-        ],
       },
     ],
   },
+  // {
+  //   title: "Administration",
+  //   items: [
+  //     // {
+  //     //   title: 'Weekoff Config',
+  //     //   icon: CalendarOff,
+  //     //   subItems: [
+  //     //     { title: 'Configuration', path: '/vendor/weekoff-config', permission: 'weekoff-config.read', icon: CalendarOff },
+  //     //     { title: 'Manage Config', path: '/vendor/weekoff-config/manage', permission: 'weekoff-config.create', icon: CalendarOff }
+  //     //   ]
+  //     // },
+  //     {
+  //       title: "Permissions",
+  //       icon: Key,
+  //       subItems: [
+  //         {
+  //           title: "Permission Matrix",
+  //           path: "/vendor/permissions",
+  //           permission: "permissions.read",
+  //           icon: Key,
+  //         },
+  //         {
+  //           title: "Manage Permissions",
+  //           path: "/vendor/permissions/manage",
+  //           permission: "permissions.create",
+  //           icon: Key,
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       title: "Policies",
+  //       icon: FileText,
+  //       subItems: [
+  //         {
+  //           title: "Policy List",
+  //           path: "/vendor/policies",
+  //           permission: "policy.read",
+  //           icon: FileText,
+  //         },
+  //         {
+  //           title: "Create Policy",
+  //           path: "/vendor/policies/create",
+  //           permission: "policy.create",
+  //           icon: FileText,
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       title: "Roles",
+  //       icon: Shield,
+  //       subItems: [
+  //         {
+  //           title: "Role Management",
+  //           path: "/vendor/roles",
+  //           permission: "role.read",
+  //           icon: Shield,
+  //         },
+  //         {
+  //           title: "Create Role",
+  //           path: "/vendor/roles/create",
+  //           permission: "role.create",
+  //           icon: Shield,
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       title: "Tenant Settings",
+  //       icon: Settings,
+  //       subItems: [
+  //         {
+  //           title: "Tenant Management",
+  //           path: "/vendor/admin/tenant",
+  //           permission: "admin.tenant.read",
+  //           icon: Settings,
+  //         },
+  //         {
+  //           title: "Configure Tenant",
+  //           path: "/vendor/admin/tenant/configure",
+  //           permission: "admin.tenant.create",
+  //           icon: Settings,
+  //         },
+  //       ],
+  //     },
+  //   ],
+  // },
 ];
 
 // Helper function to check if user has permission

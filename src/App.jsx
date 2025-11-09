@@ -27,6 +27,8 @@ import ScheduledBookings from "./components/RouteManagement/RouteScheduledBookin
 import ProfilePage from "./pages/ProfilePage";
 import BookingManagement from "./pages/BookingManagement";
 import ClusterMapViewer from "./components/RouteManagement/ClusterMapViewer";
+import VendorDashboard from "./vendor/VendorDashboard";
+import VendorRouteManagement from "./components/RouteManagement/VendorRouteManagement";
 
 function App() {
   const dispatch = useDispatch();
@@ -109,13 +111,14 @@ function App() {
             <ProtectedRouteAuth
               type="vendor"
               redirectPath="/vendor"
-              authRedirectPath="/dashboard"
+              authRedirectPath="/vendor/dashboard"
             />
           }
         >
           <Route element={<VendorLayout type={"vendor"} />}>
-            <Route path="dashboard" element={<h1>Vendor Dashboard</h1>} />
+            <Route path="dashboard" element={<VendorDashboard />} />
             <Route path="employees" element={<ManageEmployees />} />
+            <Route path="routing" element={<VendorRouteManagement />} />
             <Route
               path="employees/:userId/edit"
               element={<EmployeeForm mode="edit" />}
@@ -137,7 +140,7 @@ function App() {
             <ProtectedRouteAuth
               type="employee"
               redirectPath="/"
-              authRedirectPath="/dashboard"
+              authRedirectPath=""
             />
           }
         >
