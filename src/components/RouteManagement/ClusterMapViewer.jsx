@@ -436,14 +436,8 @@ const ClusterMapViewer = () => {
               onToggleRoutes={() => setShowRoutes(!showRoutes)}
               onToggleShortPath={() => setShortPath(!shortPath)}
               isMerging={isMerging}
+              panelType="company"
             />
-            {/* <MapToolbar
-  selectedRoutes={selectedRoutes}
-  onMerge={handleMerge}
-  onAssignVendor={handleAssignVendor}
-  panelType="company"
-  isMerging={isMerging}
-/> */}
 
             <VendorAssignModal
               isOpen={isVendorModalOpen}
