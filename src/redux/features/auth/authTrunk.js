@@ -1,11 +1,9 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { API_CLIENT } from "../../../Api/API_Client"; 
+import { API_CLIENT } from "../../../Api/API_Client";
 import { logDebug } from "../../../utils/logger";
 import axios from "axios";
-
-
 export const loginUser = createAsyncThunk(
-  'auth/login',
+  "auth/login",
   async ({ formData, endpoint }, { rejectWithValue }) => {
     console.log("Login endpoint:", endpoint, formData);
 
@@ -15,7 +13,7 @@ export const loginUser = createAsyncThunk(
       logDebug("Login response data:", response.data.data);
 
       // Destructure tokens and user
-      const { access_token:token, refresh_token, user } = response.data.data;
+      const { access_token: token, refresh_token, user } = response.data.data;
 
       // Extract permissions from user
       const allowedModules = user?.permissions || [];
@@ -23,26 +21,38 @@ export const loginUser = createAsyncThunk(
       logDebug("Extracted token:", token);
       logDebug("Allowed modules:", allowedModules);
 
-   
       return {
         user,
         token,
         refresh_token,
-        allowedModules
+        allowedModules,
       };
     } catch (error) {
       logDebug("Login error details:", error);
 
-      return rejectWithValue(
-        error.response?.data?.message ||
-        error.response?.data ||
-        'Login failed'
-      );
+      // Improved error handling for different response structures
+      const errorData = error.response?.data;
+
+      if (errorData?.detail) {
+        // Handle the structure: { "detail": { "success": false, "message": "...", ... } }
+        return rejectWithValue(errorData.detail);
+      } else if (errorData?.message) {
+        // Handle direct message property
+        return rejectWithValue(errorData);
+      } else if (errorData) {
+        // Handle any other error data
+        return rejectWithValue({
+          message: typeof errorData === "string" ? errorData : "Login failed",
+        });
+      } else {
+        // Handle network errors or unknown errors
+        return rejectWithValue({
+          message: error.message || "Network error. Please try again.",
+        });
+      }
     }
   }
 );
-
-
 
 export const fetchUserFromToken = createAsyncThunk(
   "auth/fetchUserFromToken",
@@ -72,7 +82,10 @@ export const fetchUserFromToken = createAsyncThunk(
         console.error("[fetchUserFromToken] No response from server.");
         message = "No response from server";
       } else {
-        console.error("[fetchUserFromToken] Request setup error:", error.message);
+        console.error(
+          "[fetchUserFromToken] Request setup error:",
+          error.message
+        );
         message = error.message;
       }
 

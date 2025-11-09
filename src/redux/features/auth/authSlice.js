@@ -145,9 +145,9 @@ const authSlice = createSlice({
         state.loading = true;
       })
       .addCase(fetchUserFromToken.fulfilled, (state, action) => {
-        const { user, permissions: allowedModules } = action.payload;
+        const { user, permissions: allowedModules, user_type } = action.payload;
         logDebug(" this is the refresh payload user ", action.payload);
-        state.user = user;
+        state.user = { ...user, type: user_type };
         state.permissions = allowedModules;
         state.isAuthenticated = true;
         state.loading = false;

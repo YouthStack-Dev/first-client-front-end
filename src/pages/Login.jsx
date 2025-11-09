@@ -29,6 +29,34 @@ export const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  // Helper function to extract error message
+  const getErrorMessage = (error) => {
+    if (!error) return "";
+
+    // Handle string errors
+    if (typeof error === "string") return error;
+
+    // Handle error object with detail property
+    if (error.detail) {
+      // Check if detail is an object with message property
+      if (typeof error.detail === "object" && error.detail.message) {
+        return error.detail.message;
+      }
+      // Handle case where detail might be a string
+      if (typeof error.detail === "string") {
+        return error.detail;
+      }
+    }
+
+    // Handle error object with message property
+    if (error.message) {
+      return error.message;
+    }
+
+    // Fallback for unknown error format
+    return "An unexpected error occurred. Please try again.";
+  };
+
   const getDashboardPath = () => {
     const path = location.pathname.toLowerCase();
 
@@ -70,12 +98,6 @@ export const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // // Client-side validation
-    // if (!credentials.username || !credentials.password) {
-    //   setValidationError("Please fill in both username and password.");
-    //   return;
-    // }
-
     // ID validation for company/vendor login
     if (requiresIdField() && !credentials.tenant_id) {
       setValidationError("Please fill in your Company/Vendor ID.");
@@ -85,7 +107,13 @@ export const Login = () => {
     // username format validation
     const usernameRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!usernameRegex.test(credentials.username)) {
-      setValidationError("Please enter a valid username address.");
+      setValidationError("Please enter a valid email address.");
+      return;
+    }
+
+    // Password validation
+    if (!credentials.password) {
+      setValidationError("Please enter your password.");
       return;
     }
 
@@ -111,6 +139,7 @@ export const Login = () => {
       navigate(getDashboardPath(), { replace: true });
     } catch (err) {
       console.error("Login error:", err);
+      // Error is already handled in the Redux state, no need to set local state
     }
   };
 
@@ -173,6 +202,7 @@ export const Login = () => {
 
   const { title, subtitle, icon, idLabel, idPlaceholder } = getLoginTitle();
   const showIdField = requiresIdField();
+  const displayError = validationError || getErrorMessage(error);
 
   return (
     <div className="min-h-screen bg-gradient-to-tr from-blue-50 to-blue-200 flex items-center justify-center p-4">
@@ -184,16 +214,22 @@ export const Login = () => {
         </div>
 
         {/* Error Messages */}
-        {(error?.message || validationError) && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm text-center">
-            {validationError || error.message}
-            {error?.details && (
-              <ul className="mt-1 list-disc list-inside">
-                {Object.entries(error.details).map(([field, errors]) => (
-                  <li key={field}>{errors.join(", ")}</li>
-                ))}
-              </ul>
-            )}
+        {displayError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+            <div className="flex items-start">
+              <svg
+                className="w-4 h-4 mt-0.5 mr-2 flex-shrink-0"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span>{displayError}</span>
+            </div>
           </div>
         )}
 
@@ -222,22 +258,22 @@ export const Login = () => {
             </div>
           )}
 
-          {/* username Field */}
+          {/* Email Field */}
           <div className="space-y-1">
-            <label className="block text-gray-600 font-medium">username</label>
+            <label className="block text-gray-600 font-medium">Email</label>
             <div className="relative">
               <User
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                 size={20}
               />
               <input
-                type="username"
+                type="email"
                 name="username"
                 value={credentials.username}
                 onChange={handleChange}
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="user@example.com"
-                autoComplete="username"
+                autoComplete="email"
                 required
               />
             </div>
@@ -305,11 +341,11 @@ export const Login = () => {
         </form>
 
         {/* Additional Links */}
-        {/* <div className="mt-6 text-center text-sm text-gray-500">
+        <div className="mt-6 text-center text-sm text-gray-500">
           <a href="/forgot-password" className="text-blue-600 hover:underline">
             Forgot password?
           </a>
-        </div> */}
+        </div>
       </div>
     </div>
   );

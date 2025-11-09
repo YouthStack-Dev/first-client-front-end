@@ -6,6 +6,7 @@ import Header from "./Header";
 import { getTitleFromPath } from "./utility";
 import { selectCurrentUser, selectAuthLoading } from "@features/auth/authSlice";
 import { logDebug } from "@utils/logger";
+import Unauthorized from "../../components/Unauthorized";
 
 const Layout = ({ type }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -77,27 +78,7 @@ const Layout = ({ type }) => {
     );
   }
   if (type !== user.type) {
-    const handleRefresh = () => {
-      window.location.reload();
-    };
-
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
-        <h2 className="text-2xl font-semibold text-red-600 mb-4 animate-pulse">
-          Unauthorized Access
-        </h2>
-        <p className="text-gray-600 mb-6">
-          You don’t have permission to access this page. Please refresh and try
-          again.
-        </p>
-        <button
-          onClick={handleRefresh}
-          className="px-5 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-all"
-        >
-          🔄 Refresh & Try Again
-        </button>
-      </div>
-    );
+    return <Unauthorized />;
   }
 
   return (
