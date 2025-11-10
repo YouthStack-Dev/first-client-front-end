@@ -113,18 +113,64 @@ const DriverForm = ({ initialData = null, mode, onClose, vendors = [] }) => {
 
 
   // --- Validations ---
-  const validatePersonalDetails = () => {
-    const personalErrors = {};
-    if (!formData.name?.trim()) personalErrors.name = 'Driver name is required';
-    if (!formData.dateOfBirth) personalErrors.dateOfBirth = 'Date of birth is required';
-    if (!formData.mobileNumber?.trim()) personalErrors.mobileNumber = 'Mobile number is required';
-    else if (!/^\d{10}$/.test(formData.mobileNumber)) personalErrors.mobileNumber = 'Mobile number must be exactly 10 digits';
-    if (!formData.email?.trim()) personalErrors.email = 'Email is required';
-    if (mode === 'create' && !formData.password?.trim()) { personalErrors.password = 'Password is required'; }
-    if (!formData.code?.trim()) personalErrors.code = 'Driver code is required';
-    if (!formData.gender) personalErrors.gender = 'Gender is required';
-    return personalErrors;
-  };
+  // --- Validations ---
+const validatePersonalDetails = () => {
+  const personalErrors = {};
+  const today = new Date();
+
+  // Name
+  if (!formData.name?.trim()) personalErrors.name = 'Driver name is required';
+
+  // Mobile Number
+  if (!formData.mobileNumber?.trim()) {
+    personalErrors.mobileNumber = 'Mobile number is required';
+  } else if (!/^\d{10}$/.test(formData.mobileNumber)) {
+    personalErrors.mobileNumber = 'Mobile number must be exactly 10 digits';
+  }
+
+  // Email
+  if (!formData.email?.trim()) {
+    personalErrors.email = 'Email is required';
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    personalErrors.email = 'Please enter a valid email address';
+  }
+
+  // Password (only required in create mode)
+  if (mode === 'create' && !formData.password?.trim()) {
+    personalErrors.password = 'Password is required';
+  }
+
+  // Driver Code
+  if (!formData.code?.trim()) personalErrors.code = 'Driver code is required';
+
+  // Gender
+  if (!formData.gender) personalErrors.gender = 'Gender is required';
+
+  // Date of Birth validation (should be at least 18 years old)
+  if (!formData.dateOfBirth) {
+    personalErrors.dateOfBirth = 'Date of birth is required';
+  } else {
+    const dob = new Date(formData.dateOfBirth);
+    const age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    const dayDiff = today.getDate() - dob.getDate();
+    const isUnder18 =
+      age < 18 || (age === 18 && (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)));
+
+    if (isUnder18) {
+      personalErrors.dateOfBirth = 'Driver must be at least 18 years old';
+    }
+  }
+
+
+
+  // If any validation errors exist, show toast messages
+  if (Object.keys(personalErrors).length > 0) {
+    Object.values(personalErrors).forEach((msg) => toast.error(msg));
+  }
+
+  return personalErrors;
+};
 
   const validateDocuments = () => {
     const docErrors = {};
