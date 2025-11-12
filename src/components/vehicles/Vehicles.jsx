@@ -13,6 +13,9 @@ import {
   setPage,
   updateVehicle,
 } from "../../redux/features/manageVehicles/vehicleSlice";
+import VendorSelector from "../vendor/vendordropdown";
+import { selectCurrentUser } from "../../redux/features/auth/authSlice";
+import { setActiveVendor } from "../../redux/features/manageVehicles/vehicleSlice";
 
 import {
   selectPaginatedVehicles,
@@ -22,6 +25,8 @@ import {
   selectLoading,
   selectHasFetched,
 } from "../../redux/features/manageVehicles/vehicleSelectors";
+import store from "../../redux/store";
+
 
 const VehicleList = ({
   vehicles,
@@ -171,16 +176,36 @@ const ManageVehicles = () => {
   const { total } = useSelector(selectVehicleCounts);
   const loading = useSelector(selectLoading);
   const hasFetched = useSelector(selectHasFetched);
+  const currentUser = useSelector(selectCurrentUser);
+const userType = currentUser?.type; // "employee" or "vendor"
+const tenantId = currentUser?.employee?.tenant_id;
+const vendorId = currentUser?.vendor_user?.vendor_id;
+
 
   const [vehicleModal, setVehicleModal] = useState(false);
   const [editVehicle, setEditVehicle] = useState(null);
 
+  const byVendor = useSelector((state) => state.vehicles.byVendor);
+
   // Fetch all vehicles on mount
+  // useEffect(() => {
+  //   if (!hasFetched) {
+  //     dispatch(fetchVehiclesThunk());
+  //   }
+  // }, [dispatch, hasFetched]);
+
   useEffect(() => {
-    if (!hasFetched) {
+    if (userType === "vendor" && vendorId) {
+      const cached = store.getState().vehicles.byVendor?.[vendorId];
+      if (!cached || !cached.ids?.length) {
+        dispatch(fetchVehiclesThunk({ vendor_id: vendorId }));
+      }
+    } else if (userType === "employee" && !hasFetched) {
       dispatch(fetchVehiclesThunk());
     }
-  }, [dispatch, hasFetched]);
+  }, [dispatch, userType, vendorId, hasFetched]);
+
+
 
   const totalPages = Math.ceil(total / pagination.limit) || 1;
 
@@ -256,6 +281,44 @@ const ManageVehicles = () => {
             <option value="true">Active</option>
             <option value="false">Inactive</option>
           </select>
+          
+           {/* Vendor Selector */}
+            {userType === "employee" && (
+              <VendorSelector
+                onChange={(vendor) => {
+                  const vendorId = vendor.vendor_id;
+                  dispatch(setPage(1));
+
+                // ✅ Handle "All Vendors" case properly
+                if (vendorId === "all") {
+                  console.log("🌍 Showing all tenant vehicles");
+                  dispatch(setActiveVendor("ALL"));
+
+                    const cachedAll = byVendor?.ALL;
+                    if (cachedAll && cachedAll.ids?.length) {
+                      // ✅ Restore from cache instantly — no API call needed
+                      console.log("✅ Using cached ALL vehicles:", cachedAll.ids.length);
+                      return;
+                    }
+
+                      // ❗ If "ALL" cache doesn’t exist (e.g., after visiting a vendor with 0 vehicles)
+                      console.log("🔄 Fetching ALL tenant vehicles again...");
+                      dispatch(fetchVehiclesThunk()); // fetch all tenant-wide vehicles
+                      return;
+                    }
+
+                // ✅ Handle specific vendor
+                  const cached = byVendor?.[vendorId];
+                  if (cached && cached.ids?.length) {
+                    console.log("✅ Using cached vehicles for vendor:", vendorId);
+                    dispatch(setActiveVendor(vendorId));
+                  } else {
+                    console.log("Fetching vehicles for vendor:", vendorId);
+                    dispatch(fetchVehiclesThunk({ vendor_id: vendorId }));
+                  }
+                }}
+              />
+           )}
         </div>
 
         {/* Add Vehicle Button */}

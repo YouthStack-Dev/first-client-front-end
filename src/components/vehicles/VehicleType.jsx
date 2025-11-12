@@ -12,6 +12,7 @@ import {
   toggleVehicleTypeStatus
 } from "../../redux/features/managevehicletype/vehicleTypeThunks";
 import { toast } from "react-toastify";
+import VendorSelector from "../vendor/vendordropdown";
 import ReusableButton from "../ui/ReusableButton";
 import ReusableToggleButton from "../ui/ReusableToggleButton";
 
@@ -228,6 +229,14 @@ useEffect(() => {
             <option value="true">Active</option>
             <option value="false">Inactive</option>
           </select>
+
+          <div className="w-full sm:w-auto">
+              <VendorSelector
+                onChange={(vendor) => {
+                  dispatch(fetchVehicleTypes({ vendor_id: vendor.vendor_id }));
+                }}
+              />
+            </div>
         </div>
 
         <ToolBar
