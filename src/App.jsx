@@ -29,6 +29,8 @@ import BookingManagement from "./pages/BookingManagement";
 import ClusterMapViewer from "./components/RouteManagement/ClusterMapViewer";
 import VendorDashboard from "./vendor/VendorDashboard";
 import VendorRouteManagement from "./components/RouteManagement/VendorRouteManagement";
+import Practice from "./pages/Practice";
+import SupademoPage from "./Docs/company/SupademoPage";
 
 function App() {
   const dispatch = useDispatch();
@@ -43,8 +45,8 @@ function App() {
 
       <Routes>
         {/* ================= PRACTICE ROUTE ================= */}
-        <Route path="/practice" element={<ClusterMapViewer />} />
-
+        <Route path="/practice" element={<Practice />} />
+        <Route path="/supademo" element={<SupademoPage />} />
         {/* ================= PUBLIC LOGIN ROUTES ================= */}
         {/* Company Login */}
         <Route
