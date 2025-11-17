@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchVehicleTypes, createVehicleType, updateVehicleType,toggleVehicleTypeStatus  } from "./vehicleTypeThunks";
+import { fetchVehicleTypes, createVehicleType, updateVehicleType,toggleVehicleTypeStatus,fetchVendorVehicleTypes  } from "./vehicleTypeThunks";
 
 const initialState = {
   byId: {},        // normalized data: id -> vehicleType
@@ -7,6 +7,10 @@ const initialState = {
   loading: false,
   error: null,
    fetched: false,
+
+     vendorById: {},         // vendorId -> items[]
+  vendorLoading: false,
+  vendorError: null,
 };
 
 const vehicleTypeSlice = createSlice({
@@ -18,6 +22,12 @@ const vehicleTypeSlice = createSlice({
       state.allIds = [];
       state.loading = false;
       state.error = null;
+
+       // ⭐ Also reset vendor data
+      state.vendorById = {};
+      state.vendorLoading = false;
+      state.vendorError = null;
+      state.fetched = false;
     },
   },
   extraReducers: (builder) => {
@@ -114,6 +124,22 @@ const vehicleTypeSlice = createSlice({
       .addCase(toggleVehicleTypeStatus.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to toggle vehicle type status";
+      })
+      .addCase(fetchVendorVehicleTypes.pending, (state) => {
+        state.vendorLoading = true;
+        state.vendorError = null;
+      })
+      .addCase(fetchVendorVehicleTypes.fulfilled, (state, action) => {
+        state.vendorLoading = false;
+
+        const { vendorId, items } = action.payload;
+
+        // Store vendor-specific list
+        state.vendorById[vendorId] = items;
+      })
+      .addCase(fetchVendorVehicleTypes.rejected, (state, action) => {
+        state.vendorLoading = false;
+        state.vendorError = action.payload || "Failed to fetch vendor vehicle types";
       });
   },
 });

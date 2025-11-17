@@ -25,7 +25,7 @@ import {
   selectLoading,
   selectHasFetched,
 } from "../../redux/features/manageVehicles/vehicleSelectors";
-import store from "../../redux/store";
+
 
 
 const VehicleList = ({
@@ -188,22 +188,22 @@ const vendorId = currentUser?.vendor_user?.vendor_id;
   const byVendor = useSelector((state) => state.vehicles.byVendor);
 
   // Fetch all vehicles on mount
-  // useEffect(() => {
-  //   if (!hasFetched) {
-  //     dispatch(fetchVehiclesThunk());
-  //   }
-  // }, [dispatch, hasFetched]);
-
   useEffect(() => {
-    if (userType === "vendor" && vendorId) {
-      const cached = store.getState().vehicles.byVendor?.[vendorId];
-      if (!cached || !cached.ids?.length) {
-        dispatch(fetchVehiclesThunk({ vendor_id: vendorId }));
-      }
-    } else if (userType === "employee" && !hasFetched) {
+    if (!hasFetched) {
       dispatch(fetchVehiclesThunk());
     }
-  }, [dispatch, userType, vendorId, hasFetched]);
+  }, [dispatch, hasFetched]);
+
+  // useEffect(() => {
+  //   if (userType === "vendor" && vendorId) {
+  //     const cached = store.getState().vehicles.byVendor?.[vendorId];
+  //     if (!cached || !cached.ids?.length) {
+  //       dispatch(fetchVehiclesThunk({ vendor_id: vendorId }));
+  //     }
+  //   } else if (userType === "employee" && !hasFetched) {
+  //     dispatch(fetchVehiclesThunk());
+  //   }
+  // }, [dispatch, userType, vendorId, hasFetched]);
 
 
 

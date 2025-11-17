@@ -29,7 +29,10 @@ import {
 import DriverForm from "@components/driver/DriverForm";
 import Modal from "@components/modals/Modal";
 import ConfirmationModal from "@components/modals/ConfirmationModal";
-import { fetchDriversThunk, toggleDriverStatusThunk } from "../redux/features/manageDriver/driverThunks";
+import { fetchDriversThunk, toggleDriverStatusThunk ,fetchDriversByVendorThunk} from "../redux/features/manageDriver/driverThunks";
+import VendorSelector from "../components/vendor/vendordropdown";
+
+
 
 function ManageDrivers() {
   const dispatch = useDispatch();
@@ -44,6 +47,10 @@ function ManageDrivers() {
   const pagination = useSelector((state) => state.drivers.pagination);
   const driversEntities = useSelector((state) => state.drivers.entities);
   const driversIds = useSelector((state) => state.drivers.ids);
+  const currentUser = useSelector((state) => state.auth.user);
+  const userType = currentUser?.type;
+  const driversByVendor = useSelector((state) => state.drivers.byVendor); // optional, used for caching like vehicles
+
 
   // Modal and form state
   const [showModal, setShowModal] = useState(false);
@@ -272,6 +279,28 @@ function ManageDrivers() {
                 </svg>
               </div>
             </div>
+                {userType === "employee" && (
+                  <VendorSelector
+                    onChange={(vendor) => {
+                      const vendorId = vendor.vendor_id;
+
+                      // Reset pagination on vendor change
+                      dispatch(setPage(1));
+
+                      // ALL vendors → fetch full tenant list
+                      if (vendorId === "all" || vendorId === "ALL") {
+                        console.log("🌍 Fetching ALL drivers (tenant-wide)");
+                        dispatch(fetchDriversThunk());
+                        return;
+                      }
+
+                      // Specific vendor → fetch vendor drivers
+                      console.log("🚗 Fetching drivers for vendor:", vendorId);
+                      dispatch(fetchDriversByVendorThunk(vendorId));
+                    }}
+                  />
+                )}
+
           </div>
         }
         rightElements={
