@@ -45,10 +45,41 @@ API_CLIENT.interceptors.response.use(
     });
     return response;
   },
+
   (error) => {
+    // ────────────────────────────────
+    // 1. Detect Session Expired Error
+    // ────────────────────────────────
+    const errData = error?.response?.data?.detail;
+
+    const isSessionExpired =
+      errData?.error_code === "SESSION_EXPIRED" ||
+      errData?.message?.toLowerCase()?.includes("session expired");
+
+    if (isSessionExpired) {
+      console.warn("⚠️ Session expired — auto logout");
+
+      // 1. Show toast/message
+      alert("Your session expired. Please login again.");
+
+      // 2. Clear cookies + storage
+      Cookies.remove("auth_token");
+      sessionStorage.clear();
+      localStorage.clear();
+
+      // 3. Redirect to login
+      window.location.href = "/";
+
+      return;
+    }
+
+    // ────────────────────────────────
+    // 2. Detect Server Down
+    // ────────────────────────────────
     if (error.message === "Network Error" || error.code === "ERR_NETWORK") {
       window.dispatchEvent(new Event("server-down"));
     }
+
     return Promise.reject(error);
   }
 );

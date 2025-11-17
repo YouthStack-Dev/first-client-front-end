@@ -20,15 +20,17 @@ import CompanyManagement from "./pages/CompanyManagement";
 import SuperAdminDashboard from "./superadmin/SuperAdminDashboard";
 import CompanyDashboard from "./companies/CompanyDashboard";
 import RoleManagement from "./pages/RoleManagement";
-import RouteManagement from "./pages/RouteManagement";
 import Schedulemanagement from "./pages/Schedulemanagement";
 import CutoffManagement from "./components/Schedulemanagement/CutoffManagement";
 import ScheduledBookings from "./components/RouteManagement/RouteScheduledBookings";
 import ProfilePage from "./pages/ProfilePage";
 import BookingManagement from "./pages/BookingManagement";
-import ClusterMapViewer from "./components/RouteManagement/ClusterMapViewer";
 import VendorDashboard from "./vendor/VendorDashboard";
 import VendorRouteManagement from "./components/RouteManagement/VendorRouteManagement";
+import Practice from "./pages/Practice";
+import SupademoPage from "./Docs/company/SupademoPage";
+import RouteScheduledBookings from "./components/RouteManagement/RouteScheduledBookings";
+import ShiftRoutingManagement from "./components/RouteManagement/ShiftRoutingManagement";
 
 function App() {
   const dispatch = useDispatch();
@@ -43,8 +45,8 @@ function App() {
 
       <Routes>
         {/* ================= PRACTICE ROUTE ================= */}
-        <Route path="/practice" element={<ClusterMapViewer />} />
-
+        <Route path="/practice" element={<Practice />} />
+        <Route path="/supademo" element={<SupademoPage />} />
         {/* ================= PUBLIC LOGIN ROUTES ================= */}
         {/* Company Login */}
         <Route
@@ -158,7 +160,9 @@ function App() {
             <Route path="/cutoff" element={<CutoffManagement />} />
             <Route path="/manage-vendors" element={<VendorManagement />} />
             <Route path="/vehicles" element={<VehicleManagement />} />
+
             <Route path="/vendors" element={<VendorManagement />} />
+
             <Route path="/profile" element={<ProfilePage />} />
 
             <Route
@@ -185,22 +189,10 @@ function App() {
               path="/bookings"
               element={<h1> This is the screen of Booking </h1>}
             />
-            <Route path="/routing" element={<RouteManagement />} />
+            <Route path="/routing" element={<RouteScheduledBookings />} />
             <Route
-              path="/shift/:shiftId/:date/routing-map"
-              element={<ClusterMapViewer />}
-            />
-            <Route
-              path="/shift/:shiftId/:date/suggestions-route"
-              element={<ClusterMapViewer mode="suggestions" />}
-            />
-            <Route
-              path="/shift/:shiftId/:date/saved-routes"
-              element={<ClusterMapViewer mode="saved" />}
-            />
-            <Route
-              path="/shift/:shiftId/:date/pending-routes"
-              element={<ClusterMapViewer />}
+              path="/shift/:shiftId/:shiftType/:date/routing-map"
+              element={<ShiftRoutingManagement />}
             />
             <Route
               path="/employee/:employee_id/bookings"

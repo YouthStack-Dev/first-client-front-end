@@ -1,6 +1,5 @@
 // VendorRouteManagement.jsx
 import React, { useState, useCallback, useEffect } from "react";
-import GoogleMapView from "../ui/GoogleMapView";
 import SavedRouteCard from "./SavedRouteCard";
 import MapToolbar from "./MapToolbar";
 import AssignDriverModal from "./AssignDriverModal";
@@ -217,19 +216,7 @@ const VendorRouteManagement = () => {
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Map Container */}
-      <div className="flex-1 relative">
-        <GoogleMapView
-          center={mapCenter}
-          zoom={mapZoom}
-          onMapClick={handleMapClick}
-          onMapLoad={handleMapLoad}
-          className="w-full h-full"
-          gestureHandling="greedy"
-          disableDefaultUI={false}
-        >
-          {/* Map content goes here - you can pass routes data to display on map */}
-        </GoogleMapView>
-      </div>
+      <div className="flex-1 relative"></div>
 
       {/* Sidebar for route management controls */}
       <div className="w-2/1 bg-white shadow-lg p-4 overflow-y-auto border-l border-gray-200">
