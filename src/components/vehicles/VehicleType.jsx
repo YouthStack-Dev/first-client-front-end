@@ -63,9 +63,7 @@ const ManageVehicleTypes = () => {
     // if cached exists, do nothing (we'll use cached data)
   }, [selectedVendor, fetched, vendorById, dispatch]);
 
-  // ---------------------------
-  // Tenant filtering logic
-  // ---------------------------
+
   const filteredVehicleTypes = vehicleTypes.filter((vt) => {
     if (!vt) return false;
     const name = (vt.name || "").toLowerCase();
@@ -215,9 +213,6 @@ const ManageVehicleTypes = () => {
     }
   };
 
-  // ---------------------------
-  // JSX
-  // ---------------------------
   return (
     <>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 bg-white shadow-sm p-4 rounded-lg">
