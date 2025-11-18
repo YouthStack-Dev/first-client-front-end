@@ -4,15 +4,21 @@ import SavedRouteCard from "./SavedRouteCard";
 import MapToolbar from "./MapToolbar";
 import AssignDriverModal from "./AssignDriverModal";
 import { API_CLIENT } from "../../Api/API_Client";
+import { useRouteDirections, useSelection } from "@hooks/useRouteDirections";
+import { CompanyMarker, RouteDirections, RouteMarkers } from "./MapComponents";
+import { APIProvider, Map } from "@vis.gl/react-google-maps";
+
+// Debug utility function
+const logDebug = (message, data = null) => {
+  if (import.meta.env.DEV) {
+    console.log(`[VendorRouteManagement] ${message}`, data || "");
+  }
+};
+const API_KEY = import.meta.env.VITE_GOOGLE_API || "";
 
 const VendorRouteManagement = () => {
-  const [mapCenter, setMapCenter] = useState({ lat: 12.9716, lng: 77.5946 });
-  const [mapZoom, setMapZoom] = useState(12);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [savedRoutes, setSavedRoutes] = useState([]);
-  const [selectedRouteId, setSelectedRouteId] = useState(null);
-  const [selectedBookings, setSelectedBookings] = useState(new Set());
-  const [selectedRoutes, setSelectedRoutes] = useState(new Set());
   const [isAssignDriverModalOpen, setIsAssignDriverModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,134 +26,109 @@ const VendorRouteManagement = () => {
     const today = new Date();
     return today.toISOString().split("T")[0];
   });
-
+  const [routeData, setRouteData] = useState([]);
   const [shifts, setShifts] = useState([]);
 
-  // Transform API response to match component structure
-  const transformApiResponse = (apiData) => {
-    const transformedRoutes = [];
+  // Fixed: Removed duplicate state variables - use the ones from hook
+  const [shiftId, setShiftId] = useState(null);
 
-    apiData.data.shifts.forEach((shift) => {
-      shift.routes.forEach((route) => {
-        // Transform stops to bookings format
-        const bookings = route.stops.map((stop) => ({
-          booking_id: stop.booking_id,
-          employee_id: stop.employee_id,
-          employee_code: stop.employee_code,
-          pickup_location: stop.pickup_location,
-          drop_location: stop.drop_location,
-          pickup_latitude: stop.pickup_latitude,
-          pickup_longitude: stop.pickup_longitude,
-          drop_latitude: stop.drop_latitude,
-          drop_longitude: stop.drop_longitude,
-          status: stop.status,
-          estimated_pick_up_time: stop.estimated_pick_up_time,
-          estimated_distance: stop.estimated_distance,
-          booking_date: stop.booking_date,
-        }));
+  // Fixed: Use the custom hook for selection management
+  const { getRouteColor, getBookingColor } = useRouteDirections();
+  const {
+    selectedRoutes,
+    selectedBookings,
+    handleRouteSelect,
+    handleBookingSelect,
+    clearAllSelections,
+  } = useSelection();
 
-        transformedRoutes.push({
-          route_id: route.route_id,
-          route_code: route.route_code || `Route-${route.route_id}`,
-          status: route.status,
-          driver: route.driver,
-          vehicle: route.vehicle,
-          vendor: route.vendor,
-          bookings: bookings,
-          summary: route.summary,
-          shift_id: shift.shift_id,
-          shift_time: shift.shift_time,
-          log_type: shift.log_type,
-        });
-      });
-    });
+  // Fixed: Removed duplicate state variables that conflict with hook
+  const [selectedRouteId, setSelectedRouteId] = useState(null);
+  const logType = "IN";
 
-    return transformedRoutes;
-  };
-
-  // Fetch routes from backend
-  const fetchRoutes = useCallback(
-    async (date = bookingDate) => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const response = await API_CLIENT.get(`/v1/routes/`, {
-          params: {
-            booking_date: date,
-          },
-        });
-
-        if (response.data.success) {
-          const transformedRoutes = transformApiResponse(response.data);
-          setSavedRoutes(transformedRoutes);
-          setShifts(response.data.data.shifts);
-        } else {
-          throw new Error(response.data.message || "Failed to fetch routes");
+  const companyLocation =
+    routeData.length > 0
+      ? {
+          lat: routeData[0].tenant.latitude,
+          lng: routeData[0].tenant.longitude,
         }
-      } catch (err) {
-        console.error("Error fetching routes:", err);
-        setError(
-          err.response?.data?.message ||
-            err.message ||
-            "Failed to load routes. Please try again."
-        );
-        // Fallback to dummy data if needed
-      } finally {
-        setLoading(false);
+      : { lat: 12.933463, lng: 77.540186 };
+
+  const fetchRouteData = useCallback(async () => {
+    if (!shiftId || !bookingDate) {
+      setError("Missing shift ID or date");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const apiEndpoint = `/v1/routes/?&booking_date=${bookingDate}`;
+      const response = await API_CLIENT.get(apiEndpoint);
+
+      if (response.data.success) {
+        // Extract routes from the first shift (assuming single shift for now)
+        const routes = response.data.data.shifts[0]?.routes || [];
+        setRouteData(routes);
+
+        // Fixed: Also update savedRoutes to be used in the component
+        setSavedRoutes(routes);
+
+        logDebug("Route data fetched successfully", {
+          routeCount: routes.length,
+        });
+      } else {
+        const errorMsg = response.data.message || "Failed to fetch route data";
+        setError(errorMsg);
+        logDebug("API returned error", errorMsg);
       }
-    },
-    [bookingDate]
-  );
+    } catch (err) {
+      console.error("Error fetching route data:", err);
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to fetch route data";
+      setError(errorMessage);
+      logDebug("Fetch route data error", errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [shiftId, bookingDate]); // Fixed: Use bookingDate instead of separate date state
+
+  // Fixed: Separate function to fetch routes (was referenced but not defined)
+  const fetchRoutes = useCallback(async () => {
+    try {
+      setLoading(true);
+      await fetchRouteData();
+    } catch (err) {
+      console.error("Error fetching routes:", err);
+      setError("Failed to fetch routes");
+    }
+  }, [fetchRouteData]);
 
   // Fetch routes on component mount and when bookingDate changes
   useEffect(() => {
-    fetchRoutes();
-  }, [fetchRoutes]);
+    // Fixed: Initialize shiftId if needed
+    if (!shiftId) {
+      setShiftId("default_shift_id");
+    }
+  }, [bookingDate, shiftId]);
 
-  const handleMapClick = useCallback((event) => {
-    const { latLng } = event.detail;
-    const lat = latLng.lat();
-    const lng = latLng.lng();
-
-    const newLocation = { lat, lng };
-    setSelectedLocation(newLocation);
-    console.log("Selected location:", newLocation);
-  }, []);
-
-  const handleMapLoad = useCallback((map) => {
-    console.log("Map loaded, ready for vendor route management");
-  }, []);
+  // Fixed: Added useEffect to actually fetch data when shiftId or bookingDate changes
+  useEffect(() => {
+    if (shiftId && bookingDate) {
+      fetchRouteData();
+    }
+  }, [shiftId, bookingDate, fetchRouteData]);
 
   const resetSelection = () => {
     setSelectedLocation(null);
+    clearAllSelections(); // Fixed: Use the hook's clear function
   };
 
-  // Handler for route selection
-  const handleRouteSelect = (routeId) => {
-    const newSelectedRoutes = new Set(selectedRoutes);
-
-    if (newSelectedRoutes.has(routeId)) {
-      newSelectedRoutes.delete(routeId);
-    } else {
-      newSelectedRoutes.add(routeId);
-    }
-
-    setSelectedRoutes(newSelectedRoutes);
-    setSelectedRouteId(routeId === selectedRouteId ? null : routeId);
-    setSelectedBookings(new Set());
-  };
-
-  // Handler for booking selection
-  const handleBookingSelect = (bookingId) => {
-    const newSelectedBookings = new Set(selectedBookings);
-    if (newSelectedBookings.has(bookingId)) {
-      newSelectedBookings.delete(bookingId);
-    } else {
-      newSelectedBookings.add(bookingId);
-    }
-    setSelectedBookings(newSelectedBookings);
-  };
+  // Fixed: Removed duplicate handlers - using the ones from useSelection hook
 
   // Handler for assigning vehicle/driver (vendor panel)
   const handleAssignVehicle = () => {
@@ -188,8 +169,8 @@ const VendorRouteManagement = () => {
       setIsAssignDriverModalOpen(false);
       alert("Successfully assigned driver and vehicle to route");
 
-      // Clear selection
-      setSelectedRoutes(new Set());
+      // Clear selection using hook function
+      clearAllSelections();
       setSelectedRouteId(null);
     } catch (err) {
       console.error("Error assigning driver:", err);
@@ -207,19 +188,95 @@ const VendorRouteManagement = () => {
     fetchRoutes();
   };
 
-  // Group routes by shift for better organization
+  // Helper function to find booking by ID
+  const findBookingById = (bookingId, unroutedBookings, routeData) => {
+    // First check unrouted bookings
+    const unroutedBooking = unroutedBookings?.find(
+      (booking) => booking.booking_id === bookingId
+    );
+    if (unroutedBooking) return unroutedBooking;
+
+    // Then check all routes' bookings
+    for (const route of routeData) {
+      const routeBooking = route.bookings?.find(
+        (booking) => booking.booking_id === bookingId
+      );
+      if (routeBooking) return routeBooking;
+    }
+
+    return null;
+  };
+
+  // Fixed: Group routes by shift for better organization
   const routesByShift = shifts.map((shift) => ({
     shift,
-    routes: savedRoutes.filter((route) => route.shift_id === shift.shift_id),
+    routes: routeData.filter((route) => route.shift_id === shift.shift_id),
   }));
+
+  // Fixed: Alternative grouping if shifts is empty - group by shift_id from routeData
+  const effectiveRoutesByShift =
+    shifts.length > 0
+      ? routesByShift
+      : routeData.length > 0
+      ? [
+          {
+            shift: {
+              shift_id: "default",
+              log_type: "OUT",
+              shift_time: "All Day",
+            },
+            routes: routeData,
+          },
+        ]
+      : [];
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Map Container */}
-      <div className="flex-1 relative"></div>
+      <div className="flex-1 relative">
+        <APIProvider apiKey={API_KEY}>
+          <Map
+            defaultCenter={companyLocation}
+            defaultZoom={11}
+            mapId="company-route-map"
+            gestureHandling="greedy"
+            style={{ width: "100%", height: "100%" }}
+            fullscreenControl={false}
+            streetViewControl={false}
+            mapTypeControl={false}
+          >
+            <CompanyMarker position={companyLocation} />
+
+            {/* Selected Routes */}
+            {Array.from(selectedRoutes).map((routeId, routeIndex) => {
+              const route = routeData.find((r) => r.route_id === routeId);
+              if (!route) return null;
+
+              const color = getRouteColor(routeIndex);
+
+              return (
+                <div key={`route-${routeId}`}>
+                  <RouteDirections
+                    logType={logType}
+                    route={route}
+                    color={color}
+                    routeIndex={routeIndex}
+                  />
+                  <RouteMarkers
+                    logType={logType}
+                    route={route}
+                    color={color}
+                    routeIndex={routeIndex}
+                  />
+                </div>
+              );
+            })}
+          </Map>
+        </APIProvider>
+      </div>
 
       {/* Sidebar for route management controls */}
-      <div className="w-2/1 bg-white shadow-lg p-4 overflow-y-auto border-l border-gray-200">
+      <div className="w-1/2 bg-white shadow-lg p-4 overflow-y-auto border-l border-gray-200">
         <h2 className="text-xl font-bold mb-4">Vendor Route Management</h2>
 
         {/* Date Selector */}
@@ -289,7 +346,7 @@ const VendorRouteManagement = () => {
 
               {/* Routes organized by shift */}
               <div className="space-y-6">
-                {routesByShift.map(({ shift, routes }) => (
+                {effectiveRoutesByShift.map(({ shift, routes }) => (
                   <div key={shift.shift_id} className="border rounded-lg">
                     <div className="bg-gray-50 px-3 py-2 border-b">
                       <h3 className="font-semibold text-sm">
@@ -322,7 +379,7 @@ const VendorRouteManagement = () => {
               </div>
 
               {/* Empty state when no shifts */}
-              {routesByShift.length === 0 && !loading && (
+              {effectiveRoutesByShift.length === 0 && !loading && (
                 <div className="text-center py-8 text-gray-500">
                   No routes found for the selected date.
                 </div>

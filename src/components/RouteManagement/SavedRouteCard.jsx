@@ -28,6 +28,7 @@ const SavedRouteCard = ({
   selectedBookings,
   onBookingSelect,
   OnOperation,
+  detachBooking,
   onRouteUpdate, // New prop for handling route updates
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -107,13 +108,14 @@ const SavedRouteCard = ({
   const handleBookingDetach = async (booking_id, stop, routeId) => {
     logDebug("Detaching booking:", booking_id, "from route:", routeId);
 
+    logDebug(" this is the booking id to be removed:", booking_id);
     try {
       await API_CLIENT.put(`/v1/routes/${routeId}`, {
         operation: "remove",
         booking_ids: [booking_id],
       });
 
-      OnOperation();
+      detachBooking();
     } catch (error) {
       logError("Failed to detach booking:", error);
       alert("Failed to detach booking. Please try again.");
@@ -430,7 +432,7 @@ const SavedRouteCard = ({
                   isSelected={selectedBookings?.has(stop.booking_id)}
                   isDeleteDisabled={isDeleteDisabled}
                   onBookingClick={handleBookingClick}
-                  onRemoveFromRoute={(e, bookingId, stop) =>
+                  onRemoveFromRoute={(bookingId, stop) =>
                     handleBookingDetach(bookingId, stop, route.route_id)
                   }
                 />

@@ -867,3 +867,39 @@ export const dummyroutes = [
     },
   },
 ];
+
+export const ongoingRoutes = [
+  {
+    id: "R001",
+    vehicleNumber: "KA-02-9282",
+    driver: "John Doe",
+    driverId: "KA-02-9282",
+    route: "Whitefield → Koramangala",
+    passengers: 8,
+    location: { lat: 12.9698, lng: 77.75 },
+    status: "On Time",
+    eta: "15 mins",
+  },
+  {
+    id: "R002",
+    vehicleNumber: "KA-02-9289",
+    driver: "Jane Smith",
+    driverId: "KA-02-9289",
+    route: "Electronic City → Indiranagar",
+    passengers: 12,
+    location: { lat: 12.8456, lng: 77.6603 },
+    status: "Delayed",
+    eta: "25 mins",
+  },
+  {
+    id: "R003",
+    vehicleNumber: "KA-02-9292",
+    driver: "Bob Johnson",
+    driverId: "KA-02-9292",
+    route: "Hebbal → MG Road",
+    passengers: 6,
+    location: { lat: 13.0358, lng: 77.597 },
+    status: "On Time",
+    eta: "10 mins",
+  },
+];

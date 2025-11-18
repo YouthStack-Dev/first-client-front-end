@@ -28,9 +28,9 @@ import BookingManagement from "./pages/BookingManagement";
 import VendorDashboard from "./vendor/VendorDashboard";
 import VendorRouteManagement from "./components/RouteManagement/VendorRouteManagement";
 import Practice from "./pages/Practice";
-import SupademoPage from "./Docs/company/SupademoPage";
 import RouteScheduledBookings from "./components/RouteManagement/RouteScheduledBookings";
 import ShiftRoutingManagement from "./components/RouteManagement/ShiftRoutingManagement";
+import DocPage from "./Docs/SupademoPage";
 
 function App() {
   const dispatch = useDispatch();
@@ -46,7 +46,7 @@ function App() {
       <Routes>
         {/* ================= PRACTICE ROUTE ================= */}
         <Route path="/practice" element={<Practice />} />
-        <Route path="/supademo" element={<SupademoPage />} />
+        <Route path="/supademo" element={<DocPage />} />
         {/* ================= PUBLIC LOGIN ROUTES ================= */}
         {/* Company Login */}
         <Route
@@ -118,9 +118,14 @@ function App() {
           }
         >
           <Route element={<VendorLayout type={"vendor"} />}>
-            <Route path="dashboard" element={<VendorDashboard />} />
+            <Route path="dashboard" element={<CompanyDashboard />} />
             <Route path="employees" element={<ManageEmployees />} />
             <Route path="routing" element={<VendorRouteManagement />} />
+            <Route
+              path="routing-listing"
+              element={<h1> this is the page of route listing </h1>}
+            />
+
             <Route
               path="employees/:userId/edit"
               element={<EmployeeForm mode="edit" />}
@@ -129,6 +134,7 @@ function App() {
               path="employees/:userId/view"
               element={<EmployeeForm mode="view" />}
             />
+
             <Route path="reports" element={<h1>Vendor Reports</h1>} />
             <Route path="drivers" element={<ManageDrivers />} />
             <Route path="vehicles" element={<VehicleManagement />} />

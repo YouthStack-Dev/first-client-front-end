@@ -426,6 +426,7 @@ const ShiftRoutingManagement = () => {
                     selectedBookings={selectedBookings}
                     onBookingSelect={handleBookingSelect}
                     OnOperation={handleRefreshData}
+                    detachBooking={handleRefreshData}
                     onRouteUpdate={() =>
                       logDebug("Route updated", route.route_id)
                     }
