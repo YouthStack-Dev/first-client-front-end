@@ -14,6 +14,20 @@ import { downloadFile } from "../../utils/downloadfile";
 
 const TABS = ["BASIC INFO", "DOCUMENTS"];
 
+// ⭐ Add error class helper
+const errorClass = (hasError) =>
+  hasError ? "border-red-500 focus:ring-red-500" : "border-gray-300";
+
+// ⭐ Helper to validate future dates only
+const isFutureDate = (value) => {
+  if (!value) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const inputDate = new Date(value);
+  return inputDate > today; // must be strictly future
+};
+
+
 const initialState = {
   vendor_id: "",
   vehicle_type_id: "",
@@ -153,36 +167,65 @@ useEffect(() => {
     }
   };
 
-  // --- Validation ---
-  const validateBasicInfo = () => {
-    const newErrors = {};
-    if (!formData.vendor_id) newErrors.vendor_id = "Vendor is required";
-    if (!formData.vehicle_type_id)
-      newErrors.vehicle_type_id = "Vehicle Type is required";
-    if (!formData.rc_number) newErrors.rc_number = "RC Number is required";
-    if (!formData.driver_id) newErrors.driver_id = "Driver is required";
-    return newErrors;
-  };
 
-  const validateDocuments = () => {
-    const requiredDocs = [
-      "insurance_file",
-      "permit_file",
-      "puc_file",
-      "fitness_file",
-      "tax_receipt_file",
-    ];
-    const newErrors = {};
-    requiredDocs.forEach((doc) => {
-      if (
-        !formData[doc] &&
-        !initialData[`${doc.replace("_file", "_url")}`]
-      ) {
-        newErrors[doc] = "This document is required";
-      }
-    });
-    return newErrors;
-  };
+const validateBasicInfo = () => {
+  const newErrors = {};
+  if (!formData.vendor_id) newErrors.vendor_id = "Vendor is required";
+  if (!formData.vehicle_type_id)
+    newErrors.vehicle_type_id = "Vehicle Type is required";
+  if (!formData.rc_number) newErrors.rc_number = "RC Number is required";
+  if (!formData.driver_id) newErrors.driver_id = "Driver is required";
+
+  // ⭐ RC expiry must be future date
+  if (!formData.rc_expiry_date) {
+    newErrors.rc_expiry_date = "RC Expiry Date is required";
+  } else if (!isFutureDate(formData.rc_expiry_date)) {
+    newErrors.rc_expiry_date = "RC Expiry must be a future date";
+  }
+
+  return newErrors;
+};
+
+
+   const validateDocuments = () => {
+  const requiredDocs = [
+    "insurance_file",
+    "permit_file",
+    "puc_file",
+    "fitness_file",
+    "tax_receipt_file",
+  ];
+  const requiredDates = [
+    "insurance_expiry_date",
+    "permit_expiry_date",
+    "puc_expiry_date",
+    "fitness_expiry_date",
+    "tax_receipt_date",
+  ];
+
+  const newErrors = {};
+
+  // ⭐ Required files
+  requiredDocs.forEach((doc) => {
+    const exists = initialData?.[`${doc.replace("_file", "_url")}`];
+    if (!formData[doc] && !exists) {
+      newErrors[doc] = "This document is required";
+    }
+  });
+
+  // ⭐ Required FUTURE dates
+  requiredDates.forEach((field) => {
+    const value = formData[field];
+
+    if (!value) {
+      newErrors[field] = "Expiry Date is required";
+    } else if (!isFutureDate(value)) {
+      newErrors[field] = "Expiry Date must be a future date";
+    }
+  });
+
+  return newErrors;
+};
 
   const handleNext = () => {
     const newErrors =
@@ -203,10 +246,17 @@ useEffect(() => {
   // --- Submit ---
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const allErrors = { ...validateBasicInfo(), ...validateDocuments() };
+
     if (Object.keys(allErrors).length > 0) {
       setErrors(allErrors);
-      setActiveTab("BASIC INFO");
+
+      if (Object.keys(validateBasicInfo()).length > 0) {
+        setActiveTab("BASIC INFO");
+      } else {
+        setActiveTab("DOCUMENTS");
+      }
       return;
     }
 
@@ -250,39 +300,53 @@ useEffect(() => {
   };
 
   // --- Render helpers ---
-  const renderField = (label, field, type = "text", required = false) => (
+    const renderField = (label, field, type = "text", required = false) => (
     <div>
       <label className="block font-medium mb-1">
         {label} {required && "*"}
       </label>
+
       <input
         type={type}
         value={formData[field] || ""}
         onChange={(e) => handleInputChange(field, e.target.value)}
         disabled={isViewMode}
-        className="w-full border rounded px-3 py-2 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+        className={`w-full rounded px-3 py-2 bg-white border ${errorClass(
+          errors[field]
+        )}`}
       />
+
       {errors[field] && (
-        <p className="text-red-500 text-sm">{errors[field]}</p>
+        <p className="text-red-500 text-sm mt-1">{errors[field]}</p>
       )}
     </div>
   );
 
-  const renderSelect = (label, field, options = [], required = false, disabled = false) => (
+  const renderSelect = (
+    label,
+    field,
+    options = [],
+    required = false,
+    disabled = false
+  ) => (
     <div>
       <label className="block font-medium mb-1">
         {label} {required && "*"}
       </label>
-      <Select
-        options={options}
-        value={options.find((o) => o.value === formData[field]) || null}
-        onChange={(s) => handleInputChange(field, s?.value || "")}
-        isSearchable
-        placeholder={`Select ${label}`}
-        isDisabled={disabled || vtLoading || isViewMode}
-      />
+
+      <div className={errors[field] ? "border border-red-500 rounded" : ""}>
+        <Select
+          options={options}
+          value={options.find((o) => o.value === formData[field]) || null}
+          onChange={(s) => handleInputChange(field, s?.value || "")}
+          isSearchable
+          placeholder={`Select ${label}`}
+          isDisabled={disabled || vtLoading || isViewMode}
+        />
+      </div>
+
       {errors[field] && (
-        <p className="text-red-500 text-sm">{errors[field]}</p>
+        <p className="text-red-500 text-sm mt-1">{errors[field]}</p>
       )}
     </div>
   );
