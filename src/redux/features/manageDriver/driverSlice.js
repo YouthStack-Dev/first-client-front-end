@@ -1,5 +1,5 @@
 import { createSlice, createSelector } from '@reduxjs/toolkit';
-import { fetchDriversThunk,createDriverThunk ,updateDriverThunk  } from "./driverThunks";
+import { fetchDriversThunk,createDriverThunk ,updateDriverThunk,fetchDriversByVendorThunk   } from "./driverThunks";
 
 const initialState = {
   entities: {},
@@ -7,6 +7,8 @@ const initialState = {
   loading: false,
   error: null,
   hasFetched: false,
+  selectedVendor: "all",
+  byVendor: {},
   filters: {
     searchTerm: '',
     statusFilter: 'all',
@@ -42,7 +44,9 @@ const driversSlice = createSlice({
     setPage: (state, action) => {
       state.pagination.skip = (action.payload - 1) * state.pagination.limit;
     },
-    
+    setSelectedDriverVendor: (state, action) => {
+      state.selectedVendor = action.payload;
+    }, 
     // Data management actions
     setDriversLoading: (state, action) => {
       state.loading = action.payload;
@@ -104,7 +108,7 @@ const driversSlice = createSlice({
         state.error = action.payload || "Failed to fetch drivers";
       })
       
-        .addCase(createDriverThunk.pending, (state) => {
+      .addCase(createDriverThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
@@ -140,7 +144,38 @@ const driversSlice = createSlice({
         .addCase(updateDriverThunk.rejected, (state, action) => {
           state.loading = false;
           state.error = action.payload?.message || "Failed to update driver";
+        })
+        .addCase(fetchDriversByVendorThunk.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+          })
+        .addCase(fetchDriversByVendorThunk.fulfilled, (state, action) => {
+          state.loading = false;
+          state.error = null;
+
+          const { vendorId, items } = action.payload;
+
+          const entities = {};
+          const ids = [];
+
+          items.forEach((driver) => {
+            entities[driver.driver_id] = driver;
+            ids.push(driver.driver_id);
+          });
+
+          // Cache vendor data
+          state.byVendor[vendorId] = { entities, ids };
+
+          // Also set active listing
+          state.entities = entities;
+          state.ids = ids;
+        })
+
+        .addCase(fetchDriversByVendorThunk.rejected, (state, action) => {
+          state.loading = false;
+          state.error = action.payload || "Failed to fetch vendor-specific drivers";
         });
+
     }
   });
 
@@ -157,6 +192,7 @@ export const selectError = state => state.drivers.error;
 export const selectHasFetched = state => state.drivers.hasFetched;
 export const selectFilters = state => state.drivers.filters;
 export const selectPagination = state => state.drivers.pagination;
+
 
 
 
@@ -261,7 +297,8 @@ export const {
   setDriversLoading,
   setDriversError,
   setDriversData,
-  updateDriverStatus
+  updateDriverStatus,
+  setSelectedDriverVendor
 } = driversSlice.actions;
 
 export default driversSlice.reducer;

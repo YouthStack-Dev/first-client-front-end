@@ -95,3 +95,22 @@ export const toggleDriverStatusThunk = createAsyncThunk(
   }
 );
 
+
+export const fetchDriversByVendorThunk = createAsyncThunk(
+  "drivers/fetchDriversByVendor",
+  async (vendorId, { rejectWithValue }) => {
+    try {
+      const response = await API_CLIENT.get(
+        `/v1/drivers/vendor?vendor_id=${vendorId}`
+      );
+
+      return {
+        vendorId,
+        items: response.data?.data?.items || []
+      };
+
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Failed to fetch vendor drivers");
+    }
+  }
+);

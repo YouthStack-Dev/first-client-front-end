@@ -76,3 +76,17 @@ export const toggleVehicleTypeStatus = createAsyncThunk(
     }
   }
 );
+
+export const fetchVendorVehicleTypes = createAsyncThunk(
+  "vehicleTypes/fetchVendorVehicleTypes",
+  async (vendorId, { rejectWithValue }) => {
+    try {
+      const response = await API_CLIENT.get(
+        `/v1/vehicle-types/?vendor_id=${vendorId}`
+      );
+      return { vendorId, items: response.data.data.items };
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Failed to fetch vendor vehicles");
+    }
+  }
+);
