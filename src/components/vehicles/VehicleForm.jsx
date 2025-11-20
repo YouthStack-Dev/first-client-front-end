@@ -130,10 +130,10 @@ useEffect(() => {
 
 useEffect(() => {
   // ✅ Only fetch if not fetched already
-  if (!hasFetched && !loading) {
+  if (!hasFetched ) {
     dispatch(fetchDriversThunk());
   }
-}, [dispatch, hasFetched, loading]);
+}, [dispatch, hasFetched]);
 
 
   const driverOptions = useMemo(() => {
