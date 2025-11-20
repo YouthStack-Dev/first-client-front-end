@@ -19,18 +19,19 @@ import { initializeAuth } from "./redux/features/auth/authSlice";
 import CompanyManagement from "./pages/CompanyManagement";
 import SuperAdminDashboard from "./superadmin/SuperAdminDashboard";
 import CompanyDashboard from "./companies/CompanyDashboard";
-import RoleManagement from "./pages/RoleManagement";
 import Schedulemanagement from "./pages/Schedulemanagement";
 import CutoffManagement from "./components/Schedulemanagement/CutoffManagement";
 import ScheduledBookings from "./components/RouteManagement/RouteScheduledBookings";
 import ProfilePage from "./pages/ProfilePage";
 import BookingManagement from "./pages/BookingManagement";
-import VendorDashboard from "./vendor/VendorDashboard";
 import VendorRouteManagement from "./components/RouteManagement/VendorRouteManagement";
 import Practice from "./pages/Practice";
 import RouteScheduledBookings from "./components/RouteManagement/RouteScheduledBookings";
 import ShiftRoutingManagement from "./components/RouteManagement/ShiftRoutingManagement";
 import DocPage from "./Docs/SupademoPage";
+import PermissionCheck from "./middleware/PermissionCheck";
+import RoleManagement from "./components/RoleManagement/RoleManagement";
+import ReportDownloader from "./pages/ReportDownloader";
 
 function App() {
   const dispatch = useDispatch();
@@ -154,11 +155,19 @@ function App() {
         >
           <Route element={<Layout type={"employee"} />}>
             <Route path="/dashboard" element={<CompanyDashboard />} />
-
+            <Route
+              path="/company-management"
+              element={
+                <PermissionCheck module="permisions" action="read">
+                  <h1> this is to chekc the permisison bassed ui </h1>
+                </PermissionCheck>
+              }
+            />
             <Route path="departments" element={<ManageDepartment />} />
             <Route path="/shift-categories" element={<ManageDepartment />} />
             <Route path="/shifts" element={<Schedulemanagement />} />
             <Route path="/role-management" element={<RoleManagement />} />
+            <Route path="/role-permission" element={<RoleManagement />} />
             <Route path="/drivers" element={<ManageDrivers />} />
             <Route path="/manage-company" element={<ManageDepartment />} />
             <Route path="/scheduling" element={<Schedulemanagement />} />
@@ -177,8 +186,13 @@ function App() {
             />
             <Route
               path="/department/:depId/employees"
-              element={<ManageEmployees />}
+              element={
+                <PermissionCheck module="employee" action="read">
+                  <ManageEmployees />{" "}
+                </PermissionCheck>
+              }
             />
+
             <Route
               path="/department/:depId/employees/:userId/edit"
               element={<EmployeeForm mode="edit" />}
@@ -191,10 +205,8 @@ function App() {
               path="/tracking"
               element={<h1> This is the screen of Tracking </h1>}
             />
-            <Route
-              path="/bookings"
-              element={<h1> This is the screen of Booking </h1>}
-            />
+            <Route path="/report-downloader" element={<ReportDownloader />} />
+
             <Route path="/routing" element={<RouteScheduledBookings />} />
             <Route
               path="/shift/:shiftId/:shiftType/:date/routing-map"

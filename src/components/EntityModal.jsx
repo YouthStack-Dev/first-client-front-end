@@ -1,4 +1,4 @@
-import React, { useState, useEffect ,useCallback} from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   X,
   Building2,
@@ -54,7 +54,7 @@ const EntityModal = ({
   useEffect(() => {
     if (!isOpen || permissions.length === 0) return;
 
-     console.log("🧭 entityData received in modal:", entityData);
+    console.log("🧭 entityData received in modal:", entityData);
 
     const groupedPermissions = {};
     permissions.forEach((p) => {
@@ -133,8 +133,7 @@ const EntityModal = ({
     // });
     if (mode === "create") {
       const password = formData.employee_password;
-      const passwordRegex =
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
       if (!password) newErrors.employee_password = "Password is required";
       else if (!passwordRegex.test(password))
         newErrors.employee_password =
@@ -202,7 +201,10 @@ const EntityModal = ({
               {entityType.charAt(0).toUpperCase() + entityType.slice(1)}
             </h2>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -340,35 +342,43 @@ const EntityModal = ({
             {loading ? (
               <p>Loading permissions...</p>
             ) : (
-            
-                  // ✅ 4-column layout instead of 3
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {Object.entries(formData.permissions).map(([module, actions]) => (
-                      <div key={module} className="bg-gray-50 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
-                        <label className="block font-medium text-gray-800 mb-2">
-                          {module}
-                        </label>
-                        <div className="space-y-2">
-                          {Object.entries(actions).map(([action, data]) => (
-                            <label key={action} className="flex items-center">
-                              <input
-                                type="checkbox"
-                                checked={data.is_active || false}
-                                onChange={(e) =>
-                                  handlePermissionChange(module, action, e.target.checked)
-                                }
-                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                              />
-                              <span className="ml-2 text-sm text-gray-700">
-                                {action.charAt(0).toUpperCase() + action.slice(1)}
-                              </span>
-                            </label>
-                          ))}
-                        </div>
+              // ✅ 4-column layout instead of 3
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {Object.entries(formData.permissions).map(
+                  ([module, actions]) => (
+                    <div
+                      key={module}
+                      className="bg-gray-50 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+                    >
+                      <label className="block font-medium text-gray-800 mb-2">
+                        {module}
+                      </label>
+                      <div className="space-y-2">
+                        {Object.entries(actions).map(([action, data]) => (
+                          <label key={action} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={data.is_active || false}
+                              onChange={(e) =>
+                                handlePermissionChange(
+                                  module,
+                                  action,
+                                  e.target.checked
+                                )
+                              }
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="ml-2 text-sm text-gray-700">
+                              {action.charAt(0).toUpperCase() + action.slice(1)}
+                            </span>
+                          </label>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )
                 )}
+              </div>
+            )}
 
             <div className="flex justify-between pt-4 border-t border-gray-200">
               <button
