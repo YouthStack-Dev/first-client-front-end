@@ -100,7 +100,7 @@ export const baseSidebarConfig = [
         icon: Users2,
       },
       {
-        title: "Vendor",
+        title: "Vendor Management",
         path: "/vendors",
         permission: "vendor.read",
         icon: Store,

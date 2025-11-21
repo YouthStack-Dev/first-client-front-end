@@ -31,6 +31,7 @@ import Practice from "./pages/Practice";
 import RouteScheduledBookings from "./components/RouteManagement/RouteScheduledBookings";
 import ShiftRoutingManagement from "./components/RouteManagement/ShiftRoutingManagement";
 import DocPage from "./Docs/SupademoPage";
+import NewVendorManagement from "./pages/NewVendorManagement";
 
 function App() {
   const dispatch = useDispatch();
@@ -168,7 +169,10 @@ function App() {
             <Route path="/vehicles" element={<VehicleManagement />} />
 
             <Route path="/vendors" element={<VendorManagement />} />
-
+            <Route
+              path="/new-vendor-management"
+              element={<NewVendorManagement />}
+            />
             <Route path="/profile" element={<ProfilePage />} />
 
             <Route

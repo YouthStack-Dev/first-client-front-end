@@ -4,6 +4,7 @@ import {
   Building2,
   Lock,
   Save,
+  MapPin,
   ArrowLeft,
   ArrowRight,
   CheckCircle,
@@ -27,7 +28,7 @@ const initialFormState = {
   permissions: {},
 };
 
-const EntityModal = ({
+const NewEntityModal = ({
   isOpen,
   onClose,
   entityType = "company",
@@ -403,4 +404,4 @@ const EntityModal = ({
   );
 };
 
-export default EntityModal;
+export default NewEntityModal;
