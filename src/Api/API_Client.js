@@ -9,11 +9,12 @@ export const API_CLIENT = axios.create({
   baseURL: "https://api.gocab.tech/api",
 });
 
-// Add request interceptor
-
+// ───────────────────────────────────
+// 🔼 REQUEST INTERCEPTOR
+// ───────────────────────────────────
 API_CLIENT.interceptors.request.use(
   (config) => {
-    const token = Cookies.get("auth_token"); // Replace with your actual cookie name
+    const token = Cookies.get("auth_token");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -35,7 +36,9 @@ API_CLIENT.interceptors.request.use(
   }
 );
 
-// Add response interceptor
+// ───────────────────────────────────
+// 🔽 RESPONSE INTERCEPTOR
+// ───────────────────────────────────
 API_CLIENT.interceptors.response.use(
   (response) => {
     console.log("✅ Response:", {
@@ -48,6 +51,17 @@ API_CLIENT.interceptors.response.use(
 
   (error) => {
     // ────────────────────────────────
+    // 📌 NEW: Log full error response
+    // ────────────────────────────────
+    console.error("❌ API Error Response:", {
+      url: error.config?.url,
+      status: error.response?.status,
+      data: error.response?.data, // <-- Backend validation errors here
+      method: error.config?.method,
+      payload: error.config?.data,
+    });
+
+    // ────────────────────────────────
     // 1. Detect Session Expired Error
     // ────────────────────────────────
     const errData = error?.response?.data?.detail;
@@ -59,17 +73,13 @@ API_CLIENT.interceptors.response.use(
     if (isSessionExpired) {
       console.warn("⚠️ Session expired — auto logout");
 
-      // 1. Show toast/message
       alert("Your session expired. Please login again.");
 
-      // 2. Clear cookies + storage
       Cookies.remove("auth_token");
       sessionStorage.clear();
       localStorage.clear();
 
-      // 3. Redirect to login
       window.location.href = "/";
-
       return;
     }
 

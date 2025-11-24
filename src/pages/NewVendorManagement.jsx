@@ -8,7 +8,6 @@ import {
   fetchVendorsThunk,
 } from "../redux/features/vendors/vendorThunk";
 import { fetchCompaniesThunk } from "../redux/features/company/companyThunks";
-import NewAssignEntityModal from "../components/modals/NewAssignEntityModal";
 import {
   Plus,
   RefreshCw,
@@ -32,25 +31,31 @@ const NewVendorManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedCompany, setSelectedCompany] = useState("all");
 
   // --- Modals State ---
-  const [isVendorModalOpen, setIsVendorModalOpen] = useState(false); // Updated state name
-  const [vendorModalMode, setVendorModalMode] = useState("create"); // 'create' | 'edit' | 'view'
+  const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
+  const [vendorModalMode, setVendorModalMode] = useState("create");
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-  const [vendorToAssign, setVendorToAssign] = useState(null);
   const [selectedVendor, setSelectedVendor] = useState(null);
-  const { type } = useSelector(selectCurrentUser);
-  logDebug("Current user type:", type);
-  // --- Redux Data ---
+
+  // --- Fixed User Selection with Null Checks ---
+  const currentUser = useSelector(selectCurrentUser);
+  const userType = currentUser?.type || "user"; // Default to "user" if null/undefined
+
+  logDebug("Current user in Vendor Management:", currentUser);
+
+  // --- Redux Data with Safe Defaults ---
   const {
     data: vendors = [],
-    loading: vendorLoading,
-    error: vendorError,
+    loading: vendorLoading = false,
+    error: vendorError = null,
   } = useSelector((state) => state.vendor || {});
+
   const {
     data: companies = [],
-    loading: companyLoading,
-    error: companyError,
+    loading: companyLoading = false,
+    error: companyError = null,
   } = useSelector((state) => state.company || {});
 
   // --- Filter Options ---
@@ -62,18 +67,43 @@ const NewVendorManagement = () => {
     { value: "suspended", label: "Suspended" },
   ];
 
-  // --- Fetch Data on Mount ---
+  // Company options for filter - with safe mapping
+  const companyOptions = [
+    { value: "all", label: "All Companies" },
+    ...(companies?.map((company) => ({
+      value: company?.tenant_id || company?._id || "unknown",
+      label: company?.name || company?.companyName || "Unnamed Company",
+    })) || []),
+  ];
+
   useEffect(() => {
-    if (!vendors.length) dispatch(fetchVendorsThunk());
-    if (!companies.length) dispatch(fetchCompaniesThunk());
-  }, [dispatch]);
+    const fetchData = async () => {
+      if (!vendors || vendors.length === 0) {
+        dispatch(fetchVendorsThunk());
+      }
+      if (!companies || companies.length === 0) {
+        dispatch(fetchCompaniesThunk());
+      }
+    };
 
-  // --- Filtering Logic ---
-  const filteredVendors = vendors.filter((vendor) => {
+    fetchData();
+  }, [dispatch, vendors, companies]);
+
+  // --- Enhanced Filtering Logic with Safe Access ---
+  const filteredVendors = (vendors || []).filter((vendor) => {
+    if (!vendor) return false;
+
+    // Search filter with safe access
+    const vendorName = vendor.name || "";
+    const vendorEmail = vendor.email || "";
+    const vendorPhone = vendor.phone || "";
+
     const matchesSearch =
-      vendor.name?.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
-      vendor.email?.toLowerCase().includes(searchQuery.trim().toLowerCase());
+      vendorName.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+      vendorEmail.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+      vendorPhone.toLowerCase().includes(searchQuery.trim().toLowerCase());
 
+    // Status filter with safe access
     let matchesStatus = true;
     if (selectedStatus === "active") matchesStatus = vendor.is_active === true;
     else if (selectedStatus === "inactive")
@@ -82,18 +112,35 @@ const NewVendorManagement = () => {
       matchesStatus = vendor.status === "pending";
     else if (selectedStatus === "suspended")
       matchesStatus = vendor.status === "suspended";
-    // else "all"
 
-    return matchesSearch && matchesStatus;
+    // Company filter - based on tenant_id association
+    let matchesCompany = true;
+    if (selectedCompany !== "all") {
+      matchesCompany = vendor.tenant_id === selectedCompany;
+    }
+
+    return matchesSearch && matchesStatus && matchesCompany;
   });
+
+  // Get company name for display with safe access
+  const getCompanyName = (companyId) => {
+    if (!companyId || !companies) return "Unknown Company";
+    const company = companies.find(
+      (comp) => comp?.id === companyId || comp?._id === companyId
+    );
+    return company
+      ? company.name || company.companyName || "Unknown Company"
+      : "Unknown Company";
+  };
 
   // --- Handler Functions ---
   const handleSync = () => {
     setLoading(true);
+    dispatch(fetchVendorsThunk());
+    dispatch(fetchCompaniesThunk());
     setTimeout(() => {
       setLoading(false);
       console.log("Vendors synced");
-      alert("Vendors synchronized successfully!");
     }, 1000);
   };
 
@@ -123,7 +170,14 @@ const NewVendorManagement = () => {
     alert("Vendor configuration opened!");
   };
 
-  // Updated vendor modal handlers
+  // Clear all filters
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setSelectedStatus("all");
+    setSelectedCompany("all");
+  };
+
+  // Vendor modal handlers
   const handleAddVendor = () => {
     setVendorModalMode("create");
     setSelectedVendor(null);
@@ -142,25 +196,20 @@ const NewVendorManagement = () => {
     setIsVendorModalOpen(true);
   };
 
-  const handleAssignEntity = (vendor) => {
-    setVendorToAssign(vendor);
-    setIsAssignModalOpen(true);
-  };
-
-  // Updated form submission handler
   const handleVendorSubmit = (formData) => {
     if (vendorModalMode === "create") {
       dispatch(createVendorThunk(formData));
     } else if (vendorModalMode === "edit" && selectedVendor) {
       dispatch(
         updateVendorThunk({
-          id: selectedVendor.id,
-          ...formData,
+          vendorId: selectedVendor.vendor_id,
+          formData: formData,
         })
       );
     }
     setIsVendorModalOpen(false);
     setSelectedVendor(null);
+    setIsAssignModalOpen(false);
   };
 
   const handleCloseVendorModal = () => {
@@ -168,8 +217,16 @@ const NewVendorManagement = () => {
     setSelectedVendor(null);
   };
 
+  const handleCloseAssignModal = () => {
+    setIsAssignModalOpen(false);
+  };
+
   const handleDeleteVendor = (vendor) => {
-    if (window.confirm(`Are you sure you want to delete ${vendor.name}?`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete ${vendor?.name || "this vendor"}?`
+      )
+    ) {
       console.log("Deleting vendor:", vendor);
     }
   };
@@ -181,7 +238,7 @@ const NewVendorManagement = () => {
         searchBar={
           <div className="flex flex-col sm:flex-row gap-3 w-full">
             <SearchInput
-              placeholder="Search vendors"
+              placeholder="Search vendors by name, email, or phone"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-grow"
@@ -200,11 +257,22 @@ const NewVendorManagement = () => {
               className="text-gray-600 hover:text-gray-800 p-2 rounded-lg hover:bg-gray-100 border border-gray-300"
               size={18}
             />
+
+            {/* Status Filter */}
             <SelectField
               label="Status"
               value={selectedStatus}
               onChange={setSelectedStatus}
               options={statusOptions}
+            />
+
+            {/* Company Filter */}
+            <SelectField
+              label="Company"
+              value={selectedCompany}
+              onChange={setSelectedCompany}
+              options={companyOptions}
+              disabled={companyLoading}
             />
 
             {/* Sync Button */}
@@ -276,25 +344,56 @@ const NewVendorManagement = () => {
               title="Add new vendor"
               buttonName="Add Vendor"
               onClick={handleAddVendor}
-              className="bg-indigo-600 text-white px-1 py-2 rounded-lg"
-              size={18}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 flex items-center gap-2 transition-colors duration-200"
+              size={16}
             />
           </div>
         }
       />
+
+      {/* Results Summary */}
+      <div className="mb-4 px-4">
+        <p className="text-sm text-gray-600">
+          Showing {filteredVendors.length} of {vendors?.length || 0} vendors
+          {selectedCompany !== "all" &&
+            ` for ${getCompanyName(selectedCompany)}`}
+        </p>
+      </div>
+
       <div className="mx-auto px-4">
         <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4 md:gap-6">
           {filteredVendors.map((vendor, index) => (
             <NewVendorCard
-              key={vendor._id || vendor.id || `vendor-${index}`}
+              key={vendor?._id || vendor?.id || `vendor-${index}`}
               vendor={vendor}
-              onAssignEntity={() => handleAssignEntity(vendor)}
               onEditVendor={() => handleEditVendor(vendor)}
               onViewVendor={() => handleViewVendor(vendor)}
               onDeleteVendor={() => handleDeleteVendor(vendor)}
             />
           ))}
         </div>
+
+        {/* No Results Message */}
+        {filteredVendors.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-gray-500 text-lg mb-2">
+              {!vendors || vendors.length === 0
+                ? "No vendors found."
+                : "No vendors match your filters."}
+            </div>
+            {(searchQuery ||
+              selectedStatus !== "all" ||
+              selectedCompany !== "all") && (
+              <button
+                onClick={handleClearFilters}
+                className="text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Clear filters to see all vendors
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Vendor Modal Form for Create/Edit/View */}
         <VendorModalForm
           isOpen={isVendorModalOpen}
@@ -303,23 +402,27 @@ const NewVendorManagement = () => {
           mode={vendorModalMode}
           vendorData={selectedVendor}
           loading={vendorLoading}
-          userType={type || "user"} // or get this from your auth state
-          tenants={[
-            { id: 1, name: "NGNI Corporation", tenantId: "NGNI001" },
-            { id: 2, name: "Tech Solutions Ltd", tenantId: "TECH002" },
-            { id: 3, name: "Global Enterprises", tenantId: "GLBL003" },
-            // ... more tenants from your API
-          ]}
+          userType={userType}
+          tenants={(companies || []).map((company) => ({
+            id: company?.id || company?._id,
+            name: company?.name || company?.companyName,
+            tenantId: company?.tenant_id || company?.id,
+          }))}
         />
 
-        {/* Assign/Edit Vendor Modal */}
-        <NewAssignEntityModal
+        {/* Assign Vendor Modal using VendorModalForm */}
+        <VendorModalForm
           isOpen={isAssignModalOpen}
-          onClose={() => {
-            setIsAssignModalOpen(false);
-            setVendorToAssign(null);
-          }}
-          sourceEntity={vendorToAssign}
+          onClose={handleCloseAssignModal}
+          onSubmit={handleVendorSubmit}
+          mode={vendorModalMode}
+          loading={vendorLoading}
+          userType={userType}
+          tenants={(companies || []).map((company) => ({
+            id: company?.id || company?._id,
+            name: company?.name || company?.companyName,
+            tenantId: company?.tenant_id || company?.id,
+          }))}
         />
       </div>
     </div>

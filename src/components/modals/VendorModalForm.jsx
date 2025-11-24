@@ -12,6 +12,7 @@ import {
   Building,
   Search,
   Check,
+  Info,
 } from "lucide-react";
 
 const VendorModalForm = ({
@@ -45,8 +46,8 @@ const VendorModalForm = ({
   // Check if user is superadmin
   const isSuperAdmin = userType === "superadmin";
 
-  // Form field configuration
-  const formFields = [
+  // Base form fields (always visible)
+  const baseFields = [
     {
       label: "Vendor Name",
       name: "name",
@@ -79,6 +80,10 @@ const VendorModalForm = ({
       required: true,
       placeholder: "Enter unique vendor code",
     },
+  ];
+
+  // Admin fields (only for creation)
+  const adminFields = [
     {
       label: "Admin Name",
       name: "admin_name",
@@ -110,9 +115,18 @@ const VendorModalForm = ({
       icon: Key,
       required: mode === "create",
       placeholder: "Enter admin password",
-      hidden: mode === "view",
     },
   ];
+
+  // Combine fields based on mode
+  const getFormFields = () => {
+    if (mode === "create") {
+      return [...baseFields, ...adminFields];
+    }
+    return baseFields;
+  };
+
+  const formFields = getFormFields();
 
   // Filter tenants based on search
   const filteredTenants = tenants.filter(
@@ -212,47 +226,63 @@ const VendorModalForm = ({
   const validateForm = () => {
     const newErrors = {};
 
-    formFields.forEach((field) => {
+    // Validate base fields (always required)
+    baseFields.forEach((field) => {
       if (field.required && !formData[field.name]?.trim()) {
         newErrors[field.name] = `${field.label} is required`;
       }
 
-      // Email validation
-      if (
-        (field.name === "email" || field.name === "admin_email") &&
-        formData[field.name]
-      ) {
+      // Email validation for vendor email
+      if (field.name === "email" && formData[field.name]) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(formData[field.name])) {
           newErrors[field.name] = "Please enter a valid email address";
         }
       }
 
-      // Phone validation (basic)
-      if (
-        (field.name === "phone" || field.name === "admin_phone") &&
-        formData[field.name]
-      ) {
+      // Phone validation for vendor phone
+      if (field.name === "phone" && formData[field.name]) {
         const phoneRegex = /^[\d\s\-\+\(\)]{10,}$/;
         if (!phoneRegex.test(formData[field.name])) {
           newErrors[field.name] = "Please enter a valid phone number";
         }
       }
-
-      // Password validation for create mode
-      if (
-        field.name === "admin_password" &&
-        mode === "create" &&
-        field.required
-      ) {
-        if (!formData.admin_password) {
-          newErrors.admin_password = "Admin password is required";
-        } else if (formData.admin_password.length < 6) {
-          newErrors.admin_password =
-            "Password must be at least 6 characters long";
-        }
-      }
     });
+
+    // Validate admin fields only in create mode
+    if (mode === "create") {
+      adminFields.forEach((field) => {
+        if (field.required && !formData[field.name]?.trim()) {
+          newErrors[field.name] = `${field.label} is required`;
+        }
+
+        // Email validation for admin email
+        if (field.name === "admin_email" && formData[field.name]) {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(formData[field.name])) {
+            newErrors[field.name] = "Please enter a valid email address";
+          }
+        }
+
+        // Phone validation for admin phone
+        if (field.name === "admin_phone" && formData[field.name]) {
+          const phoneRegex = /^[\d\s\-\+\(\)]{10,}$/;
+          if (!phoneRegex.test(formData[field.name])) {
+            newErrors[field.name] = "Please enter a valid phone number";
+          }
+        }
+
+        // Password validation for create mode
+        if (field.name === "admin_password" && field.required) {
+          if (!formData.admin_password) {
+            newErrors.admin_password = "Admin password is required";
+          } else if (formData.admin_password.length < 6) {
+            newErrors.admin_password =
+              "Password must be at least 6 characters long";
+          }
+        }
+      });
+    }
 
     // Tenant validation for superadmin
     if (isSuperAdmin && !formData.tenant_id) {
@@ -274,8 +304,16 @@ const VendorModalForm = ({
     // Prepare data for submission
     const submissionData = { ...formData };
 
-    // Don't send password if it's empty in edit mode
-    if (mode === "edit" && !submissionData.admin_password) {
+    // In edit mode, don't send admin fields (they're not visible to user)
+    if (mode === "edit") {
+      delete submissionData.admin_name;
+      delete submissionData.admin_email;
+      delete submissionData.admin_phone;
+      delete submissionData.admin_password;
+    }
+
+    // Don't send password if it's empty in any mode
+    if (!submissionData.admin_password) {
       delete submissionData.admin_password;
     }
 
@@ -463,8 +501,6 @@ const VendorModalForm = ({
             {/* Vendor Form Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {formFields.map((field) => {
-                if (field.hidden) return null;
-
                 const IconComponent = field.icon;
                 const isPasswordField = field.type === "password";
                 const isViewMode = mode === "view" && !isEditing;
@@ -542,6 +578,19 @@ const VendorModalForm = ({
                 );
               })}
             </div>
+
+            {/* Admin Fields Info Note for Edit/View Modes */}
+            {mode !== "create" && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <Info size={16} />
+                  <span className="text-sm font-medium">
+                    Admin account details are only managed during vendor
+                    creation.
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Form Actions */}
             {(mode === "create" ||

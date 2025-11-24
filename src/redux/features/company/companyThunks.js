@@ -45,12 +45,14 @@ export const createCompanyThunk = createAsyncThunk(
       return response.data; // Let caller handle extraction
     } catch (error) {
       console.error("[Thunk] Failed to create company:", error);
-      const message = error.response?.data?.message || error.message ||"Failed to create company";
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to create company";
       return rejectWithValue(message);
     }
   }
 );
-
 
 export const fetchCompanyByIdThunk = createAsyncThunk(
   "company/fetchCompanyById",
@@ -68,7 +70,6 @@ export const fetchCompanyByIdThunk = createAsyncThunk(
   }
 );
 
-
 export const updateTenantThunk = createAsyncThunk(
   "tenants/update",
   async ({ tenantId, data }, { rejectWithValue }) => {
@@ -78,14 +79,15 @@ export const updateTenantThunk = createAsyncThunk(
       if (response?.data?.success) {
         return response.data.data;
       } else {
-        return rejectWithValue(response.data.message || "Failed to update tenant");
+        return rejectWithValue(
+          response.data.message || "Failed to update tenant"
+        );
       }
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
-
 
 export const toggleCompanyStatusThunk = createAsyncThunk(
   "company/toggleStatus",

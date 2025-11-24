@@ -107,6 +107,18 @@ export const baseSidebarConfig = [
       },
     ],
   },
+  {
+    title: "Reports",
+    items: [
+      {
+        title: "Reports Managements",
+        icon: Users,
+        path: "/repots-management",
+        permission: "report.read",
+        icon: Users,
+      },
+    ],
+  },
   // {
   //   title: "Administration",
   //   items: [

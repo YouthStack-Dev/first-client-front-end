@@ -72,7 +72,12 @@ const AssignedCompaniesList = ({ companies, loading, error }) => {
   );
 };
 
-const NewVendorCard = ({ vendor = {}, onAssignEntity, onDeleteVendor }) => {
+const NewVendorCard = ({
+  vendor = {},
+  onAssignEntity,
+  onDeleteVendor,
+  onEditVendor,
+}) => {
   const dispatch = useDispatch();
   const [isActive, setIsActive] = useState(vendor.is_active);
 
@@ -110,8 +115,6 @@ const NewVendorCard = ({ vendor = {}, onAssignEntity, onDeleteVendor }) => {
 
   const companiesLoading = companyState.loading;
   const vendorCompaniesError = companyState.error;
-
-  const statusText = isActive ? "Active" : "Inactive";
 
   // ✅ Card styling based on active status
   const cardBorderColor = isActive ? "border-gray-200" : "border-red-300";
@@ -227,7 +230,7 @@ const NewVendorCard = ({ vendor = {}, onAssignEntity, onDeleteVendor }) => {
             action="update"
             icon={Pencil}
             title="Edit"
-            onClick={() => onAssignEntity?.(vendor)}
+            onClick={() => onEditVendor?.(vendor)}
             size={16}
           />
 

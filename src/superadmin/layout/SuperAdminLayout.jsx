@@ -114,7 +114,7 @@ const SuperAdminLayout = () => {
         {/* Header */}
         <Header toggleSidebar={toggleSidebar} title={title} />
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto pt-20 pb-6">
+        <main className="flex-1 overflow-y-auto pt-16 pb-6">
           <div className="w-full mx-auto px-4 lg:px-6">
             <Outlet />
           </div>

@@ -12,7 +12,6 @@ import ManageEmployees from "./pages/ManageEmployees";
 import VendorManagement from "./pages/VendorManagement";
 import VehicleManagement from "./pages/VehicleManagement";
 import ManageDrivers from "./pages/ManageDrivers";
-import SuperAdminLayout from "./superadmin/SuperAdminLayout";
 import VendorLayout from "./vendor/VendorLayout";
 import { useDispatch } from "react-redux";
 import { initializeAuth } from "./redux/features/auth/authSlice";
@@ -25,13 +24,14 @@ import CutoffManagement from "./components/Schedulemanagement/CutoffManagement";
 import ScheduledBookings from "./components/RouteManagement/RouteScheduledBookings";
 import ProfilePage from "./pages/ProfilePage";
 import BookingManagement from "./pages/BookingManagement";
-import VendorDashboard from "./vendor/VendorDashboard";
 import VendorRouteManagement from "./components/RouteManagement/VendorRouteManagement";
 import Practice from "./pages/Practice";
 import RouteScheduledBookings from "./components/RouteManagement/RouteScheduledBookings";
 import ShiftRoutingManagement from "./components/RouteManagement/ShiftRoutingManagement";
 import DocPage from "./Docs/SupademoPage";
 import NewVendorManagement from "./pages/NewVendorManagement";
+import SuperAdminLayout from "./superadmin/layout/SuperAdminLayout";
+import ReportsManagement from "./pages/ReportManagement";
 
 function App() {
   const dispatch = useDispatch();
@@ -103,6 +103,11 @@ function App() {
             <Route path="dashboard" element={<SuperAdminDashboard />} />
             <Route path="manage-companies" element={<CompanyManagement />} />
             <Route path="manage-vendors" element={<VendorManagement />} />
+            <Route path="repots-management" element={<ReportsManagement />} />
+            <Route
+              path="new-vendor-management"
+              element={<NewVendorManagement />}
+            />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Route>
@@ -174,7 +179,7 @@ function App() {
               element={<NewVendorManagement />}
             />
             <Route path="/profile" element={<ProfilePage />} />
-
+            <Route path="repots-management" element={<ReportsManagement />} />
             <Route
               path="/employee/create-employee"
               element={<EmployeeForm />}
