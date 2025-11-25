@@ -1,5 +1,4 @@
-
-const LOG_LEVEL = import.meta.env.VITE_APP_LOG_LEVEL || 'debug';
+const LOG_LEVEL = import.meta.env.VITE_APP_LOG_LEVEL || "debug";
 
 const levels = {
   silent: 0,

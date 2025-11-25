@@ -1,23 +1,23 @@
-import React from 'react';
+import React from "react";
 /** @typedef {import('./types').RoleCardProps} RoleCardProps */
-import { Eye, Edit, Trash2, Users, UserPlus } from 'lucide-react';
+import { Eye, Edit, Trash2, Users, UserPlus } from "lucide-react";
 
 /**
  * Renders a simple role card with header, description, and color-coded footer actions.
  * @param {RoleCardProps} props
  * @returns {JSX.Element}
  */
-function RoleCard({ 
-  role, 
-  onEdit, 
-  onDelete, 
-  onDuplicate, 
-  onAssignUsers, 
-  onViewAssignedUsers 
+function RoleCard({
+  role,
+  onEdit,
+  onDelete,
+  onView,
+  onAssignUsers,
+  onViewAssignedUsers,
 }) {
   // Format date for display
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString();
   };
 
@@ -26,9 +26,13 @@ function RoleCard({
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h3 className="text-lg font-medium text-gray-900 mb-1">{role.name}</h3>
-          <p className="text-sm text-gray-500">{role.description || 'No description'}</p>
-          
+          <h3 className="text-lg font-medium text-gray-900 mb-1">
+            {role.name}
+          </h3>
+          <p className="text-sm text-gray-500">
+            {role.description || "No description"}
+          </p>
+
           {/* Role Metadata */}
           <div className="mt-2 space-y-1">
             <div className="flex items-center text-xs text-gray-500">
@@ -82,7 +86,7 @@ function RoleCard({
           <div className="flex items-center space-x-2">
             {/* View Button */}
             <button
-              onClick={() => onEdit(role)}
+              onClick={() => onView(role)}
               className="flex items-center justify-center p-2 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
               title="View details"
             >

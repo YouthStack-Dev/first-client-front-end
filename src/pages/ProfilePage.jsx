@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ProfileCard from "@components/ProfileCard";
 import MultiDateCalendar from "@components/MultiDateCalendar";
 import ShiftSelector from "@components/ShiftSelector";
@@ -41,6 +41,97 @@ export default function ProfilePage() {
     booking: "/v1/bookings/",
   };
 
+  // Fetch user profile - simplified version
+  const fetchUserProfile = useCallback(async () => {
+    try {
+      const response = await API_CLIENT.get("/v1/auth/me");
+      if (response.data.success) {
+        setUserProfile(response.data.data.user);
+      } else {
+        setErrors(["Failed to load profile"]);
+      }
+    } catch (err) {
+      console.error("Error fetching user profile:", err);
+      setErrors(["Something went wrong while fetching profile"]);
+    }
+  }, []);
+
+  // Fetch booking history
+  const fetchBookingHistory = useCallback(
+    async (date = null) => {
+      if (!userProfile?.employee_id) {
+        setIsErrorHistory(true);
+        setErrorMessageHistory("Employee ID not found");
+        return;
+      }
+
+      setIsLoadingHistory(true);
+      setIsErrorHistory(false);
+      setErrorMessageHistory("");
+
+      try {
+        const bookingDate = date || bookingFilters.date;
+        const response = await API_CLIENT.get(
+          `${endpoint.booking}employee?booking_date=${bookingDate}&employee_id=${userProfile?.employee_id}`
+        );
+
+        logDebug("Booking history response:", response.data);
+
+        if (response.data.success) {
+          const bookings = response.data.data || [];
+          setBookingHistoryData(bookings);
+
+          // Update available filter options
+          const availableDates = [
+            ...new Set(bookings.map((booking) => booking.booking_date)),
+          ].sort();
+          const availableStatuses = [
+            ...new Set(bookings.map((booking) => booking.status)),
+          ];
+
+          setBookingFilters((prev) => ({
+            ...prev,
+            availableDates,
+            availableStatuses,
+          }));
+
+          logDebug(
+            `Loaded ${bookings.length} bookings for date: ${bookingDate}`
+          );
+        } else {
+          throw new Error(
+            response.data.message || "Failed to fetch booking history"
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching booking history:", error);
+        setIsErrorHistory(true);
+        setErrorMessageHistory(
+          error.response?.data?.message ||
+            error.message ||
+            "Failed to load booking history"
+        );
+        setBookingHistoryData([]);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    },
+    [userProfile?.employee_id, bookingFilters.date]
+  );
+
+  // Fetch all initial data once on component mount
+  useEffect(() => {
+    const initializeData = async () => {
+      // Fetch user profile
+      await fetchUserProfile();
+
+      // Fetch shifts - always fetch on mount
+      dispatch(fetchShiftTrunk());
+    };
+
+    initializeData();
+  }, []); // Empty dependency array - runs only once on mount
+
   // Error display component
   const renderErrors = () => {
     if (errors.length === 0) return null;
@@ -59,100 +150,6 @@ export default function ProfilePage() {
         </ul>
       </div>
     );
-  };
-
-  // Get employee data from user profile
-
-  // Fetch user profile
-  const fetchUserProfile = async () => {
-    try {
-      const response = await API_CLIENT.get("/v1/auth/me");
-      if (response.data.success) {
-        setUserProfile(response.data.data.user);
-      } else {
-        setErrors(["Failed to load profile"]);
-      }
-    } catch (err) {
-      console.error("Error fetching user profile:", err);
-      setErrors(["Something went wrong while fetching profile"]);
-    }
-  };
-
-  // Fetch booking history
-  const fetchBookingHistory = async (date = null) => {
-    if (!userProfile?.employee_id) {
-      setIsErrorHistory(true);
-      setErrorMessageHistory("Employee ID not found");
-      return;
-    }
-
-    setIsLoadingHistory(true);
-    setIsErrorHistory(false);
-    setErrorMessageHistory("");
-
-    try {
-      const bookingDate = date || bookingFilters.date;
-      const response = await API_CLIENT.get(
-        `${endpoint.booking}employee?booking_date=${bookingDate}&employee_id=${userProfile?.employee_id}`
-      );
-
-      logDebug("Booking history response:", response.data);
-
-      if (response.data.success) {
-        const bookings = response.data.data || [];
-        setBookingHistoryData(bookings);
-
-        // Update available filter options
-        const availableDates = [
-          ...new Set(bookings.map((booking) => booking.booking_date)),
-        ].sort();
-        const availableStatuses = [
-          ...new Set(bookings.map((booking) => booking.status)),
-        ];
-
-        setBookingFilters((prev) => ({
-          ...prev,
-          availableDates,
-          availableStatuses,
-        }));
-
-        logDebug(`Loaded ${bookings.length} bookings for date: ${bookingDate}`);
-      } else {
-        throw new Error(
-          response.data.message || "Failed to fetch booking history"
-        );
-      }
-    } catch (error) {
-      console.error("Error fetching booking history:", error);
-      setIsErrorHistory(true);
-      setErrorMessageHistory(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to load booking history"
-      );
-      setBookingHistoryData([]);
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  };
-
-  // Simple validation schema for booking
-  const validateBooking = () => {
-    const validationErrors = [];
-
-    if (!userProfile?.employee_id) {
-      validationErrors.push("Employee ID is required");
-    }
-
-    if (!selectedDates || selectedDates.length === 0) {
-      validationErrors.push("Please select at least one date");
-    }
-
-    if (!selectedShiftId) {
-      validationErrors.push("Please select a shift");
-    }
-
-    return validationErrors;
   };
 
   const handleBookingSubmit = async () => {
@@ -247,40 +244,35 @@ export default function ProfilePage() {
     setErrors([]);
   };
 
-  const handleBookingFilterChange = (filterType, value) => {
+  const handleBookingFilterChange = useCallback((filterType, value) => {
     setBookingFilters((prev) => ({
       ...prev,
       [filterType]: value,
     }));
-
-    if (filterType === "date" && value) {
-      fetchBookingHistory(value);
-    }
-  };
+  }, []);
 
   const handleClearBookingFilters = () => {
+    const today = new Date().toISOString().split("T")[0];
     setBookingFilters((prev) => ({
       ...prev,
-      date: new Date().toISOString().split("T")[0],
+      date: today,
       status: "",
       shiftType: "",
     }));
-    fetchBookingHistory(new Date().toISOString().split("T")[0]);
+    fetchBookingHistory(today);
   };
-
-  // Effects
-  useEffect(() => {
-    fetchUserProfile();
-
-    if (!shifts || shifts.length === 0) {
-      dispatch(fetchShiftTrunk());
-    }
-  }, [shifts, dispatch]);
 
   // Clear errors when step changes
   useEffect(() => {
     setErrors([]);
   }, [step]);
+
+  // Handle date filter changes separately
+  useEffect(() => {
+    if (bookingFilters.date && userProfile?.employee_id) {
+      fetchBookingHistory(bookingFilters.date);
+    }
+  }, [bookingFilters.date, userProfile?.employee_id]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">

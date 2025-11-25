@@ -51,7 +51,6 @@ const CompanyVendorsList = ({ vendors, loading, error }) => {
         {uniqueVendors.map((vendor, index) => (
           <div
             key={`vendor-${vendor.vendor_id ?? index}`}
-
             className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
           >
             <div className="flex items-center space-x-2 min-w-0 flex-1">
@@ -96,17 +95,18 @@ const CompanyCard = ({ company, onEditCompany }) => {
     setCompanyVendorsListState(companyVendorsList);
   }, [company.is_active, companyVendorsList]);
 
-const handleToggle = async () => {
-  const newStatus = !isActive;
-  setIsActive(newStatus);
-  try {
-    await dispatch(toggleCompanyStatusThunk({ tenant_id: company.tenant_id })).unwrap();
-  } catch (err) {
-    console.error("Failed to toggle status:", err);
-    setIsActive(!newStatus); // revert on failure
-  }
-};
-
+  const handleToggle = async () => {
+    const newStatus = !isActive;
+    setIsActive(newStatus);
+    try {
+      await dispatch(
+        toggleCompanyStatusThunk({ tenant_id: company.tenant_id })
+      ).unwrap();
+    } catch (err) {
+      console.error("Failed to toggle status:", err);
+      setIsActive(!newStatus); // revert on failure
+    }
+  };
 
   const handleOpenAssign = () => setAssignOpen(true);
 
@@ -232,7 +232,8 @@ const handleToggle = async () => {
         assignedIds={companyVendorsListState.map((v) => v.vendor_id)}
         onSaveSuccess={(newVendor) => {
           setCompanyVendorsListState((prev) => {
-            if (prev.some((v) => v.vendor_id === newVendor.vendor_id)) return prev;
+            if (prev.some((v) => v.vendor_id === newVendor.vendor_id))
+              return prev;
             return [...prev, newVendor];
           });
         }}

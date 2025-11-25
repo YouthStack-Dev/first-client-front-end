@@ -12,6 +12,8 @@ export const initialState = {
   error: null,
   hasFetched: false,
   dataLoadedForVendor: null,
+  vehiclesByVendor: {},
+  allVehicles: [],
   filters: {
     rc_number: '',
     vehicle_type_id: 'all',
@@ -85,6 +87,16 @@ const vehicleSlice = createSlice({
         state.ids = state.ids.filter(i => i !== id);
       }
     },
+    setActiveVendor: (state, action) => {
+      const vendorId = action.payload;
+      const cached = state.byVendor?.[vendorId];
+      if (cached) {
+        // Replace visible table data with cached vendor data
+        state.entities = cached.entities;
+        state.ids = cached.ids;
+        console.log(`🚀 Switched to cached vendor: ${vendorId}`);
+      }
+    },
   },
 
   extraReducers: (builder) => {
@@ -94,23 +106,60 @@ const vehicleSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchVehiclesThunk.fulfilled, (state, action) => {
-        const vehicles = action.payload?.items || [];
+     .addCase(fetchVehiclesThunk.fulfilled, (state, action) => {
+        const { vendor_id, items = [] } = action.payload || {};
         const vehicleTypes = {};
         const drivers = {};
         const vendors = {};
 
-        vehicles.forEach((v) => {
+        if (!state.byVendor) state.byVendor = {};
+        if (!state.entities) state.entities = {};
+        if (!state.ids) state.ids = [];
+
+        const newEntities = {};
+        const newIds = [];
+
+        items.forEach((v) => {
           const id = v.vehicle_id;
           if (!id) return;
 
-          state.entities[id] = v;
-          if (!state.ids.includes(id)) state.ids.push(id);
+          newEntities[id] = v;
+          newIds.push(id);
 
-          if (v.driver_id && v.driver_name) drivers[v.driver_id] = { driver_id: v.driver_id, driver_name: v.driver_name };
-          if (v.vendor_id && v.vendor_name) vendors[v.vendor_id] = { vendor_id: v.vendor_id, vendor_name: v.vendor_name };
-          if (v.vehicle_type_id && v.vehicle_type_name) vehicleTypes[v.vehicle_type_id] = { vehicle_type_id: v.vehicle_type_id, vehicle_type_name: v.vehicle_type_name };
+          if (v.driver_id && v.driver_name)
+            drivers[v.driver_id] = {
+              driver_id: v.driver_id,
+              driver_name: v.driver_name,
+            };
+          if (v.vendor_id && v.vendor_name)
+            vendors[v.vendor_id] = {
+              vendor_id: v.vendor_id,
+              vendor_name: v.vendor_name,
+            };
+          if (v.vehicle_type_id && v.vehicle_type_name)
+            vehicleTypes[v.vehicle_type_id] = {
+              vehicle_type_id: v.vehicle_type_id,
+              vehicle_type_name: v.vehicle_type_name,
+            };
         });
+
+        // ✅ FIXED: Always update visible state for current vendor fetch
+        if (vendor_id) {
+          state.byVendor[vendor_id] = {
+            entities: newEntities,
+            ids: newIds,
+            count: newIds.length,
+            lastFetched: Date.now(),
+          };
+
+          // ✅ show this vendor’s data in the current table
+          state.entities = newEntities;
+          state.ids = newIds;
+        } else {
+          // fallback: all vehicles (tenant-wide)
+          state.entities = newEntities;
+          state.ids = newIds;
+        }
 
         state.drivers = { ...state.drivers, ...drivers };
         state.vendors = { ...state.vendors, ...vendors };
@@ -118,7 +167,10 @@ const vehicleSlice = createSlice({
 
         state.loading = false;
         state.hasFetched = true;
+        console.log(`✅ Cached ${newIds.length} vehicles for vendor ${vendor_id || "ALL"}`);
+
       })
+
       .addCase(fetchVehiclesThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to fetch vehicles';
@@ -208,6 +260,7 @@ export const {
   addVehicle,
   updateVehicle,
   removeVehicle,
+  setActiveVendor,
 } = vehicleSlice.actions;
 
 export default vehicleSlice.reducer;

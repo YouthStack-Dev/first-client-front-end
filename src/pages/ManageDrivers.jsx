@@ -29,7 +29,12 @@ import {
 import DriverForm from "@components/driver/DriverForm";
 import Modal from "@components/modals/Modal";
 import ConfirmationModal from "@components/modals/ConfirmationModal";
-import { fetchDriversThunk, toggleDriverStatusThunk } from "../redux/features/manageDriver/driverThunks";
+import {
+  fetchDriversThunk,
+  toggleDriverStatusThunk,
+  fetchDriversByVendorThunk,
+} from "../redux/features/manageDriver/driverThunks";
+import VendorSelector from "../components/vendor/vendordropdown";
 
 function ManageDrivers() {
   const dispatch = useDispatch();
@@ -44,6 +49,9 @@ function ManageDrivers() {
   const pagination = useSelector((state) => state.drivers.pagination);
   const driversEntities = useSelector((state) => state.drivers.entities);
   const driversIds = useSelector((state) => state.drivers.ids);
+  const currentUser = useSelector((state) => state.auth.user);
+  const userType = currentUser?.type;
+  const driversByVendor = useSelector((state) => state.drivers.byVendor); // optional, used for caching like vehicles
 
   // Modal and form state
   const [showModal, setShowModal] = useState(false);
@@ -76,8 +84,8 @@ function ManageDrivers() {
     show: false,
     title: "",
     message: "",
-    onConfirm: () => { },
-    onCancel: () => { },
+    onConfirm: () => {},
+    onCancel: () => {},
   });
 
   // Track the last fetched page to prevent refetching when going back
@@ -119,13 +127,14 @@ function ManageDrivers() {
       });
   }, [driversEntities, driversIds, filters]);
 
-
-
   useEffect(() => {
     // Fetch drivers if:
     // 1. We haven't fetched any data yet (initial load)
     // 2. We're moving to a new page that hasn't been fetched before
-    if (!hasFetched || (currentPage > lastFetchedPage.current && !allDrivers.length)) {
+    if (
+      !hasFetched ||
+      (currentPage > lastFetchedPage.current && !allDrivers.length)
+    ) {
       fetchDriversThunk(currentPage);
     }
   }, [currentPage, hasFetched, allDrivers.length, dispatch, paginationLimit]);
@@ -165,12 +174,15 @@ function ManageDrivers() {
     setConfirmationModal({
       show: true,
       title: "Confirm Status Change",
-      message: `Are you sure you want to ${driver.is_active ? "deactivate" : "activate"
-        } this driver?`,
+      message: `Are you sure you want to ${
+        driver.is_active ? "deactivate" : "activate"
+      } this driver?`,
       onConfirm: async () => {
         try {
           // Dispatch the thunk and unwrap result
-          const updatedDriver = await dispatch(toggleDriverStatusThunk(driver.driver_id)).unwrap();
+          const updatedDriver = await dispatch(
+            toggleDriverStatusThunk(driver.driver_id)
+          ).unwrap();
 
           // Update local Redux state if needed
           dispatch(
@@ -182,7 +194,8 @@ function ManageDrivers() {
 
           // Show success toast
           toast.success(
-            `Driver has been ${updatedDriver.is_active ? "activated" : "deactivated"
+            `Driver has been ${
+              updatedDriver.is_active ? "activated" : "deactivated"
             } successfully!`
           );
         } catch (err) {
@@ -196,7 +209,6 @@ function ManageDrivers() {
       },
     });
   };
-
 
   const handlePageChange = (page) => {
     dispatch(setPage(page));
@@ -224,12 +236,10 @@ function ManageDrivers() {
   };
 
   if (loading) {
-  return (
-    <div className="flex justify-center items-center h-64">
-      Loading...
-    </div>
-  );
-}
+    return (
+      <div className="flex justify-center items-center h-64">Loading...</div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -272,6 +282,27 @@ function ManageDrivers() {
                 </svg>
               </div>
             </div>
+            {userType === "employee" && (
+              <VendorSelector
+                onChange={(vendor) => {
+                  const vendorId = vendor.vendor_id;
+
+                  // Reset pagination on vendor change
+                  dispatch(setPage(1));
+
+                  // ALL vendors → fetch full tenant list
+                  if (vendorId === "all" || vendorId === "ALL") {
+                    console.log("🌍 Fetching ALL drivers (tenant-wide)");
+                    dispatch(fetchDriversThunk());
+                    return;
+                  }
+
+                  // Specific vendor → fetch vendor drivers
+                  console.log("🚗 Fetching drivers for vendor:", vendorId);
+                  dispatch(fetchDriversByVendorThunk(vendorId));
+                }}
+              />
+            )}
           </div>
         }
         rightElements={
@@ -323,7 +354,6 @@ function ManageDrivers() {
           </div>
         }
       />
-
 
       {/* Active filters display */}
       {activeFilters.length > 0 && (

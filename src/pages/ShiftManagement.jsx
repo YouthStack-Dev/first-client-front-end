@@ -12,7 +12,7 @@ import ShiftForm from "@components/shift/ShiftForm";
 const ShiftManagement = () => {
   const dispatch = useDispatch();
 
-  const {shifts,loading,error,} = useSelector((state) => state.shift);
+  const { shifts, loading, error } = useSelector((state) => state.shift);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -20,7 +20,7 @@ const ShiftManagement = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showCategorieModal, setShowCategorieModal] = useState(false);
   const [showShiftModal, setShowShiftModal] = useState(false);
-  const shiftCategories=[]
+  const shiftCategories = [];
 
   // Fetch shift data on mount
   useEffect(() => {
@@ -32,18 +32,17 @@ const ShiftManagement = () => {
   // Extract categories from shifts data
   const categories = useMemo(() => {
     if (!Array.isArray(shifts)) return [];
-    return shifts.map(category => ({
+    return shifts.map((category) => ({
       id: category.id,
       name: category.name,
-      description: category.description
+      description: category.description,
     }));
   }, [shifts]);
-  
 
   // Get shifts for selected category
   const shiftsForSelectedCategory = useMemo(() => {
     if (!selectedCategory || !shifts) return [];
-    const category = shifts.find(cat => cat.id === selectedCategory);
+    const category = shifts.find((cat) => cat.id === selectedCategory);
     return category ? category.shifts : [];
   }, [selectedCategory, shifts]);
 
@@ -54,11 +53,6 @@ const ShiftManagement = () => {
       shift.shiftType.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [shiftsForSelectedCategory, searchTerm]);
-
-  const onAddClick = () => {
-    console.log("Add Shift button clicked");
-    // Add shift logic
-  };
 
   const handleSearch = () => {
     console.log("Searching for:", searchTerm);
@@ -75,9 +69,7 @@ const ShiftManagement = () => {
 
   const handleSelectShift = (shift, isSelected) => {
     setSelectedShifts((prev) =>
-      isSelected
-        ? [...prev, shift]
-        : prev.filter((s) => s.id !== shift.id)
+      isSelected ? [...prev, shift] : prev.filter((s) => s.id !== shift.id)
     );
   };
 
@@ -133,27 +125,28 @@ const ShiftManagement = () => {
   // Error State
   if (error) {
     return (
-      <div className="p-4 text-red-600">
-        Error fetching shifts: {error}
-      </div>
+      <div className="p-4 text-red-600">Error fetching shifts: {error}</div>
     );
   }
 
   return (
     <div>
       <ToolBar
-        onAddClick={()=> setShowShiftModal(true)}
+        onAddClick={() => setShowShiftModal(true)}
         addButtonLabel="New Shift"
         addButtonIcon={<Plus />}
         leftContent={
           <div className="flex items-center space-x-4">
             <div className="w-64">
-              
               <select
                 id="category-select"
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 value={selectedCategory || ""}
-                onChange={(e) => setSelectedCategory(e.target.value ? parseInt(e.target.value) : null)}
+                onChange={(e) =>
+                  setSelectedCategory(
+                    e.target.value ? parseInt(e.target.value) : null
+                  )
+                }
               >
                 <option value="">-- Select a category --</option>
                 {categories.map((category) => (
@@ -174,8 +167,10 @@ const ShiftManagement = () => {
           </div>
         }
         rightContent={
-          <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-            onClick={()=>setShowCategorieModal(true)}> 
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            onClick={() => setShowCategorieModal(true)}
+          >
             Add Category
           </button>
         }
@@ -186,13 +181,13 @@ const ShiftManagement = () => {
         <div className="mt-4">
           <div className="mb-4 p-4 bg-gray-50 rounded-lg">
             <h3 className="font-medium text-lg">
-              {categories.find(c => c.id === selectedCategory)?.name}
+              {categories.find((c) => c.id === selectedCategory)?.name}
             </h3>
             <p className="text-gray-600">
-              {categories.find(c => c.id === selectedCategory)?.description}
+              {categories.find((c) => c.id === selectedCategory)?.description}
             </p>
           </div>
-          
+
           <DynamicTable
             headers={headers}
             data={filteredShifts}
@@ -211,45 +206,40 @@ const ShiftManagement = () => {
         <div className="mt-8 text-center text-gray-500">
           Please select a shift category to view its shifts
         </div>
-      )} 
+      )}
 
+      <Modal
+        title="Add Category"
+        isOpen={showCategorieModal}
+        onClose={() => setShowCategorieModal(false)}
+      >
+        <CategoryForm
+          onSubmit={(data) => {
+            console.log("Submitted category:", data);
+            // TODO: dispatch Redux action or API call here
+            setShowCategorieModal(false);
+          }}
+          onCancel={() => setShowCategorieModal(false)}
+        />
+      </Modal>
 
-<Modal
-  title="Add Category"
-  isOpen={showCategorieModal}
-  onClose={() => setShowCategorieModal(false)}
->
-  <CategoryForm
-    onSubmit={(data) => {
-      console.log("Submitted category:", data);
-      // TODO: dispatch Redux action or API call here
-      setShowCategorieModal(false);
-    }}
-    onCancel={() => setShowCategorieModal(false)}
-  />
-</Modal>
-
-
-
-<Modal
-  title="Add Shift"
-  isOpen={showShiftModal}
-  onClose={() => setShowShiftModal(false)}
->
-  <ShiftForm
-    categories={shiftCategories} // pass array like [{id: 3, name: "Afternoon Shift"}]
-    onSubmit={(data) => {
-      console.log("Shift data submitted:", data);
-      // TODO: Dispatch Redux action or API call here
-      setShowShiftModal(false);
-    }}
-    onCancel={() => setShowShiftModal(false)}
-  />
-</Modal>
-
-      
+      <Modal
+        title="Add Shift"
+        isOpen={showShiftModal}
+        onClose={() => setShowShiftModal(false)}
+      >
+        <ShiftForm
+          categories={shiftCategories} // pass array like [{id: 3, name: "Afternoon Shift"}]
+          onSubmit={(data) => {
+            console.log("Shift data submitted:", data);
+            // TODO: Dispatch Redux action or API call here
+            setShowShiftModal(false);
+          }}
+          onCancel={() => setShowShiftModal(false)}
+        />
+      </Modal>
     </div>
   );
 };
 
-export default ShiftManagement; 
+export default ShiftManagement;

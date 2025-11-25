@@ -1,7 +1,8 @@
 import { Pencil } from "lucide-react";
 import FormField from "../../components/ui/FormFields";
 import { useEffect, useState } from "react";
-import { previewFile } from '../../utils/downloadfile';
+import { previewFile } from "../../utils/downloadfile";
+import { toast } from "react-toastify";
 
 const DriverPersonalDetails = ({
   formData,
@@ -15,6 +16,64 @@ const DriverPersonalDetails = ({
   const [previewUrl, setPreviewUrl] = useState("");
   const [lastFetchedPhoto, setLastFetchedPhoto] = useState(null);
 
+  // ----------------- ✅ VALIDATION LOGIC -----------------
+  const validateForm = () => {
+    const { mobileNumber, email, dateOfBirth, date_of_joining } = formData;
+    let isValid = true;
+
+    // Mobile number validation
+    const mobileRegex = /^[0-9]{10}$/;
+    if (!mobileRegex.test(mobileNumber)) {
+      toast.error("Please enter a valid 10-digit mobile number.");
+      isValid = false;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Please enter a valid email address.");
+      isValid = false;
+    }
+
+    // Date of joining (future date check)
+    if (date_of_joining) {
+      const joiningDate = new Date(date_of_joining);
+      const today = new Date();
+      if (joiningDate <= today) {
+        toast.error("Date of Joining must be a future date.");
+        isValid = false;
+      }
+    }
+
+    // Date of birth (must be at least 18 years old)
+    if (dateOfBirth) {
+      const dob = new Date(dateOfBirth);
+      const today = new Date();
+      const ageDiff = today.getFullYear() - dob.getFullYear();
+      const ageCheck =
+        ageDiff > 18 ||
+        (ageDiff === 18 &&
+          (today.getMonth() > dob.getMonth() ||
+            (today.getMonth() === dob.getMonth() &&
+              today.getDate() >= dob.getDate())));
+
+      if (!ageCheck) {
+        toast.error("Driver must be at least 18 years old.");
+        isValid = false;
+      }
+    }
+
+    return isValid;
+  };
+
+  // ✅ Exported so parent component can trigger validation before submit
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.validateDriverForm = validateForm;
+    }
+  }, [formData]);
+
+  // ----------------- ✅ IMAGE PREVIEW LOGIC -----------------
   useEffect(() => {
     let isMounted = true;
     let objectUrl;
@@ -25,13 +84,11 @@ const DriverPersonalDetails = ({
         setPreviewUrl(objectUrl);
       } else if (formData.photo) {
         const filePath = formData.photo || formData.photo_url;
-
-        // Only fetch if the file path changed
         if (filePath !== lastFetchedPhoto) {
           try {
             const url = await previewFile(filePath, "vehicles");
             if (isMounted && url) setPreviewUrl(url);
-            setLastFetchedPhoto(filePath); // remember fetched file
+            setLastFetchedPhoto(filePath);
           } catch (err) {
             console.error("Preview failed:", err);
             if (isMounted) setPreviewUrl("");
@@ -50,7 +107,7 @@ const DriverPersonalDetails = ({
     };
   }, [formData.profileImage, formData.photo, formData.photo_url, lastFetchedPhoto]);
 
-
+  // ----------------- ✅ UI -----------------
   return (
     <div className="p-6 bg-white rounded-md shadow-sm border border-gray-200">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
@@ -64,10 +121,8 @@ const DriverPersonalDetails = ({
               onError={() => setPreviewUrl("")}
             />
           ) : formData.photo || formData.photo_url ? (
-            // Show loading placeholder while backend image is being fetched
             <div className="animate-pulse w-full h-full bg-gray-200 rounded-lg" />
           ) : (
-            // Show Pencil icon if no image exists
             <div className="text-center p-4">
               <Pencil className="w-8 h-8 mx-auto text-gray-400" />
               <p className="text-xs text-gray-500 mt-2">
@@ -82,16 +137,13 @@ const DriverPersonalDetails = ({
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (!file) return;
-              console.log("Selected file:", file);
-              onImageChange(file); // update parent state
+              onImageChange(file);
               const objectUrl = URL.createObjectURL(file);
-              setPreviewUrl(objectUrl); // live preview immediately
+              setPreviewUrl(objectUrl);
             }}
             className="absolute inset-0 opacity-0 cursor-pointer"
           />
         </div>
-
-
 
         {/* Driver Name */}
         <FormField label="Driver Name" name="name" required error={errors.name}>
@@ -151,7 +203,7 @@ const DriverPersonalDetails = ({
           />
         </FormField>
 
-        {/* Password (only on create/edit) */}
+        {/* Password */}
         {(mode === "create" || mode === "edit") && (
           <FormField
             label="Password"
@@ -226,7 +278,7 @@ const DriverPersonalDetails = ({
           />
         </FormField>
 
-        {/* Addresses */}
+        {/* Address Section */}
         <div className="flex flex-col md:grid md:grid-cols-2 md:gap-4">
           <FormField
             label="Permanent Address"

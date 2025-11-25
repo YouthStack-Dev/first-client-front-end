@@ -20,27 +20,18 @@ import {
 
 // Base sidebar configuration
 export const baseSidebarConfig = [
-  // {
-  //   title: 'Operations',
-  //   items: [
-  //     {
-  //       title: 'Bookings',
-  //       icon: Calendar,
-  //        path: '/bookings',
-  //        permission: 'booking.read',
-  //        icon: Calendar
-
-  //     },
-  //     {
-  //       title: 'Route Bookings',
-  //       icon: Route,
-  //       subItems: [
-  //         { title: 'Route Booking List', path: '/route-bookings', permission: 'route-booking.read', icon: Route },
-  //         { title: 'Create Route Booking', path: '/route-bookings/create', permission: 'route-booking.create', icon: Route }
-  //       ]
-  //     }
-  //   ]
-  // },
+  {
+    title: "User Administrator",
+    items: [
+      {
+        title: " User Role & Permission",
+        icon: Users,
+        path: "/role-permission",
+        permission: "role.read",
+        icon: Users,
+      },
+    ],
+  },
   {
     title: "Resources",
     items: [
@@ -58,17 +49,9 @@ export const baseSidebarConfig = [
         permission: "vehicle.read",
         icon: Car,
       },
-
-      // {
-      //   title: 'Vehicle Types',
-      //   icon: Truck,
-      //   subItems: [
-      //     { title: 'Type List', path: '/vehicle-types', permission: 'vehicle-type.read', icon: Truck },
-      //     { title: 'Add Type', path: '/vehicle-types/add', permission: 'vehicle-type.create', icon: Truck }
-      //   ]
-      // }
     ],
   },
+
   {
     title: "Management",
     items: [
@@ -87,7 +70,7 @@ export const baseSidebarConfig = [
       },
       {
         title: "Cutoff Management",
-        icon: Clock, // replace with your preferred icon
+        icon: Clock,
         path: "/cutoff",
         permission: "cutoff.read",
         icon: Clock,
@@ -100,98 +83,25 @@ export const baseSidebarConfig = [
         icon: Users2,
       },
       {
-        title: "Vendor",
+        title: "Vendor Management",
         path: "/vendors",
         permission: "vendor.read",
         icon: Store,
       },
     ],
   },
-  // {
-  //   title: "Administration",
-  //   items: [
-  //     // {
-  //     //   title: 'Weekoff Config',
-  //     //   icon: CalendarOff,
-  //     //   subItems: [
-  //     //     { title: 'Configuration', path: '/weekoff-config', permission: 'weekoff-config.read', icon: CalendarOff },
-  //     //     { title: 'Manage Config', path: '/weekoff-config/manage', permission: 'weekoff-config.create', icon: CalendarOff }
-  //     //   ]
-  //     // },
-  //     {
-  //       title: "Permissions",
-  //       icon: Key,
-  //       subItems: [
-  //         {
-  //           title: "Permission Matrix",
-  //           path: "/permissions",
-  //           permission: "permissions.read",
-  //           icon: Key,
-  //         },
-  //         {
-  //           title: "Manage Permissions",
-  //           path: "/permissions/manage",
-  //           permission: "permissions.create",
-  //           icon: Key,
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       title: "Policies",
-  //       icon: FileText,
-  //       subItems: [
-  //         {
-  //           title: "Policy List",
-  //           path: "/policies",
-  //           permission: "policy.read",
-  //           icon: FileText,
-  //         },
-  //         {
-  //           title: "Create Policy",
-  //           path: "/policies/create",
-  //           permission: "policy.create",
-  //           icon: FileText,
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       title: "Roles",
-  //       icon: Shield,
-  //       subItems: [
-  //         {
-  //           title: "Role Management",
-  //           path: "/roles",
-  //           permission: "role.read",
-  //           icon: Shield,
-  //         },
-  //         {
-  //           title: "Create Role",
-  //           path: "/roles/create",
-  //           permission: "role.create",
-  //           icon: Shield,
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       title: "Tenant Settings",
-  //       icon: Settings,
-  //       subItems: [
-  //         {
-  //           title: "Tenant Management",
-  //           path: "/admin/tenant",
-  //           permission: "admin.tenant.read",
-  //           icon: Settings,
-  //         },
-  //         {
-  //           title: "Configure Tenant",
-  //           path: "/admin/tenant/configure",
-  //           permission: "admin.tenant.create",
-  //           icon: Settings,
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // },
+  {
+    title: "Reports",
+    items: [
+      {
+        title: "Reports Managements",
+        icon: Users,
+        path: "/repots-management",
+        permission: "report.read",
+        icon: Users,
+      },
+    ],
+  },
 ];
 
 // Helper function to check if user has permission

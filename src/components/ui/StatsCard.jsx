@@ -1,13 +1,13 @@
-import React from 'react';
-import { DivideIcon as LucideIcon } from 'lucide-react';
-import Card from './Card';
+import React from "react";
+import { DivideIcon as LucideIcon } from "lucide-react";
+import Card from "./Card";
 
 const StatsCard = ({
   title,
   value,
   icon: Icon,
-  iconColor = 'text-blue-500',
-  change
+  iconColor = "text-blue-500",
+  change,
 }) => {
   return (
     <Card className="flex flex-col transform transition-transform duration-300 hover:scale-105">
@@ -18,8 +18,13 @@ const StatsCard = ({
       <div className="mt-1">
         <p className="text-2xl font-semibold">{value}</p>
         {change && (
-          <p className={`text-sm ${change.isPositive ? 'text-green-500' : 'text-red-500'} flex items-center`}>
-            {change.isPositive ? '↑' : '↓'} <span className="ml-1">{Math.abs(change.value)}%</span>
+          <p
+            className={`text-sm ${
+              change.isPositive ? "text-green-500" : "text-red-500"
+            } flex items-center`}
+          >
+            {change.isPositive ? "↑" : "↓"}{" "}
+            <span className="ml-1">{Math.abs(change.value)}%</span>
           </p>
         )}
       </div>

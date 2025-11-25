@@ -13,7 +13,9 @@ import {
   clearAllRouteData,
 } from "@features/routes/roureSlice.js";
 import { Settings, RefreshCw } from "lucide-react";
-
+import SelectField from "../ui/SelectField.jsx";
+import { selectCurrentUser } from "../../redux/features/auth/authSlice.js";
+import { logDebug } from "../../utils/logger.js";
 // Configuration Modal Component (keep this same as before)
 const ConfigModal = ({ isOpen, onClose, config, onConfigChange, onSave }) => {
   const [localConfig, setLocalConfig] = useState(config);
@@ -171,9 +173,11 @@ const RouteScheduledBookings = () => {
     strict_grouping: false,
   });
   const [generatingRoute, setGeneratingRoute] = useState(null); // Track which route is being generated
+  const [selectedCompany, setSelectedCompany] = useState("");
 
   const hasFetchedRef = useRef(false);
-
+  const { type } = useSelector(selectCurrentUser);
+  logDebug(" this is the user type ", type);
   const loading = useSelector(selectRouteLoading);
   const shiftsData = useSelector(selectShiftsData);
   const dispatch = useDispatch();
@@ -291,6 +295,18 @@ const RouteScheduledBookings = () => {
   const handleRefreshData = () => {
     fetchShiftsData(selectedDate);
   };
+  const shiftOptions = [
+    { value: "All", label: "All" },
+    { value: "In", label: "LogIn" },
+    { value: "Out", label: "LogOut" },
+  ];
+
+  const companyOptions = [
+    { value: "", label: "All company" },
+    { value: "company1", label: "company 1" },
+    { value: "company2", label: "company 2" },
+    { value: "company3", label: "company 3" },
+  ];
 
   const topToolbar = (
     <ToolBar
@@ -308,25 +324,29 @@ const RouteScheduledBookings = () => {
             />
           </div>
 
-          {/* Shift Type Dropdown */}
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">Shift Type</label>
-            <select
-              value={selectedShiftType}
-              onChange={(e) => setSelectedShiftType(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-1 text-sm"
-            >
-              <option value="All">All</option>
-              <option value="In">LogIn</option>
-              <option value="Out">LogOut</option>
-            </select>
-          </div>
+          {/* Shift Type (Reusable SelectField) */}
+          <SelectField
+            label="Shift Type"
+            value={selectedShiftType}
+            onChange={setSelectedShiftType}
+            options={shiftOptions}
+          />
+
+          {type === "employee" ? (
+            <SelectField
+              label="Company"
+              value={selectedCompany}
+              onChange={setSelectedCompany}
+              options={companyOptions}
+            />
+          ) : null}
 
           {/* Sync Button */}
           <button
             onClick={handleSync}
             disabled={loading}
-            className="bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600 disabled:bg-blue-300 flex items-center gap-2"
+            className="bg-blue-500 text-white px-3 py-1 rounded-md text-sm 
+                   hover:bg-blue-600 disabled:bg-blue-300 flex items-center gap-2"
           >
             {loading ? (
               <>
@@ -341,10 +361,11 @@ const RouteScheduledBookings = () => {
             )}
           </button>
 
-          {/* Configuration Button */}
+          {/* Config Button */}
           <button
             onClick={() => setIsConfigModalOpen(true)}
-            className="bg-green-500 text-white px-3 py-1 rounded-md text-sm hover:bg-green-600 flex items-center gap-2"
+            className="bg-green-500 text-white px-3 py-1 rounded-md text-sm 
+                   hover:bg-green-600 flex items-center gap-2"
             title="Route Configuration"
           >
             <Settings size={16} />
