@@ -12,23 +12,28 @@ import ManageEmployees from "./pages/ManageEmployees";
 import VendorManagement from "./pages/VendorManagement";
 import VehicleManagement from "./pages/VehicleManagement";
 import ManageDrivers from "./pages/ManageDrivers";
-import SuperAdminLayout from "./superadmin/SuperAdminLayout";
 import VendorLayout from "./vendor/VendorLayout";
 import { useDispatch } from "react-redux";
 import { initializeAuth } from "./redux/features/auth/authSlice";
 import CompanyManagement from "./pages/CompanyManagement";
 import SuperAdminDashboard from "./superadmin/SuperAdminDashboard";
 import CompanyDashboard from "./companies/CompanyDashboard";
-import RoleManagement from "./pages/RoleManagement";
-import RouteManagement from "./pages/RouteManagement";
 import Schedulemanagement from "./pages/Schedulemanagement";
 import CutoffManagement from "./components/Schedulemanagement/CutoffManagement";
 import ScheduledBookings from "./components/RouteManagement/RouteScheduledBookings";
 import ProfilePage from "./pages/ProfilePage";
 import BookingManagement from "./pages/BookingManagement";
-import ClusterMapViewer from "./components/RouteManagement/ClusterMapViewer";
-import VendorDashboard from "./vendor/VendorDashboard";
 import VendorRouteManagement from "./components/RouteManagement/VendorRouteManagement";
+import Practice from "./pages/Practice";
+import RouteScheduledBookings from "./components/RouteManagement/RouteScheduledBookings";
+import ShiftRoutingManagement from "./components/RouteManagement/ShiftRoutingManagement";
+import DocPage from "./Docs/SupademoPage";
+import NewVendorManagement from "./pages/NewVendorManagement";
+import SuperAdminLayout from "./superadmin/layout/SuperAdminLayout";
+import ReportsManagement from "./pages/ReportManagement";
+import PermissionCheck from "./middleware/PermissionCheck";
+import RoleManagement from "./components/RoleManagement/RoleManagement";
+import ReportDownloader from "./pages/ReportDownloader";
 
 function App() {
   const dispatch = useDispatch();
@@ -43,8 +48,8 @@ function App() {
 
       <Routes>
         {/* ================= PRACTICE ROUTE ================= */}
-        <Route path="/practice" element={<ClusterMapViewer />} />
-
+        <Route path="/practice" element={<Practice />} />
+        <Route path="/supademo" element={<DocPage />} />
         {/* ================= PUBLIC LOGIN ROUTES ================= */}
         {/* Company Login */}
         <Route
@@ -100,6 +105,11 @@ function App() {
             <Route path="dashboard" element={<SuperAdminDashboard />} />
             <Route path="manage-companies" element={<CompanyManagement />} />
             <Route path="manage-vendors" element={<VendorManagement />} />
+            <Route path="repots-management" element={<ReportsManagement />} />
+            <Route
+              path="new-vendor-management"
+              element={<NewVendorManagement />}
+            />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Route>
@@ -116,9 +126,14 @@ function App() {
           }
         >
           <Route element={<VendorLayout type={"vendor"} />}>
-            <Route path="dashboard" element={<VendorDashboard />} />
+            <Route path="dashboard" element={<CompanyDashboard />} />
             <Route path="employees" element={<ManageEmployees />} />
             <Route path="routing" element={<VendorRouteManagement />} />
+            <Route
+              path="routing-listing"
+              element={<h1> this is the page of route listing </h1>}
+            />
+
             <Route
               path="employees/:userId/edit"
               element={<EmployeeForm mode="edit" />}
@@ -127,6 +142,7 @@ function App() {
               path="employees/:userId/view"
               element={<EmployeeForm mode="view" />}
             />
+
             <Route path="reports" element={<h1>Vendor Reports</h1>} />
             <Route path="drivers" element={<ManageDrivers />} />
             <Route path="vehicles" element={<VehicleManagement />} />
@@ -146,11 +162,19 @@ function App() {
         >
           <Route element={<Layout type={"employee"} />}>
             <Route path="/dashboard" element={<CompanyDashboard />} />
-
+            <Route
+              path="/company-management"
+              element={
+                <PermissionCheck module="permisions" action="read">
+                  <h1> this is to chekc the permisison bassed ui </h1>
+                </PermissionCheck>
+              }
+            />
             <Route path="departments" element={<ManageDepartment />} />
             <Route path="/shift-categories" element={<ManageDepartment />} />
             <Route path="/shifts" element={<Schedulemanagement />} />
             <Route path="/role-management" element={<RoleManagement />} />
+            <Route path="/role-permission" element={<RoleManagement />} />
             <Route path="/drivers" element={<ManageDrivers />} />
             <Route path="/manage-company" element={<ManageDepartment />} />
             <Route path="/scheduling" element={<Schedulemanagement />} />
@@ -158,17 +182,27 @@ function App() {
             <Route path="/cutoff" element={<CutoffManagement />} />
             <Route path="/manage-vendors" element={<VendorManagement />} />
             <Route path="/vehicles" element={<VehicleManagement />} />
-            <Route path="/vendors" element={<VendorManagement />} />
-            <Route path="/profile" element={<ProfilePage />} />
 
+            <Route path="/vendors" element={<VendorManagement />} />
+            <Route
+              path="/new-vendor-management"
+              element={<NewVendorManagement />}
+            />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="repots-management" element={<ReportsManagement />} />
             <Route
               path="/employee/create-employee"
               element={<EmployeeForm />}
             />
             <Route
               path="/department/:depId/employees"
-              element={<ManageEmployees />}
+              element={
+                <PermissionCheck module="employee" action="read">
+                  <ManageEmployees />{" "}
+                </PermissionCheck>
+              }
             />
+
             <Route
               path="/department/:depId/employees/:userId/edit"
               element={<EmployeeForm mode="edit" />}
@@ -181,26 +215,12 @@ function App() {
               path="/tracking"
               element={<h1> This is the screen of Tracking </h1>}
             />
+            <Route path="/report-downloader" element={<ReportDownloader />} />
+
+            <Route path="/routing" element={<RouteScheduledBookings />} />
             <Route
-              path="/bookings"
-              element={<h1> This is the screen of Booking </h1>}
-            />
-            <Route path="/routing" element={<RouteManagement />} />
-            <Route
-              path="/shift/:shiftId/:date/routing-map"
-              element={<ClusterMapViewer />}
-            />
-            <Route
-              path="/shift/:shiftId/:date/suggestions-route"
-              element={<ClusterMapViewer mode="suggestions" />}
-            />
-            <Route
-              path="/shift/:shiftId/:date/saved-routes"
-              element={<ClusterMapViewer mode="saved" />}
-            />
-            <Route
-              path="/shift/:shiftId/:date/pending-routes"
-              element={<ClusterMapViewer />}
+              path="/shift/:shiftId/:shiftType/:date/routing-map"
+              element={<ShiftRoutingManagement />}
             />
             <Route
               path="/employee/:employee_id/bookings"

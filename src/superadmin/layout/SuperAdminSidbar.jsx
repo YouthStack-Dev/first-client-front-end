@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { BarChart3, Building2, Truck } from "lucide-react";
-import SidebarHeader from "./SidebarHeader";
-import SidebarMenuItem from "./SidebarMenuItem";
-import SidebarFooter from "./SidebarFooter";
+import SidebarMenuItem from "../SidebarMenuItem";
+import SidebarFooter from "../SidebarFooter";
 import { useDispatch } from "react-redux";
-import { logout } from "../redux/features/auth/authSlice";
+import { logout } from "../../redux/features/auth/authSlice";
 
 // Import your constants (move these to a separate file if needed)
 const superAdminData = {
@@ -28,6 +27,16 @@ export const superAdminMenuItems = [
     name: "Vendors",
     path: "/superadmin/manage-vendors",
     icon: Truck,
+  },
+  {
+    name: "New Vendor Management",
+    path: "/superadmin/new-vendor-management",
+    icon: BarChart3,
+  },
+  {
+    name: "Reports Management",
+    path: "/superadmin/repots-management",
+    icon: BarChart3,
   },
 ];
 
@@ -99,14 +108,6 @@ const SuperAdminSidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <SidebarHeader
-        isOpen={isOpen}
-        isPinned={isPinned}
-        togglePin={togglePin}
-        isMobile={isMobile}
-        platformName={superAdminData.platformName}
-      />
-
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-4 space-y-1">
         {superAdminMenuItems.map((item) => (

@@ -9,17 +9,29 @@ import {
   fetchVehicleTypes,
   createVehicleType,
   updateVehicleType,
-  toggleVehicleTypeStatus
+  toggleVehicleTypeStatus,
+  fetchVendorVehicleTypes,
 } from "../../redux/features/managevehicletype/vehicleTypeThunks";
 import { toast } from "react-toastify";
-import ReusableButton from "../ui/ReusableButton";
-import ReusableToggleButton from "../ui/ReusableToggleButton";
+import VendorSelector from "../vendor/vendordropdown";
 
 const ManageVehicleTypes = () => {
   const dispatch = useDispatch();
-  const { byId, allIds, loading } = useSelector((state) => state.vehicleType);
-  const vehicleTypes = allIds.map((id) => byId[id]);
 
+  const {
+    byId,
+    allIds,
+    loading,
+    fetched,
+    vendorById, // vendor cache from the slice
+    vendorLoading,
+  } = useSelector((state) => state.vehicleType);
+
+  const selectedVendor = useSelector((state) => state.vendor.selectedVendor);
+
+  const vehicleTypes = allIds.map((id) => byId[id] || {});
+
+  // Local UI state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({});
   const [editingId, setEditingId] = useState(null);
@@ -27,27 +39,56 @@ const ManageVehicleTypes = () => {
   const [activeOnly, setActiveOnly] = useState(undefined);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Local state for optimistic toggle
   const [localStatus, setLocalStatus] = useState({});
 
-const { fetched } = useSelector((state) => state.vehicleType);
+  // ---------------------------
+  // Decide and dispatch the right fetch (ONLY here)
+  // ---------------------------
+  useEffect(() => {
+    const vendorId = selectedVendor?.vendor_id;
 
-useEffect(() => {
-  if (!fetched) {
-    dispatch(fetchVehicleTypes());
-  }
-}, [dispatch, fetched]);
+    if (!vendorId || vendorId === "all") {
+      // No vendor selected -> ensure tenant-level types are loaded
+      if (!fetched) {
+        dispatch(fetchVehicleTypes());
+      }
+      return;
+    }
+
+    // Vendor selected -> use cache if present, otherwise fetch vendor-specific list
+    const cached = vendorById?.[vendorId];
+    if (!cached) {
+      dispatch(fetchVendorVehicleTypes(vendorId));
+    }
+    // if cached exists, do nothing (we'll use cached data)
+  }, [selectedVendor, fetched, vendorById, dispatch]);
+
 
   const filteredVehicleTypes = vehicleTypes.filter((vt) => {
     if (!vt) return false;
-    const matchesSearch =
-      vt.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vt.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const name = (vt.name || "").toLowerCase();
+    const desc = (vt.description || "").toLowerCase();
+    const q = searchTerm.toLowerCase();
+    const matchesSearch = name.includes(q) || desc.includes(q);
     const matchesStatus = activeOnly === undefined || vt.is_active === activeOnly;
     return matchesSearch && matchesStatus;
   });
 
+  // ---------------------------
+  // Determine table data (vendor cached list OR tenant default)
+  // ---------------------------
+  const vendorId = selectedVendor?.vendor_id;
+  const vendorList = vendorId ? vendorById?.[vendorId] ?? null : null;
+
+  const tableData = vendorList
+    ? vendorList.filter((vt) =>
+        (vt.name || "").toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : filteredVehicleTypes;
+
+  // ---------------------------
+  // Table headers
+  // ---------------------------
   const headers = [
     { label: "Vehicle Type Name", key: "name", className: "text-left" },
     { label: "Description", key: "description", className: "text-left" },
@@ -57,12 +98,16 @@ useEffect(() => {
       key: "is_active",
       className: "text-center",
       render: (row) => {
-        const isActive = localStatus[row.id] ?? row.is_active;
+        const id = row.id || row.vehicle_type_id;
+        const isActive = localStatus[id] ?? row.is_active;
         return <div className="text-lg">{isActive ? "✅" : "❌"}</div>;
       },
     },
   ];
 
+  // ---------------------------
+  // Handlers
+  // ---------------------------
   const handleSelectItem = (item, isSelected) => {
     setSelectedItems((prev) =>
       isSelected ? [...prev, item] : prev.filter((i) => i.id !== item.id)
@@ -77,16 +122,15 @@ useEffect(() => {
     }));
   };
 
-  const handleSearchChange = (e) => setSearchTerm(e.target.value);
-
   const handleStatusFilterChange = (e) => {
     const value = e.target.value;
     setActiveOnly(value === "" ? undefined : value === "true");
   };
 
   const handleEdit = (row) => {
-    if (!row) return;
-    setEditingId(row.id);
+    const id = row.id || row.vehicle_type_id;
+    if (!id) return;
+    setEditingId(id);
     setFormData({
       name: row.name || "",
       description: row.description || "",
@@ -97,47 +141,25 @@ useEffect(() => {
   };
 
   const handleToggleStatus = async (row) => {
-    if (!row || !row.id) return;
-    // Optimistic update
-    setLocalStatus((prev) => ({
-      ...prev,
-      [row.id]: !(prev[row.id] ?? row.is_active),
-    }));
+    const id = row.id || row.vehicle_type_id;
+    if (!id) return;
+
+    setLocalStatus((prev) => ({ ...prev, [id]: !(prev[id] ?? row.is_active) }));
+
     try {
-      await dispatch(toggleVehicleTypeStatus(row.id)).unwrap();
-      toast.success(
-        `Vehicle type ${
-          !(localStatus[row.id] ?? row.is_active) ? "activated" : "deactivated"
-        } successfully`
-      );
+      await dispatch(toggleVehicleTypeStatus(id)).unwrap();
+      toast.success("Status updated");
     } catch (error) {
-      // Revert if API fails
-      setLocalStatus((prev) => ({
-        ...prev,
-        [row.id]: row.is_active,
-      }));
-      toast.error(error?.message || "Failed to toggle vehicle type status");
+      setLocalStatus((prev) => ({ ...prev, [id]: row.is_active }));
+      toast.error("Failed to update status");
     }
   };
 
-  // const handleDelete = async (row) => {
-  //   if (!row || !row.id) return;
-  //   if (window.confirm(`Are you sure you want to delete "${row.name}"?`)) {
-  //     try {
-  //       await dispatch(deleteVehicleType(row.id)).unwrap();
-  //       toast.success("Vehicle type deleted successfully");
-  //     } catch (error) {
-  //       toast.error(error?.message || "Failed to delete vehicle type");
-  //     }
-  //   }
-  // };
-
   const renderActions = (row) => {
-    const isActive = localStatus[row.id] ?? row.is_active;
-
+    const id = row.id || row.vehicle_type_id;
+    const isActive = localStatus[id] ?? row.is_active;
     return (
       <div className="flex justify-center items-center gap-2">
-        {/* Toggle switch */}
         <button
           onClick={() => handleToggleStatus(row)}
           className={`relative inline-flex h-6 w-11 items-center rounded-full ${
@@ -151,12 +173,7 @@ useEffect(() => {
           />
         </button>
 
-        {/* Edit */}
-        <button
-          onClick={() => handleEdit(row)}
-          className="text-blue-600 hover:bg-blue-50 p-1.5 rounded transition-colors"
-          title="Edit"
-        >
+        <button onClick={() => handleEdit(row)} className="text-blue-600 p-1.5 rounded">
           <Edit size={18} />
         </button>
       </div>
@@ -177,92 +194,85 @@ useEffect(() => {
     try {
       if (editingId) {
         await dispatch(updateVehicleType({ id: editingId, payload })).unwrap();
-        toast.success("Vehicle type updated successfully");
+        toast.success("Vehicle type updated");
       } else {
         await dispatch(createVehicleType(payload)).unwrap();
-        toast.success("Vehicle type created successfully");
+        toast.success("Vehicle type created");
       }
 
       setIsModalOpen(false);
       setFormData({});
       setEditingId(null);
+
+      // refresh tenant list after changes (still using tenant thunk)
       dispatch(fetchVehicleTypes());
     } catch (error) {
-      toast.error(error?.message || error || "Failed to save vehicle type");
+      toast.error("Failed to save vehicle type");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleModalClose = () => {
-    setIsModalOpen(false);
-    setFormData({});
-    setEditingId(null);
-    setIsSubmitting(false);
-  };
-
   return (
     <>
-      {/* Toolbar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 bg-white shadow-sm p-4 rounded-lg">
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
               <Search size={18} className="text-gray-400" />
             </div>
             <input
-              type="text"
               placeholder="Search vehicle types..."
               value={searchTerm}
-              onChange={handleSearchChange}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full sm:w-64"
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border rounded-lg w-full sm:w-64"
             />
           </div>
 
           <select
             value={activeOnly === undefined ? "" : activeOnly.toString()}
             onChange={handleStatusFilterChange}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full sm:w-auto"
+            className="px-4 py-2 border rounded-lg"
           >
             <option value="">All Status</option>
             <option value="true">Active</option>
             <option value="false">Inactive</option>
           </select>
+
+          {/* VendorSelector: should update selectedVendor in Redux.
+              DO NOT dispatch fetch here to avoid duplicate calls. */}
+          <VendorSelector onChange={() => { /* noop here */ }} />
         </div>
 
         <ToolBar
-            className="bg-transparent shadow-none p-0"
-            leftElements={null} // or any search/filters you have
-            rightElements={
-              <button
-                onClick={() => {
-                  setFormData({ is_active: true });
-                  setEditingId(null);
-                  setIsModalOpen(true);
-                }}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 w-full sm:w-auto"
-              >
-                Add Vehicle Type
-              </button>
-            }
-          />
+          rightElements={
+            <button
+              onClick={() => {
+                setFormData({ is_active: true });
+                setEditingId(null);
+                setIsModalOpen(true);
+              }}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+            >
+              Add Vehicle Type
+            </button>
+          }
+        />
       </div>
 
-      {/* Table */}
       <DynamicTable
         headers={headers}
-        data={filteredVehicleTypes}
-        loading={loading}
-        onSelectItem={handleSelectItem}
+        data={tableData}
+        loading={loading || vendorLoading}
         selectedItems={selectedItems}
+        onSelectItem={handleSelectItem}
         renderActions={renderActions}
         showCheckboxes={false}
       />
 
-      {/* Modal */}
       <Modal
         isOpen={isModalOpen}
-        onClose={handleModalClose}
+        onClose={() => setIsModalOpen(false)}
         onSubmit={handleSubmit}
         title={editingId ? "Edit Vehicle Type" : "Add Vehicle Type"}
         isSubmitting={isSubmitting}
@@ -271,43 +281,37 @@ useEffect(() => {
           <InputField
             label="Vehicle Type Name *"
             name="name"
-            type="text"
-            required
-            value={formData.name || ""}
+            value={formData.name ?? ""}
             onChange={handleInputChange}
-            disabled={isSubmitting}
+            required
           />
+
           <InputField
             label="Description"
             name="description"
             type="textarea"
-            value={formData.description || ""}
+            value={formData.description ?? ""}
             onChange={handleInputChange}
-            disabled={isSubmitting}
           />
+
           <InputField
             label="Seats *"
             name="seats"
             type="number"
-            min="1"
-            required
-            value={formData.seats || ""}
+            value={formData.seats ?? ""}
             onChange={handleInputChange}
-            disabled={isSubmitting}
+            required
           />
+
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
               id="is_active"
               name="is_active"
-              checked={formData.is_active || false}
+              checked={formData.is_active ?? false}
               onChange={handleInputChange}
-              disabled={isSubmitting}
-              className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
             />
-            <label htmlFor="is_active" className="text-sm text-gray-700">
-              Active
-            </label>
+            <label htmlFor="is_active">Active</label>
           </div>
         </div>
       </Modal>

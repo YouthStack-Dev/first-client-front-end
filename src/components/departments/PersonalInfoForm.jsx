@@ -1,8 +1,8 @@
-import React, { useRef, useEffect } from 'react';
-import { DateRange } from 'react-date-range';
-import 'react-date-range/dist/styles.css';
-import 'react-date-range/dist/theme/default.css';
-import { logDebug } from '../../utils/logger';
+import React, { useRef, useEffect } from "react";
+import { DateRange } from "react-date-range";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
+import { logDebug } from "../../utils/logger";
 
 const PersonalInfoForm = ({
   formData,
@@ -15,32 +15,35 @@ const PersonalInfoForm = ({
   handleDateSelect,
   displayDateRange,
   teams = [],
-  loadingTeams = false
+  loadingTeams = false,
 }) => {
   const datePickerRef = useRef(null);
-  logDebug('this is the teams', teams);
-  
+  logDebug("this is the teams", teams);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (datePickerRef.current && !datePickerRef.current.contains(event.target)) {
+      if (
+        datePickerRef.current &&
+        !datePickerRef.current.contains(event.target)
+      ) {
         setShowDatePicker(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [setShowDatePicker]);
 
   const getInputClasses = (hasError) =>
     `w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-      hasError ? 'border-red-500 bg-red-50' : 'border-gray-300'
-    } ${isReadOnly ? 'bg-gray-100 cursor-not-allowed' : ''}`;
+      hasError ? "border-red-500 bg-red-50" : "border-gray-300"
+    } ${isReadOnly ? "bg-gray-100 cursor-not-allowed" : ""}`;
 
   const getSelectClasses = (hasError) =>
     `w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none ${
-      hasError ? 'border-red-500 bg-red-50' : 'border-gray-300'
-    } ${isReadOnly ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`;
+      hasError ? "border-red-500 bg-red-50" : "border-gray-300"
+    } ${isReadOnly ? "bg-gray-100 cursor-not-allowed" : "bg-white"}`;
 
   return (
     <div className="animate-fadeIn">
@@ -53,7 +56,7 @@ const PersonalInfoForm = ({
           <input
             type="text"
             name="name"
-            value={formData.name || ''}
+            value={formData.name || ""}
             onChange={onChange}
             className={getInputClasses(errors.name)}
             placeholder="Enter employee name"
@@ -72,7 +75,7 @@ const PersonalInfoForm = ({
           <input
             type="text"
             name="employee_code"
-            value={formData.employee_code || ''}
+            value={formData.employee_code || ""}
             onChange={onChange}
             className={getInputClasses(errors.employee_code)}
             placeholder="Enter employee ID"
@@ -91,7 +94,7 @@ const PersonalInfoForm = ({
           <input
             type="email"
             name="email"
-            value={formData.email || ''}
+            value={formData.email || ""}
             onChange={onChange}
             className={getInputClasses(errors.email)}
             placeholder="Enter email ID"
@@ -109,7 +112,7 @@ const PersonalInfoForm = ({
           </label>
           <select
             name="gender"
-            value={formData.gender || ''}
+            value={formData.gender || ""}
             onChange={onChange}
             className={getSelectClasses(errors.gender)}
             disabled={isReadOnly}
@@ -132,7 +135,7 @@ const PersonalInfoForm = ({
           <input
             type="tel"
             name="phone"
-            value={formData.phone || ''}
+            value={formData.phone || ""}
             onChange={onChange}
             className={getInputClasses(errors.phone)}
             placeholder="Enter mobile number"
@@ -151,14 +154,16 @@ const PersonalInfoForm = ({
           <input
             type="tel"
             name="alternate_phone"
-            value={formData.alternate_phone || ''}
+            value={formData.alternate_phone || ""}
             onChange={onChange}
             className={getInputClasses(errors.alternate_phone)}
             placeholder="Enter alternate mobile number"
             disabled={isReadOnly}
           />
           {errors.alternate_phone && (
-            <p className="mt-1 text-sm text-red-500">{errors.alternate_phone}</p>
+            <p className="mt-1 text-sm text-red-500">
+              {errors.alternate_phone}
+            </p>
           )}
         </div>
 
@@ -169,7 +174,7 @@ const PersonalInfoForm = ({
           </label>
           <select
             name="special_needs"
-            value={formData.special_needs || 'none'}
+            value={formData.special_needs || "none"}
             onChange={onChange}
             className={getSelectClasses(false)}
             disabled={isReadOnly}
@@ -187,15 +192,26 @@ const PersonalInfoForm = ({
           </label>
           <input
             type="text"
-            name="dateRangeDisplay"
-            value={displayDateRange()}
+            value={
+              dateRangeSelection?.[0]?.startDate &&
+              dateRangeSelection?.[0]?.endDate
+                ? `${new Date(
+                    dateRangeSelection[0].startDate
+                  ).toLocaleDateString()} - ${new Date(
+                    dateRangeSelection[0].endDate
+                  ).toLocaleDateString()}`
+                : ""
+            }
             onClick={() => !isReadOnly && setShowDatePicker(!showDatePicker)}
             readOnly
             className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-              isReadOnly ? 'bg-gray-100 cursor-not-allowed' : 'cursor-pointer'
+              isReadOnly
+                ? "bg-gray-100 cursor-not-allowed"
+                : "cursor-pointer bg-white"
             }`}
             placeholder="Select date range"
           />
+
           {showDatePicker && !isReadOnly && (
             <div className="absolute z-10 mt-1 shadow-lg rounded-md overflow-hidden bg-white">
               <DateRange
@@ -223,7 +239,7 @@ const PersonalInfoForm = ({
           ) : (
             <select
               name="team_id"
-              value={formData.team_id || ''}
+              value={formData.team_id || ""}
               onChange={onChange}
               className={getSelectClasses(errors.team_id)}
               disabled={isReadOnly}

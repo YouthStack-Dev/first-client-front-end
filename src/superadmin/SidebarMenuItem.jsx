@@ -1,13 +1,8 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import { ChevronDown } from "lucide-react";
 
-const SidebarMenuItem = ({ 
-  item, 
-  isOpen, 
-  openDropdown, 
-  toggleDropdown 
-}) => {
+const SidebarMenuItem = ({ item, isOpen, openDropdown, toggleDropdown }) => {
   const location = useLocation();
 
   const isActive = location.pathname === item.path;
@@ -21,8 +16,8 @@ const SidebarMenuItem = ({
           onClick={() => toggleDropdown(item.name)}
           className={`flex items-center w-full px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium ${
             isDropdownOpen
-              ? 'bg-sidebar-primary-700 text-white shadow-sidebar-item'
-              : 'text-sidebar-primary-200 hover:bg-sidebar-primary-700 hover:text-white hover:shadow-sidebar-item-hover'
+              ? "bg-sidebar-primary-700 text-white shadow-sidebar-item"
+              : "text-sidebar-primary-200 hover:bg-sidebar-primary-700 hover:text-white hover:shadow-sidebar-item-hover"
           }`}
         >
           <item.icon className="w-5 h-5 min-w-[1.25rem]" />
@@ -46,8 +41,8 @@ const SidebarMenuItem = ({
                 to={subItem.path}
                 className={`flex items-center px-3 py-2.5 text-sm rounded-lg transition-colors ${
                   location.pathname === subItem.path
-                    ? 'bg-sidebar-accent-600 text-white shadow-md'
-                    : 'text-sidebar-primary-300 hover:bg-sidebar-primary-600 hover:text-white'
+                    ? "bg-sidebar-accent-600 text-white shadow-md"
+                    : "text-sidebar-primary-300 hover:bg-sidebar-primary-600 hover:text-white"
                 }`}
               >
                 <subItem.icon className="w-4 h-4" />
@@ -65,8 +60,8 @@ const SidebarMenuItem = ({
       to={item.path}
       className={`flex items-center px-4 py-3.5 rounded-xl transition-colors text-sm font-medium ${
         isActive
-          ? 'bg-sidebar-primary-700 text-white shadow-sidebar-item'
-          : 'text-sidebar-primary-200 hover:bg-sidebar-primary-700 hover:text-white hover:shadow-sidebar-item-hover'
+          ? "bg-sidebar-primary-700 text-white shadow-sidebar-item"
+          : "text-sidebar-primary-200 hover:bg-sidebar-primary-700 hover:text-white hover:shadow-sidebar-item-hover"
       }`}
     >
       <item.icon className="w-5 h-5 min-w-[1.25rem]" />

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import BookingDetailsModal from "../modals/BookingDetailsModal";
 import { API_CLIENT } from "../../Api/API_Client";
+import { logDebug } from "../../utils/logger";
 
 const ShiftBookingsTable = ({
   data,
@@ -87,8 +88,8 @@ const ShiftBookingsTable = ({
 
   const handleShiftRoute = (shift) => {
     if (!shift?.id) return;
-
-    const url = `/shift/${shift.id}/${date}/routing-map`;
+    logDebug("Opening routing map for shift:", shift);
+    const url = `/shift/${shift.id}/${shift.log_type}/${date}/routing-map`;
     window.open(url, "_blank");
   };
 

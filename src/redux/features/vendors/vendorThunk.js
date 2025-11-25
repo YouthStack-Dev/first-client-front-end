@@ -8,10 +8,16 @@ export const fetchVendorsThunk = createAsyncThunk(
   "vendor/fetchVendors",
   async (params = {}, { rejectWithValue }) => {
     try {
-      const { skip = 0, limit = 100, name = "", code = "", tenant_id="" } = params;
+      const {
+        skip = 0,
+        limit = 100,
+        name = "",
+        code = "",
+        tenant_id = "",
+      } = params;
 
       const response = await API_CLIENT.get("/v1/vendors/", {
-        params: { skip, limit, name, code, tenant_id  },
+        params: { skip, limit, name, code, tenant_id },
       });
       // Extract items array
       const vendors = response.data?.data?.items || [];
@@ -19,12 +25,13 @@ export const fetchVendorsThunk = createAsyncThunk(
     } catch (error) {
       console.error("[Thunk] Failed to fetch vendors:", error);
       const message =
-        error.response?.data?.message || error.message || "Failed to fetch vendors";
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch vendors";
       return rejectWithValue(message);
     }
   }
 );
-
 
 /**
  * Create a new vendor
@@ -44,7 +51,9 @@ export const createVendorThunk = createAsyncThunk(
     } catch (error) {
       console.error("[Thunk] Failed to create vendor:", error);
       return rejectWithValue(
-        error.response?.data?.message || error.message || "Failed to create vendor"
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to create vendor"
       );
     }
   }
@@ -57,16 +66,17 @@ export const updateVendorThunk = createAsyncThunk(
   "vendor/updateVendor",
   async ({ vendorId, formData }, { rejectWithValue, dispatch }) => {
     try {
-      const response = await API_CLIENT.put(`/v1/vendors/${vendorId}`, formData);
+      const response = await API_CLIENT.put(
+        `/v1/vendors/${vendorId}`,
+        formData
+      );
 
       // Refresh vendor list after update
       dispatch(fetchVendorsThunk({ tenant_id: formData.tenant_id }));
 
-      return response.data; 
+      return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || error.message || "Failed to update vendor"
-      );
+      return rejectWithValue(error.response?.data || error);
     }
   }
 );
@@ -81,7 +91,7 @@ export const toggleVendorStatusThunk = createAsyncThunk(
     try {
       const response = await API_CLIENT.patch(
         `/v1/vendors/${vendorId}/toggle-status`,
-        null, 
+        null,
         { params: { tenant_id } }
       );
       // await dispatch(fetchVendorsThunk({ tenant_id }));

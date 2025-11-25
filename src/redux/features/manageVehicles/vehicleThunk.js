@@ -3,16 +3,47 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { API_CLIENT } from "../../../Api/API_Client";
 
 
+// export const fetchVehiclesThunk = createAsyncThunk(
+//   "vehicles/fetchVehicles",
+//   async (_, { rejectWithValue }) => {
+//     try {
+//       const response = await API_CLIENT.get("/v1/vehicles/");
+//       if (!response.data?.success) {
+//         return rejectWithValue(response.data?.message || "Failed to fetch vehicles");
+//       }
+//       return response.data.data; 
+//     } catch (err) {
+//       return rejectWithValue(err.response?.data || err.message);
+//     }
+//   }
+// );
+
 export const fetchVehiclesThunk = createAsyncThunk(
   "vehicles/fetchVehicles",
-  async (_, { rejectWithValue }) => {
+  async (params = {}, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.get("/v1/vehicles/");
+      const { vendor_id } = params;
+      const query = vendor_id ? `?vendor_id=${vendor_id}` : "";
+      const response = await API_CLIENT.get(`/v1/vehicles/${query}`);
+
       if (!response.data?.success) {
         return rejectWithValue(response.data?.message || "Failed to fetch vehicles");
       }
-      return response.data.data; 
+
+      // ✅ Correctly extract items array from nested structure
+      const rawData = response.data.data;
+      const items = Array.isArray(rawData?.items)
+        ? rawData.items
+        : Array.isArray(rawData)
+        ? rawData
+        : [];
+
+      console.log("✅ Thunk returning vendor_id:", vendor_id, "items:", items.length);
+
+      // ✅ Return normalized structure that reducer expects
+      return { vendor_id, items };
     } catch (err) {
+      console.error("❌ Fetch vehicles failed:", err);
       return rejectWithValue(err.response?.data || err.message);
     }
   }

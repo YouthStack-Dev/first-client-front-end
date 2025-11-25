@@ -1,6 +1,4 @@
-// src/components/ui/FilterBadges.jsx
-import React from 'react';
-import { X } from 'lucide-react';
+import React from "react";
 
 const FilterBadges = ({ filters, onClear }) => {
   return (
