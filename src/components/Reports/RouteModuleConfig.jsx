@@ -109,43 +109,6 @@ const RouteModuleConfig = ({
           </span>
         </label>
       </div>
-
-      {/* Route Performance Metrics */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="text-sm font-semibold text-blue-800 mb-2">
-          Route Performance Metrics
-        </h4>
-        <div className="grid grid-cols-2 gap-4">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={formData.include_performance_metrics || false}
-              onChange={(e) =>
-                handleChange("include_performance_metrics", e.target.checked)
-              }
-              className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
-              disabled={loading}
-            />
-            <span className="text-sm text-blue-700">
-              Include Performance Metrics
-            </span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={formData.include_route_optimization || false}
-              onChange={(e) =>
-                handleChange("include_route_optimization", e.target.checked)
-              }
-              className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
-              disabled={loading}
-            />
-            <span className="text-sm text-blue-700">
-              Include Route Optimization Data
-            </span>
-          </label>
-        </div>
-      </div>
     </>
   );
 };

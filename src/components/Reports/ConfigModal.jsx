@@ -1,6 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import BookingModuleConfig from "./BookingModuleConfig";
 import RouteModuleConfig from "./RouteModuleConfig";
+import CommonConfig from "./CommonConfig";
+import { API_CLIENT } from "../../Api/API_Client";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../redux/features/auth/authSlice";
+import { logDebug } from "../../utils/logger";
 
 const ConfigModal = ({
   isOpen,
@@ -9,9 +14,8 @@ const ConfigModal = ({
   onSubmit,
   type,
   loading = false,
-  error = null,
 }) => {
-  const [selectedModule, setSelectedModule] = useState("booking"); // "booking" or "route"
+  const [selectedModule, setSelectedModule] = useState("booking");
   const [formData, setFormData] = useState({
     start_date: "",
     end_date: "",
@@ -21,7 +25,6 @@ const ConfigModal = ({
     route_status: [],
     vendor_id: "",
     include_unrouted: true,
-    // Route-specific fields
     driver_id: "",
     vehicle_type: "",
     include_performance_metrics: false,
@@ -29,10 +32,88 @@ const ConfigModal = ({
   });
 
   const [errors, setErrors] = useState({});
+  const [tenants, setTenants] = useState([]);
+  const [shifts, setShifts] = useState([]);
+  const [vendors, setVendors] = useState([]);
+  const [fetchShiftsLoading, setFetchShiftsLoading] = useState(false);
+  const [fetchVendorsLoading, setFetchVendorsLoading] = useState(false);
 
-  // Reset form when modal opens/closes or module changes
+  const user = useSelector(selectCurrentUser);
+  const userType = user?.type;
+  const isSuperAdmin = "admin" === userType;
+  const currentUserTenant = user?.tenant_id || user?.tenant?.tenant_id;
+  logDebug(" This is the current user tenant ID:", user);
+  // Use ref to track initial data fetch
+  const hasFetchedInitialData = useRef(false);
+
+  // Reset the ref when modal closes
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) {
+      hasFetchedInitialData.current = false;
+    }
+  }, [isOpen]);
+
+  const fetchTenants = async () => {
+    try {
+      const response = await API_CLIENT.get("/v1/tenants/");
+      setTenants(
+        response.data?.data?.items?.map((tenant) => ({
+          value: tenant.tenant_id,
+          label: `${tenant.name}`,
+        }))
+      );
+    } catch (error) {
+      console.error("Error fetching tenants:", error);
+      // Fallback to static data
+      setTenants([
+        { value: "SAM001", label: "SAM001 - Main Campus" },
+        { value: "SAM002", label: "SAM002 - Downtown Branch" },
+        { value: "SAM003", label: "SAM003 - Westside Office" },
+      ]);
+    }
+  };
+
+  const fetchShiftsAndVendors = useCallback(async (tenantId) => {
+    logDebug("Fetching shifts and vendors for tenant:", tenantId);
+    if (!tenantId) return;
+
+    try {
+      setFetchShiftsLoading(true);
+      setFetchVendorsLoading(true);
+
+      // Fetch shifts for the tenant
+      const shiftsResponse = await API_CLIENT.get(
+        `/v1/shifts/?tenant_id=${tenantId}`
+      );
+      setShifts([
+        { value: "", label: "All Shifts" },
+        ...shiftsResponse.data?.data?.items?.map((shift) => ({
+          value: shift.shift_id,
+          label: `${shift.shift_code} - ${shift.shift_time}`,
+        })),
+      ]);
+
+      // Fetch vendors for the tenant
+      const vendorsResponse = await API_CLIENT.get(`/v1/vendors/`);
+      setVendors([
+        { value: "", label: "All Vendors" },
+        ...vendorsResponse.data?.data?.items?.map((vendor) => ({
+          value: vendor.vendor_id,
+          label: `${vendor.name} - ${vendor.service_type}`,
+        })),
+      ]);
+    } catch (error) {
+      console.error("Error fetching shifts/vendors:", error);
+      // Keep existing static data
+    } finally {
+      setFetchShiftsLoading(false);
+      setFetchVendorsLoading(false);
+    }
+  }, []);
+  logDebug(" This is the current user tenant ID:", currentUserTenant);
+  useEffect(() => {
+    if (isOpen && !hasFetchedInitialData.current) {
+      // Reset form data
       setFormData({
         start_date: "",
         end_date: "",
@@ -48,20 +129,46 @@ const ConfigModal = ({
         include_route_optimization: false,
       });
       setErrors({});
-      // Set default module based on type or config
+
+      // Set module based on type
       if (type === "routes" || config === "route") {
         setSelectedModule("route");
       } else {
         setSelectedModule("booking");
       }
+
+      // Fetch initial data only once
+      if (isSuperAdmin) {
+        fetchTenants();
+      } else if (currentUserTenant) {
+        logDebug(" This is the current user tenant ID:", currentUserTenant);
+        // For non-superadmin, fetch shifts and vendors for their tenant only once
+        fetchShiftsAndVendors(currentUserTenant);
+        hasFetchedInitialData.current = true;
+      }
     }
-  }, [isOpen, type, config]);
+  }, [
+    isOpen,
+    type,
+    config,
+    isSuperAdmin,
+    currentUserTenant,
+    fetchShiftsAndVendors,
+  ]);
+
+  const handleTenantChange = async (tenantId) => {
+    if (tenantId) {
+      await fetchShiftsAndVendors(tenantId);
+    } else {
+      setShifts([]);
+      setVendors([]);
+    }
+  };
 
   // Validate form
   const validateForm = () => {
     const newErrors = {};
 
-    // Required date validation
     if (!formData.start_date) {
       newErrors.start_date = "Start date is required";
     }
@@ -69,7 +176,6 @@ const ConfigModal = ({
       newErrors.end_date = "End date is required";
     }
 
-    // Date range validation
     if (formData.start_date && formData.end_date) {
       const start = new Date(formData.start_date);
       const end = new Date(formData.end_date);
@@ -85,25 +191,6 @@ const ConfigModal = ({
       }
     }
 
-    // Shift ID validation
-    if (formData.shift_id && formData.shift_id < 0) {
-      newErrors.shift_id = "Shift ID must be a positive number";
-    }
-
-    // Vendor ID validation
-    if (formData.vendor_id && formData.vendor_id < 0) {
-      newErrors.vendor_id = "Vendor ID must be a positive number";
-    }
-
-    // Driver ID validation (route module)
-    if (
-      selectedModule === "route" &&
-      formData.driver_id &&
-      formData.driver_id < 0
-    ) {
-      newErrors.driver_id = "Driver ID must be a positive number";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -112,11 +199,12 @@ const ConfigModal = ({
     e.preventDefault();
 
     if (validateForm()) {
-      // Add module information to form data
       const submitData = {
         ...formData,
         module: selectedModule,
         report_format: selectedModule === "booking" ? "booking" : "route",
+        // Ensure tenant_id is set for non-superadmin users
+        tenant_id: isSuperAdmin ? formData.tenant_id : currentUserTenant,
       };
       onSubmit(submitData);
     }
@@ -125,7 +213,6 @@ const ConfigModal = ({
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
-    // Clear error when field is updated
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
@@ -140,7 +227,6 @@ const ConfigModal = ({
     }));
   };
 
-  // Select all/none for array fields
   const handleSelectAll = (field, options) => {
     setFormData((prev) => ({
       ...prev,
@@ -150,7 +236,6 @@ const ConfigModal = ({
 
   const isDownload = config === "download";
 
-  // Get report type display name
   const getReportTypeDisplay = () => {
     const reportTypes = {
       bookings: "Bookings",
@@ -162,7 +247,6 @@ const ConfigModal = ({
     return reportTypes[type] || type;
   };
 
-  // Get module display name
   const getModuleDisplay = () => {
     return selectedModule === "booking" ? "Booking" : "Route";
   };
@@ -172,38 +256,37 @@ const ConfigModal = ({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white p-6 rounded-t-2xl">
-          <div className="flex justify-between items-start">
-            <div>
-              <h2 className="text-2xl font-bold">
-                {isDownload
-                  ? `Download ${getReportTypeDisplay()} Report`
-                  : `${getReportTypeDisplay()} Analytics`}
-              </h2>
-              <p className="text-indigo-100 mt-1">
-                Configure parameters for your {getModuleDisplay().toLowerCase()}{" "}
-                report
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              disabled={loading}
-              className="text-white/80 hover:text-white text-2xl font-light disabled:opacity-50"
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {isDownload ? "Download Report" : "View Analytics"}
+            </h2>
+            <p className="text-gray-600 mt-1">
+              Configure parameters for {getReportTypeDisplay()}{" "}
+              {isDownload ? "download" : "analytics"}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            disabled={loading}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 disabled:opacity-50"
+          >
+            <svg
+              className="w-6 h-6 text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              ×
-            </button>
-          </div>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
         </div>
-
-        {/* Error Display */}
-        {error && (
-          <div className="mx-6 mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 text-red-700">
-              <span>⚠️</span>
-              <span className="text-sm font-medium">{error}</span>
-            </div>
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Module Selection */}
@@ -249,103 +332,21 @@ const ConfigModal = ({
             </div>
           )}
 
-          {/* Date Range */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Start Date <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                required
-                value={formData.start_date}
-                onChange={(e) => handleChange("start_date", e.target.value)}
-                className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all ${
-                  errors.start_date ? "border-red-300" : "border-gray-300"
-                }`}
-                disabled={loading}
-              />
-              {errors.start_date && (
-                <p className="text-red-500 text-xs mt-1">{errors.start_date}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                End Date <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                required
-                value={formData.end_date}
-                onChange={(e) => handleChange("end_date", e.target.value)}
-                className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all ${
-                  errors.end_date ? "border-red-300" : "border-gray-300"
-                }`}
-                disabled={loading}
-              />
-              {errors.end_date && (
-                <p className="text-red-500 text-xs mt-1">{errors.end_date}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Common Fields */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Tenant ID{" "}
-                <span className="text-gray-400 text-xs">(Admin only)</span>
-              </label>
-              <input
-                type="text"
-                value={formData.tenant_id}
-                onChange={(e) => handleChange("tenant_id", e.target.value)}
-                placeholder="e.g., SAM001"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                disabled={loading}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Shift ID
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={formData.shift_id}
-                onChange={(e) => handleChange("shift_id", e.target.value)}
-                placeholder="e.g., 1"
-                className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all ${
-                  errors.shift_id ? "border-red-300" : "border-gray-300"
-                }`}
-                disabled={loading}
-              />
-              {errors.shift_id && (
-                <p className="text-red-500 text-xs mt-1">{errors.shift_id}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Vendor ID - Common for both modules */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Vendor ID
-            </label>
-            <input
-              type="number"
-              min="0"
-              value={formData.vendor_id}
-              onChange={(e) => handleChange("vendor_id", e.target.value)}
-              placeholder="e.g., 5"
-              className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all ${
-                errors.vendor_id ? "border-red-300" : "border-gray-300"
-              }`}
-              disabled={loading}
-            />
-            {errors.vendor_id && (
-              <p className="text-red-500 text-xs mt-1">{errors.vendor_id}</p>
-            )}
-          </div>
+          {/* Common Configuration */}
+          <CommonConfig
+            formData={formData}
+            handleChange={handleChange}
+            errors={errors}
+            loading={loading}
+            userType={userType}
+            currentTenant={currentUserTenant}
+            onTenantChange={handleTenantChange}
+            tenants={tenants}
+            shifts={shifts}
+            vendors={vendors}
+            fetchShiftsLoading={fetchShiftsLoading}
+            fetchVendorsLoading={fetchVendorsLoading}
+          />
 
           {/* Module-specific configurations */}
           {isDownload && (

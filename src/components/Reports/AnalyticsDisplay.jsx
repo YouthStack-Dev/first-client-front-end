@@ -3,18 +3,13 @@ import {
   analyticsConfig,
   statusColors,
 } from "../../utils/analyticsConfig";
+import { logDebug } from "../../utils/logger";
 import {
   StatCard,
   ProgressBar,
   StatusBreakdown,
   SummarySection,
 } from "../AnalyticsComponents";
-// import {
-//   StatCard,
-//   ProgressBar,
-//   StatusBreakdown,
-//   SummarySection,
-// } from "@ui/AnalyticsComponents";
 
 export const AnalyticsDisplay = ({
   data,
@@ -22,15 +17,23 @@ export const AnalyticsDisplay = ({
   reportType = "bookings",
 }) => {
   if (!data || !data.data) return null;
-
+  logDebug("AnalyticsDisplay data:", data);
   // Extract the actual analytics data from the response
   const analyticsData = data.data;
   const config = analyticsConfig[reportType] || analyticsConfig.bookings;
 
   // Helper function to get metric value with formatting
+  // Helper function to get metric value with formatting
   const getMetricValue = (metric) => {
     const value = getNestedValue(analyticsData, metric.key);
-    return metric.format ? metric.format(value) : value;
+
+    // 🛑 Prevent React child error
+    if (value && typeof value === "object") {
+      console.warn("Invalid metric value (object):", metric.key, value);
+      return "--"; // or return JSON.stringify(value) if you want to show it
+    }
+
+    return metric.format ? metric.format(value) : value ?? "--";
   };
 
   return (
@@ -173,19 +176,69 @@ export const AnalyticsDisplay = ({
           {analyticsData.daily_breakdown &&
             Object.keys(analyticsData.daily_breakdown).length > 0 && (
               <SummarySection title="Daily Breakdown">
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {Object.entries(analyticsData.daily_breakdown).map(
-                    ([date, count]) => (
+                    ([date, item]) => (
                       <div
                         key={date}
-                        className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                        className="p-4 bg-white rounded-lg shadow-sm border border-gray-200"
                       >
-                        <span className="text-sm font-medium text-gray-700">
+                        {/* DATE */}
+                        <p className="text-sm font-semibold text-gray-700 mb-2">
                           {date}
-                        </span>
-                        <span className="text-lg font-bold text-gray-800">
-                          {count}
-                        </span>
+                        </p>
+
+                        {/* CASE 1: item is a NUMBER */}
+                        {typeof item === "number" ? (
+                          <p className="text-lg font-bold text-gray-900">
+                            {item}
+                          </p>
+                        ) : (
+                          /* CASE 2: item is an OBJECT */
+                          <div className="space-y-2">
+                            {/* Booking Status Breakdown */}
+                            {item.booking_status && (
+                              <div>
+                                <p className="text-xs font-semibold text-gray-500">
+                                  Booking Status
+                                </p>
+                                {Object.entries(item.booking_status).map(
+                                  ([status, value]) => (
+                                    <p
+                                      key={status}
+                                      className="text-sm text-gray-700 flex justify-between"
+                                    >
+                                      <span>{status}</span>
+                                      <span className="font-semibold">
+                                        {value}
+                                      </span>
+                                    </p>
+                                  )
+                                )}
+                              </div>
+                            )}
+
+                            {/* Vendor Assigned */}
+                            {"vendor_assigned" in item && (
+                              <p className="text-sm flex justify-between text-gray-700">
+                                <span>Vendor Assigned</span>
+                                <span className="font-semibold">
+                                  {item.vendor_assigned}
+                                </span>
+                              </p>
+                            )}
+
+                            {/* Driver Assigned */}
+                            {"driver_assigned" in item && (
+                              <p className="text-sm flex justify-between text-gray-700">
+                                <span>Driver Assigned</span>
+                                <span className="font-semibold">
+                                  {item.driver_assigned}
+                                </span>
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )
                   )}

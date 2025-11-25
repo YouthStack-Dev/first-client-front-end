@@ -83,7 +83,7 @@ const Layout = ({ type }) => {
 
   return (
     <div
-      className={`h-screen flex overflow-hidden bg-gray-100 ${
+      className={`h-screen flex overflow-hidden ${
         mounted ? "transition-opacity duration-500 opacity-100" : "opacity-0"
       }`}
     >
