@@ -1,80 +1,150 @@
-// components/LiveTracking.jsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { APIProvider, Map } from "@vis.gl/react-google-maps";
-import { Search, X, AlertCircle } from "lucide-react";
+import { Search, X, AlertCircle, RefreshCw } from "lucide-react";
 import LiveRouteCard from "./LiveRouteCard";
 import MapMarkers from "./MapMarker";
 import SelectedRouteOverlay from "./SelectedRouteOverlay";
-import { ongoingRoutes } from "../staticData/routedata";
+import { dummyroutes } from "../staticData/routedata";
 import { useDriverLocations } from "../hooks/useDriverLocations";
-// import LiveRouteCard from "./LiveRouteCard";
-// import MapMarkers from "./MapMarkers";
-// import SelectedRouteOverlay from "./SelectedRouteOverlay";
-// import { ongoingRoutes } from "../staticData/routedata";
-// import { useDriverLocations } from "../hooks/useDriverLocations";
+import { API_CLIENT } from "../Api/API_Client";
+import { logDebug } from "../utils/logger";
+import ToolBar from "../components/ui/ToolBar";
+import SelectField from "../components/ui/SelectField";
 
 const LiveTracking = () => {
   const [routeSearch, setRouteSearch] = useState("");
   const [selectedRouteIds, setSelectedRouteIds] = useState([]); // Multi-selection
   const [focusedRouteId, setFocusedRouteId] = useState(null);
-
+  const [loading, setLoading] = useState(false);
   const API_KEY = import.meta.env.VITE_GOOGLE_API || "";
   const companyLocation = { lat: 12.9716, lng: 77.5946 };
+  const [selectedCompany, setSelectedCompany] = useState("");
+
+  const fetchOngooingRoutes = async () => {
+    const response = await API_CLIENT.get("/v1/routes/");
+    logDebug("Ongoing Routes Response:", response.data);
+  };
+
+  useEffect(() => {
+    fetchOngooingRoutes();
+  }, []);
+
+  logDebug("Selected Route IDs:", selectedRouteIds);
 
   // Get all driver IDs for selected routes
   const trackedDriverIds = useMemo(() => {
-    return ongoingRoutes
-      .filter((route) => selectedRouteIds.includes(route.id))
-      .map((route) => route.driverId)
+    return dummyroutes
+      .filter((route) => selectedRouteIds.includes(route.route_id))
+      .map((route) => route?.driver?.id)
       .filter(Boolean);
   }, [selectedRouteIds]);
+
+  logDebug("Tracked Driver IDs:", trackedDriverIds);
 
   // Use custom hook for location tracking
   const { driverLocations, loadingLocations, locationErrors } =
     useDriverLocations(trackedDriverIds);
-
+  logDebug(
+    "Driver Locations:",
+    driverLocations,
+    loadingLocations,
+    locationErrors
+  );
   // Filter routes based on search
   const filteredRoutes = useMemo(() => {
-    return ongoingRoutes.filter(
+    return dummyroutes.filter(
       (route) =>
-        route.vehicleNumber.toLowerCase().includes(routeSearch.toLowerCase()) ||
-        route.driver.toLowerCase().includes(routeSearch.toLowerCase())
+        route?.vehicle?.rc_number
+          .toLowerCase()
+          .includes(routeSearch.toLowerCase()) ||
+        route?.driver?.name?.toLowerCase().includes(routeSearch.toLowerCase())
     );
   }, [routeSearch]);
 
   // Get selected routes with their locations
+  // In the selectedRoutes computation, update to handle different location structures
   const selectedRoutes = useMemo(() => {
-    return ongoingRoutes
-      .filter((route) => selectedRouteIds.includes(route.id))
-      .map((route) => ({
-        ...route,
-        currentLocation: driverLocations[route.driverId] || route.location,
-        hasLiveLocation: !!driverLocations[route.driverId],
-        isLoading: loadingLocations[route.driverId],
-        error: locationErrors[route.driverId],
-      }));
-  }, [selectedRouteIds, driverLocations, loadingLocations, locationErrors]);
+    return dummyroutes
+      .filter((route) => selectedRouteIds.includes(route.route_id))
+      .map((route) => {
+        const driverId = route?.driver?.id;
+        const firebaseLocation = driverLocations[driverId];
+
+        // Extract location from firebase data
+        let currentLocation = null;
+
+        if (firebaseLocation) {
+          // Handle different possible location structures
+          if (firebaseLocation.lat && firebaseLocation.lng) {
+            // Direct lat/lng properties
+            currentLocation = {
+              lat: firebaseLocation.lat,
+              lng: firebaseLocation.lng,
+            };
+          } else if (firebaseLocation.coordinates) {
+            // Nested coordinates
+            currentLocation = {
+              lat: firebaseLocation.coordinates.lat,
+              lng: firebaseLocation.coordinates.lng,
+            };
+          } else if (firebaseLocation.latitude && firebaseLocation.longitude) {
+            // Different property names
+            currentLocation = {
+              lat: firebaseLocation.latitude,
+              lng: firebaseLocation.longitude,
+            };
+          }
+        }
+
+        // If no valid firebase location, use first stop's pickup location
+        if (!currentLocation && route.stops?.[0]) {
+          currentLocation = {
+            lat: route.stops[0].pickup_latitude,
+            lng: route.stops[0].pickup_longitude,
+          };
+        }
+
+        // Final fallback to company location
+        if (!currentLocation) {
+          currentLocation = companyLocation;
+        }
+
+        return {
+          ...route,
+          currentLocation,
+          hasLiveLocation: !!firebaseLocation,
+          isLoading: loadingLocations[driverId],
+          error: locationErrors[driverId],
+        };
+      });
+  }, [
+    selectedRouteIds,
+    driverLocations,
+    loadingLocations,
+    locationErrors,
+    companyLocation,
+  ]);
 
   // Get focused route for overlay
   const focusedRoute = useMemo(() => {
-    return selectedRoutes.find((route) => route.id === focusedRouteId);
+    return selectedRoutes.find((route) => route.route_id === focusedRouteId);
   }, [selectedRoutes, focusedRouteId]);
 
   // Handle route selection (toggle)
   const handleRouteSelect = (route) => {
     setSelectedRouteIds((prev) => {
-      if (prev.includes(route.id)) {
+      if (prev.includes(route.route_id)) {
         // Deselect
-        const newSelection = prev.filter((id) => id !== route.id);
+        const newSelection = prev.filter((id) => id !== route.route_id);
         // If focused route was deselected, clear focus or set to first selected
-        if (focusedRouteId === route.id) {
+        if (focusedRouteId === route.route_id) {
           setFocusedRouteId(newSelection[0] || null);
         }
         return newSelection;
       } else {
         // Select and focus
-        setFocusedRouteId(route.id);
-        return [...prev, route.id];
+        setFocusedRouteId(route.route_id);
+        return [...prev, route.route_id];
       }
     });
   };
@@ -86,13 +156,51 @@ const LiveTracking = () => {
 
   const clearSearch = () => setRouteSearch("");
   const clearFocus = () => setFocusedRouteId(null);
+  const handleSync = () => {
+    logDebug("Syncing data...");
+  };
+
+  const companyOptions = [
+    { value: "", label: "All company" },
+    { value: "company1", label: "company 1" },
+    { value: "company2", label: "company 2" },
+    { value: "company3", label: "company 3" },
+  ];
 
   return (
     <div className="mb-8">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">
-        Live Tracking
-      </h2>
-
+      <ToolBar
+        rightElements={
+          <div className="flex items-center gap-4">
+            {"admin" === "admin" ? (
+              <SelectField
+                label="Company"
+                value={selectedCompany}
+                onChange={setSelectedCompany}
+                options={companyOptions}
+              />
+            ) : null}
+            <button
+              onClick={handleSync}
+              disabled={loading}
+              className="bg-blue-500 text-white px-3 py-1 rounded-md text-sm 
+             hover:bg-blue-600 disabled:bg-blue-300 flex items-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Syncing...
+                </>
+              ) : (
+                <>
+                  <RefreshCw size={16} />
+                  Sync
+                </>
+              )}
+            </button>
+          </div>
+        }
+      />
       <div
         className="bg-white shadow-lg border border-gray-200 overflow-hidden"
         style={{ height: "600px" }}
@@ -124,7 +232,7 @@ const LiveTracking = () => {
             )}
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            {filteredRoutes.length} of {ongoingRoutes.length} routes
+            {filteredRoutes.length} of {dummyroutes.length} routes
             {selectedRouteIds.length > 0 &&
               ` • ${selectedRouteIds.length} tracked`}
             {Object.keys(driverLocations).length > 0 &&
@@ -165,7 +273,7 @@ const LiveTracking = () => {
                 {focusedRoute && (
                   <>
                     <div className="border-t border-gray-600 pt-1 mt-1">
-                      Focused: {focusedRoute.vehicleNumber}
+                      Focused: {focusedRoute.vehicle?.rc_number || "Unknown"}
                     </div>
                     <div>
                       Source:{" "}
@@ -188,15 +296,15 @@ const LiveTracking = () => {
               {filteredRoutes.length > 0 ? (
                 filteredRoutes.map((route) => (
                   <LiveRouteCard
-                    key={route.id}
+                    key={route.route_id}
                     route={route}
-                    isSelected={selectedRouteIds.includes(route.id)}
-                    isFocused={focusedRouteId === route.id}
+                    isSelected={selectedRouteIds.includes(route.route_id)}
+                    isFocused={focusedRouteId === route.route_id}
                     onSelect={handleRouteSelect}
                     onFocus={handleRouteFocus}
-                    hasLiveLocation={!!driverLocations[route.driverId]}
-                    isLoading={loadingLocations[route.driverId]}
-                    error={locationErrors[route.driverId]}
+                    hasLiveLocation={!!driverLocations[route?.driver?.id]}
+                    isLoading={loadingLocations[route?.driver?.id]}
+                    error={locationErrors[route?.driver?.id]}
                   />
                 ))
               ) : (

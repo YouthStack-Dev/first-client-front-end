@@ -332,7 +332,7 @@ const RouteScheduledBookings = () => {
             options={shiftOptions}
           />
 
-          {type === "employee" ? (
+          {type === "admin" ? (
             <SelectField
               label="Company"
               value={selectedCompany}

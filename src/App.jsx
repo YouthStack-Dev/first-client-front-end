@@ -35,6 +35,9 @@ import PermissionCheck from "./middleware/PermissionCheck";
 import RoleManagement from "./components/RoleManagement/RoleManagement";
 import ReportDownloader from "./pages/ReportDownloader";
 
+import VendorUserManagement from "./pages/VendorUserManagement";
+import TrackingManagement from "./pages/TrackingManagement";
+
 function App() {
   const dispatch = useDispatch();
 
@@ -102,6 +105,7 @@ function App() {
           }
         >
           <Route element={<SuperAdminLayout />}>
+            <Route path="departments" element={<ManageDepartment />} />
             <Route path="dashboard" element={<SuperAdminDashboard />} />
             <Route path="manage-companies" element={<CompanyManagement />} />
             <Route path="manage-vendors" element={<VendorManagement />} />
@@ -128,6 +132,13 @@ function App() {
           <Route element={<VendorLayout type={"vendor"} />}>
             <Route path="dashboard" element={<CompanyDashboard />} />
             <Route path="employees" element={<ManageEmployees />} />
+            {/* <Route path="tracking" element={<TrackingManagement />} /> */}
+            <Route
+              path="vendor-user-management"
+              element={<VendorUserManagement />}
+            />
+
+            <Route path="role-permission" element={<RoleManagement />} />
             <Route path="routing" element={<VendorRouteManagement />} />
             <Route
               path="routing-listing"
@@ -171,6 +182,10 @@ function App() {
               }
             />
             <Route path="departments" element={<ManageDepartment />} />
+            <Route
+              path="vendor-user-management"
+              element={<VendorUserManagement />}
+            />
             <Route path="/shift-categories" element={<ManageDepartment />} />
             <Route path="/shifts" element={<Schedulemanagement />} />
             <Route path="/role-management" element={<RoleManagement />} />
@@ -180,7 +195,6 @@ function App() {
             <Route path="/scheduling" element={<Schedulemanagement />} />
             <Route path="employees/create" element={<EmployeeForm />} />
             <Route path="/cutoff" element={<CutoffManagement />} />
-            <Route path="/manage-vendors" element={<VendorManagement />} />
             <Route path="/vehicles" element={<VehicleManagement />} />
 
             <Route path="/vendors" element={<VendorManagement />} />
@@ -211,10 +225,7 @@ function App() {
               path="/department/:depId/employees/:userId/view"
               element={<EmployeeForm mode="view" />}
             />
-            <Route
-              path="/tracking"
-              element={<h1> This is the screen of Tracking </h1>}
-            />
+            <Route path="/tracking" element={<TrackingManagement />} />
             <Route path="/report-downloader" element={<ReportDownloader />} />
 
             <Route path="/routing" element={<RouteScheduledBookings />} />

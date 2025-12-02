@@ -1,7 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { API_CLIENT } from "../../../Api/API_Client";
 import { logDebug } from "../../../utils/logger";
-import axios from "axios";
+
 export const loginUser = createAsyncThunk(
   "auth/login",
   async ({ formData, endpoint }, { rejectWithValue }) => {
@@ -15,6 +15,10 @@ export const loginUser = createAsyncThunk(
       // Destructure tokens and user
       const { access_token: token, refresh_token, user } = response.data.data;
 
+      if (user?.tenant) {
+        localStorage.setItem("tenant", JSON.stringify(user?.tenant));
+        logDebug("Tenant stored in localStorage:", user?.tenant);
+      }
       // Extract permissions from user
       const allowedModules = user?.permissions || [];
 

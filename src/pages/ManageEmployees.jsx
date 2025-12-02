@@ -8,7 +8,7 @@ import {
 import { API_CLIENT } from "../Api/API_Client";
 import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
-import { Plus } from "lucide-react";
+import { History, Plus } from "lucide-react";
 import SearchInput from "@components/ui/SearchInput";
 import { logDebug } from "../utils/logger";
 import ToolBar from "@components/ui/ToolBar";
@@ -20,8 +20,10 @@ import {
 } from "../redux/features/user/userSlice";
 import EmployeeList from "@components/departments/EmployeeList";
 import endpoint from "../Api/Endpoints";
-import Modal from "@components/modals/Modal";
-import AuditLogModal from "@components/departments/AuditLogModal";
+
+import AuditLogsModal from "../components/modals/AuditLogsModal";
+import { DummyauditLogs } from "../staticData/StaticReport";
+import ReusableButton from "../components/ui/ReusableButton";
 
 const ManageEmployees = () => {
   const [loading, setLoading] = useState(true);
@@ -29,12 +31,10 @@ const ManageEmployees = () => {
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchParams] = useSearchParams();
-
-  const [isAuditLogModalOpen, setIsAuditLogModalOpen] = useState(false);
-  const [auditLogs, setAuditLogs] = useState([]);
-  const [isAuditLogLoading, setIsAuditLogLoading] = useState(false);
+  const [showAuditModal, setShowAuditModal] = useState(false);
+  const [auditLogs, setAuditLogs] = useState(DummyauditLogs);
   const location = useLocation();
-
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
   // Get department info from location state with safe fallback
   const { depname, memberCount } = location.state || {};
 
@@ -43,6 +43,7 @@ const ManageEmployees = () => {
   const dispatch = useDispatch();
 
   const isActive = searchParams.get("active");
+  const tenantId = searchParams.get("tenantId");
   const targetIsActive = isActive === "true";
 
   // Get department cache and employees from Redux store
@@ -256,48 +257,21 @@ const ManageEmployees = () => {
 
       // Remove from current selection since employee will move to different list
       setSelectedEmployeeIds((prev) => prev.filter((id) => id !== employeeId));
-
-      // Show success message
-      // toast.success(
-      //   `Employee ${newIsActive ? "activated" : "deactivated"} successfully`
-      // );
-
-      // logDebug(`Employee ${employeeId} status updated to ${newIsActive}`);
     } catch (error) {
       console.error("Failed to update status:", error);
       toast.error("Failed to update status");
     }
   };
 
-  const handleEmployeeLog = async (employee) => {
-    setIsAuditLogLoading(true);
-    setIsAuditLogModalOpen(true);
+  const handleHistoryClick = async () => {
+    // setIsAuditLogModalOpen(true);
+    setShowAuditModal(true);
+  };
 
-    try {
-      const dummyLogs = [
-        {
-          id: 1,
-          action: "UPDATE",
-          action_description: "Changed phone number",
-          changes: ["phone: 9876543210 → 9123456780"],
-          changed_by: "Admin",
-          changed_at: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          action: "CREATE",
-          action_description: "Employee account created",
-          changes: ["name: John Doe", "email: john@example.com"],
-          changed_by: "System",
-          changed_at: new Date().toISOString(),
-        },
-      ];
-      setAuditLogs(dummyLogs);
-    } catch (err) {
-      toast.error("Failed to load employee logs");
-    } finally {
-      setIsAuditLogLoading(false);
-    }
+  const handleEmployeeSpecificHistory = async (employeeId) => {
+    setShowAuditModal(true);
+    logDebug("Fetching audit logs for employee ID:", employeeId);
+    setSelectedEmployee(employeeId?.name || "NAN");
   };
 
   return (
@@ -317,6 +291,19 @@ const ManageEmployees = () => {
             />
           </div>
         }
+        rightElements={
+          <div className="flex items-center gap-3">
+            <ReusableButton
+              module="team"
+              action="read"
+              buttonName={"History"}
+              icon={History}
+              title="View Audit History"
+              onClick={handleHistoryClick}
+              className="text-white bg-blue-600 p-2 rounded-md"
+            />
+          </div>
+        }
       />
 
       <EmployeeList
@@ -329,17 +316,21 @@ const ManageEmployees = () => {
         onRowClick={handleRowClick}
         onView={handleView}
         onEdit={handleEdit}
-        onHistory={handleEmployeeLog}
+        onHistory={handleEmployeeSpecificHistory}
       />
 
-      <Modal
-        isOpen={isAuditLogModalOpen}
-        onClose={() => setIsAuditLogModalOpen(false)}
-        title="Employee Audit History"
-        size="lg"
-      >
-        <AuditLogModal logs={auditLogs} isLoading={isAuditLogLoading} />
-      </Modal>
+      <AuditLogsModal
+        isOpen={showAuditModal}
+        onClose={() => {
+          setShowAuditModal(false);
+          setSelectedEmployee(null);
+        }}
+        apimodule="employee"
+        moduleName={`${selectedEmployee ? selectedEmployee : "Employee"} `}
+        auditData={auditLogs}
+        showUserColumn={true}
+        selectedCompany={tenantId}
+      />
     </div>
   );
 };

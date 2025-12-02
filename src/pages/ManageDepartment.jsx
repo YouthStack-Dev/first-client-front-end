@@ -9,16 +9,23 @@ import { setTeams, removeTeam } from "../redux/features/user/userSlice";
 import { logDebug, logError } from "../utils/logger";
 import ToolBar from "@components/ui/ToolBar";
 import SearchInput from "@components/ui/SearchInput";
-import AuditLogModal from "@components/departments/AuditLogModal";
 import Modal from "@components/modals/Modal";
 import { toast } from "react-toastify";
 import ReusableButton from "../components/ui/ReusableButton";
 import endpoint from "../Api/Endpoints";
+import AuditLogsModal from "../components/modals/AuditLogsModal";
+import { DummyauditLogs } from "../staticData/StaticReport";
+import SelectField from "../components/ui/SelectField";
+import {
+  selectCompaniesFetched,
+  selectCompaniesFromRedux,
+} from "../redux/features/company/companyslice";
+import { fetchCompaniesThunk } from "../redux/features/company/companyThunks";
 
 const ManageDepartment = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
+  const [showAuditModal, setShowAuditModal] = useState(false);
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -26,13 +33,13 @@ const ManageDepartment = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [selectedCompany, setSelectedCompany] = useState("");
 
   // Modal states
   const [isDepartmentModalOpen, setIsDepartmentModalOpen] = useState(false);
-  const [isAuditLogModalOpen, setIsAuditLogModalOpen] = useState(false);
 
   // Audit log state
-  const [auditLogs, setAuditLogs] = useState([]);
+  const [auditLogs, setAuditLogs] = useState(DummyauditLogs);
   const [isAuditLogLoading, setIsAuditLogLoading] = useState(false);
 
   // Pull teams from Redux slice
@@ -45,7 +52,37 @@ const ManageDepartment = () => {
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [editingTeam, setEditingTeam] = useState(null);
 
+  // Get companies data from Redux
+  const companies = useSelector(selectCompaniesFromRedux);
+  const companiesFetched = useSelector(selectCompaniesFetched);
+
+  // Generate company options from fetched data
+  const companyOptions = React.useMemo(() => {
+    const options = [{ value: "", label: "All Companies" }];
+
+    if (companies && companies.length > 0) {
+      companies.forEach((company) => {
+        options.push({
+          value: company.tenant_id || company.id || company.company_id,
+          label:
+            company.name ||
+            company.company_name ||
+            `Company ${company.tenant_id}`,
+        });
+      });
+    }
+
+    logDebug("Generated company options:", options);
+    return options;
+  }, [companies]);
+
   // Debounce search term
+  useEffect(() => {
+    if (!companiesFetched) {
+      dispatch(fetchCompaniesThunk());
+    }
+  }, [dispatch, companiesFetched]);
+
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -67,14 +104,96 @@ const ManageDepartment = () => {
     setCurrentPage(1); // Reset to first page when searching
   };
 
+  // Handle company selection change - ONLY fetch when company is selected
+  const handleCompanyChange = async (companyId) => {
+    setSelectedCompany(companyId);
+    setCurrentPage(1);
+    setSearchTerm("");
+    setDebouncedSearchTerm("");
+
+    // Only make API call if a company is selected (not empty/"All Companies")
+    if (companyId && companyId !== "") {
+      await fetchDepartmentsByCompany(companyId);
+    } else {
+      // If "All Companies" is selected, clear the departments
+      dispatch(setTeams([]));
+      setTotalItems(0);
+    }
+  };
+
   // Handle add button click
   const handleAddClick = () => {
     setEditingTeam(null);
     setIsDepartmentModalOpen(true);
   };
 
-  // Fetch departments with proper pagination
-  const fetchDepartments = async (page = 1, limit = 10, search = "") => {
+  // Fetch departments for specific company
+  const fetchDepartmentsByCompany = async (companyId, page = 1, limit = 10) => {
+    if (!companyId) return;
+
+    setIsLoading(true);
+    try {
+      const params = {
+        skip: (page - 1) * limit,
+        limit,
+        tenant_id: companyId, // Always include tenant_id when company is selected
+      };
+
+      logDebug("Fetching departments by company with params:", params);
+      const { data } = await API_CLIENT.get(endpoint.getDepartments, {
+        params,
+      });
+      logDebug("Fetched departments by company response:", data);
+
+      // Handle different response structures
+      const departmentsData = data?.data || data;
+
+      let processedData;
+      if (departmentsData?.items) {
+        processedData = {
+          items: departmentsData.items,
+          totalCount:
+            departmentsData.totalCount ||
+            departmentsData.total ||
+            departmentsData.items.length,
+        };
+      } else if (Array.isArray(departmentsData)) {
+        processedData = {
+          items: departmentsData,
+          totalCount: departmentsData.length,
+        };
+      } else {
+        processedData = {
+          items: [],
+          totalCount: 0,
+        };
+      }
+
+      dispatch(setTeams(processedData.items));
+      setTotalItems(processedData.totalCount);
+
+      // Show toast if no results
+      if (processedData.items.length === 0) {
+        const selectedCompanyName =
+          companyOptions.find((opt) => opt.value === companyId)?.label ||
+          "Selected company";
+        toast.info(`No departments found for ${selectedCompanyName}`);
+      }
+    } catch (error) {
+      logError("Error fetching departments by company:", error);
+      toast.error("Failed to fetch departments");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch departments with search (only when search term is used)
+  const fetchDepartmentsWithSearch = async (
+    page = 1,
+    limit = 10,
+    search = ""
+  ) => {
+    setIsLoading(true);
     try {
       const params = {
         skip: (page - 1) * limit,
@@ -86,102 +205,66 @@ const ManageDepartment = () => {
         params.name = search;
       }
 
-      logDebug("Fetching departments with params:", params);
+      // Add company filter if a company is selected
+      if (selectedCompany && selectedCompany !== "") {
+        params.tenant_id = selectedCompany;
+      }
+
+      logDebug("Fetching departments with search params:", params);
       const { data } = await API_CLIENT.get(endpoint.getDepartments, {
         params,
       });
-      logDebug("Fetched departments response:", data);
 
-      // Handle different response structures
+      // Handle response (same as before)
       const departmentsData = data?.data || data;
+      let processedData;
 
       if (departmentsData?.items) {
-        // If response has items array and pagination info
-        return {
+        processedData = {
           items: departmentsData.items,
           totalCount:
             departmentsData.totalCount ||
             departmentsData.total ||
             departmentsData.items.length,
-          currentPage: page,
-          totalPages: Math.ceil(
-            (departmentsData.totalCount ||
-              departmentsData.total ||
-              departmentsData.items.length) / limit
-          ),
         };
       } else if (Array.isArray(departmentsData)) {
-        // If response is directly an array
-        return {
+        processedData = {
           items: departmentsData,
           totalCount: departmentsData.length,
-          currentPage: page,
-          totalPages: Math.ceil(departmentsData.length / limit),
         };
       } else {
-        // Fallback
-        return {
+        processedData = {
           items: [],
           totalCount: 0,
-          currentPage: page,
-          totalPages: 0,
         };
       }
+
+      dispatch(setTeams(processedData.items));
+      setTotalItems(processedData.totalCount);
+
+      if (search && processedData.items.length === 0) {
+        toast.info("Nothing found on search");
+      }
     } catch (error) {
-      logError("Error fetching departments:", error);
-      throw error;
+      logError("Error fetching departments with search:", error);
+      toast.error("Failed to fetch departments");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Fetch teams with pagination - only when debounced search term changes or page changes
+  // Load teams only when search term changes (not on initial load)
   useEffect(() => {
-    const loadTeams = async () => {
-      setIsLoading(true);
-      try {
-        // Only make backend request if:
-        // 1. We have a search term AND local filtering returns no results, OR
-        // 2. We're on a specific page with search term (for paginated search results)
-        const shouldFetchFromBackend =
-          debouncedSearchTerm &&
-          debouncedSearchTerm.length > 3 &&
-          (filteredTeams.length === 0 || currentPage > 1);
+    if (debouncedSearchTerm && debouncedSearchTerm.length > 0) {
+      fetchDepartmentsWithSearch(
+        currentPage,
+        itemsPerPage,
+        debouncedSearchTerm
+      );
+    }
+  }, [debouncedSearchTerm, currentPage]);
 
-        if (shouldFetchFromBackend || !debouncedSearchTerm) {
-          const data = await fetchDepartments(
-            currentPage,
-            itemsPerPage,
-            debouncedSearchTerm
-          );
-          logDebug("Processed departments data:", data);
-
-          dispatch(setTeams(data.items));
-          setTotalItems(data.totalCount);
-
-          // Show toast if no results from backend
-          if (debouncedSearchTerm && data.items.length === 0) {
-            toast.info("Nothing found on search");
-          }
-        } else {
-          // When using local filtering, update total items count
-          setTotalItems(filteredTeams.length);
-
-          // Show toast if no results from local filtering
-          if (debouncedSearchTerm && filteredTeams.length === 0) {
-            toast.info("Nothing found on search");
-          }
-        }
-      } catch (error) {
-        logError("Error fetching teams:", error);
-        toast.error("Failed to fetch departments");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadTeams();
-  }, [dispatch, currentPage, itemsPerPage, debouncedSearchTerm]);
-
-  // Reset to first page when search term changes significantly
+  // Reset to first page when search term changes
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchTerm]);
@@ -207,8 +290,7 @@ const ManageDepartment = () => {
 
   // Handle history button click
   const handleHistoryClick = async () => {
-    setIsAuditLogModalOpen(true);
-    await fetchAuditLogs();
+    setShowAuditModal(true);
   };
 
   // Handle department selection
@@ -229,7 +311,6 @@ const ManageDepartment = () => {
   };
 
   const handleEdit = (team) => {
-    // Transform team data back to the form's expected structure
     const teamToEdit = {
       ...team,
       department_id: team.id,
@@ -241,22 +322,6 @@ const ManageDepartment = () => {
 
   const handleDelete = async (teamId) => {
     alert("Delete functionality is currently disabled.");
-    // if (window.confirm(`Are you sure you want to delete this department?`)) {
-    //   try {
-    //     await API_CLIENT.delete(`/departments/${teamId}`);
-    //     dispatch(removeTeam({ teamId }));
-    //     setSelectedDepartments((prev) => prev.filter((id) => id !== teamId));
-
-    //     // Refresh the current page if we're left with no items after deletion
-    //     if (teams.length === 1 && currentPage > 1) {
-    //       setCurrentPage(currentPage - 1);
-    //     }
-    //     toast.success("Department deleted successfully");
-    //   } catch (error) {
-    //     console.error("Error deleting department:", error);
-    //     toast.error("Failed to delete department");
-    //   }
-    // }
   };
 
   const handleViewEmployees = (
@@ -265,30 +330,25 @@ const ManageDepartment = () => {
     depname,
     memberCount
   ) => {
-    navigate(`/department/${departmentId}/employees?active=${isActive}`, {
-      state: { isActive, depname, departmentId, memberCount },
-    });
+    navigate(
+      `/department/${departmentId}/employees?active=${isActive}&tenantId=${selectedCompany}`,
+      {
+        state: { isActive, depname, departmentId, memberCount },
+      }
+    );
   };
 
   const handleFormSuccess = () => {
     setEditingTeam(null);
     setIsDepartmentModalOpen(false);
     // Refresh the list after successful form submission
-    const loadTeams = async () => {
-      const data = await fetchDepartments(
-        currentPage,
-        itemsPerPage,
-        debouncedSearchTerm
-      );
-      dispatch(setTeams(data.items));
-      setTotalItems(data.totalCount);
-    };
-    loadTeams();
+    if (selectedCompany && selectedCompany !== "") {
+      fetchDepartmentsByCompany(selectedCompany, currentPage, itemsPerPage);
+    }
   };
 
   const handleDepartmentSpecificLog = (departmentId) => {
     logDebug("Department specific log function invoked for:", departmentId);
-    // Implement department-specific log functionality here
   };
 
   // Determine which departments to display
@@ -299,6 +359,7 @@ const ManageDepartment = () => {
     <div>
       <ToolBar
         onAddClick={handleAddClick}
+        module="team"
         addButtonLabel="Department"
         addButtonIcon={<UsersRound size={16} />}
         className="p-4 bg-white border rounded shadow-sm mb-4"
@@ -314,6 +375,14 @@ const ManageDepartment = () => {
         }
         rightElements={
           <div className="flex items-center gap-3">
+            <SelectField
+              className="p-2"
+              label="Company"
+              value={selectedCompany}
+              onChange={handleCompanyChange}
+              options={companyOptions}
+              disabled={!companiesFetched || companyOptions.length === 1}
+            />
             <ReusableButton
               module="team"
               action="delete"
@@ -321,7 +390,7 @@ const ManageDepartment = () => {
               icon={History}
               title="View Audit History"
               onClick={handleHistoryClick}
-              className="text-white bg-blue-600 p-2 rounded-md"
+              className="text-white bg-blue-600 p-1 rounded-md"
             />
 
             <ReusableButton
@@ -331,29 +400,41 @@ const ManageDepartment = () => {
               icon={UserPlus}
               title="Create Employee"
               onClick={() => navigate("/employees/create")}
-              className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+              className="flex items-center gap-2 p-1 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
             />
           </div>
         }
       />
 
-      {/* Department List Component */}
-      <DepartmentList
-        departments={displayDepartments}
-        selectedDepartments={selectedDepartments}
-        isLoading={isLoading}
-        searchTerm={searchTerm}
-        onSelectDepartment={handleSelectDepartment}
-        onSelectAllDepartments={handleSelectAllDepartments}
-        onEditDepartment={handleEdit}
-        onDeleteDepartment={handleDelete}
-        onViewEmployees={handleViewEmployees}
-        currentPage={currentPage}
-        totalItems={totalItems}
-        itemsPerPage={itemsPerPage}
-        onPageChange={setCurrentPage}
-        onViewHistory={handleDepartmentSpecificLog}
-      />
+      {/* Show message when no company is selected */}
+      {!selectedCompany && (
+        <div className="p-4 mb-4 bg-blue-50 border border-blue-200 rounded-md">
+          <p className="text-blue-800 text-center">
+            Please select a company to view departments
+          </p>
+        </div>
+      )}
+
+      {/* Department List Component - Only show when company is selected */}
+      {selectedCompany && (
+        <DepartmentList
+          departments={displayDepartments}
+          selectedDepartments={selectedDepartments}
+          isLoading={isLoading}
+          searchTerm={searchTerm}
+          onSelectDepartment={handleSelectDepartment}
+          onSelectAllDepartments={handleSelectAllDepartments}
+          onEditDepartment={handleEdit}
+          onDeleteDepartment={handleDelete}
+          onViewEmployees={handleViewEmployees}
+          currentPage={currentPage}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onViewHistory={handleDepartmentSpecificLog}
+          selectedCompany={selectedCompany}
+        />
+      )}
 
       {/* Department Form Modal */}
       <Modal
@@ -372,18 +453,19 @@ const ManageDepartment = () => {
           }}
           onSuccess={handleFormSuccess}
           initialData={editingTeam}
+          companyOptions={companyOptions}
+          selectedCompany={selectedCompany}
         />
       </Modal>
 
-      {/* Audit Log Modal */}
-      <Modal
-        isOpen={isAuditLogModalOpen}
-        onClose={() => setIsAuditLogModalOpen(false)}
-        title="Department Audit History"
-        size="lg"
-      >
-        <AuditLogModal logs={auditLogs} isLoading={isAuditLogLoading} />
-      </Modal>
+      <AuditLogsModal
+        isOpen={showAuditModal}
+        onClose={() => setShowAuditModal(false)}
+        moduleName="Team"
+        showUserColumn={true}
+        apimodule="team"
+        selectedCompany={selectedCompany}
+      />
     </div>
   );
 };

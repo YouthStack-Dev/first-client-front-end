@@ -21,6 +21,18 @@ import {
 // Base sidebar configuration
 export const baseSidebarConfig = [
   {
+    title: "Dashboard",
+    items: [
+      {
+        title: "Dashboard",
+        icon: Users,
+        path: "/dashboard",
+        permission: "role.read",
+        icon: Users,
+      },
+    ],
+  },
+  {
     title: "User Administrator",
     items: [
       {
@@ -86,6 +98,12 @@ export const baseSidebarConfig = [
         title: "Vendor Management",
         path: "/vendors",
         permission: "vendor.read",
+        icon: Store,
+      },
+      {
+        title: "Tracking Management",
+        path: "/tracking",
+        permission: "route.read",
         icon: Store,
       },
     ],

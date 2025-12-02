@@ -1,33 +1,93 @@
-import { Map, Marker, useMap } from '@vis.gl/react-google-maps';
-import React, { useRef, useEffect, useState } from 'react';
+import { Map, Marker, useMap } from "@vis.gl/react-google-maps";
+import React, { useRef, useEffect, useState } from "react";
 
-const fixedPoint = { lat: 12.9716, lng: 77.5946 };
+// Remove the hardcoded fixedPoint and get from localStorage
+const getCompanyLocation = () => {
+  try {
+    const companyLocation = localStorage.getItem("tenant");
+    if (companyLocation) {
+      const parsed = JSON.parse(companyLocation);
+      return {
+        lat: parseFloat(parsed.latitude),
+        lng: parseFloat(parsed.longitude),
+      };
+    }
+  } catch (error) {
+    console.error("Error parsing company location from localStorage:", error);
+  }
 
-const MapContent = ({ homePosition, setHomePosition, setAddress, landmarkInputRef, setLandmark }) => {
+  // Fallback to Bangalore if not found in localStorage
+  return { lat: 12.9716, lng: 77.5946 };
+};
+
+const MapContent = ({
+  homePosition,
+  setHomePosition,
+  setAddress,
+  landmarkInputRef,
+  setLandmark,
+}) => {
   const map = useMap();
   const inputRef = useRef(null); // For address search
   const [showCompanyInfo, setShowCompanyInfo] = useState(false);
+
+  // Get company location from localStorage
+  const [companyLocation, setCompanyLocation] = useState(getCompanyLocation());
+
+  // Listen for changes in localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setCompanyLocation(getCompanyLocation());
+    };
+
+    // Listen for storage events (changes from other tabs/windows)
+    window.addEventListener("storage", handleStorageChange);
+
+    // Also check periodically for changes in the same tab
+    const interval = setInterval(() => {
+      const currentLocation = getCompanyLocation();
+      if (
+        currentLocation.lat !== companyLocation.lat ||
+        currentLocation.lng !== companyLocation.lng
+      ) {
+        setCompanyLocation(currentLocation);
+      }
+    }, 1000); // Check every second
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [companyLocation]);
+
   const handleGoToCompany = () => {
-    if (map) {
-      console.log('Panning to company location:', fixedPoint);
-      map.panTo(fixedPoint);
+    if (map && companyLocation) {
+      console.log("Panning to company location:", companyLocation);
+      map.panTo(companyLocation);
       map.setZoom(14);
     } else {
-      console.error('Map instance not available yet.');
+      console.error("Map instance not available yet.");
     }
   };
 
   // Effect for Landmark Autocomplete
   useEffect(() => {
-    // Ensure both ref and window.google.maps are available
-    if (!landmarkInputRef.current || !window.google || !window.google.maps || !window.google.maps.places) return;
+    if (
+      !landmarkInputRef.current ||
+      !window.google ||
+      !window.google.maps ||
+      !window.google.maps.places
+    )
+      return;
 
     const createAutocomplete = () => {
-      const landmarkAutocomplete = new window.google.maps.places.Autocomplete(landmarkInputRef.current, {
-        fields: ['name', 'formatted_address'],
-      });
+      const landmarkAutocomplete = new window.google.maps.places.Autocomplete(
+        landmarkInputRef.current,
+        {
+          fields: ["name", "formatted_address"],
+        }
+      );
 
-      // If homePosition exists, bias results to nearby area
       if (homePosition) {
         const circle = new window.google.maps.Circle({
           center: homePosition,
@@ -37,22 +97,23 @@ const MapContent = ({ homePosition, setHomePosition, setAddress, landmarkInputRe
         landmarkAutocomplete.setOptions({ strictBounds: false });
       }
 
-      const placeChangedListener = landmarkAutocomplete.addListener('place_changed', () => {
-        const place = landmarkAutocomplete.getPlace();
-        if (place && place.name) {
-          setLandmark(place.name);
-        } else if (place && place.formatted_address) {
-          setLandmark(place.formatted_address);
+      const placeChangedListener = landmarkAutocomplete.addListener(
+        "place_changed",
+        () => {
+          const place = landmarkAutocomplete.getPlace();
+          if (place && place.name) {
+            setLandmark(place.name);
+          } else if (place && place.formatted_address) {
+            setLandmark(place.formatted_address);
+          }
         }
-      });
+      );
 
       return () => {
-        // Clean up the listener when the component unmounts or dependencies change
         window.google.maps.event.removeListener(placeChangedListener);
       };
     };
 
-    // Use an interval to wait for window.google.maps to be ready
     const interval = setInterval(() => {
       if (window.google && window.google.maps && window.google.maps.places) {
         createAutocomplete();
@@ -60,9 +121,8 @@ const MapContent = ({ homePosition, setHomePosition, setAddress, landmarkInputRe
       }
     }, 100);
 
-    return () => clearInterval(interval); // Cleanup interval on unmount
+    return () => clearInterval(interval);
   }, [homePosition, landmarkInputRef, setLandmark]);
-
 
   // Effect for Home Address Autocomplete
   useEffect(() => {
@@ -70,28 +130,34 @@ const MapContent = ({ homePosition, setHomePosition, setAddress, landmarkInputRe
 
     const interval = setInterval(() => {
       if (window.google && window.google.maps && window.google.maps.places) {
-        const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current);
-        const placeChangedListener = autocomplete.addListener('place_changed', () => {
-          const place = autocomplete.getPlace();
-          if (place.geometry && place.geometry.location) {
-            const newPosition = {
-              lat: place.geometry.location.lat(),
-              lng: place.geometry.location.lng(),
-            };
-            setHomePosition(newPosition);
-            if (place.formatted_address) {
-              setAddress(place.formatted_address);
-            } else if (place.name) {
-              setAddress(place.name);
-            }
-            if (map) {
-              map.panTo(newPosition);
-              map.setZoom(14);
+        const autocomplete = new window.google.maps.places.Autocomplete(
+          inputRef.current
+        );
+        const placeChangedListener = autocomplete.addListener(
+          "place_changed",
+          () => {
+            const place = autocomplete.getPlace();
+            if (place.geometry && place.geometry.location) {
+              const newPosition = {
+                lat: place.geometry.location.lat(),
+                lng: place.geometry.location.lng(),
+              };
+              setHomePosition(newPosition);
+              if (place.formatted_address) {
+                setAddress(place.formatted_address);
+              } else if (place.name) {
+                setAddress(place.name);
+              }
+              if (map) {
+                map.panTo(newPosition);
+                map.setZoom(14);
+              }
             }
           }
-        });
+        );
         clearInterval(interval);
-        return () => window.google.maps.event.removeListener(placeChangedListener);
+        return () =>
+          window.google.maps.event.removeListener(placeChangedListener);
       }
     }, 100);
 
@@ -101,24 +167,33 @@ const MapContent = ({ homePosition, setHomePosition, setAddress, landmarkInputRe
   return (
     <div className="relative w-full h-full">
       <Map
-        defaultCenter={fixedPoint}
+        defaultCenter={companyLocation} // Use company location as default center
         defaultZoom={12}
         gestureHandling="greedy"
         disableDefaultUI={false}
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: "100%", height: "100%" }}
       >
-<Marker
-  position={fixedPoint}
-  title="Company (Bangalore)"
-  icon={{ url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" }}
-  onClick={() => setShowCompanyInfo(true)}
-/>
+        {/* Company Marker from localStorage */}
+        {companyLocation && (
+          <Marker
+            position={companyLocation}
+            title="Company Location"
+            icon={{
+              url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png",
+            }}
+            onClick={() => setShowCompanyInfo(true)}
+          />
+        )}
 
-{showCompanyInfo && (
-  <div className="absolute top-4 left-4 bg-white p-2 rounded shadow text-sm">
-    📍 <strong>Company:</strong> Bangalore HQ
-  </div>
-)}
+        {showCompanyInfo && companyLocation && (
+          <div className="absolute top-4 left-4 bg-white p-2 rounded shadow text-sm border border-green-400">
+            📍 <strong>Company Location</strong>
+            <br />
+            Lat: {companyLocation.lat.toFixed(6)}
+            <br />
+            Lng: {companyLocation.lng.toFixed(6)}
+          </div>
+        )}
 
         {homePosition && (
           <Marker
@@ -149,12 +224,11 @@ const MapContent = ({ homePosition, setHomePosition, setAddress, landmarkInputRe
         />
       </div>
 
-
-      {/* Bottom right floating button, vertically centered */}
+      {/* Bottom right floating button */}
       <button
         onClick={handleGoToCompany}
-        className="absolute bottom-1/2 right-4 translate-y-1/2 bg-blue-500 text-white rounded-full p-3 shadow hover:bg-blue-600 transition"
-        title="Go to Company"
+        className="absolute bottom-1/2 right-4 translate-y-1/2 bg-green-500 text-white rounded-full p-3 shadow hover:bg-green-600 transition"
+        title="Go to Company Location"
       >
         CP
       </button>

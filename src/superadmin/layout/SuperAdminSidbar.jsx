@@ -38,6 +38,11 @@ export const superAdminMenuItems = [
     path: "/superadmin/repots-management",
     icon: BarChart3,
   },
+  {
+    name: "Dempartment",
+    path: "/superadmin/departments",
+    icon: BarChart3,
+  },
 ];
 
 const SuperAdminSidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
