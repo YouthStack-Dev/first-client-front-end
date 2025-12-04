@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { icons } from "lucide-react";
+import { logDebug } from "../../utils/logger";
 
 const DefaultIcon = icons.AlertCircle || icons.Info;
 
@@ -20,6 +21,11 @@ const ReusableButton = ({
 }) => {
   const [showTooltipState, setShowTooltipState] = useState(false);
 
+  // Don't render if module or action is not provided
+  if (!module || !action) {
+    return null;
+  }
+
   const getPermissions = () => {
     const userPermissions = sessionStorage.getItem("userPermissions");
     if (userPermissions) {
@@ -37,7 +43,6 @@ const ReusableButton = ({
   const permissions = getPermissions();
 
   const hasPermission = () => {
-    if (!module || !action) return true;
     const modulePermission = permissions.find((p) => p.module === module);
     return modulePermission?.action.includes(action);
   };

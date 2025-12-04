@@ -1,6 +1,7 @@
 // utils/firebaseLocationUtils.js
 import { ref, onValue, off } from "firebase/database";
 import { database } from "./firebase";
+import { logDebug } from "./logger";
 
 /**
  * Subscribe to real-time location updates for a driver
@@ -9,22 +10,37 @@ import { database } from "./firebase";
  * @param {function} onError - Callback for errors
  * @returns {function} Unsubscribe function
  */
-export const subscribeToDriverLocation = (driverId, onUpdate, onError) => {
-  const driverLocationRef = ref(database, `Driverlocations/${driverId}`);
 
+const tenant = JSON.parse(localStorage.getItem("tenant"));
+logDebug("Firebase Tenant:", tenant?.tenant_id);
+const tenant_id = tenant?.tenant_id || "default_tenant";
+const vendor = 1; // You can modify this as needed
+export const subscribeToDriverLocation = (driverId, onUpdate, onError) => {
+  const driverLocationRef = ref(
+    database,
+    `drivers/${tenant_id}/${vendor}/${driverId}`
+  );
+  logDebug(
+    " the firebase path is :",
+    "drivers/" + tenant_id + "/" + vendor + "/" + driverId
+  );
   const unsubscribe = onValue(
     driverLocationRef,
     (snapshot) => {
+      logDebug("Firebase snapshot received for driver:", snapshot);
       if (snapshot.exists()) {
         const locationData = snapshot.val();
         const parsedLocation = parseLocationData(locationData, driverId);
+        logDebug(" This is the parsed location data: ", parsedLocation);
 
+        logDebug(" This is the parsed location data: ", parsedLocation);
         if (parsedLocation) {
           onUpdate(driverId, parsedLocation);
         } else {
           onError?.(driverId, "Invalid coordinates");
         }
       } else {
+        logDebug(`No location data for driver ${driverId}`);
         onError?.(driverId, "Location not available");
       }
     },

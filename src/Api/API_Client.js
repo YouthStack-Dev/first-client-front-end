@@ -1,5 +1,6 @@
 import axios from "axios";
 import Cookies from "js-cookie";
+import { logDebug } from "../utils/logger";
 
 // Read the environment variable
 const baseURL = import.meta.env.VITE_API_URL;
@@ -20,7 +21,7 @@ API_CLIENT.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    console.log("🔼 Request:", {
+    logDebug("🔼 Request:", {
       url: `${config.baseURL}${config.url}`,
       method: config.method,
       headers: config.headers,

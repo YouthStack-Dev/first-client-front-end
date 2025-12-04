@@ -16,26 +16,25 @@ import {
 
 // Vendor-specific sidebar configuration
 export const vendorSidebarConfig = [
-  // {
-  //   title: 'Operations',
-  //   items: [
-  //     {
-  //       title: 'Bookings',
-  //       icon: Calendar,
-  //        path: '/vendor/bookings',
-  //        permission: 'booking.read',
-  //        icon: Calendar
-  //     },
-  //     {
-  //       title: 'Route Bookings',
-  //       icon: Route,
-  //       subItems: [
-  //         { title: 'Route Booking List', path: '/vendor/route-bookings', permission: 'route-booking.read', icon: Route },
-  //         { title: 'Create Route Booking', path: '/vendor/route-bookings/create', permission: 'route-booking.create', icon: Route }
-  //       ]
-  //     }
-  //   ]
-  // },
+  {
+    title: "User Administrator",
+    items: [
+      {
+        title: " User Role & Permission",
+        icon: Users,
+        path: "/vendor/role-permission",
+        permission: "role.read",
+        icon: Users,
+      },
+      {
+        title: " User Management",
+        icon: Users,
+        path: "/vendor/vendor-user-management",
+        permission: "role.read",
+        icon: Users,
+      },
+    ],
+  },
   {
     title: "Resources",
     items: [

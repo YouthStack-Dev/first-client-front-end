@@ -41,12 +41,13 @@ const authSlice = createSlice({
       // Clear all client-side storage
       Cookies.remove("auth_token", { path: "/" });
       Cookies.remove("refresh_token", { path: "/" });
-      sessionStorage.removeItem("userPermissions");
-      localStorage.removeItem("persist:root"); // More specific clearing
-
-      // Reset state
+      sessionStorage.clear(); // clear ALL session data
+      localStorage.clear(); // clear ALL localStorage keys
+      window.location.reload();
+      // Reset redux state
       Object.assign(state, initialState);
     },
+
     setAuthCredentials: (state, action) => {
       const { user, token } = action.payload;
 

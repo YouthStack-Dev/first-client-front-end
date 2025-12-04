@@ -1,22 +1,23 @@
 // src/redux/features/companies/companySlice.js
 import { createSlice } from "@reduxjs/toolkit";
-import { 
-  fetchCompaniesThunk, 
-  createCompanyThunk, 
+import {
+  fetchCompaniesThunk,
+  createCompanyThunk,
   updateTenantThunk,
   fetchCompanyByIdThunk,
-  toggleCompanyStatusThunk
+  toggleCompanyStatusThunk,
 } from "./companyThunks";
 
 const initialState = {
-  data: [],              // list of companies
-  loading: false,        // fetching all companies
-  creating: false,       // creating a company
-  updating: false,       // updating a company
+  data: [],
+  loading: false,
+  creating: false,
+  updating: false,
   error: null,
-  selectedCompany: null, // for edit modal
-  fetchingSingle: false, // fetching single company
-   toggling: false,  
+  selectedCompany: null,
+  fetchingSingle: false,
+  toggling: false,
+  fetched: false, // 🟢 New status to track if companies have been fetched
 };
 
 const companySlice = createSlice({
@@ -26,6 +27,9 @@ const companySlice = createSlice({
     clearSelectedCompany: (state) => {
       state.selectedCompany = null;
     },
+    resetFetchedStatus: (state) => {
+      state.fetched = false; // 🟢 Reset fetched status if needed
+    },
   },
   extraReducers: (builder) => {
     // Fetch companies
@@ -33,14 +37,17 @@ const companySlice = createSlice({
       .addCase(fetchCompaniesThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.fetched = false; // 🟢 Reset to false when starting new fetch
       })
       .addCase(fetchCompaniesThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.data = action.payload;
+        state.fetched = true; // 🟢 Set to true when successfully fetched
       })
       .addCase(fetchCompaniesThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        state.fetched = false; // 🟢 Remain false on error
       });
 
     // Create company
@@ -52,6 +59,7 @@ const companySlice = createSlice({
       .addCase(createCompanyThunk.fulfilled, (state, action) => {
         state.creating = false;
         if (action.payload) state.data.push(action.payload);
+        // 🟢 Don't modify fetched status here as we're just adding to existing data
       })
       .addCase(createCompanyThunk.rejected, (state, action) => {
         state.creating = false;
@@ -59,7 +67,7 @@ const companySlice = createSlice({
       });
 
     // Update company
-     builder
+    builder
       .addCase(updateTenantThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -68,7 +76,8 @@ const companySlice = createSlice({
         state.loading = false;
 
         const tenant = action.payload;
-        const tenantId = tenant?.tenant_id || tenant?.id || action.meta?.arg?.tenantId;
+        const tenantId =
+          tenant?.tenant_id || tenant?.id || action.meta?.arg?.tenantId;
         // 🟢 Ensure state.entities exists
         if (!state.entities) {
           state.entities = {};
@@ -80,28 +89,27 @@ const companySlice = createSlice({
         state.error = action.payload || "Failed to update tenant";
       });
 
-          // ✅ Toggle company active/inactive status
-        builder
-          .addCase(toggleCompanyStatusThunk.pending, (state) => {
-            state.toggling = true;
-            state.error = null;
-          })
-          .addCase(toggleCompanyStatusThunk.fulfilled, (state, action) => {
-            state.toggling = false;
+    // ✅ Toggle company active/inactive status
+    builder
+      .addCase(toggleCompanyStatusThunk.pending, (state) => {
+        state.toggling = true;
+        state.error = null;
+      })
+      .addCase(toggleCompanyStatusThunk.fulfilled, (state, action) => {
+        state.toggling = false;
 
-            const { tenant_id } = action.payload;
-            const index = state.data.findIndex((c) => c.tenant_id === tenant_id);
+        const { tenant_id } = action.payload;
+        const index = state.data.findIndex((c) => c.tenant_id === tenant_id);
 
-            if (index !== -1) {
-              // Toggle status locally
-              state.data[index].is_active = !state.data[index].is_active;
-            }
-          })
-          .addCase(toggleCompanyStatusThunk.rejected, (state, action) => {
-            state.toggling = false;
-            state.error = action.payload || "Failed to toggle company status";
-          });
-
+        if (index !== -1) {
+          // Toggle status locally
+          state.data[index].is_active = !state.data[index].is_active;
+        }
+      })
+      .addCase(toggleCompanyStatusThunk.rejected, (state, action) => {
+        state.toggling = false;
+        state.error = action.payload || "Failed to toggle company status";
+      });
 
     // Fetch single company
     builder
@@ -120,6 +128,8 @@ const companySlice = createSlice({
   },
 });
 
-export const { clearSelectedCompany } = companySlice.actions;
-
+export const { clearSelectedCompany, resetFetchedStatus } =
+  companySlice.actions;
+export const selectCompaniesFromRedux = (state) => state.company.data;
+export const selectCompaniesFetched = (state) => state.company.fetched; // 🟢 Selector for fetched status
 export default companySlice.reducer;

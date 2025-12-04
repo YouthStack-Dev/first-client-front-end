@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import AssignEntityModal from "@components/modals/AssignEntityModal";
 import { toggleCompanyStatusThunk } from "../redux/features/company/companyThunks";
+
 const CompanyVendorsList = ({ vendors, loading, error }) => {
   if (loading) {
     return (
@@ -118,39 +119,23 @@ const CompanyCard = ({ company, onEditCompany }) => {
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col h-[420px] relative">
+      <div
+        className={`bg-white rounded-xl shadow-md border hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col h-[420px] relative ${
+          isActive ? "border-gray-200" : "border-red-300"
+        }`}
+      >
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white flex-shrink-0 relative">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Building2 className="w-6 h-6" />
-              <h3 className="text-lg font-semibold truncate">{company.name}</h3>
-            </div>
-            <span
-              className={`px-2 py-1 text-xs rounded-full ${
-                isActive ? "bg-green-600 text-white" : "bg-red-400 text-white"
-              }`}
-            >
-              {isActive ? "Active" : "Inactive"}
-            </span>
+        <div
+          className={`p-4 text-white flex-shrink-0 relative ${
+            isActive
+              ? "bg-gradient-to-r from-blue-600 to-blue-700"
+              : "bg-gradient-to-r from-red-500 to-red-600"
+          }`}
+        >
+          <div className="flex items-center space-x-3">
+            <Building2 className="w-6 h-6" />
+            <h3 className="text-lg font-semibold truncate">{company.name}</h3>
           </div>
-
-          {/* ✅ Toggle Switch like Vendor */}
-          <button
-            onClick={handleToggle}
-            className={`absolute top-3 right-3 p-2 rounded-full shadow-lg transition-all duration-300 ${
-              isActive
-                ? "bg-green-100 hover:bg-green-200"
-                : "bg-gray-100 hover:bg-gray-200"
-            }`}
-            title={isActive ? "Deactivate Company" : "Activate Company"}
-          >
-            {isActive ? (
-              <Power className="w-5 h-5 text-green-700 transition-transform duration-300 transform hover:scale-110" />
-            ) : (
-              <PowerOff className="w-5 h-5 text-gray-500 transition-transform duration-300 transform hover:scale-110" />
-            )}
-          </button>
         </div>
 
         {/* Company Details */}
@@ -182,7 +167,13 @@ const CompanyCard = ({ company, onEditCompany }) => {
               <Link2 className="w-4 h-4 mr-2" />
               Assigned Vendors
             </div>
-            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+            <span
+              className={`px-2 py-1 text-xs rounded-full ${
+                isActive
+                  ? "bg-blue-100 text-blue-800"
+                  : "bg-red-100 text-red-800"
+              }`}
+            >
               {companyVendorsListState.length} vendors
             </span>
           </div>
@@ -196,22 +187,53 @@ const CompanyCard = ({ company, onEditCompany }) => {
 
         {/* Footer Actions */}
         <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center flex-shrink-0">
-          <span className="text-sm font-bold text-gray-700 whitespace-nowrap">
-            {formatDate(company.created_at)}
-          </span>
+          <div className="flex items-center space-x-3">
+            <span className="text-sm font-bold text-gray-700 whitespace-nowrap">
+              {formatDate(company.created_at)}
+            </span>
+            <button
+              onClick={handleToggle}
+              className={`flex items-center space-x-1 px-3 py-1 rounded-full text-sm font-medium transition-all duration-300 ${
+                isActive
+                  ? "bg-green-100 text-green-800 hover:bg-green-200"
+                  : "bg-red-100 text-red-800 hover:bg-red-200"
+              }`}
+              title={isActive ? "Deactivate Company" : "Activate Company"}
+            >
+              {isActive ? (
+                <>
+                  <Power className="w-4 h-4" />
+                  <span>Active</span>
+                </>
+              ) : (
+                <>
+                  <PowerOff className="w-4 h-4" />
+                  <span>Inactive</span>
+                </>
+              )}
+            </button>
+          </div>
           <div className="flex space-x-2">
             <button
               onClick={() => onEditCompany?.(company)}
-              className="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              className={`p-2 rounded-full text-white transition-colors ${
+                isActive
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-gray-500 hover:bg-gray-600"
+              }`}
               title="Edit Company"
             >
               <Edit2 className="w-4 h-4" />
             </button>
             <button
               onClick={handleOpenAssign}
-              className="p-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition-colors"
+              className={`p-2 rounded-full text-white transition-colors ${
+                isActive
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-gray-500 hover:bg-gray-600"
+              }`}
               title="Assign Vendor"
-              disabled={companyVendorsLoading}
+              disabled={companyVendorsLoading || !isActive}
             >
               <Link2 className="w-4 h-4" />
             </button>
