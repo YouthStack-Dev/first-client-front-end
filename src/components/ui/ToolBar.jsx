@@ -3,6 +3,7 @@ import ReusableButton from "./ReusableButton";
 import { Plus } from "lucide-react";
 
 const ToolBar = ({
+  module,
   title,
   subtitle,
   onAddClick,
@@ -63,13 +64,13 @@ const ToolBar = ({
           {rightElements}
           {onAddClick && (
             <ReusableButton
-              module="employee"
+              module={module}
               action="create"
               buttonName={addButtonLabel}
               icon={Plus}
-              title="Create Employee"
+              title={`Create ${addButtonLabel}`}
               onClick={onAddClick}
-              className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+              className="flex items-center gap-2 p-1 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
             />
           )}
         </div>

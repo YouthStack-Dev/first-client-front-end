@@ -1,6 +1,15 @@
 // components/LiveRouteCard.jsx
 import React from "react";
-import { MapPin, Users, Clock, Wifi, CheckCircle2 } from "lucide-react";
+import {
+  Car,
+  User,
+  Navigation,
+  Clock,
+  Wifi,
+  CheckCircle2,
+  MapPin,
+  Users,
+} from "lucide-react";
 
 const LiveRouteCard = ({
   route,
@@ -12,87 +21,123 @@ const LiveRouteCard = ({
   isLoading,
   error,
 }) => {
+  const handleCardClick = () => {
+    onSelect(route);
+  };
+
+  const handleDoubleClick = () => {
+    onFocus(route.route_id);
+  };
+
+  // Get status color
+  const getStatusColor = (status) => {
+    const statusLower = status?.toLowerCase();
+    if (statusLower?.includes("assigned") || statusLower?.includes("on time")) {
+      return "bg-green-100 text-green-700";
+    }
+    if (statusLower?.includes("delay") || statusLower?.includes("progress")) {
+      return "bg-yellow-100 text-yellow-700";
+    }
+    if (statusLower?.includes("completed")) {
+      return "bg-blue-100 text-blue-700";
+    }
+    return "bg-gray-100 text-gray-700";
+  };
+
   return (
     <div
-      onClick={() => onSelect(route)}
-      onDoubleClick={() => onFocus(route.id)}
-      className={`p-6 cursor-pointer transition-all duration-200 relative ${
+      onClick={handleCardClick}
+      onDoubleClick={handleDoubleClick}
+      className={`p-3 cursor-pointer transition-all duration-150 relative ${
         isFocused
-          ? "bg-blue-100 border-l-4 border-l-blue-600"
+          ? "bg-blue-50 border-l-2 border-l-blue-600"
           : isSelected
-          ? "bg-blue-50 border-l-4 border-l-blue-400"
-          : "hover:bg-gray-50"
+          ? "bg-blue-50/50 border-l-2 border-l-blue-400"
+          : "hover:bg-gray-50 border-l-2 border-l-transparent"
       }`}
     >
       {/* Selection indicator */}
       {isSelected && (
-        <div className="absolute top-3 right-3">
-          <CheckCircle2 className="w-5 h-5 text-blue-600" />
+        <div className="absolute top-2 right-2">
+          <CheckCircle2 className="w-4 h-4 text-blue-600" />
         </div>
       )}
 
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className="text-xs font-bold text-gray-900">{route.id}</span>
-            <span
-              className={`text-xs px-2 py-0.5 rounded-full ${
-                route.status === "On Time"
-                  ? "bg-green-100 text-green-700"
-                  : "bg-red-100 text-red-700"
-              }`}
-            >
-              {route.status}
-            </span>
-            {hasLiveLocation && (
-              <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
-                <Wifi className="w-3 h-3" />
-                Live
-              </span>
-            )}
-            {isLoading && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
-                Updating...
-              </span>
-            )}
-            {error && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
-                {error}
-              </span>
-            )}
-          </div>
-          <p className="text-sm font-semibold text-gray-900">
-            {route.vehicleNumber}
-          </p>
+      {/* Header Row: Route Code, Status, Live Indicator */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-gray-900">
+            {route.route_code}
+          </span>
+          <span
+            className={`text-xs px-1.5 py-0.5 rounded ${getStatusColor(
+              route.status
+            )}`}
+          >
+            {route.status}
+          </span>
+        </div>
+
+        {/* Live/Error indicators */}
+        <div className="flex items-center gap-1">
+          {hasLiveLocation && <Wifi className="w-3 h-3 text-green-500" />}
+          {isLoading && (
+            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+          )}
+          {error && (
+            <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
+          )}
         </div>
       </div>
 
-      <div className="space-y-2">
+      {/* Main Info Row */}
+      <div className="mb-2">
+        <div className="flex items-center gap-2 mb-1">
+          <Car className="w-3 h-3 text-gray-500" />
+          <span className="text-sm font-semibold text-gray-900">
+            {route.vehicle?.rc_number || "No Vehicle"}
+          </span>
+        </div>
+
         <div className="flex items-center gap-2 text-xs text-gray-600">
-          <MapPin className="w-3.5 h-3.5" />
-          <span className="truncate">{route.route}</span>
-        </div>
-        <div className="flex items-center justify-between text-xs text-gray-600">
-          <div className="flex items-center gap-2">
-            <Users className="w-3.5 h-3.5" />
-            <span>{route.passengers} passengers</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5" />
-            <span>{route.eta}</span>
-          </div>
+          <User className="w-3 h-3" />
+          <span>{route.driver?.name || "Unknown"}</span>
         </div>
       </div>
 
-      <div className="mt-3 pt-3 border-t border-gray-100">
-        <p className="text-xs text-gray-500">{route.driver}</p>
+      {/* Stats Row */}
+      <div className="grid grid-cols-3 gap-1 text-xs text-gray-600 mb-2">
+        <div className="flex items-center gap-1">
+          <Navigation className="w-3 h-3" />
+          <span>{route.summary?.total_distance_km?.toFixed(1) || "0"}km</span>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <Clock className="w-3 h-3" />
+          <span>{route.summary?.total_time_minutes?.toFixed(0) || "0"}min</span>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <Users className="w-3 h-3" />
+          <span>{route.stops?.length || 0}</span>
+        </div>
       </div>
 
-      {isFocused && (
-        <p className="text-xs text-blue-600 mt-2 font-medium">
-          📍 Showing details on map
-        </p>
-      )}
+      {/* Vendor & Quick Info */}
+      <div className="text-xs text-gray-500">
+        <div className="truncate mb-1">
+          <span className="font-medium">Vendor: </span>
+          {route.vendor?.name || "N/A"}
+        </div>
+
+        {/* Focus indicator */}
+        {isFocused && (
+          <div className="flex items-center gap-1 text-blue-600 font-medium">
+            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+            Focused
+          </div>
+        )}
+      </div>
     </div>
   );
 };

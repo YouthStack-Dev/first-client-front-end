@@ -1,12 +1,20 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { X } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { createVendorThunk, updateVendorThunk } from "../../redux/features/vendors/vendorThunk"; // make sure update thunk exists
+import {
+  createVendorThunk,
+  updateVendorThunk,
+} from "../../redux/features/vendors/vendorThunk"; // make sure update thunk exists
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phoneRegex = /^[\d+\-()\s]{7,20}$/;
 
-const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSaveSuccess }) => {
+const AssignEntityModal = ({
+  isOpen,
+  onClose,
+  sourceEntity,
+  onSaveSuccess,
+}) => {
   const dispatch = useDispatch();
   const creating = useSelector((state) => state.vendor.creating);
 
@@ -59,8 +67,8 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSaveSuccess }) => 
         admin_password: "", // always empty for security
       });
       setErrors({});
-      setTimeout(() =>
-        modalRef.current?.querySelector("input:not([readonly])")?.focus(),
+      setTimeout(
+        () => modalRef.current?.querySelector("input:not([readonly])")?.focus(),
         0
       );
     }
@@ -86,32 +94,43 @@ const AssignEntityModal = ({ isOpen, onClose, sourceEntity, onSaveSuccess }) => 
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-const validate = () => {
-  const newErrors = {};
+  const validate = () => {
+    const newErrors = {};
 
-  if (isEditMode) {
-    // ✅ Edit mode (fields used in update payload)
-    if (!formData.name) newErrors.name = "Vendor name is required";
-    if (!emailRegex.test(formData.email)) newErrors.email = "Invalid vendor email";
-    if (!phoneRegex.test(formData.phone)) newErrors.phone = "Invalid vendor phone";
-    // if (!formData.admin_name) newErrors.admin_name = "Admin name is required";
-  } else {
-    // ✅ Create mode (full validation)
-    if (!formData.name) newErrors.name = "Vendor name is required";
-    if (!emailRegex.test(formData.email)) newErrors.email = "Invalid vendor email";
-    if (!emailRegex.test(formData.admin_email)) newErrors.admin_email = "Invalid admin email";
-    if (formData.email && formData.admin_email && formData.email === formData.admin_email) {
-      newErrors.admin_email = "Admin email must be different from vendor email";
+    if (isEditMode) {
+      // ✅ Edit mode (fields used in update payload)
+      if (!formData.name) newErrors.name = "Vendor name is required";
+      if (!emailRegex.test(formData.email))
+        newErrors.email = "Invalid vendor email";
+      if (!phoneRegex.test(formData.phone))
+        newErrors.phone = "Invalid vendor phone";
+      // if (!formData.admin_name) newErrors.admin_name = "Admin name is required";
+    } else {
+      // ✅ Create mode (full validation)
+      if (!formData.name) newErrors.name = "Vendor name is required";
+      if (!emailRegex.test(formData.email))
+        newErrors.email = "Invalid vendor email";
+      if (!emailRegex.test(formData.admin_email))
+        newErrors.admin_email = "Invalid admin email";
+      if (
+        formData.email &&
+        formData.admin_email &&
+        formData.email === formData.admin_email
+      ) {
+        newErrors.admin_email =
+          "Admin email must be different from vendor email";
+      }
+      if (!phoneRegex.test(formData.phone))
+        newErrors.phone = "Invalid vendor phone";
+      if (!phoneRegex.test(formData.admin_phone))
+        newErrors.admin_phone = "Invalid admin phone";
+      if (!formData.admin_password)
+        newErrors.admin_password = "Admin password is required";
     }
-    if (!phoneRegex.test(formData.phone)) newErrors.phone = "Invalid vendor phone";
-    if (!phoneRegex.test(formData.admin_phone)) newErrors.admin_phone = "Invalid admin phone";
-    if (!formData.admin_password) newErrors.admin_password = "Admin password is required";
-  }
 
-  setErrors(newErrors);
-  return Object.keys(newErrors).length === 0;
-};
-
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async () => {
     if (!validate()) return;
@@ -119,7 +138,9 @@ const validate = () => {
     try {
       let result;
       if (isEditMode) {
-        result = await dispatch(updateVendorThunk({ vendorId: sourceEntity.vendor_id, formData })).unwrap();
+        result = await dispatch(
+          updateVendorThunk({ vendorId: sourceEntity.vendor_id, formData })
+        ).unwrap();
       } else {
         result = await dispatch(createVendorThunk(formData)).unwrap();
       }
@@ -145,7 +166,8 @@ const validate = () => {
         {/* Header */}
         <div className="flex justify-between items-center border-b pb-3 mb-4">
           <h2 className="text-lg font-semibold">
-            {isEditMode ? "Update Vendor" : "Assign Vendor"}: {sourceEntity?.name || "N/A"}
+            {isEditMode ? "Update Vendor" : "Assign Vendor"}:{" "}
+            {sourceEntity?.name || "N/A"}
           </h2>
           <button onClick={onClose} aria-label="Close modal">
             <X className="w-5 h-5 text-gray-500 hover:text-gray-700" />
@@ -155,7 +177,9 @@ const validate = () => {
         {/* Form */}
         <div className="space-y-3 max-h-[70vh] overflow-y-auto">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Tenant ID</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Tenant ID
+            </label>
             <input
               type="text"
               name="tenant_id"
@@ -167,7 +191,9 @@ const validate = () => {
 
           {fields.map((field) => (
             <div key={field.name}>
-              <label className="block text-sm font-medium text-gray-700">{field.label}</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {field.label}
+              </label>
               <input
                 type={field.type}
                 name={field.name}
@@ -178,7 +204,9 @@ const validate = () => {
                 }`}
               />
               {errors[field.name] && (
-                <p className="text-xs text-red-500 mt-1">{errors[field.name]}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors[field.name]}
+                </p>
               )}
             </div>
           ))}

@@ -12,6 +12,7 @@ import {
   Shield,
 } from "lucide-react";
 import LiveTracking from "../pages/LiveTracking";
+import TrackingManagement from "../pages/TrackingManagement";
 // import LiveTracking from "./LiveTracking";
 
 const CompanyDashboard = () => {
@@ -473,7 +474,7 @@ const CompanyDashboard = () => {
         </div>
 
         {/* Live Tracking Section */}
-        <LiveTracking />
+        <TrackingManagement />
 
         {/* Modal */}
         {modalOpen && (

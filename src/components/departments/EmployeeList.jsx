@@ -295,19 +295,6 @@ const EmployeeList = ({
                   </td>
                   <td className="p-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-center space-x-1">
-                      {/* View Button */}
-                      {/* <ReusableButton
-                        module="employee"
-                        action="read"
-                        icon={Eye}
-                        title="View Details"
-                        onClick={() => {
-                          onView?.(employee);
-                        }}
-                        className="text-sidebar-primary-600 hover:text-sidebar-primary-700 transition-colors"
-                        iconSize={14}
-                      /> */}
-
                       {/* Edit Button */}
                       <ReusableButton
                         module="employee"

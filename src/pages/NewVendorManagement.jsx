@@ -63,8 +63,6 @@ const NewVendorManagement = () => {
     { value: "all", label: "All Status" },
     { value: "active", label: "Active" },
     { value: "inactive", label: "Inactive" },
-    { value: "pending", label: "Pending" },
-    { value: "suspended", label: "Suspended" },
   ];
 
   // Company options for filter - with safe mapping

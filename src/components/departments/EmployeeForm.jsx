@@ -73,6 +73,15 @@ const EmployeeForm = ({ mode = "create" }) => {
     navigate(-1);
   }
 
+  const tenantString = localStorage.getItem("tenant");
+
+  if (tenantString) {
+    const tenant = JSON.parse(tenantString);
+    console.log("Tenant object:", tenant);
+  } else {
+    console.log("No tenant stored in localStorage");
+  }
+
   const handleDateSelect = (ranges) => {
     const { startDate, endDate } = ranges.selection;
     setDateRangeSelection([ranges.selection]);
