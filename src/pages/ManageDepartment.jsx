@@ -14,7 +14,6 @@ import { toast } from "react-toastify";
 import ReusableButton from "../components/ui/ReusableButton";
 import endpoint from "../Api/Endpoints";
 import AuditLogsModal from "../components/modals/AuditLogsModal";
-import { DummyauditLogs } from "../staticData/StaticReport";
 import SelectField from "../components/ui/SelectField";
 import {
   selectCompaniesFetched,
@@ -80,7 +79,7 @@ const ManageDepartment = () => {
   const [isDepartmentModalOpen, setIsDepartmentModalOpen] = useState(false);
 
   // Audit log state
-  const [auditLogs, setAuditLogs] = useState(DummyauditLogs);
+  const [auditLogs, setAuditLogs] = useState([]);
   const [isAuditLogLoading, setIsAuditLogLoading] = useState(false);
 
   // Pull teams from Redux slice
@@ -450,7 +449,7 @@ const ManageDepartment = () => {
     }
 
     navigate(
-      `/department/${departmentId}/employees?active=${isActive}&tenantId=${tenantId}`,
+      `/companies/department/${departmentId}/employees?active=${isActive}&tenantId=${tenantId}`,
       {
         state: { isActive, depname, departmentId, memberCount },
       }
@@ -529,7 +528,7 @@ const ManageDepartment = () => {
               buttonName="Employee"
               icon={UserPlus}
               title="Create Employee"
-              onClick={() => navigate("/employees/create")}
+              onClick={() => navigate("/companies/employees/create")}
               className="flex items-center gap-2 p-1 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
             />
           </div>

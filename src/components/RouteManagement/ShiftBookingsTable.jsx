@@ -89,7 +89,7 @@ const ShiftBookingsTable = ({
   const handleShiftRoute = (shift) => {
     if (!shift?.id) return;
     logDebug("Opening routing map for shift:", shift);
-    const url = `/shift/${shift.id}/${shift.log_type}/${date}/routing-map`;
+    const url = `/companies/shift/${shift.id}/${shift.log_type}/${date}/routing-map`;
     window.open(url, "_blank");
   };
 

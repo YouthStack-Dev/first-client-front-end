@@ -22,7 +22,6 @@ import EmployeeList from "@components/departments/EmployeeList";
 import endpoint from "../Api/Endpoints";
 
 import AuditLogsModal from "../components/modals/AuditLogsModal";
-import { DummyauditLogs } from "../staticData/StaticReport";
 import ReusableButton from "../components/ui/ReusableButton";
 
 const ManageEmployees = () => {
@@ -32,7 +31,7 @@ const ManageEmployees = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchParams] = useSearchParams();
   const [showAuditModal, setShowAuditModal] = useState(false);
-  const [auditLogs, setAuditLogs] = useState(DummyauditLogs);
+  const [auditLogs, setAuditLogs] = useState([]);
   const location = useLocation();
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   // Get department info from location state with safe fallback
@@ -157,7 +156,7 @@ const ManageEmployees = () => {
   const handleRowClick = (employee, e) => {
     if (e.target.type === "checkbox") return;
     navigate(
-      `/department/${employee.team_id}/employees/${employee.employee_id}/view`,
+      `/companies/department/${employee.team_id}/employees/${employee.employee_id}/view`,
       {
         state: { employee, fromChild: true },
       }
@@ -165,12 +164,12 @@ const ManageEmployees = () => {
   };
 
   const handleAddClick = () => {
-    navigate(`/employee/create-employee`);
+    navigate(`/companies/employee/create-employee`);
   };
 
   const handleView = (employee) => {
     navigate(
-      `/department/${employee.team_id}/employees/${employee.employee_id}/view`,
+      `/companies/department/${employee.team_id}/employees/${employee.employee_id}/view`,
       {
         state: { employee, fromChild: true },
       }
@@ -179,7 +178,7 @@ const ManageEmployees = () => {
 
   const handleEdit = (employee) => {
     navigate(
-      `/department/${employee.team_id}/employees/${employee.employee_id}/edit`,
+      `/companies/department/${employee.team_id}/employees/${employee.employee_id}/edit`,
       {
         state: { employee },
       }

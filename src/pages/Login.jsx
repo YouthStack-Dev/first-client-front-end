@@ -66,18 +66,20 @@ export const Login = () => {
       return "/vendor/dashboard";
     }
 
-    return "/profile"; // Default for company login
+    return "/companies/profile"; // Default for company login
   };
 
   // Check if ID field is required based on login type
   const requiresIdField = () => {
     const path = location.pathname.toLowerCase();
-    return (
-      path === "/" ||
-      path === "" ||
-      path.includes("/vendor") ||
-      path.includes("/employee")
-    );
+
+    // Show ID field for all except superadmin if superadmin doesn't need it
+    // Modify this based on your backend requirements
+    if (path.includes("/superadmin")) {
+      return false; // Superadmin doesn't need tenant_id (adjust based on your API)
+    }
+
+    return true; // Show for all other paths
   };
 
   // Redirect if already authenticated
@@ -98,13 +100,16 @@ export const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ID validation for company/vendor login
+    const path = location.pathname.toLowerCase();
+
+    // Validation logic
     if (requiresIdField() && !credentials.tenant_id) {
-      setValidationError("Please fill in your Company/Vendor ID.");
+      const titleInfo = getLoginTitle();
+      setValidationError(`Please fill in your ${titleInfo.idLabel}.`);
       return;
     }
 
-    // username format validation
+    // Email validation
     const usernameRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!usernameRegex.test(credentials.username)) {
       setValidationError("Please enter a valid email address.");
@@ -118,9 +123,15 @@ export const Login = () => {
     }
 
     try {
+      // Prepare data for superadmin (without tenant_id if not required)
+      const loginData = { ...credentials };
+      if (path.includes("/superadmin") && !requiresIdField()) {
+        delete loginData.tenant_id; // Remove tenant_id for superadmin
+      }
+
       const result = await dispatch(
         loginUser({
-          formData: credentials,
+          formData: loginData,
           endpoint: getLoginEndpoint(),
         })
       ).unwrap();
@@ -139,35 +150,21 @@ export const Login = () => {
       navigate(getDashboardPath(), { replace: true });
     } catch (err) {
       console.error("Login error:", err);
-      // Error is already handled in the Redux state, no need to set local state
+      // Error is already handled in the Redux state
     }
   };
 
   const getLoginTitle = () => {
     const path = location.pathname.toLowerCase();
-    if (path === "/" || path === "") {
+
+    if (path.includes("/superadmin")) {
       return {
-        title: "Company Login",
-        subtitle: "Access your company dashboard",
-        icon: <Users className="w-8 h-8 text-blue-600" />,
-        idLabel: "Company ID",
-        idPlaceholder: "Enter your company ID",
-      };
-    } else if (path.includes("/superadmin")) {
-      return {
-        title: "Superadmin",
+        title: "Superadmin Login",
         subtitle: "System administration access",
         icon: <Shield className="w-8 h-8 text-red-600" />,
         idLabel: "",
         idPlaceholder: "",
-      };
-    } else if (path.includes("/employee")) {
-      return {
-        title: "Employee Login",
-        subtitle: "Employee portal access",
-        icon: <Shield className="w-8 h-8 text-red-600" />,
-        idLabel: "Company ID",
-        idPlaceholder: "Enter your company ID",
+        showIdField: false, // Explicit flag
       };
     } else if (path.includes("/vendor")) {
       return {
@@ -176,32 +173,43 @@ export const Login = () => {
         icon: <Truck className="w-8 h-8 text-green-600" />,
         idLabel: "Vendor ID",
         idPlaceholder: "Enter your vendor ID",
+        showIdField: true,
+      };
+    } else if (path.includes("/employee")) {
+      return {
+        title: "Employee Login",
+        subtitle: "Employee portal access",
+        icon: <User className="w-8 h-8 text-blue-600" />,
+        idLabel: "Company ID",
+        idPlaceholder: "Enter your company ID",
+        showIdField: true,
       };
     } else {
+      // Default company login
       return {
-        title: "Login",
-        subtitle: "Welcome back",
-        icon: <User className="w-8 h-8 text-gray-600" />,
-        idLabel: "ID",
-        idPlaceholder: "Enter your ID",
+        title: "Company Login",
+        subtitle: "Access your company dashboard",
+        icon: <Users className="w-8 h-8 text-blue-600" />,
+        idLabel: "Company ID",
+        idPlaceholder: "Enter your company ID",
+        showIdField: true,
       };
     }
   };
 
   const getLoginEndpoint = () => {
     const path = location.pathname.toLowerCase();
-    if (path === "/" || path === "") {
-      return endpoint.login;
-    } else if (path.includes("/superadmin")) {
+
+    if (path.includes("/superadmin")) {
       return endpoint.superAdminLogin;
     } else if (path.includes("/vendor")) {
       return endpoint.vendorLogin;
     }
-    return endpoint.login; // Default endpoint
+    return endpoint.login; // Default endpoint for company and employee
   };
 
-  const { title, subtitle, icon, idLabel, idPlaceholder } = getLoginTitle();
-  const showIdField = requiresIdField();
+  const { title, subtitle, icon, idLabel, idPlaceholder, showIdField } =
+    getLoginTitle();
   const displayError = validationError || getErrorMessage(error);
 
   return (
@@ -234,7 +242,7 @@ export const Login = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* ID Field (only for company/vendor login) */}
+          {/* ID Field (only for company/vendor/employee login) */}
           {showIdField && (
             <div className="space-y-1">
               <label className="block text-gray-600 font-medium">
