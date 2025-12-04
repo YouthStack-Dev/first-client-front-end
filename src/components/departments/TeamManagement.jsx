@@ -1,23 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { UserX, Users, Building2, Plus, Search, Filter } from 'lucide-react';
-import Modal from '../modals/Modal';
-import DepartmentForm from '../teams/DepartmentForm';
-import EmployeeList from '../teams/EmployeeList';
-import { useDispatch, useSelector } from 'react-redux';
-import { API_CLIENT } from '../../Api/API_Client';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { UserX, Users, Building2, Plus, Search, Filter } from "lucide-react";
+import Modal from "../modals/Modal";
+import DepartmentForm from "../teams/DepartmentForm";
+import EmployeeList from "../teams/EmployeeList";
+import { useDispatch, useSelector } from "react-redux";
+import { API_CLIENT } from "../../Api/API_Client";
 import {
   upsertTeam,
   removeTeam,
   setDepartmentEmployees,
   setLastFetchedDepId,
-  setTeams
-} from '../../redux/features/user/userSlice';
+  setTeams,
+} from "../../redux/features/user/userSlice";
 
-import { fetchDepartments } from '../../redux/features/user/userTrunk';
-import { toast } from 'react-toastify';
-import DepartmentList from './DepartmentList';
-import { logDebug } from '../../utils/logger';
+import { fetchDepartments } from "../../redux/features/user/userTrunk";
+import { toast } from "react-toastify";
+import DepartmentList from "./DepartmentList";
+import { logDebug } from "../../utils/logger";
 
 const TeamManagement = () => {
   const navigate = useNavigate();
@@ -26,8 +26,8 @@ const TeamManagement = () => {
   const { depId } = useParams();
 
   // Tab Management
-  const [activeTab, setActiveTab] = useState('departments');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState("departments");
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Department State
   const [currentPage, setCurrentPage] = useState(1);
@@ -40,29 +40,31 @@ const TeamManagement = () => {
 
   // Employee State
   const [employeeLoading, setEmployeeLoading] = useState(false);
-  const [employeeError, setEmployeeError] = useState('');
+  const [employeeError, setEmployeeError] = useState("");
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
-  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState("");
 
   // Redux selectors
   const teamsById = useSelector((state) => state.user.teams.byId);
   const teamIds = useSelector((state) => state.user.teams.allIds);
   const teams = teamIds.map((id) => teamsById[id]);
-  
-  const lastFetchedDepId = useSelector(state => state.user.lastFetchedDepId);
-  const employeeIds = useSelector(state => state.user.departmentEmployees[selectedDepartment] || []);
-  const employees = useSelector(state => employeeIds.map(id => state.user.employees.byId[id]));
 
-
+  const lastFetchedDepId = useSelector((state) => state.user.lastFetchedDepId);
+  const employeeIds = useSelector(
+    (state) => state.user.departmentEmployees[selectedDepartment] || []
+  );
+  const employees = useSelector((state) =>
+    employeeIds.map((id) => state.user.employees.byId[id])
+  );
 
   logDebug(" this are the actions:", actions);
   // Initialize tab based on URL or default
   useEffect(() => {
     if (depId) {
-      setActiveTab('employees');
+      setActiveTab("employees");
       setSelectedDepartment(depId);
-    } else if (location.pathname.includes('employees')) {
-      setActiveTab('employees');
+    } else if (location.pathname.includes("employees")) {
+      setActiveTab("employees");
     }
   }, [depId, location.pathname]);
 
@@ -75,19 +77,22 @@ const TeamManagement = () => {
         dispatch(setTeams(data));
         setTotalItems(data.length);
       } catch (error) {
-        logError('Error fetching teams:', error);
+        logError("Error fetching teams:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (activeTab === 'departments') {
+    if (activeTab === "departments") {
       const skip = (currentPage - 1) * itemsPerPage;
       const pageTeams = teamIds
         .slice(skip, skip + itemsPerPage)
         .map((id) => teamsById[id]);
 
-      if (pageTeams.length === itemsPerPage || (pageTeams.length > 0 && currentPage === 1)) {
+      if (
+        pageTeams.length === itemsPerPage ||
+        (pageTeams.length > 0 && currentPage === 1)
+      ) {
         return;
       }
 
@@ -97,7 +102,7 @@ const TeamManagement = () => {
 
   // Fetch employees when department is selected
   useEffect(() => {
-    if (activeTab === 'employees' && selectedDepartment) {
+    if (activeTab === "employees" && selectedDepartment) {
       if (lastFetchedDepId === selectedDepartment && employeeIds.length > 0) {
         setEmployeeLoading(false);
         return;
@@ -106,16 +111,25 @@ const TeamManagement = () => {
       const fetchDepartmentEmployees = async () => {
         try {
           setEmployeeLoading(true);
-          const response = await API_CLIENT.get(`employees/department/${selectedDepartment}`);
+          const response = await API_CLIENT.get(
+            `employees/department/${selectedDepartment}`
+          );
           const { employees: fetchedEmployees, message } = response.data;
 
-          dispatch(setDepartmentEmployees({ depId: selectedDepartment, employees: fetchedEmployees }));
+          dispatch(
+            setDepartmentEmployees({
+              depId: selectedDepartment,
+              employees: fetchedEmployees,
+            })
+          );
           dispatch(setLastFetchedDepId(selectedDepartment));
 
-          toast.success(message || 'Employees loaded successfully');
+          toast.success(message || "Employees loaded successfully");
         } catch (err) {
-          setEmployeeError(err.response?.data?.detail || 'Something went wrong');
-          toast.error(err.response?.data?.detail || 'Failed to load employees');
+          setEmployeeError(
+            err.response?.data?.detail || "Something went wrong"
+          );
+          toast.error(err.response?.data?.detail || "Failed to load employees");
         } finally {
           setEmployeeLoading(false);
         }
@@ -123,7 +137,13 @@ const TeamManagement = () => {
 
       fetchDepartmentEmployees();
     }
-  }, [activeTab, selectedDepartment, lastFetchedDepId, employeeIds.length, dispatch]);
+  }, [
+    activeTab,
+    selectedDepartment,
+    lastFetchedDepId,
+    employeeIds.length,
+    dispatch,
+  ]);
 
   // Department handlers
   const handleSelectTeam = (teamId, isSelected) => {
@@ -143,7 +163,6 @@ const TeamManagement = () => {
   const handleEdit = (team) => {
     const teamToEdit = {
       ...team,
-    
     };
     setEditingTeam(teamToEdit);
     setIsOpen(true);
@@ -155,14 +174,14 @@ const TeamManagement = () => {
         await API_CLIENT.delete(`/departments/${teamId}`);
         dispatch(removeTeam({ teamId }));
         setSelectedTeams((prev) => prev.filter((id) => id !== teamId));
-        
+
         if (teams.length === 1 && currentPage > 1) {
           setCurrentPage(currentPage - 1);
         }
-        toast.success('Department deleted successfully');
+        toast.success("Department deleted successfully");
       } catch (error) {
-        toast.error('Error deleting department');
-        console.error('Error deleting team:', error);
+        toast.error("Error deleting department");
+        console.error("Error deleting team:", error);
       }
     }
   };
@@ -194,42 +213,52 @@ const TeamManagement = () => {
   };
 
   const handleEmployeeRowClick = (employee, e) => {
-    if (e.target.type === 'checkbox') return;
-    navigate(`/department/${selectedDepartment}/employees/${employee.employee_code}/view`);
+    if (e.target.type === "checkbox") return;
+    navigate(
+      `/companies/department/${selectedDepartment}/employees/${employee.employee_code}/view`
+    );
   };
 
   const handleEmployeeView = (employee) => {
-    navigate(`/department/${selectedDepartment}/employees/${employee.employee_code}/view`, {
-      state: { employee, fromChild: true },
-    });
+    navigate(
+      `/companies/department/${selectedDepartment}/employees/${employee.employee_code}/view`,
+      {
+        state: { employee, fromChild: true },
+      }
+    );
   };
 
   const handleEmployeeEdit = (employee) => {
-    navigate(`/department/${selectedDepartment}/employees/${employee.employee_code}/edit`, {
-      state: { employee },
-    });
+    navigate(
+      `/companies/department/${selectedDepartment}/employees/${employee.employee_code}/edit`,
+      {
+        state: { employee },
+      }
+    );
   };
 
   const handleAddEmployee = () => {
-    navigate(`/employee/create-employee`);
+    navigate(`/companies/employee/create-employee`);
   };
 
   // Filter data based on search
-  const filteredTeams = teams.filter(team =>
-    team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    team.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredTeams = teams.filter(
+    (team) =>
+      team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      team.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredEmployees = employees.filter(employee =>
-    employee?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee?.employee_code?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredEmployees = employees.filter(
+    (employee) =>
+      employee?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee?.employee_code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div className="p-6 bg-app-background min-h-screen">
       {/* Header */}
-    
+
       {/* Tab Navigation */}
       <div className="bg-app-surface rounded-lg shadow-sm border border-app-border mb-6">
         <div className="border-b border-app-border">
@@ -244,7 +273,7 @@ const TeamManagement = () => {
           </div>
 
           {/* Departments Tab Content */}
-          {activeTab === 'departments' && (
+          {activeTab === "departments" && (
             <DepartmentList
               departments={filteredTeams}
               selectedDepartments={selectedTeams}
@@ -256,7 +285,7 @@ const TeamManagement = () => {
               onDeleteDepartment={handleDelete}
               onViewEmployees={(depId) => {
                 setSelectedDepartment(depId);
-                setActiveTab('employees');
+                setActiveTab("employees");
               }}
               currentPage={currentPage}
               totalItems={totalItems}
@@ -266,15 +295,19 @@ const TeamManagement = () => {
           )}
 
           {/* Employees Tab Content */}
-          {activeTab === 'employees' && (
+          {activeTab === "employees" && (
             <>
               {!selectedDepartment ? (
                 <div className="text-center py-12">
                   <Users className="w-16 h-16 text-app-text-muted mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-app-text-primary mb-2">Select a Department</h3>
-                  <p className="text-app-text-secondary mb-6">Choose a department to view its employees</p>
+                  <h3 className="text-lg font-medium text-app-text-primary mb-2">
+                    Select a Department
+                  </h3>
+                  <p className="text-app-text-secondary mb-6">
+                    Choose a department to view its employees
+                  </p>
                   <button
-                    onClick={() => setActiveTab('departments')}
+                    onClick={() => setActiveTab("departments")}
                     className="bg-sidebar-primary-500 hover:bg-sidebar-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
                   >
                     View Departments
@@ -291,7 +324,10 @@ const TeamManagement = () => {
                   onRowClick={handleEmployeeRowClick}
                   onView={handleEmployeeView}
                   onEdit={handleEmployeeEdit}
-                  departmentName={teams.find(t => t.id === parseInt(selectedDepartment))?.name}
+                  departmentName={
+                    teams.find((t) => t.id === parseInt(selectedDepartment))
+                      ?.name
+                  }
                 />
               )}
             </>
@@ -306,7 +342,7 @@ const TeamManagement = () => {
           setIsOpen(false);
           setEditingTeam(null);
         }}
-        title={editingTeam ? 'Edit Department' : 'Create Department'}
+        title={editingTeam ? "Edit Department" : "Create Department"}
         size="md"
       >
         <DepartmentForm

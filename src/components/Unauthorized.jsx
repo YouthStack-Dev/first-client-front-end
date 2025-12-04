@@ -20,7 +20,7 @@ const Unauthorized = () => {
         return "/dashboard";
       case "vendor":
         return "/vendor/dashboard";
-      case "superadmin":
+      case "admin":
         return "/superadmin/dashboard";
       default:
         return "/dashboard";

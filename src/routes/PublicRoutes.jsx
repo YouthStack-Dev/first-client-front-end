@@ -12,8 +12,9 @@ export const PublicRoutes = () => (
         </PublicRoute>
       }
     />
+
     <Route
-      path="/employee"
+      path="/vendor"
       element={
         <PublicRoute>
           <Login />
@@ -21,7 +22,7 @@ export const PublicRoutes = () => (
       }
     />
     <Route
-      path="/vendor"
+      path="/superadmin"
       element={
         <PublicRoute>
           <Login />

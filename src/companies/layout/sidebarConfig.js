@@ -1,22 +1,5 @@
 // sidebarConfig.js
-import {
-  Calendar,
-  Users,
-  UserCheck,
-  MapPin,
-  Route,
-  Clock,
-  Users2,
-  Settings,
-  Car,
-  Truck,
-  Store,
-  UserCog,
-  CalendarOff,
-  Shield,
-  FileText,
-  Key,
-} from "lucide-react";
+import { Users, MapPin, Clock, Users2, Car, Store } from "lucide-react";
 
 // Base sidebar configuration
 export const baseSidebarConfig = [
@@ -26,7 +9,7 @@ export const baseSidebarConfig = [
       {
         title: "Dashboard",
         icon: Users,
-        path: "/dashboard",
+        path: "/companies/dashboard",
         permission: "role.read",
         icon: Users,
       },
@@ -36,9 +19,16 @@ export const baseSidebarConfig = [
     title: "User Administrator",
     items: [
       {
-        title: " User Role & Permission",
+        title: "User Role & Permission",
         icon: Users,
-        path: "/role-permission",
+        path: "/companies/role-permission",
+        permission: "role.read",
+        icon: Users,
+      },
+      {
+        title: "Vendor Users",
+        icon: Users,
+        path: "/companies/vendor-user-management",
         permission: "role.read",
         icon: Users,
       },
@@ -50,59 +40,58 @@ export const baseSidebarConfig = [
       {
         title: "Manage Drivers",
         icon: Users,
-        path: "/drivers",
+        path: "/companies/drivers",
         permission: "driver.read",
         icon: Users,
       },
       {
         title: "Vehicles",
         icon: Car,
-        path: "/vehicles",
+        path: "/companies/vehicles",
         permission: "vehicle.read",
         icon: Car,
       },
     ],
   },
-
   {
     title: "Management",
     items: [
       {
         title: "Route Management",
-        path: "/routing",
+        path: "/companies/routing",
         permission: "route.read",
         icon: MapPin,
       },
       {
         title: "Shift Management",
         icon: Clock,
-        path: "/shifts",
+        path: "/companies/shifts",
         permission: "shift.read",
         icon: Clock,
       },
       {
         title: "Cutoff Management",
         icon: Clock,
-        path: "/cutoff",
+        path: "/companies/cutoff",
         permission: "cutoff.read",
         icon: Clock,
       },
       {
         title: "Teams",
         icon: Users2,
-        path: "/departments",
+        path: "/companies/departments",
         permission: "team.read",
         icon: Users2,
       },
       {
         title: "Vendor Management",
-        path: "/vendors",
+        path: "/companies/vendors",
         permission: "vendor.read",
         icon: Store,
       },
       {
         title: "Tracking Management",
-        path: "/tracking",
+        path: "/companies/tracking",
         permission: "route.read",
         icon: Store,
       },
@@ -114,7 +103,7 @@ export const baseSidebarConfig = [
       {
         title: "Reports Managements",
         icon: Users,
-        path: "/repots-management",
+        path: "/companies/repots-management",
         permission: "report.read",
         icon: Users,
       },

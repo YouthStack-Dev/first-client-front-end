@@ -12,7 +12,7 @@ export const pathTitleMap = {
   "/employees": "Employee Management",
   "/employee": "Employee",
   "/department": "Department Employees",
-
+  "/vendor-user-management": "Vendor User Management",
   // Management
   "/departments": "Departments",
   "/groups": "Group Management",
