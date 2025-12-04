@@ -21,6 +21,7 @@ import {
   selectCompaniesFromRedux,
 } from "../redux/features/company/companyslice";
 import { fetchCompaniesThunk } from "../redux/features/company/companyThunks";
+import { selectCurrentUser } from "../redux/features/auth/authSlice";
 
 const ManageDepartment = () => {
   const navigate = useNavigate();
@@ -34,6 +35,46 @@ const ManageDepartment = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [selectedCompany, setSelectedCompany] = useState("");
+  const user = useSelector(selectCurrentUser);
+
+  logDebug(" This is the user", user?.type);
+
+  // Get tenant from localStorage for non-admin users
+  const getTenantFromLocalStorage = () => {
+    try {
+      const tenantData = localStorage.getItem("tenant");
+      if (tenantData) {
+        const parsedTenant = JSON.parse(tenantData);
+        return parsedTenant.tenant_id || "";
+      }
+    } catch (error) {
+      logError("Error getting tenant from localStorage:", error);
+    }
+    return "";
+  };
+
+  // Initialize selectedCompany based on user type
+  useEffect(() => {
+    if (!user) return; // Wait until user is loaded
+
+    logDebug("User in useEffect:", user);
+    logDebug("User type in useEffect:", user?.type);
+
+    if (user.type !== "admin") {
+      const tenantId = getTenantFromLocalStorage();
+      if (tenantId) {
+        setSelectedCompany(tenantId);
+        // Fetch departments immediately for non-admin users
+        fetchDepartments(tenantId);
+      } else {
+        toast.error(
+          "No tenant information found. Please contact administrator."
+        );
+      }
+    } else {
+      logDebug("Admin user detected, waiting for company selection");
+    }
+  }, [user]); // Runs when user changes
 
   // Modal states
   const [isDepartmentModalOpen, setIsDepartmentModalOpen] = useState(false);
@@ -52,15 +93,15 @@ const ManageDepartment = () => {
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [editingTeam, setEditingTeam] = useState(null);
 
-  // Get companies data from Redux
+  // Get companies data from Redux (only for admin users)
   const companies = useSelector(selectCompaniesFromRedux);
   const companiesFetched = useSelector(selectCompaniesFetched);
 
-  // Generate company options from fetched data
+  // Generate company options from fetched data (only for admin users)
   const companyOptions = React.useMemo(() => {
     const options = [{ value: "", label: "All Companies" }];
 
-    if (companies && companies.length > 0) {
+    if (user?.type === "admin" && companies && companies.length > 0) {
       companies.forEach((company) => {
         options.push({
           value: company.tenant_id || company.id || company.company_id,
@@ -74,15 +115,19 @@ const ManageDepartment = () => {
 
     logDebug("Generated company options:", options);
     return options;
-  }, [companies]);
+  }, [companies, user?.type]); // Use user?.type directly
 
-  // Debounce search term
+  // Fetch companies only for admin users
   useEffect(() => {
-    if (!companiesFetched) {
+    if (!user) return; // Wait until user is loaded
+
+    if (user.type === "admin" && !companiesFetched) {
+      logDebug("Fetching companies for admin user");
       dispatch(fetchCompaniesThunk());
     }
-  }, [dispatch, companiesFetched]);
+  }, [dispatch, companiesFetched, user]); // Use user as dependency
 
+  // Debounce search term
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -104,7 +149,7 @@ const ManageDepartment = () => {
     setCurrentPage(1); // Reset to first page when searching
   };
 
-  // Handle company selection change - ONLY fetch when company is selected
+  // Handle company selection change - ONLY for admin users
   const handleCompanyChange = async (companyId) => {
     setSelectedCompany(companyId);
     setCurrentPage(1);
@@ -127,7 +172,7 @@ const ManageDepartment = () => {
     setIsDepartmentModalOpen(true);
   };
 
-  // Fetch departments for specific company
+  // Fetch departments for specific company (for admin users)
   const fetchDepartmentsByCompany = async (companyId, page = 1, limit = 10) => {
     if (!companyId) return;
 
@@ -187,6 +232,68 @@ const ManageDepartment = () => {
     }
   };
 
+  // Generic fetch departments function (for non-admin users)
+  const fetchDepartments = async (tenantId = null, page = 1, limit = 10) => {
+    setIsLoading(true);
+    try {
+      const params = {
+        skip: (page - 1) * limit,
+        limit,
+      };
+
+      // For non-admin users, always use tenant_id from localStorage
+      if (!tenantId && user?.type !== "admin") {
+        tenantId = getTenantFromLocalStorage();
+      }
+
+      // Add tenant_id if available
+      if (tenantId) {
+        params.tenant_id = tenantId;
+      }
+
+      logDebug("Fetching departments with params:", params);
+      const { data } = await API_CLIENT.get(endpoint.getDepartments, {
+        params,
+      });
+
+      // Handle response
+      const departmentsData = data?.data || data;
+      let processedData;
+
+      if (departmentsData?.items) {
+        processedData = {
+          items: departmentsData.items,
+          totalCount:
+            departmentsData.totalCount ||
+            departmentsData.total ||
+            departmentsData.items.length,
+        };
+      } else if (Array.isArray(departmentsData)) {
+        processedData = {
+          items: departmentsData,
+          totalCount: departmentsData.length,
+        };
+      } else {
+        processedData = {
+          items: [],
+          totalCount: 0,
+        };
+      }
+
+      dispatch(setTeams(processedData.items));
+      setTotalItems(processedData.totalCount);
+
+      if (processedData.items.length === 0) {
+        toast.info("No departments found");
+      }
+    } catch (error) {
+      logError("Error fetching departments:", error);
+      toast.error("Failed to fetch departments");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Fetch departments with search (only when search term is used)
   const fetchDepartmentsWithSearch = async (
     page = 1,
@@ -205,8 +312,14 @@ const ManageDepartment = () => {
         params.name = search;
       }
 
-      // Add company filter if a company is selected
-      if (selectedCompany && selectedCompany !== "") {
+      // For non-admin users, always use tenant from localStorage
+      if (user?.type !== "admin") {
+        const tenantId = getTenantFromLocalStorage();
+        if (tenantId) {
+          params.tenant_id = tenantId;
+        }
+      } else if (selectedCompany && selectedCompany !== "") {
+        // For admin users, use selected company
         params.tenant_id = selectedCompany;
       }
 
@@ -215,7 +328,7 @@ const ManageDepartment = () => {
         params,
       });
 
-      // Handle response (same as before)
+      // Handle response
       const departmentsData = data?.data || data;
       let processedData;
 
@@ -330,8 +443,14 @@ const ManageDepartment = () => {
     depname,
     memberCount
   ) => {
+    // Get tenantId - use selectedCompany for admin, localStorage for non-admin
+    let tenantId = selectedCompany;
+    if (!tenantId && user?.type !== "admin") {
+      tenantId = getTenantFromLocalStorage();
+    }
+
     navigate(
-      `/department/${departmentId}/employees?active=${isActive}&tenantId=${selectedCompany}`,
+      `/department/${departmentId}/employees?active=${isActive}&tenantId=${tenantId}`,
       {
         state: { isActive, depname, departmentId, memberCount },
       }
@@ -342,8 +461,16 @@ const ManageDepartment = () => {
     setEditingTeam(null);
     setIsDepartmentModalOpen(false);
     // Refresh the list after successful form submission
-    if (selectedCompany && selectedCompany !== "") {
-      fetchDepartmentsByCompany(selectedCompany, currentPage, itemsPerPage);
+    if (user?.type === "admin") {
+      if (selectedCompany && selectedCompany !== "") {
+        fetchDepartmentsByCompany(selectedCompany, currentPage, itemsPerPage);
+      }
+    } else {
+      // For non-admin users, fetch with tenant from localStorage
+      const tenantId = getTenantFromLocalStorage();
+      if (tenantId) {
+        fetchDepartments(tenantId, currentPage, itemsPerPage);
+      }
     }
   };
 
@@ -375,14 +502,17 @@ const ManageDepartment = () => {
         }
         rightElements={
           <div className="flex items-center gap-3">
-            <SelectField
-              className="p-2"
-              label="Company"
-              value={selectedCompany}
-              onChange={handleCompanyChange}
-              options={companyOptions}
-              disabled={!companiesFetched || companyOptions.length === 1}
-            />
+            {/* Only show company selector for admin users */}
+            {user?.type === "admin" && (
+              <SelectField
+                className="p-2"
+                label="Company"
+                value={selectedCompany}
+                onChange={handleCompanyChange}
+                options={companyOptions}
+                disabled={!companiesFetched || companyOptions.length === 1}
+              />
+            )}
             <ReusableButton
               module="team"
               action="delete"
@@ -406,8 +536,8 @@ const ManageDepartment = () => {
         }
       />
 
-      {/* Show message when no company is selected */}
-      {!selectedCompany && (
+      {/* Show message when no company is selected (only for admin users) */}
+      {user?.type === "admin" && !selectedCompany && (
         <div className="p-4 mb-4 bg-blue-50 border border-blue-200 rounded-md">
           <p className="text-blue-800 text-center">
             Please select a company to view departments
@@ -415,8 +545,20 @@ const ManageDepartment = () => {
         </div>
       )}
 
-      {/* Department List Component - Only show when company is selected */}
-      {selectedCompany && (
+      {/* Show message if non-admin user has no tenant info */}
+      {user?.type !== "admin" && !getTenantFromLocalStorage() && (
+        <div className="p-4 mb-4 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-red-800 text-center">
+            No tenant information found. Please contact administrator.
+          </p>
+        </div>
+      )}
+
+      {/* Department List Component */}
+      {/* For admin users: Show only when company is selected */}
+      {/* For non-admin users: Show if tenant exists in localStorage */}
+      {(user?.type === "admin" && selectedCompany) ||
+      (user?.type !== "admin" && getTenantFromLocalStorage()) ? (
         <DepartmentList
           departments={displayDepartments}
           selectedDepartments={selectedDepartments}
@@ -432,9 +574,9 @@ const ManageDepartment = () => {
           itemsPerPage={itemsPerPage}
           onPageChange={setCurrentPage}
           onViewHistory={handleDepartmentSpecificLog}
-          selectedCompany={selectedCompany}
+          selectedCompany={selectedCompany || getTenantFromLocalStorage()}
         />
-      )}
+      ) : null}
 
       {/* Department Form Modal */}
       <Modal
@@ -454,7 +596,8 @@ const ManageDepartment = () => {
           onSuccess={handleFormSuccess}
           initialData={editingTeam}
           companyOptions={companyOptions}
-          selectedCompany={selectedCompany}
+          selectedCompany={selectedCompany || getTenantFromLocalStorage()}
+          userType={user?.type}
         />
       </Modal>
 
@@ -464,7 +607,7 @@ const ManageDepartment = () => {
         moduleName="Team"
         showUserColumn={true}
         apimodule="team"
-        selectedCompany={selectedCompany}
+        selectedCompany={selectedCompany || getTenantFromLocalStorage()}
       />
     </div>
   );

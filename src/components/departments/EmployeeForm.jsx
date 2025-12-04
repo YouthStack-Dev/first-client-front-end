@@ -507,7 +507,6 @@ const EmployeeForm = ({ mode = "create" }) => {
                 setFormData={setFormData}
                 setErrors={setErrors}
                 isReadOnly={true}
-                companyLocation={companyLocation}
               />
             </div>
             <NavigationButtons

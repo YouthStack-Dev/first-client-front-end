@@ -43,6 +43,11 @@ export const superAdminMenuItems = [
     path: "/superadmin/departments",
     icon: BarChart3,
   },
+  {
+    name: "Teams",
+    path: "/superadmin/teams",
+    icon: BarChart3,
+  },
 ];
 
 const SuperAdminSidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {

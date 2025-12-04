@@ -1,70 +1,120 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { APIProvider, Map } from "@vis.gl/react-google-maps";
-import { Search, X, AlertCircle, RefreshCw } from "lucide-react";
+import { Search, X, AlertCircle, RefreshCw, MapPin } from "lucide-react";
 import LiveRouteCard from "./LiveRouteCard";
 import MapMarkers from "./MapMarker";
 import SelectedRouteOverlay from "./SelectedRouteOverlay";
-import { dummyroutes } from "../staticData/routedata";
 import { useDriverLocations } from "../hooks/useDriverLocations";
-import { API_CLIENT } from "../Api/API_Client";
 import { logDebug } from "../utils/logger";
-import ToolBar from "../components/ui/ToolBar";
-import SelectField from "../components/ui/SelectField";
 
-const LiveTracking = () => {
+const LiveTracking = ({
+  routes: apiRoutes = [],
+  loading = false,
+  selectedCompany = null,
+}) => {
   const [routeSearch, setRouteSearch] = useState("");
-  const [selectedRouteIds, setSelectedRouteIds] = useState([]); // Multi-selection
+  const [selectedRouteIds, setSelectedRouteIds] = useState([]);
   const [focusedRouteId, setFocusedRouteId] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
+
   const API_KEY = import.meta.env.VITE_GOOGLE_API || "";
-  const companyLocation = { lat: 12.9716, lng: 77.5946 };
-  const [selectedCompany, setSelectedCompany] = useState("");
 
-  const fetchOngooingRoutes = async () => {
-    const response = await API_CLIENT.get("/v1/routes/");
-    logDebug("Ongoing Routes Response:", response.data);
-  };
+  // Use selected company location or default location
+  const companyLocation = useMemo(() => {
+    if (selectedCompany?.location) {
+      return {
+        lat:
+          selectedCompany.location.latitude ||
+          selectedCompany.location.lat ||
+          12.9716,
+        lng:
+          selectedCompany.location.longitude ||
+          selectedCompany.location.lng ||
+          77.5946,
+      };
+    }
+    return { lat: 12.9716, lng: 77.5946 };
+  }, [selectedCompany]);
 
-  useEffect(() => {
-    fetchOngooingRoutes();
-  }, []);
+  // Process API routes - NO DUMMY DATA FALLBACK
+  const allRoutes = useMemo(() => {
+    if (!apiRoutes || !Array.isArray(apiRoutes)) {
+      logDebug("No valid routes data received");
+      return [];
+    }
 
-  logDebug("Selected Route IDs:", selectedRouteIds);
+    return apiRoutes.map((route) => {
+      // Extract route ID from various possible fields
+      const routeId =
+        route.id || route.route_id || route._id || `route-${Math.random()}`;
+
+      // Extract driver info
+      const driver = route.driver || {
+        id: route.driver_id || null,
+        name: route.driver_name || "Unknown Driver",
+      };
+
+      // Extract vehicle info
+      const vehicle = route.vehicle || {
+        rc_number: route.vehicle_number || "Unknown Vehicle",
+        vehicle_id: route.vehicle_id,
+      };
+
+      // Extract stops - ensure it's an array
+      let stops = [];
+      if (route.stops && Array.isArray(route.stops)) {
+        stops = route.stops;
+      } else if (route.route_stops && Array.isArray(route.route_stops)) {
+        stops = route.route_stops;
+      }
+
+      // Extract shift info if available
+      const shift = route.shift || route.shift_info || null;
+
+      return {
+        ...route,
+        route_id: routeId,
+        driver,
+        vehicle,
+        stops,
+        shift,
+        // Add status with fallback
+        status: route.status || "Ongoing",
+      };
+    });
+  }, [apiRoutes]);
 
   // Get all driver IDs for selected routes
   const trackedDriverIds = useMemo(() => {
-    return dummyroutes
+    return allRoutes
       .filter((route) => selectedRouteIds.includes(route.route_id))
       .map((route) => route?.driver?.id)
       .filter(Boolean);
-  }, [selectedRouteIds]);
-
-  logDebug("Tracked Driver IDs:", trackedDriverIds);
+  }, [selectedRouteIds, allRoutes]);
 
   // Use custom hook for location tracking
   const { driverLocations, loadingLocations, locationErrors } =
     useDriverLocations(trackedDriverIds);
-  logDebug(
-    "Driver Locations:",
-    driverLocations,
-    loadingLocations,
-    locationErrors
-  );
+
   // Filter routes based on search
   const filteredRoutes = useMemo(() => {
-    return dummyroutes.filter(
-      (route) =>
-        route?.vehicle?.rc_number
-          .toLowerCase()
-          .includes(routeSearch.toLowerCase()) ||
-        route?.driver?.name?.toLowerCase().includes(routeSearch.toLowerCase())
-    );
-  }, [routeSearch]);
+    if (!allRoutes.length) return [];
+
+    return allRoutes.filter((route) => {
+      const vehicleNumber = route?.vehicle?.rc_number || "";
+      const driverName = route?.driver?.name || "";
+      const searchTerm = routeSearch.toLowerCase();
+
+      return (
+        vehicleNumber.toLowerCase().includes(searchTerm) ||
+        driverName.toLowerCase().includes(searchTerm)
+      );
+    });
+  }, [routeSearch, allRoutes]);
 
   // Get selected routes with their locations
-  // In the selectedRoutes computation, update to handle different location structures
   const selectedRoutes = useMemo(() => {
-    return dummyroutes
+    return allRoutes
       .filter((route) => selectedRouteIds.includes(route.route_id))
       .map((route) => {
         const driverId = route?.driver?.id;
@@ -72,35 +122,44 @@ const LiveTracking = () => {
 
         // Extract location from firebase data
         let currentLocation = null;
+        let hasLiveLocation = false;
 
         if (firebaseLocation) {
           // Handle different possible location structures
           if (firebaseLocation.lat && firebaseLocation.lng) {
-            // Direct lat/lng properties
             currentLocation = {
               lat: firebaseLocation.lat,
               lng: firebaseLocation.lng,
             };
+            hasLiveLocation = true;
           } else if (firebaseLocation.coordinates) {
-            // Nested coordinates
             currentLocation = {
               lat: firebaseLocation.coordinates.lat,
               lng: firebaseLocation.coordinates.lng,
             };
+            hasLiveLocation = true;
           } else if (firebaseLocation.latitude && firebaseLocation.longitude) {
-            // Different property names
             currentLocation = {
               lat: firebaseLocation.latitude,
               lng: firebaseLocation.longitude,
             };
+            hasLiveLocation = true;
           }
         }
 
         // If no valid firebase location, use first stop's pickup location
         if (!currentLocation && route.stops?.[0]) {
           currentLocation = {
-            lat: route.stops[0].pickup_latitude,
-            lng: route.stops[0].pickup_longitude,
+            lat: route.stops[0].pickup_latitude || route.stops[0].latitude,
+            lng: route.stops[0].pickup_longitude || route.stops[0].longitude,
+          };
+        }
+
+        // If still no location, check route's current location
+        if (!currentLocation && route.current_location) {
+          currentLocation = {
+            lat: route.current_location.latitude || route.current_location.lat,
+            lng: route.current_location.longitude || route.current_location.lng,
           };
         }
 
@@ -112,7 +171,7 @@ const LiveTracking = () => {
         return {
           ...route,
           currentLocation,
-          hasLiveLocation: !!firebaseLocation,
+          hasLiveLocation,
           isLoading: loadingLocations[driverId],
           error: locationErrors[driverId],
         };
@@ -123,6 +182,7 @@ const LiveTracking = () => {
     loadingLocations,
     locationErrors,
     companyLocation,
+    allRoutes,
   ]);
 
   // Get focused route for overlay
@@ -134,15 +194,12 @@ const LiveTracking = () => {
   const handleRouteSelect = (route) => {
     setSelectedRouteIds((prev) => {
       if (prev.includes(route.route_id)) {
-        // Deselect
         const newSelection = prev.filter((id) => id !== route.route_id);
-        // If focused route was deselected, clear focus or set to first selected
         if (focusedRouteId === route.route_id) {
           setFocusedRouteId(newSelection[0] || null);
         }
         return newSelection;
       } else {
-        // Select and focus
         setFocusedRouteId(route.route_id);
         return [...prev, route.route_id];
       }
@@ -156,57 +213,26 @@ const LiveTracking = () => {
 
   const clearSearch = () => setRouteSearch("");
   const clearFocus = () => setFocusedRouteId(null);
-  const handleSync = () => {
-    logDebug("Syncing data...");
-  };
-
-  const companyOptions = [
-    { value: "", label: "All company" },
-    { value: "company1", label: "company 1" },
-    { value: "company2", label: "company 2" },
-    { value: "company3", label: "company 3" },
-  ];
 
   return (
     <div className="mb-8">
-      <ToolBar
-        rightElements={
-          <div className="flex items-center gap-4">
-            {"admin" === "admin" ? (
-              <SelectField
-                label="Company"
-                value={selectedCompany}
-                onChange={setSelectedCompany}
-                options={companyOptions}
-              />
-            ) : null}
-            <button
-              onClick={handleSync}
-              disabled={loading}
-              className="bg-blue-500 text-white px-3 py-1 rounded-md text-sm 
-             hover:bg-blue-600 disabled:bg-blue-300 flex items-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Syncing...
-                </>
-              ) : (
-                <>
-                  <RefreshCw size={16} />
-                  Sync
-                </>
-              )}
-            </button>
-          </div>
-        }
-      />
       <div
         className="bg-white shadow-lg border border-gray-200 overflow-hidden"
         style={{ height: "600px" }}
       >
         {/* Search Bar */}
         <div className="p-4 border-b border-gray-200 bg-gray-50">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-800">
+                Live Route Tracking
+              </h2>
+              <p className="text-sm text-gray-600">
+                {selectedCompany ? selectedCompany.name : null}
+              </p>
+            </div>
+          </div>
+
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="w-5 h-5 text-gray-400" />
@@ -231,53 +257,89 @@ const LiveTracking = () => {
               </button>
             )}
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            {filteredRoutes.length} of {dummyroutes.length} routes
-            {selectedRouteIds.length > 0 &&
-              ` • ${selectedRouteIds.length} tracked`}
-            {Object.keys(driverLocations).length > 0 &&
-              ` • ${Object.keys(driverLocations).length} live`}
-            <span className="ml-2 text-green-600">
-              • Real-time updates active
-            </span>
-          </p>
+
+          <div className="flex flex-wrap items-center gap-3 mt-2">
+            <p className="text-xs text-gray-500">
+              {loading ? (
+                <span className="text-blue-500">Loading routes...</span>
+              ) : (
+                <>
+                  <span className="font-medium">{filteredRoutes.length}</span>{" "}
+                  of <span className="font-medium">{allRoutes.length}</span>{" "}
+                  routes
+                </>
+              )}
+            </p>
+
+            {selectedRouteIds.length > 0 && (
+              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                {selectedRouteIds.length} tracked
+              </span>
+            )}
+
+            {Object.keys(driverLocations).length > 0 && (
+              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                {Object.keys(driverLocations).length} live locations
+              </span>
+            )}
+
+            {allRoutes.length === 0 && !loading && (
+              <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded">
+                No ongoing routes
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="flex h-[calc(100%-80px)]">
+        <div className="flex h-[calc(100%-120px)]">
           {/* Map Section */}
           <div className="flex-1 relative">
-            <APIProvider apiKey={API_KEY}>
-              <Map
-                defaultCenter={companyLocation}
-                defaultZoom={13}
-                mapId="company-route-map"
-                gestureHandling="greedy"
-                style={{ width: "100%", height: "100%" }}
-                fullscreenControl={false}
-                streetViewControl={false}
-                mapTypeControl={false}
-              >
-                <MapMarkers
-                  companyLocation={companyLocation}
-                  selectedRoutes={selectedRoutes}
-                  onMarkerClick={handleRouteFocus}
-                />
-              </Map>
-            </APIProvider>
+            {loading ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-3"></div>
+                  <p className="text-gray-600">Loading map data...</p>
+                </div>
+              </div>
+            ) : (
+              <APIProvider apiKey={API_KEY}>
+                <Map
+                  defaultCenter={companyLocation}
+                  defaultZoom={13}
+                  mapId="company-route-map"
+                  gestureHandling="greedy"
+                  style={{ width: "100%", height: "100%" }}
+                  fullscreenControl={false}
+                  streetViewControl={false}
+                  mapTypeControl={false}
+                >
+                  <MapMarkers
+                    companyLocation={companyLocation}
+                    selectedRoutes={selectedRoutes}
+                    onMarkerClick={handleRouteFocus}
+                  />
+                </Map>
+              </APIProvider>
+            )}
 
-            {/* Debug Info Panel */}
+            {/* Status Panel */}
             <div className="absolute top-4 left-4 bg-black/80 text-white text-xs p-2 rounded-lg max-w-xs">
               <div className="font-mono space-y-1">
-                <div>Tracked: {selectedRouteIds.length} routes</div>
-                <div>Live: {Object.keys(driverLocations).length} drivers</div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-3 h-3 text-green-400" />
+                  <span>Routes: {allRoutes.length}</span>
+                </div>
+                <div>Tracked: {selectedRouteIds.length}</div>
+                <div>Live Locations: {Object.keys(driverLocations).length}</div>
                 {focusedRoute && (
                   <>
                     <div className="border-t border-gray-600 pt-1 mt-1">
                       Focused: {focusedRoute.vehicle?.rc_number || "Unknown"}
                     </div>
-                    <div>
-                      Source:{" "}
-                      {focusedRoute.hasLiveLocation ? "Firebase" : "Static"}
+                    <div className="text-green-400">
+                      {focusedRoute.hasLiveLocation
+                        ? "● Live Tracking"
+                        : "● Static Position"}
                     </div>
                   </>
                 )}
@@ -293,7 +355,12 @@ const LiveTracking = () => {
           {/* Route List Sidebar */}
           <div className="w-80 border-l border-gray-200 overflow-y-auto">
             <div className="divide-y divide-gray-100">
-              {filteredRoutes.length > 0 ? (
+              {loading ? (
+                <div className="p-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-3"></div>
+                  <p className="text-sm text-gray-500">Loading routes...</p>
+                </div>
+              ) : filteredRoutes.length > 0 ? (
                 filteredRoutes.map((route) => (
                   <LiveRouteCard
                     key={route.route_id}
@@ -307,12 +374,26 @@ const LiveTracking = () => {
                     error={locationErrors[route?.driver?.id]}
                   />
                 ))
-              ) : (
+              ) : routeSearch ? (
                 <div className="p-8 text-center">
                   <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                   <p className="text-sm text-gray-500">No routes found</p>
                   <p className="text-xs text-gray-400 mt-1">
                     Try adjusting your search
+                  </p>
+                  <button
+                    onClick={clearSearch}
+                    className="mt-3 text-sm text-blue-500 hover:text-blue-600"
+                  >
+                    Clear search
+                  </button>
+                </div>
+              ) : (
+                <div className="p-8 text-center">
+                  <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500">No ongoing routes</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    All routes are completed or haven't started yet
                   </p>
                 </div>
               )}
