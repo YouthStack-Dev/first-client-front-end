@@ -12,7 +12,7 @@ export const PublicRoute = ({ children }) => {
 
     switch (user.type.toLowerCase()) {
       case "employee":
-        return "/dashboard";
+        return "/companies/dashboard";
       case "vendor":
         return "/vendor/dashboard";
       case "superadmin":

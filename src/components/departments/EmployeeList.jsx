@@ -108,7 +108,7 @@ const EmployeeList = ({
 
   // Booking handler
   const handleBookingClick = (employee) => {
-    navigate(`/employee/${employee.employee_id}/bookings`, {
+    navigate(`/companies/employee/${employee.employee_id}/bookings`, {
       state: { employee },
     });
   };

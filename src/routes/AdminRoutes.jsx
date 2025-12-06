@@ -6,9 +6,11 @@ import CompanyManagement from "../pages/CompanyManagement";
 import VendorManagement from "../pages/VendorManagement";
 import ReportsManagement from "../pages/ReportManagement";
 import NewVendorManagement from "../pages/NewVendorManagement";
+import AdminLayout from "../superadmin/layout/AdminLayout";
 
 export const AdminRoutes = () => (
-  <Route element={<SuperAdminLayout />}>
+  // <Route element={<SuperAdminLayout />}>
+  <Route element={<AdminLayout />}>
     <Route path="departments" element={<ManageDepartment />} />
     <Route path="dashboard" element={<SuperAdminDashboard />} />
     <Route path="manage-companies" element={<CompanyManagement />} />

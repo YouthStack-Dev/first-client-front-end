@@ -16,6 +16,7 @@ const endpoint = {
   updateWeekOff: "/v1/weekoff-configs/",
   toggleEmployeStatus: "/v1/employees/",
   toggleTeamStatus: "/v1/teams/",
+  VendorUser: "/v1/vendor-users/",
 
   //  Boookings
   booking: "/v1/bookings/",

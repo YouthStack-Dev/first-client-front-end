@@ -6,28 +6,29 @@ const cutoffSlice = createSlice({
   initialState: {
     data: null, // Single cutoff record
     formData: {
-      booking: "",
-      cancellation: "",
+      booking_login_cutoff: "0:00",
+      cancel_login_cutoff: "0:00",
+      booking_logout_cutoff: "0:00",
+      cancel_logout_cutoff: "0:00",
+      medical_emergency_booking_cutoff: "0:00",
+      adhoc_booking_cutoff: "0:00",
+      allow_adhoc_booking: false,
+      allow_medical_emergency_booking: false,
     },
-    status: "idle", // idle | loading | succeeded | failed | saving
+    status: "idle", // idle | loading | succeeded | failed | saving | saved
     error: null,
   },
 
   reducers: {
     updateFormField: (state, action) => {
       const { name, value } = action.payload;
-      state.formData[name] = value;
+      if (name in state.formData) {
+        state.formData[name] = value;
+      }
     },
     resetForm: (state) => {
       if (state.data) {
-        state.formData = {
-          booking: state.data.booking_cutoff
-            ? parseFloat(state.data.booking_cutoff.split(":")[0])
-            : "",
-          cancellation: state.data.cancel_cutoff
-            ? parseFloat(state.data.cancel_cutoff.split(":")[0])
-            : "",
-        };
+        state.formData = mapApiDataToForm(state.data);
       }
     },
   },
@@ -40,18 +41,12 @@ const cutoffSlice = createSlice({
       })
       .addCase(fetchCutoffsThunk.fulfilled, (state, action) => {
         state.status = "succeeded";
-        // Take the first element from cutoffs array
         const cutoff = action.payload?.cutoffs?.[0] || null;
         state.data = cutoff;
-        state.formData = {
-          booking: cutoff?.booking_cutoff
-            ? parseFloat(cutoff.booking_cutoff.split(":")[0])
-            : "",
-          cancellation: cutoff?.cancel_cutoff
-            ? parseFloat(cutoff.cancel_cutoff.split(":")[0])
-            : "",
-        };
-        // console.log("Slice - fetched cutoff:", cutoff);
+
+        if (cutoff) {
+          state.formData = mapApiDataToForm(cutoff);
+        }
       })
       .addCase(fetchCutoffsThunk.rejected, (state, action) => {
         state.status = "failed";
@@ -59,16 +54,14 @@ const cutoffSlice = createSlice({
       })
       .addCase(saveCutoffThunk.pending, (state) => {
         state.status = "saving";
+        state.error = null;
       })
       .addCase(saveCutoffThunk.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        const cutoff = action.payload?.cutoff;
+        state.status = "saved"; // Changed from 'succeeded' to 'saved' for UI distinction
+        const cutoff = action.payload?.cutoff || action.payload;
         if (cutoff) {
           state.data = cutoff;
-          state.formData = {
-            booking: parseFloat(cutoff.booking_cutoff.split(":")[0]),
-            cancellation: parseFloat(cutoff.cancel_cutoff.split(":")[0]),
-          };
+          state.formData = mapApiDataToForm(cutoff);
         }
       })
       .addCase(saveCutoffThunk.rejected, (state, action) => {
@@ -77,6 +70,42 @@ const cutoffSlice = createSlice({
       });
   },
 });
+
+// Helper function to map API data to form structure
+const mapApiDataToForm = (apiData) => {
+  // Default values if API doesn't provide them
+  const defaults = {
+    booking_login_cutoff: "4:00",
+    cancel_login_cutoff: "2:00",
+    booking_logout_cutoff: "4:00",
+    cancel_logout_cutoff: "2:00",
+    medical_emergency_booking_cutoff: "1:00",
+    adhoc_booking_cutoff: "2:00",
+    allow_adhoc_booking: false,
+    allow_medical_emergency_booking: false,
+  };
+
+  // Map API field names to form field names
+  const fieldMapping = {
+    booking_login_cutoff: apiData.booking_login_cutoff,
+    cancel_login_cutoff: apiData.cancel_login_cutoff,
+    booking_logout_cutoff: apiData.booking_logout_cutoff,
+    cancel_logout_cutoff: apiData.cancel_logout_cutoff,
+    medical_emergency_booking_cutoff: apiData.medical_emergency_booking_cutoff,
+    adhoc_booking_cutoff: apiData.adhoc_booking_cutoff,
+    allow_adhoc_booking: apiData.allow_adhoc_booking,
+    allow_medical_emergency_booking: apiData.allow_medical_emergency_booking,
+  };
+
+  // Merge with defaults, preferring API data when available
+  const formData = {};
+  Object.keys(defaults).forEach((key) => {
+    const apiValue = fieldMapping[key];
+    formData[key] = apiValue !== undefined ? apiValue : defaults[key];
+  });
+
+  return formData;
+};
 
 export const { updateFormField, resetForm } = cutoffSlice.actions;
 export default cutoffSlice.reducer;
