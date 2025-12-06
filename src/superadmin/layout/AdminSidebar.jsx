@@ -1,14 +1,13 @@
-import { LogOut, ChevronDown, Pin, PinOff } from "lucide-react";
+import { LogOut, ChevronDown, Pin, PinOff, Users, Shield } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
-import { getFilteredSidebar } from "./sidebarConfig";
 import { logout } from "../../redux/features/auth/authSlice";
+import { getFilteredSidebar } from "./adminSidebarConfig";
 
-// Skeleton Loading Components using react-loading-skeleton
 const SkeletonMenuItem = ({ isOpen }) => (
   <div className="px-4 py-2.5 rounded-sidebar">
     <div className="flex items-center">
@@ -16,16 +15,16 @@ const SkeletonMenuItem = ({ isOpen }) => (
         circle
         width={20}
         height={20}
-        baseColor="#374151"
-        highlightColor="#4B5563"
+        baseColor="#f8fafc"
+        highlightColor="#e2e8f0"
       />
       {isOpen && (
         <div className="ml-3">
           <Skeleton
             width={96}
             height={16}
-            baseColor="#374151"
-            highlightColor="#4B5563"
+            baseColor="#f8fafc"
+            highlightColor="#e2e8f0"
           />
         </div>
       )}
@@ -34,21 +33,21 @@ const SkeletonMenuItem = ({ isOpen }) => (
 );
 
 const SkeletonHeader = ({ isOpen }) => (
-  <div className="p-4 border-b border-sidebar-primary-200/30 flex items-center justify-between">
+  <div className="p-4 border-b border-app-border flex items-center justify-between">
     {isOpen ? (
       <>
         <Skeleton
           width={192}
           height={24}
-          baseColor="#374151"
-          highlightColor="#4B5563"
+          baseColor="#f8fafc"
+          highlightColor="#e2e8f0"
         />
         <Skeleton
           circle
           width={16}
           height={16}
-          baseColor="#374151"
-          highlightColor="#4B5563"
+          baseColor="#f8fafc"
+          highlightColor="#e2e8f0"
         />
       </>
     ) : (
@@ -56,14 +55,14 @@ const SkeletonHeader = ({ isOpen }) => (
         circle
         width={32}
         height={32}
-        baseColor="#374151"
-        highlightColor="#4B5563"
+        baseColor="#f8fafc"
+        highlightColor="#e2e8f0"
       />
     )}
   </div>
 );
 
-const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
+const AdminSidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
   const location = useLocation();
   const [openDropdown, setOpenDropdown] = useState({});
   const [isMobile, setIsMobile] = useState(false);
@@ -76,11 +75,12 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
     permissions,
     loading: authLoading,
     isAuthenticated,
+    user,
   } = useSelector((state) => state.auth);
 
-  // Generate filtered sidebar based on permissions
+  // Generate admin sidebar based on permissions
   useEffect(() => {
-    if (permissions && permissions?.length > 0) {
+    if (permissions && permissions.length > 0) {
       const filteredConfig = getFilteredSidebar(permissions);
       setSidebarConfig(filteredConfig);
     }
@@ -88,7 +88,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate("/", { replace: true });
+    navigate("/admin/login", { replace: true });
   };
 
   useEffect(() => {
@@ -106,7 +106,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
 
   const toggleDropdown = (menuName, e) => {
     if (e) {
-      e.stopPropagation(); // Prevent event bubbling
+      e.stopPropagation();
     }
     setOpenDropdown((prev) => ({
       ...prev,
@@ -129,7 +129,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
 
   const togglePin = (e) => {
     if (e) {
-      e.stopPropagation(); // Prevent event bubbling
+      e.stopPropagation();
     }
     if (!isMobile) {
       setIsPinned(!isPinned);
@@ -137,23 +137,21 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
     }
   };
 
-  // Close sidebar on mobile when clicking a menu item - FIXED VERSION
   const handleMenuItemClick = (e) => {
     if (e) {
-      e.stopPropagation(); // Prevent event bubbling to parent elements
+      e.stopPropagation();
     }
 
     if (isMobile) {
-      // Use setTimeout to allow the navigation to happen first
       setTimeout(() => {
         setIsOpen(false);
         setOpenDropdown({});
-      }, 300); // Increased delay to ensure navigation completes
+      }, 300);
     }
   };
 
   const sidebarWidth = isOpen ? "w-sidebar" : "w-sidebar-collapsed";
-  const sidebarClass = `h-screen ${sidebarWidth} bg-gradient-to-b from-sidebar-primary-900 via-sidebar-primary-800 to-sidebar-primary-900 text-white flex flex-col fixed left-0 transition-all duration-300 ease-in-out z-50 shadow-sidebar border-r border-sidebar-primary-200/30`;
+  const sidebarClass = `h-screen ${sidebarWidth} bg-gradient-to-b from-blue-50 via-white to-blue-50 text-app-text-primary flex flex-col fixed left-0 transition-all duration-300 ease-in-out z-50 shadow-sidebar border-r border-app-border`;
 
   // Show loading state if auth is still loading or user is not authenticated
   const isLoading = authLoading || !isAuthenticated || !permissions;
@@ -165,20 +163,32 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
       }`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onClick={(e) => e.stopPropagation()} // Prevent click propagation from entire sidebar
+      onClick={(e) => e.stopPropagation()}
     >
       {/* Header Section */}
       {isLoading ? (
         <SkeletonHeader isOpen={isOpen} />
       ) : (
-        <div className="p-4 border-b border-sidebar-primary-200/30 flex items-center justify-between bg-sidebar-primary-800/50 backdrop-blur-sm">
+        <div className="p-4 border-b border-app-border flex items-center justify-between bg-white/80 backdrop-blur-sm">
           {isOpen && (
             <>
-              <h2 className="text-xl font-bold text-white">Company Name</h2>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br from-blue-400 to-blue-300 rounded-xl shadow-sm">
+                  <Users className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-app-text-primary">
+                    Team Portal
+                  </h2>
+                  <p className="text-xs text-app-text-secondary">
+                    {user?.role || "Team Member"}
+                  </p>
+                </div>
+              </div>
               {!isMobile && (
                 <button
                   onClick={togglePin}
-                  className="text-sidebar-primary-200 hover:text-white transition-colors duration-200 p-1 rounded-sidebar hover:bg-sidebar-primary-700/50"
+                  className="text-app-text-secondary hover:text-app-text-primary transition-colors duration-200 p-1 rounded-sidebar hover:bg-blue-50"
                   title={isPinned ? "Unpin sidebar" : "Pin sidebar"}
                 >
                   {isPinned ? (
@@ -190,25 +200,30 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
               )}
             </>
           )}
+          {!isOpen && (
+            <div className="flex items-center justify-center w-full">
+              <div className="p-2 bg-gradient-to-br from-blue-400 to-blue-300 rounded-xl shadow-sm">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Navigation Section */}
       <nav
-        className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-sidebar-primary-200 scrollbar-track-transparent"
-        onClick={(e) => e.stopPropagation()} // Prevent click propagation from nav
+        className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-blue-200 scrollbar-track-transparent"
+        onClick={(e) => e.stopPropagation()}
       >
         {isLoading
-          ? // Skeleton loading state
-            Array.from({ length: 6 }).map((_, index) => (
+          ? Array.from({ length: 6 }).map((_, index) => (
               <SkeletonMenuItem key={index} isOpen={isOpen} />
             ))
-          : // Actual sidebar content
-            sidebarConfig.map((group) => (
+          : sidebarConfig.map((group) => (
               <div key={group.title} className="mb-4">
                 {/* Group Title */}
                 {isOpen && group.items.length > 0 && (
-                  <div className="px-4 py-2 text-xs font-semibold text-sidebar-primary-300 uppercase tracking-wider">
+                  <div className="px-4 py-2 text-xs font-semibold text-app-text-muted uppercase tracking-wider">
                     {group.title}
                   </div>
                 )}
@@ -222,15 +237,15 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
                           onClick={(e) => toggleDropdown(item.title, e)}
                           className={`flex items-center w-full px-4 py-2.5 rounded-sidebar transition-all duration-200 group ${
                             openDropdown[item.title]
-                              ? "bg-gradient-to-r from-sidebar-primary-600 to-sidebar-primary-400 text-white shadow-sidebar-item-hover"
-                              : "hover:bg-sidebar-primary-700/50 hover:shadow-sidebar-item"
+                              ? "bg-sidebar-active text-white shadow-sidebar-item-hover"
+                              : "hover:bg-blue-50 hover:shadow-sidebar-item"
                           }`}
                         >
                           <item.icon
                             className={`w-5 h-5 min-w-[1.25rem] transition-colors ${
                               openDropdown[item.title]
                                 ? "text-white"
-                                : "text-sidebar-primary-200 group-hover:text-white"
+                                : "text-app-text-secondary group-hover:text-blue-500"
                             }`}
                           />
                           {isOpen && (
@@ -239,7 +254,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
                                 className={`ml-3 text-sm flex-1 font-medium ${
                                   openDropdown[item.title]
                                     ? "text-white"
-                                    : "text-sidebar-primary-100"
+                                    : "text-app-text-primary"
                                 }`}
                               >
                                 {item.title}
@@ -248,7 +263,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
                                 className={`w-5 h-5 transition-all duration-200 ${
                                   openDropdown[item.title]
                                     ? "rotate-180 text-white"
-                                    : "text-sidebar-primary-300 group-hover:text-white"
+                                    : "text-app-text-secondary group-hover:text-blue-500"
                                 }`}
                               />
                             </>
@@ -264,18 +279,18 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
                                 onClick={handleMenuItemClick}
                                 className={`flex items-center px-4 py-2 text-sm rounded-sidebar transition-all duration-200 group relative ${
                                   location.pathname === subItem.path
-                                    ? "bg-gradient-to-r from-sidebar-accent-500 to-sidebar-accent-600 text-white shadow-sidebar-item"
-                                    : "text-sidebar-primary-200 hover:bg-sidebar-primary-700/50 hover:text-white hover:shadow-sm"
+                                    ? "bg-gradient-to-r from-blue-500 to-blue-400 text-white shadow-sidebar-item"
+                                    : "text-app-text-secondary hover:bg-blue-50 hover:text-blue-500 hover:shadow-sm"
                                 }`}
                               >
                                 {location.pathname === subItem.path && (
-                                  <div className="absolute left-0 w-1 h-full bg-white rounded-r-full"></div>
+                                  <div className="absolute left-0 w-1 h-full bg-blue-500 rounded-r-full"></div>
                                 )}
                                 <subItem.icon
                                   className={`w-4 h-4 transition-colors ${
                                     location.pathname === subItem.path
                                       ? "text-white"
-                                      : "text-sidebar-primary-300 group-hover:text-white"
+                                      : "text-app-text-secondary group-hover:text-blue-500"
                                   }`}
                                 />
                                 <span className="ml-2 font-medium">
@@ -293,18 +308,18 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
                           onClick={handleMenuItemClick}
                           className={`flex items-center px-4 py-2.5 rounded-sidebar transition-all duration-200 group relative ${
                             location.pathname === item.path
-                              ? "bg-gradient-to-r from-sidebar-primary-600 to-sidebar-primary-400 text-white shadow-sidebar-item-hover"
-                              : "hover:bg-sidebar-primary-700/50 hover:shadow-sidebar-item"
+                              ? "bg-sidebar-active text-white shadow-sidebar-item-hover"
+                              : "hover:bg-blue-50 hover:shadow-sidebar-item"
                           }`}
                         >
                           {location.pathname === item.path && (
-                            <div className="absolute left-0 w-1 h-full bg-white rounded-r-full"></div>
+                            <div className="absolute left-0 w-1 h-full bg-blue-500 rounded-r-full"></div>
                           )}
                           <item.icon
                             className={`w-5 h-5 min-w-[1.25rem] transition-colors ${
                               location.pathname === item.path
                                 ? "text-white"
-                                : "text-sidebar-primary-200 group-hover:text-white"
+                                : "text-app-text-secondary group-hover:text-blue-500"
                             }`}
                           />
                           {isOpen && (
@@ -312,7 +327,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
                               className={`ml-3 text-sm font-medium ${
                                 location.pathname === item.path
                                   ? "text-white"
-                                  : "text-sidebar-primary-100"
+                                  : "text-app-text-primary"
                               }`}
                             >
                               {item.title}
@@ -329,14 +344,14 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
 
       {/* Footer Section */}
       <div
-        className="p-4 border-t border-sidebar-primary-200/30 bg-sidebar-primary-800/50 backdrop-blur-sm"
-        onClick={(e) => e.stopPropagation()} // Prevent click propagation from footer
+        className="p-4 border-t border-app-border bg-white/80 backdrop-blur-sm"
+        onClick={(e) => e.stopPropagation()}
       >
         {isLoading ? (
           <Skeleton
             height={40}
-            baseColor="#374151"
-            highlightColor="#4B5563"
+            baseColor="#f8fafc"
+            highlightColor="#e2e8f0"
             borderRadius="0.5rem"
           />
         ) : (
@@ -345,7 +360,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
               e.stopPropagation();
               handleLogout();
             }}
-            className="flex items-center justify-center w-full px-4 py-2.5 bg-gradient-to-r from-sidebar-danger-600 to-sidebar-danger-500 text-white rounded-sidebar hover:from-sidebar-danger-700 hover:to-sidebar-danger-600 transition-all duration-200 shadow-sidebar-item hover:shadow-sidebar-item-hover group"
+            className="flex items-center justify-center w-full px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-400 text-white rounded-sidebar hover:from-red-600 hover:to-red-500 transition-all duration-200 shadow-sidebar-item hover:shadow-sidebar-item-hover group"
             aria-label="Logout"
             title="Logout"
           >
@@ -358,4 +373,4 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
   );
 };
 
-export default React.memo(Sidebar);
+export default React.memo(AdminSidebar);

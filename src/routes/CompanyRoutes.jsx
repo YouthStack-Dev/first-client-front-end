@@ -85,9 +85,6 @@ export const CompanyRoutes = () => (
       element={<BookingManagement />}
     />
 
-    <Route
-      path="audit-report"
-      element={<h1>This is the screen of audit-report</h1>}
-    />
+    <Route path="repots-management" element={<ReportsManagement />} />
   </Route>
 );

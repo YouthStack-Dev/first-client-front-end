@@ -1,8 +1,24 @@
 import React, { useRef, useState, useEffect, useCallback, memo } from "react";
 import { APIProvider } from "@vis.gl/react-google-maps";
 import MapContent from "./MapContent";
+const getCompanyLocation = () => {
+  try {
+    const companyLocation = localStorage.getItem("tenant");
+    if (companyLocation) {
+      const parsed = JSON.parse(companyLocation);
+      return {
+        lat: parseFloat(parsed.latitude),
+        lng: parseFloat(parsed.longitude),
+      };
+    }
+  } catch (error) {
+    console.error("Error parsing company location from localStorage:", error);
+  }
 
-const fixedPoint = { lat: 12.9716, lng: 77.5946 }; // Company location (Bangalore)
+  // Fallback to Bangalore if not found in localStorage
+  return { lat: 12.9716, lng: 77.5946 };
+};
+const fixedPoint = getCompanyLocation(); // Company location (Bangalore)
 const MAX_DISTANCE_KM = 20;
 
 const Modal = memo(({ show, title, message, onClose }) => {

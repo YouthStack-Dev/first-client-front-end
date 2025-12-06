@@ -1,10 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import HeaderWithActionNoRoute from "@components/HeaderWithActionNoRoute";
-import {
-  updateFormField,
-  resetForm,
-} from "../../redux/features/cutoff/cutoffSlice";
+import { updateFormField } from "../../redux/features/cutoff/cutoffSlice";
 import {
   fetchCutoffsThunk,
   saveCutoffThunk,
@@ -12,292 +8,531 @@ import {
 import {
   Save,
   RotateCcw,
-  AlertCircle,
-  CheckCircle,
   Clock,
   Calendar,
+  AlertTriangle,
+  XCircle,
+  CheckCircle,
+  Settings,
+  Zap,
   Shield,
+  Activity,
 } from "lucide-react";
 
 const CutoffManagement = () => {
   const dispatch = useDispatch();
+  const [activeTab, setActiveTab] = useState("standard");
   const { formData, status, error, data } = useSelector(
     (state) => state.cutoff
   );
-  const { booking, cancellation } = formData;
+
+  const {
+    booking_login_cutoff,
+    cancel_login_cutoff,
+    booking_logout_cutoff,
+    cancel_logout_cutoff,
+    medical_emergency_booking_cutoff,
+    adhoc_booking_cutoff,
+    allow_adhoc_booking,
+    allow_medical_emergency_booking,
+  } = formData || {};
 
   useEffect(() => {
     if (!data) dispatch(fetchCutoffsThunk());
   }, [dispatch, data]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    dispatch(updateFormField({ name, value }));
-  };
-
-  const handleSave = () => {
-    const bookingVal = parseFloat(booking);
-    const cancellationVal = parseFloat(cancellation);
-
-    if (isNaN(bookingVal) || isNaN(cancellationVal)) {
-      return;
-    }
-    if (bookingVal > cancellationVal) {
-      return;
-    }
-
+    const { name, value, type, checked } = e.target;
     dispatch(
-      saveCutoffThunk({ booking: bookingVal, cancellation: cancellationVal })
+      updateFormField({
+        name,
+        value: type === "checkbox" ? checked : value,
+      })
     );
   };
 
-  const handleReset = () => {
-    dispatch(resetForm());
+  const handleToggle = (fieldName) => {
+    dispatch(
+      updateFormField({
+        name: fieldName,
+        value: !formData[fieldName],
+      })
+    );
   };
 
-  // Display numeric values for saved data
-  const displayBooking = data?.booking_cutoff
-    ? parseFloat(data.booking_cutoff.split(":")[0])
-    : 0;
-  const displayCancellation = data?.cancel_cutoff
-    ? parseFloat(data.cancel_cutoff.split(":")[0])
-    : 0;
+  const handleTimeChange = (fieldName, hours, minutes) => {
+    const formattedTime = `${hours}:${minutes.toString().padStart(2, "0")}`;
+    dispatch(updateFormField({ name: fieldName, value: formattedTime }));
+  };
 
-  // Validation states
-  const isBookingValid =
-    !isNaN(parseFloat(booking)) && parseFloat(booking) >= 0;
-  const isCancellationValid =
-    !isNaN(parseFloat(cancellation)) && parseFloat(cancellation) >= 0;
-  const isBookingLessThanCancellation =
-    parseFloat(booking) <= parseFloat(cancellation);
-  const isFormValid =
-    isBookingValid && isCancellationValid && isBookingLessThanCancellation;
-  const hasChanges =
-    booking !== displayBooking.toString() ||
-    cancellation !== displayCancellation.toString();
+  const handleSave = () => {
+    dispatch(saveCutoffThunk(formData));
+  };
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className=" mx-auto space-y-6">
-        {/* Status Indicators */}
-        {status === "loading" && (
-          <div className="flex items-center justify-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-gray-600">
-              Loading cutoff settings...
+  const parseTime = (timeString) => {
+    if (!timeString) return { hours: 0, minutes: 0 };
+    const [hours, minutes] = timeString.split(":").map(Number);
+    return { hours: hours || 0, minutes: minutes || 0 };
+  };
+
+  const hasChanges = data && JSON.stringify(formData) !== JSON.stringify(data);
+
+  const ModernTimeInput = ({ label, fieldName, currentValue, icon: Icon }) => {
+    const { hours, minutes } = parseTime(currentValue);
+
+    return (
+      <div className="group">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="p-2 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
+            <Icon className="w-4 h-4 text-indigo-600" />
+          </div>
+          <div className="flex-1">
+            <label className="text-sm font-semibold text-gray-900">
+              {label}
+            </label>
+            <p className="text-xs text-gray-500">
+              Currently set to {currentValue}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <div className="flex-1 relative">
+            <select
+              value={hours}
+              onChange={(e) =>
+                handleTimeChange(fieldName, parseInt(e.target.value), minutes)
+              }
+              className="w-full appearance-none px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors text-gray-900 font-medium cursor-pointer hover:border-gray-300"
+            >
+              {Array.from({ length: 25 }, (_, i) => (
+                <option key={i} value={i}>
+                  {i}h
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+              ▼
+            </div>
+          </div>
+
+          <div className="flex-1 relative">
+            <select
+              value={minutes}
+              onChange={(e) =>
+                handleTimeChange(fieldName, hours, parseInt(e.target.value))
+              }
+              className="w-full appearance-none px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors text-gray-900 font-medium cursor-pointer hover:border-gray-300"
+            >
+              {[0, 15, 30, 45].map((min) => (
+                <option key={min} value={min}>
+                  {min}m
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+              ▼
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const ModernToggle = ({ label, enabled, onChange, description }) => (
+    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+      <div className="flex-1">
+        <p className="font-semibold text-gray-900">{label}</p>
+        <p className="text-sm text-gray-600 mt-0.5">{description}</p>
+      </div>
+      <button
+        onClick={onChange}
+        className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+          enabled ? "bg-emerald-500" : "bg-gray-300"
+        }`}
+      >
+        <span
+          className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 ${
+            enabled ? "translate-x-6" : "translate-x-0"
+          }`}
+        />
+      </button>
+    </div>
+  );
+
+  const StatusBanner = () => {
+    if (status === "loading") {
+      return (
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+          <div className="flex items-center gap-3">
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
+            <span className="text-blue-900 font-medium">
+              Loading configuration...
             </span>
           </div>
-        )}
+        </div>
+      );
+    }
 
-        {status === "failed" && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
-            <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+    if (status === "failed") {
+      return (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+          <div className="flex items-center gap-3">
+            <XCircle className="w-5 h-5 text-red-600" />
             <div>
-              <p className="text-red-800 font-medium">
-                Failed to load cutoff settings
-              </p>
-              <p className="text-red-600 text-sm mt-1">{error}</p>
+              <p className="text-red-900 font-semibold">Configuration Error</p>
+              <p className="text-red-700 text-sm">{error}</p>
             </div>
           </div>
-        )}
+        </div>
+      );
+    }
 
-        {status === "saved" && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start space-x-3">
-            <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="text-green-800 font-medium">
-                Cutoff settings saved successfully!
-              </p>
-              <p className="text-green-600 text-sm mt-1">
-                Your changes have been applied.
-              </p>
-            </div>
+    if (status === "saved") {
+      return (
+        <div className="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-lg">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="w-5 h-5 text-emerald-600" />
+            <p className="text-emerald-900 font-semibold">
+              Configuration saved successfully!
+            </p>
           </div>
-        )}
+        </div>
+      );
+    }
 
-        {data && (
-          <div className="space-y-6">
-            {/* Information Card */}
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-              <div className="flex items-start space-x-4">
-                <Shield className="w-6 h-6 text-blue-600 mt-1 flex-shrink-0" />
-                <div>
-                  <h3 className="text-blue-900 font-semibold text-lg mb-2">
-                    About Cutoff Times
-                  </h3>
-                  <p className="text-blue-700 text-sm leading-relaxed">
-                    Cutoff times determine how far in advance employees can book
-                    or cancel shifts. Booking cutoff must be earlier than
-                    cancellation cutoff to allow sufficient notice.
-                  </p>
-                </div>
+    return null;
+  };
+
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Top Navigation Bar */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl">
+                <Settings className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Cutoff Management
+                </h1>
+                <p className="text-sm text-gray-600">
+                  Configure booking and cancellation policies
+                </p>
               </div>
             </div>
 
-            {/* Cutoff Cards Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Booking Cutoff Card */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Calendar className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-gray-900 font-semibold">
-                      Booking Cutoff
-                    </h3>
-                    <p className="text-gray-500 text-sm">
-                      How far in advance shifts can be booked
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="booking"
-                      min="0"
-                      step="0.5"
-                      value={booking}
-                      onChange={handleChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                        !isBookingValid
-                          ? "border-red-300 bg-red-50"
-                          : "border-gray-300"
-                      }`}
-                      placeholder="Enter hours (e.g., 24.0)"
-                    />
-                    <div className="absolute right-3 top-3 text-gray-400">
-                      hours
-                    </div>
-                  </div>
-
-                  {!isBookingValid && (
-                    <div className="flex items-center space-x-2 text-red-600 text-sm">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>Please enter a valid positive number</span>
-                    </div>
-                  )}
-
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-gray-600 text-sm font-medium">
-                      Current Setting
-                    </p>
-                    <p className="text-gray-900 font-semibold text-lg">
-                      {displayBooking} hours
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Cancellation Cutoff Card */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <Clock className="w-5 h-5 text-orange-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-gray-900 font-semibold">
-                      Cancellation Cutoff
-                    </h3>
-                    <p className="text-gray-500 text-sm">
-                      Latest time to cancel a booked shift
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="cancellation"
-                      min="0"
-                      step="0.5"
-                      value={cancellation}
-                      onChange={handleChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                        !isCancellationValid
-                          ? "border-red-300 bg-red-50"
-                          : "border-gray-300"
-                      }`}
-                      placeholder="Enter hours (e.g., 12.0)"
-                    />
-                    <div className="absolute right-3 top-3 text-gray-400">
-                      hours
-                    </div>
-                  </div>
-
-                  {!isCancellationValid && (
-                    <div className="flex items-center space-x-2 text-red-600 text-sm">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>Please enter a valid positive number</span>
-                    </div>
-                  )}
-
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-gray-600 text-sm font-medium">
-                      Current Setting
-                    </p>
-                    <p className="text-gray-900 font-semibold text-lg">
-                      {displayCancellation} hours
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Validation Alert */}
-            {!isBookingLessThanCancellation && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start space-x-3">
-                <AlertCircle className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-amber-800 font-medium">
-                    Invalid cutoff relationship
-                  </p>
-                  <p className="text-amber-600 text-sm mt-1">
-                    Booking cutoff must be less than or equal to cancellation
-                    cutoff.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
-              <button
-                onClick={handleReset}
-                disabled={!hasChanges || status === "saving"}
-                className="flex items-center justify-center space-x-2 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span>Reset Changes</span>
-              </button>
-
+            <div className="flex items-center gap-3">
               <button
                 onClick={handleSave}
-                disabled={!isFormValid || !hasChanges || status === "saving"}
-                className="flex items-center justify-center space-x-2 px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-sm hover:shadow-md"
+                disabled={!hasChanges || status === "saving"}
+                className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold flex items-center gap-2 shadow-lg shadow-indigo-500/30"
               >
                 {status === "saving" ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    <span>Saving...</span>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    Saving...
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    <span>Save Changes</span>
+                    Save Changes
                   </>
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Help Text */}
-            <div className="text-center">
-              <p className="text-gray-500 text-sm">
-                Changes will affect all future shift bookings and cancellations
-              </p>
+      <div className=" mx-auto px-6 py-8">
+        <StatusBanner />
+
+        {/* Tabs */}
+        <div className="flex gap-2 mb-8 bg-white p-2 rounded-xl shadow-sm">
+          <button
+            onClick={() => setActiveTab("standard")}
+            className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
+              activeTab === "standard"
+                ? "bg-indigo-600 text-white shadow-md"
+                : "text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Standard Shifts
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab("special")}
+            className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
+              activeTab === "special"
+                ? "bg-indigo-600 text-white shadow-md"
+                : "text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              Special Bookings
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab("overview")}
+            className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
+              activeTab === "overview"
+                ? "bg-indigo-600 text-white shadow-md"
+                : "text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <Activity className="w-4 h-4" />
+              Overview
+            </div>
+          </button>
+        </div>
+
+        {/* Standard Shifts Tab */}
+        {activeTab === "standard" && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200">
+              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-200">
+                <div className="p-3 bg-blue-100 rounded-xl">
+                  <Clock className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Booking Cutoffs
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    When booking closes before shift
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <ModernTimeInput
+                  label="Login Booking Cutoff"
+                  fieldName="booking_login_cutoff"
+                  currentValue={booking_login_cutoff}
+                  icon={Clock}
+                />
+                <ModernTimeInput
+                  label="Logout Booking Cutoff"
+                  fieldName="booking_logout_cutoff"
+                  currentValue={booking_logout_cutoff}
+                  icon={Clock}
+                />
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200">
+              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-200">
+                <div className="p-3 bg-red-100 rounded-xl">
+                  <XCircle className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Cancellation Cutoffs
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    Latest time to cancel booking
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <ModernTimeInput
+                  label="Login Cancellation Cutoff"
+                  fieldName="cancel_login_cutoff"
+                  currentValue={cancel_login_cutoff}
+                  icon={XCircle}
+                />
+                <ModernTimeInput
+                  label="Logout Cancellation Cutoff"
+                  fieldName="cancel_logout_cutoff"
+                  currentValue={cancel_logout_cutoff}
+                  icon={XCircle}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Special Bookings Tab */}
+        {activeTab === "special" && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200">
+              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-200">
+                <div className="p-3 bg-red-100 rounded-xl">
+                  <Shield className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Medical Emergency
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    Emergency booking policies
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <ModernTimeInput
+                  label="Emergency Booking Cutoff"
+                  fieldName="medical_emergency_booking_cutoff"
+                  currentValue={medical_emergency_booking_cutoff}
+                  icon={Shield}
+                />
+                <ModernToggle
+                  label="Enable Medical Emergency Booking"
+                  enabled={allow_medical_emergency_booking}
+                  onChange={() =>
+                    handleToggle("allow_medical_emergency_booking")
+                  }
+                  description="Allow bookings during medical emergencies"
+                />
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200">
+              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-200">
+                <div className="p-3 bg-purple-100 rounded-xl">
+                  <Zap className="w-6 h-6 text-purple-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Adhoc Shifts
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    Unscheduled shift policies
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <ModernTimeInput
+                  label="Adhoc Booking Cutoff"
+                  fieldName="adhoc_booking_cutoff"
+                  currentValue={adhoc_booking_cutoff}
+                  icon={Zap}
+                />
+                <ModernToggle
+                  label="Enable Adhoc Booking"
+                  enabled={allow_adhoc_booking}
+                  onChange={() => handleToggle("allow_adhoc_booking")}
+                  description="Allow unscheduled shift bookings"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Overview Tab */}
+        {activeTab === "overview" && (
+          <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
+              Configuration Summary
+            </h2>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
+                <p className="text-xs font-semibold text-blue-700 uppercase mb-2">
+                  Login Booking
+                </p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {booking_login_cutoff}
+                </p>
+              </div>
+              <div className="p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-xl">
+                <p className="text-xs font-semibold text-red-700 uppercase mb-2">
+                  Login Cancel
+                </p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {cancel_login_cutoff}
+                </p>
+              </div>
+              <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
+                <p className="text-xs font-semibold text-blue-700 uppercase mb-2">
+                  Logout Booking
+                </p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {booking_logout_cutoff}
+                </p>
+              </div>
+              <div className="p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-xl">
+                <p className="text-xs font-semibold text-red-700 uppercase mb-2">
+                  Logout Cancel
+                </p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {cancel_logout_cutoff}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="font-bold text-gray-900 text-lg mb-4">
+                Special Booking Status
+              </h3>
+              <div className="flex items-center justify-between p-5 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-red-100 rounded-lg">
+                    <Shield className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      Medical Emergency Booking
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Cutoff: {medical_emergency_booking_cutoff}
+                    </p>
+                  </div>
+                </div>
+                <span
+                  className={`px-4 py-2 rounded-full text-sm font-bold ${
+                    allow_medical_emergency_booking
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                >
+                  {allow_medical_emergency_booking ? "Active" : "Inactive"}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between p-5 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Zap className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">Adhoc Booking</p>
+                    <p className="text-sm text-gray-600">
+                      Cutoff: {adhoc_booking_cutoff}
+                    </p>
+                  </div>
+                </div>
+                <span
+                  className={`px-4 py-2 rounded-full text-sm font-bold ${
+                    allow_adhoc_booking
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                >
+                  {allow_adhoc_booking ? "Active" : "Inactive"}
+                </span>
+              </div>
             </div>
           </div>
         )}

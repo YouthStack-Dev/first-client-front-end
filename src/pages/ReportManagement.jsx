@@ -115,7 +115,7 @@ const ReportsManagement = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+    <div className="bg-gradient-to-br p-6">
       <div className="mx-auto">
         {/* Loading Overlay */}
         {loading && (
