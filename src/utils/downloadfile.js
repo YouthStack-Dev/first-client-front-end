@@ -39,12 +39,15 @@ export const downloadFile = async (
   try {
     // ✅ Use environment API base URL if available
     const baseURL =
-      import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "https://api.gocab.tech/api";
+      import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
+      "https://api.gocab.tech/api";
 
     // ✅ If filePath is absolute (e.g., http...), use it directly
     let url = filePath.startsWith("http")
       ? filePath
-      : `${baseURL}/v1/${module}/files/${encodeURIComponent(filePath)}?download=true`;
+      : `${baseURL}/v1/${module}/files/${encodeURIComponent(
+          filePath
+        )}?download=true`;
 
     // ✅ Get token (localStorage → sessionStorage → cookie)
     const token =
@@ -71,12 +74,15 @@ export const downloadFile = async (
     const contentDisposition = response.headers["content-disposition"];
     const suggestedFileName = contentDisposition
       ? decodeURIComponent(
-        contentDisposition.split("filename=")[1]?.replace(/['"]/g, "") || ""
-      )
+          contentDisposition.split("filename=")[1]?.replace(/['"]/g, "") || ""
+        )
       : "";
 
     const finalFileName =
-      fileName || suggestedFileName || filePath.split("/").pop() || "downloaded_file";
+      fileName ||
+      suggestedFileName ||
+      filePath.split("/").pop() ||
+      "downloaded_file";
 
     // ✅ Trigger download
     const blob = new Blob([response.data]);
@@ -99,7 +105,6 @@ export const downloadFile = async (
   }
 };
 
-
 /**
  * Fetch file and return a preview URL for <img> or <object> display
  *
@@ -116,12 +121,17 @@ export const downloadFile = async (
  * @returns {Promise<string|null>} - Object URL for preview or null on error
  */
 
-export const previewFile = async (filePath, module = "vehicles", download = false) => {
+export const previewFile = async (
+  filePath,
+  module = "vehicles",
+  download = false
+) => {
   if (!filePath) return null;
 
   try {
     const baseURL =
-      import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "https://api.gocab.tech/api";
+      import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
+      "https://api.gocab.tech/api";
 
     // Encode each segment of path to handle special characters
     let url;
@@ -129,7 +139,9 @@ export const previewFile = async (filePath, module = "vehicles", download = fals
       url = filePath;
     } else {
       const parts = filePath.split("/").map(encodeURIComponent);
-      url = `${baseURL}/v1/${module}/files/${parts.join("/")}${download ? "?download=false" : ""}`;
+      url = `${baseURL}/v1/${module}/files/${parts.join("/")}${
+        download ? "?download=false" : ""
+      }`;
     }
 
     // Get auth token
@@ -151,7 +163,8 @@ export const previewFile = async (filePath, module = "vehicles", download = fals
       },
     });
 
-    if (!response.ok) throw new Error(`Failed to fetch file: ${response.statusText}`);
+    if (!response.ok)
+      throw new Error(`Failed to fetch file: ${response.statusText}`);
 
     const blob = await response.blob();
     return URL.createObjectURL(blob); // Use this as src in <img>

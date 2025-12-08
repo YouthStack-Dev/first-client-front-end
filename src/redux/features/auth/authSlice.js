@@ -217,11 +217,11 @@ export const initializeAuth = () => async (dispatch) => {
 
     // Decode token and set basic user info
     const decoded = jwtDecode(token);
-
+    logDebug(" thi is the decoded data ", decoded);
     const user = {
       email: decoded.email || "dummy@gmail.com",
       type: decoded.user_type,
-      companyName: decoded.companyName || "Demo Company",
+
       tenant_id: decoded.tenant_id || null,
     };
 

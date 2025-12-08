@@ -12,6 +12,7 @@ import { VendorRoutes } from "./routes/VendorRoutes";
 import ProtectedRouteAuth from "./middleware/ProtectedRouteAuth";
 import Practice from "./pages/Practice";
 import DocPage from "./Docs/SupademoPage";
+import DriverForm from "./components/driver/NewDriverFrom";
 
 function App() {
   const dispatch = useDispatch();

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Modal from "../modals/Modal";
-import { Edit,Plus } from "lucide-react";
+import { Download, Edit, Plus } from "lucide-react";
 import ShiftForm from "./ShiftForm";
 import ConfirmationModal from "../modals/ConfirmationModal";
 import { useDispatch, useSelector } from "react-redux";
@@ -18,6 +18,9 @@ import {
 import { toast } from "react-toastify";
 import ReusableButton from "../ui/ReusableButton";
 import ReusableToggleButton from "../ui/ReusableToggleButton";
+import ToolBar from "../ui/ToolBar";
+import SearchInput from "@components/ui/SearchInput";
+import { logDebug } from "../../utils/logger";
 
 const ShiftManagement = () => {
   const dispatch = useDispatch();
@@ -51,7 +54,7 @@ const ShiftManagement = () => {
 
   const handleStatusToggle = async (shift) => {
     try {
-      const result = await dispatch(toggleShiftStatus(shift.shift_id));
+      const result = dispatch(toggleShiftStatus(shift.shift_id));
       if (toggleShiftStatus.fulfilled.match(result)) {
         toast.success(`Shift "${shift.shift_code}" status updated!`);
       } else {
@@ -135,28 +138,28 @@ const ShiftManagement = () => {
   });
 
   return (
-    <div className="p-4 space-y-4">
-      {/* Toolbar */}
-      <div className="flex flex-col md:flex-row items-center justify-between bg-white border rounded shadow-sm p-4 gap-3">
-        <input
-          type="text"
-          placeholder="Search shifts..."
-          value={searchTerm}
-          onChange={handleSearchChange}
-          className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-64"
-        />
-        <div className="flex items-center gap-3">
-          <ReusableButton
-            module="shift"
-            action="create"
-            buttonName="Add Shift"
-            icon={Plus} // now uses the same icon as Employee button
-            title="Create Shift"
-            onClick={handleAddClick}
-            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
-          />
-        </div>
-      </div>
+    <div className="">
+      <ToolBar
+        module="shift"
+        className="p-4 bg-white border rounded-lg shadow-sm mb-6"
+        onAddClick={handleAddClick}
+        addButtonLabel="Add Shift"
+        addButtonIcon={<Plus size={16} />}
+        rightElements={
+          <div className="flex items-center gap-3">
+            {/* Export Button */}
+            <ReusableButton
+              module="shift"
+              action="read"
+              icon={Download}
+              title="Export roles to CSV"
+              onClick={() => alert(" Exporting rolses not implimented ")}
+              className="text-gray-600 hover:text-gray-800 p-2  bg-green-100 rounded-lg hover:bg-green-100 border border-gray-300"
+              size={18}
+            />
+          </div>
+        }
+      />
 
       {/* Tabs */}
       <div className="flex space-x-2 mb-4">
@@ -179,7 +182,9 @@ const ShiftManagement = () => {
       <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           {loading ? (
-            <div className="p-8 text-center text-gray-500">Loading shifts...</div>
+            <div className="p-8 text-center text-gray-500">
+              Loading shifts...
+            </div>
           ) : (
             <table className="w-full min-w-[600px]">
               <thead className="bg-gray-50">
@@ -218,7 +223,10 @@ const ShiftManagement = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredShifts.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                    <td
+                      colSpan="7"
+                      className="px-6 py-8 text-center text-gray-500"
+                    >
                       {searchTerm ? "No shifts found." : "No shifts available."}
                     </td>
                   </tr>
@@ -235,7 +243,9 @@ const ShiftManagement = () => {
                       </td>
                       <td className="px-6 py-4">{shift.shift_code}</td>
                       <td className="px-6 py-4">{shift.log_type}</td>
-                      <td className="px-6 py-4">{formatTime(shift.shift_time)}</td>
+                      <td className="px-6 py-4">
+                        {formatTime(shift.shift_time)}
+                      </td>
                       <td className="px-6 py-4">{shift.pickup_type}</td>
                       <td className="px-6 py-4 text-center">
                         <ReusableToggleButton

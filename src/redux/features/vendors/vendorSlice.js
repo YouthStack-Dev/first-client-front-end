@@ -8,12 +8,12 @@ import {
 } from "./vendorThunk";
 
 const initialState = {
-  data: [],               // all vendors
-  vendorsByTenant: {},    // map tenant_id => vendor list
+  data: [], // all vendors
+  vendorsByTenant: {}, // map tenant_id => vendor list
   loading: false,
   creating: false,
   updating: false,
-  toggling: false,        // for toggle status
+  toggling: false, // for toggle status
   selectedVendor: null,
   error: null,
 };
@@ -87,12 +87,16 @@ const vendorSlice = createSlice({
         if (!updatedVendor) return;
 
         // Flat list update
-        const index = state.data.findIndex(v => v.vendor_id === updatedVendor.vendor_id);
+        const index = state.data.findIndex(
+          (v) => v.vendor_id === updatedVendor.vendor_id
+        );
         if (index !== -1) state.data[index] = updatedVendor;
 
         // Tenant map update
         const tenantList = state.vendorsByTenant[updatedVendor.tenant_id] || [];
-        const tenantIndex = tenantList.findIndex(v => v.vendor_id === updatedVendor.vendor_id);
+        const tenantIndex = tenantList.findIndex(
+          (v) => v.vendor_id === updatedVendor.vendor_id
+        );
         if (tenantIndex !== -1) tenantList[tenantIndex] = updatedVendor;
         else tenantList.push(updatedVendor);
         state.vendorsByTenant[updatedVendor.tenant_id] = tenantList;
@@ -121,12 +125,17 @@ const vendorSlice = createSlice({
 
         if (toggledVendor.vendor_id) {
           // Flat list update
-          const index = state.data.findIndex(v => v.vendor_id === toggledVendor.vendor_id);
+          const index = state.data.findIndex(
+            (v) => v.vendor_id === toggledVendor.vendor_id
+          );
           if (index !== -1) state.data[index] = toggledVendor;
 
           // Tenant map update
-          const tenantList = state.vendorsByTenant[toggledVendor.tenant_id] || [];
-          const tenantIndex = tenantList.findIndex(v => v.vendor_id === toggledVendor.vendor_id);
+          const tenantList =
+            state.vendorsByTenant[toggledVendor.tenant_id] || [];
+          const tenantIndex = tenantList.findIndex(
+            (v) => v.vendor_id === toggledVendor.vendor_id
+          );
           if (tenantIndex !== -1) tenantList[tenantIndex] = toggledVendor;
           else tenantList.push(toggledVendor);
           state.vendorsByTenant[toggledVendor.tenant_id] = tenantList;
