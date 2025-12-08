@@ -20,6 +20,9 @@ import RoleManagement from "../components/RoleManagement/RoleManagement";
 import ReportDownloader from "../pages/ReportDownloader";
 import VendorUserManagement from "../pages/VendorUserManagement";
 import TrackingManagement from "../pages/TrackingManagement";
+import NewDriverManagement from "../pages/NewDriverManagement";
+import EscortManagement from "../pages/EscortManagement";
+// import NewDriverManagement from "../pages/NewDriverManagement";
 
 export const CompanyRoutes = () => (
   <Route path="/companies" element={<Layout type="employee" />}>
@@ -51,7 +54,7 @@ export const CompanyRoutes = () => (
     <Route path="profile" element={<ProfilePage />} />
     <Route path="reports-management" element={<ReportsManagement />} />
     <Route path="employee/create-employee" element={<EmployeeForm />} />
-
+    <Route path="driverform" element={<NewDriverManagement />} />
     <Route
       path="department/:depId/employees"
       element={
@@ -74,7 +77,7 @@ export const CompanyRoutes = () => (
     <Route path="tracking" element={<TrackingManagement />} />
     <Route path="report-downloader" element={<ReportDownloader />} />
     <Route path="routing" element={<RouteScheduledBookings />} />
-
+    <Route path="escort-management" element={<EscortManagement />} />
     <Route
       path="shift/:shiftId/:shiftType/:date/routing-map"
       element={<ShiftRoutingManagement />}

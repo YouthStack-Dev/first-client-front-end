@@ -1,6 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { API_CLIENT } from "../../../Api/API_Client";
 
+// Cutoff endpoints
 export const fetchCutoffsThunk = createAsyncThunk(
   "cutoff/fetchCutoffs",
   async (_, { rejectWithValue }) => {
@@ -52,11 +53,58 @@ export const saveCutoffThunk = createAsyncThunk(
   }
 );
 
-// Helper function to format time consistently
+// Escort Config endpoints
+export const fetchEscortConfigThunk = createAsyncThunk(
+  "cutoff/fetchEscortConfig",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await API_CLIENT.get(`/v1/tenant-config/`);
+
+      if (response.status === 200) {
+        return response.data?.data || response.data;
+      }
+
+      return rejectWithValue("Failed to fetch escort config");
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const saveEscortConfigThunk = createAsyncThunk(
+  "cutoff/saveEscortConfig",
+  async (formData, { rejectWithValue }) => {
+    try {
+      const payload = {
+        escort_required_start_time: formatFullTime(
+          formData.escort_required_start_time
+        ),
+        escort_required_end_time: formatFullTime(
+          formData.escort_required_end_time
+        ),
+        escort_required_for_women: formData.escort_required_for_women,
+      };
+
+      console.log("Saving escort config payload:", payload);
+
+      const response = await API_CLIENT.put("/v1/tenant-config/", payload);
+
+      if (response.status === 200) {
+        return response.data?.data || response.data;
+      }
+
+      return rejectWithValue("Failed to save escort config");
+    } catch (error) {
+      console.error("Error saving escort config:", error);
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Helper functions
 const formatTime = (timeString) => {
   if (!timeString) return "0:00";
 
-  // If timeString is already in HH:MM format, return it
   if (timeString.includes(":")) {
     const [hours, minutes] = timeString.split(":");
     return `${parseInt(hours) || 0}:${(parseInt(minutes) || 0)
@@ -64,7 +112,21 @@ const formatTime = (timeString) => {
       .padStart(2, "0")}`;
   }
 
-  // If it's just a number, treat it as hours
   const hours = parseInt(timeString) || 0;
   return `${hours}:00`;
+};
+
+const formatFullTime = (timeString) => {
+  if (!timeString) return "00:00:00";
+
+  if (timeString.includes(":")) {
+    const parts = timeString.split(":");
+    if (parts.length === 3) {
+      return timeString; // Already in HH:MM:SS format
+    } else if (parts.length === 2) {
+      return `${parts[0].padStart(2, "0")}:${parts[1].padStart(2, "0")}:00`;
+    }
+  }
+
+  return `${parseInt(timeString) || 0}:00:00`;
 };

@@ -21,7 +21,6 @@ import {
 } from "../../staticData/permissionModules";
 import ReusableButton from "../ui/ReusableButton";
 
-// Mock Policies Management component - replace with your actual component
 import PoliciesManagement from "./PoliciesManagement";
 
 const RoleManagement = () => {
