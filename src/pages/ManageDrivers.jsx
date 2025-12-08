@@ -6,6 +6,7 @@ import ToolBar from "@components/ui/ToolBar";
 import Pagination from "@components/ui/Pagination";
 import FilterBadges from "@components/ui/FilterBadges";
 import StatusIndicator from "@components/ui/StatusIndicator";
+import ReusableButton from "@components/ui/ReusableButton";
 import { toast } from "react-toastify";
 import {
   setSearchTerm,
@@ -25,6 +26,7 @@ import {
   selectActiveFilters,
   selectCounts,
   selectFilteredDrivers,
+  setSelectedDriverVendor,            // ✅ NEW
 } from "../redux/features/manageDriver/driverSlice";
 import DriverForm from "@components/driver/DriverForm";
 import Modal from "@components/modals/Modal";
@@ -42,7 +44,6 @@ function ManageDrivers() {
   const loading = useSelector(selectLoading);
   const error = useSelector(selectError);
   const statusOptions = useSelector(selectStatusOptions);
-  // const verificationOptions = useSelector(selectVerificationOptions);
   const activeFilters = useSelector(selectActiveFilters);
   const counts = useSelector(selectCounts);
   const filters = useSelector((state) => state.drivers.filters);
@@ -51,14 +52,15 @@ function ManageDrivers() {
   const driversIds = useSelector((state) => state.drivers.ids);
   const currentUser = useSelector((state) => state.auth.user);
   const userType = currentUser?.type;
-  const driversByVendor = useSelector((state) => state.drivers.byVendor); // optional, used for caching like vehicles
+  const driversByVendor = useSelector((state) => state.drivers.byVendor);
+  const selectedVendor = useSelector(           // ✅ NEW
+    (state) => state.drivers.selectedVendor
+  );
 
   // Modal and form state
   const [showModal, setShowModal] = useState(false);
   const [formMode, setFormMode] = useState("create"); // 'create', 'edit', 'view'
   const [selectedDriver, setSelectedDriver] = useState(null);
-
-  // Existing selectors
 
   const statusFilterValue = useSelector(
     (state) => state.drivers.filters.statusFilter
@@ -91,14 +93,14 @@ function ManageDrivers() {
   // Track the last fetched page to prevent refetching when going back
   const lastFetchedPage = useRef(0);
 
-  // Fetch drivers once
+  // Initial fetch (tenant-wide drivers or current vendor, depending on API)
   useEffect(() => {
     if (!hasFetched) {
       dispatch(fetchDriversThunk());
     }
-  }, [dispatch]);
+  }, [dispatch, hasFetched]);
 
-  // Local filtered drivers
+  // Local filtered drivers (not used in rendering directly, but kept if needed)
   const filteredDrivers = useMemo(() => {
     return driversIds
       .map((id) => driversEntities[id])
@@ -127,20 +129,28 @@ function ManageDrivers() {
       });
   }, [driversEntities, driversIds, filters]);
 
+  // Page-based fetch (if you later support server-side pagination)
   useEffect(() => {
-    // Fetch drivers if:
-    // 1. We haven't fetched any data yet (initial load)
-    // 2. We're moving to a new page that hasn't been fetched before
     if (
       !hasFetched ||
       (currentPage > lastFetchedPage.current && !allDrivers.length)
     ) {
-      fetchDriversThunk(currentPage);
+      dispatch(fetchDriversThunk());
+      lastFetchedPage.current = currentPage;
     }
   }, [currentPage, hasFetched, allDrivers.length, dispatch, paginationLimit]);
 
   // Modal handlers
   const openCreateModal = () => {
+    // ✅ Ensure vendor is selected before creating a driver for tenant-side users
+    // Vendor users (who have `vendor_user` on their profile) don't need to select a vendor
+    if (!currentUser?.vendor_user) {
+      if (!selectedVendor || selectedVendor === "all" || selectedVendor === "ALL") {
+        toast.error("Please select a vendor before adding a driver.");
+        return;
+      }
+    }
+
     setFormMode("create");
     setSelectedDriver(null);
     setShowModal(true);
@@ -166,7 +176,7 @@ function ManageDrivers() {
 
   const handleFormSuccess = () => {
     // Refresh drivers data after successful create/update
-    fetchDriversThunk(currentPage);
+    dispatch(fetchDriversThunk());
     closeModal();
   };
 
@@ -179,12 +189,10 @@ function ManageDrivers() {
       } this driver?`,
       onConfirm: async () => {
         try {
-          // Dispatch the thunk and unwrap result
           const updatedDriver = await dispatch(
             toggleDriverStatusThunk(driver.driver_id)
           ).unwrap();
 
-          // Update local Redux state if needed
           dispatch(
             updateDriverStatus({
               driverId: updatedDriver.driver_id,
@@ -192,7 +200,6 @@ function ManageDrivers() {
             })
           );
 
-          // Show success toast
           toast.success(
             `Driver has been ${
               updatedDriver.is_active ? "activated" : "deactivated"
@@ -201,11 +208,11 @@ function ManageDrivers() {
         } catch (err) {
           toast.error(err.message || "Failed to update driver status.");
         } finally {
-          setConfirmationModal({ ...confirmationModal, show: false });
+          setConfirmationModal((prev) => ({ ...prev, show: false }));
         }
       },
       onCancel: () => {
-        setConfirmationModal({ ...confirmationModal, show: false });
+        setConfirmationModal((prev) => ({ ...prev, show: false }));
       },
     });
   };
@@ -243,11 +250,6 @@ function ManageDrivers() {
 
   return (
     <div className="space-y-4">
-      {/* {error && (
-          <div className="p-3 mb-4 text-sm bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-md">
-            {error}
-          </div>
-      )} */}
       <ToolBar
         leftElements={
           <div className="flex flex-wrap gap-2">
@@ -282,22 +284,24 @@ function ManageDrivers() {
                 </svg>
               </div>
             </div>
-            {userType === "employee" && (
+
+            {!currentUser?.vendor_user && (
               <VendorSelector
                 onChange={(vendor) => {
                   const vendorId = vendor.vendor_id;
 
+                  // ✅ Store selected vendor for createDriverThunk
+                  dispatch(setSelectedDriverVendor(vendorId));
+
                   // Reset pagination on vendor change
                   dispatch(setPage(1));
 
-                  // ALL vendors → fetch full tenant list
                   if (vendorId === "all" || vendorId === "ALL") {
                     console.log("🌍 Fetching ALL drivers (tenant-wide)");
                     dispatch(fetchDriversThunk());
                     return;
                   }
 
-                  // Specific vendor → fetch vendor drivers
                   console.log("🚗 Fetching drivers for vendor:", vendorId);
                   dispatch(fetchDriversByVendorThunk(vendorId));
                 }}
@@ -316,13 +320,17 @@ function ManageDrivers() {
               Reset Filters
             </button>
 
-            {/* Add Driver Button */}
-            <button
+            {/* Add Driver Button – permission-based via ReusableButton */}
+            <ReusableButton
+              module="driver"
+              action="create"
+              icon={Plus}
+              title="Add Driver"
+              buttonName="Add Driver"
               onClick={openCreateModal}
+              size={16}
               className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
-            >
-              <Plus size={16} /> Add Driver
-            </button>
+            />
           </div>
         }
         searchBar={
