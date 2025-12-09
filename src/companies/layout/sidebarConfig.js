@@ -32,6 +32,13 @@ export const baseSidebarConfig = [
         permission: "role.read",
         icon: Users,
       },
+      {
+        title: "Escort Management",
+        icon: Users,
+        path: "/companies/escort-management",
+        permission: "escort.read",
+        icon: Users,
+      },
     ],
   },
   {
@@ -45,6 +52,13 @@ export const baseSidebarConfig = [
         icon: Users,
       },
       {
+        title: " New Manage Drivers",
+        icon: Users,
+        path: "/companies/driverform",
+        permission: "driver.read",
+        icon: Users,
+      },
+      {
         title: "Vehicles",
         icon: Car,
         path: "/companies/vehicles",
@@ -53,6 +67,7 @@ export const baseSidebarConfig = [
       },
     ],
   },
+
   {
     title: "Management",
     items: [

@@ -5,7 +5,7 @@ import DepartmentForm from "@components/departments/DepartmentForm";
 import DepartmentList from "@components/departments/DepartmentList";
 import { useDispatch, useSelector } from "react-redux";
 import { API_CLIENT } from "../Api/API_Client";
-import { setTeams, removeTeam } from "../redux/features/user/userSlice";
+import { setTeams } from "../redux/features/user/userSlice";
 import { logDebug, logError } from "../utils/logger";
 import ToolBar from "@components/ui/ToolBar";
 import SearchInput from "@components/ui/SearchInput";

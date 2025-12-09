@@ -1,4 +1,313 @@
+import { Briefcase, Eye, FileText, Shield } from "lucide-react";
 import { API_CLIENT } from "../../Api/API_Client";
+
+export const defaultFormData = {
+  name: "",
+  code: "",
+  email: "",
+  mobileNumber: "",
+  gender: "Male",
+  password: "",
+  dateOfBirth: "",
+  dateOfJoining: "",
+  permanentAddress: "",
+  currentAddress: "",
+  isSameAddress: false,
+  licenseNumber: "",
+  licenseExpiryDate: "",
+  badgeNumber: "",
+  badgeExpiryDate: "",
+  inductionDate: "",
+  bgvExpiryDate: "",
+  policeExpiryDate: "",
+  medicalExpiryDate: "",
+  trainingExpiryDate: "",
+  eyeTestExpiryDate: "",
+  alternateGovtId: "", // ID Number
+  alternateGovtIdType: "", // ID Type (aadhar/pan/voter/passport)
+  vendor_id: "", // Added vendor ID
+  profileImage: null,
+  license_file: null,
+  badge_file: null,
+  alt_govt_id_file: null,
+  bgv_file: null,
+  police_file: null,
+  medical_file: null,
+  training_file: null,
+  eye_file: null,
+  induction_file: null,
+  bgvStatus: "Pending",
+  policeVerification: "Pending",
+  medicalVerification: "Pending",
+  trainingVerification: "Pending",
+  eyeTestStatus: "Pending",
+};
+
+export const documents = [
+  {
+    id: "license",
+    label: "Driving License",
+    fileKey: "license_file",
+    numberKey: "licenseNumber",
+    expiryKey: "licenseExpiryDate",
+    icon: Briefcase,
+    color: "blue",
+  },
+  {
+    id: "badge",
+    label: "Security Badge",
+    fileKey: "badge_file",
+    numberKey: "badgeNumber",
+    expiryKey: "badgeExpiryDate",
+    icon: Shield,
+    color: "green",
+  },
+  {
+    id: "alt_govt_id",
+    label: "Alternate Govt ID",
+    fileKey: "alt_govt_id_file",
+    numberKey: "alternateGovtId",
+    typeKey: "alternateGovtIdType",
+    icon: FileText,
+    color: "purple",
+  },
+  {
+    id: "bgv",
+    label: "Background Verification",
+    fileKey: "bgv_file",
+    expiryKey: "bgvExpiryDate",
+    statusKey: "bgvStatus",
+    icon: Shield,
+    color: "red",
+  },
+  {
+    id: "police",
+    label: "Police Verification",
+    fileKey: "police_file",
+    expiryKey: "policeExpiryDate",
+    statusKey: "policeVerification",
+    icon: Shield,
+    color: "indigo",
+  },
+  {
+    id: "medical",
+    label: "Medical Certificate",
+    fileKey: "medical_file",
+    expiryKey: "medicalExpiryDate",
+    statusKey: "medicalVerification",
+    icon: Briefcase,
+    color: "pink",
+  },
+  {
+    id: "training",
+    label: "Training Certificate",
+    fileKey: "training_file",
+    expiryKey: "trainingExpiryDate",
+    statusKey: "trainingVerification",
+    icon: Briefcase,
+    color: "orange",
+  },
+  {
+    id: "eye",
+    label: "Eye Test Certificate",
+    fileKey: "eye_file",
+    expiryKey: "eyeTestExpiryDate",
+    statusKey: "eyeTestStatus",
+    icon: Eye,
+    color: "cyan",
+  },
+  {
+    id: "induction",
+    label: "Induction Certificate",
+    fileKey: "induction_file",
+    dateKey: "inductionDate",
+    icon: Briefcase,
+    color: "teal",
+  },
+];
+
+// Static vendors data
+export const staticVendors = [
+  { id: "1", name: "ABC Transport Services" },
+  { id: "2", name: "XYZ Logistics Ltd." },
+  { id: "3", name: "City Cabs Pvt. Ltd." },
+  { id: "4", name: "Metro Travel Solutions" },
+  { id: "5", name: "Express Delivery Network" },
+];
+
+export const transformApiToFormData = (driverData) => {
+  return {
+    name: driverData.name || "",
+    code: driverData.code || "",
+    email: driverData.email || "",
+    mobileNumber: driverData.phone || "",
+    gender: driverData.gender || "Male",
+    password: "", // Not available from API for security
+    dateOfBirth: driverData.date_of_birth || "",
+    dateOfJoining: driverData.date_of_joining || "",
+    permanentAddress: driverData.permanent_address || "",
+    currentAddress: driverData.current_address || "",
+    isSameAddress: driverData.permanent_address === driverData.current_address,
+    licenseNumber: driverData.license_number || "",
+    licenseExpiryDate: driverData.license_expiry_date || "",
+    badgeNumber: driverData.badge_number || "",
+    badgeExpiryDate: driverData.badge_expiry_date || "",
+    inductionDate: driverData.induction_date || "",
+    bgvExpiryDate: driverData.bg_expiry_date || "",
+    policeExpiryDate: driverData.police_expiry_date || "",
+    medicalExpiryDate: driverData.medical_expiry_date || "",
+    trainingExpiryDate: driverData.training_expiry_date || "",
+    eyeTestExpiryDate: driverData.eye_expiry_date || "",
+    alternateGovtId: driverData.alt_govt_id_number || "", // ID Number
+    alternateGovtIdType: driverData.alt_govt_id_type || "", // ID Type
+    vendor_id: driverData.vendor_id || "", // Added vendor ID
+    profileImage: driverData.photo_url
+      ? {
+          path: driverData.photo_url,
+          name: "profile.jpg",
+        }
+      : null,
+    license_file: driverData.license_url
+      ? {
+          path: driverData.license_url,
+          name: "license.pdf",
+        }
+      : null,
+    badge_file: driverData.badge_url
+      ? {
+          path: driverData.badge_url,
+          name: "badge.pdf",
+        }
+      : null,
+    alt_govt_id_file: driverData.alt_govt_id_url
+      ? {
+          path: driverData.alt_govt_id_url,
+          name: "alt_govt_id.pdf",
+        }
+      : null,
+    bgv_file: driverData.bg_verify_url
+      ? {
+          path: driverData.bg_verify_url,
+          name: "bgv.pdf",
+        }
+      : null,
+    police_file: driverData.police_verify_url
+      ? {
+          path: driverData.police_verify_url,
+          name: "police.pdf",
+        }
+      : null,
+    medical_file: driverData.medical_verify_url
+      ? {
+          path: driverData.medical_verify_url,
+          name: "medical.pdf",
+        }
+      : null,
+    training_file: driverData.training_verify_url
+      ? {
+          path: driverData.training_verify_url,
+          name: "training.pdf",
+        }
+      : null,
+    eye_file: driverData.eye_verify_url
+      ? {
+          path: driverData.eye_verify_url,
+          name: "eye.pdf",
+        }
+      : null,
+    induction_file: driverData.induction_url
+      ? {
+          path: driverData.induction_url,
+          name: "induction.pdf",
+        }
+      : null,
+    bgvStatus: driverData.bg_verify_status || "Pending",
+    policeVerification: driverData.police_verify_status || "Pending",
+    medicalVerification: driverData.medical_verify_status || "Pending",
+    trainingVerification: driverData.training_verify_status || "Pending",
+    eyeTestStatus: driverData.eye_verify_status || "Pending",
+  };
+};
+
+// Text fields mapper
+export const mapDriverTextFields = (formData) => ({
+  name: formData.name,
+  code: formData.code,
+  email: formData.email,
+  phone: formData.mobileNumber,
+  gender: formData.gender,
+  password: formData.password,
+  date_of_joining: formData.dateOfJoining,
+  date_of_birth: formData.dateOfBirth,
+  permanent_address: formData.permanentAddress,
+  current_address: formData.currentAddress,
+  license_number: formData.licenseNumber,
+  license_expiry_date: formData.licenseExpiryDate,
+  badge_number: formData.badgeNumber,
+  badge_expiry_date: formData.badgeExpiryDate,
+  induction_date: formData.inductionDate,
+  bg_expiry_date: formData.bgvExpiryDate,
+  police_expiry_date: formData.policeExpiryDate,
+  medical_expiry_date: formData.medicalExpiryDate,
+  training_expiry_date: formData.trainingExpiryDate,
+  eye_expiry_date: formData.eyeTestExpiryDate,
+  alt_govt_id_number: formData.alternateGovtId,
+  alt_govt_id_type: formData.alternateGovtIdType,
+  vendor_id: formData.vendor_id, // Added vendor ID
+  bg_verify_status: formData.bgvStatus,
+  police_verify_status: formData.policeVerification,
+  medical_verify_status: formData.medicalVerification,
+  training_verify_status: formData.trainingVerification,
+  eye_verify_status: formData.eyeTestStatus,
+});
+
+// File fields
+export const driverFileFields = [
+  "profileImage",
+  "license_file",
+  "badge_file",
+  "alt_govt_id_file",
+  "bgv_file",
+  "police_file",
+  "medical_file",
+  "training_file",
+  "eye_file",
+  "induction_file",
+];
+
+// Create FormData for create driver
+export const buildDriverFormData = (formData) => {
+  const formDataToSend = new FormData();
+
+  const textFields = mapDriverTextFields(formData);
+
+  Object.entries(textFields).forEach(([key, value]) => {
+    if (value !== null && value !== undefined) {
+      formDataToSend.append(key, value.toString());
+    }
+  });
+
+  driverFileFields.forEach((field) => {
+    if (formData[field] instanceof File) {
+      formDataToSend.append(field, formData[field]);
+    }
+  });
+
+  return formDataToSend;
+};
+
+// Build update JSON for edit
+export const buildDriverUpdateData = (formData, selectedDriverId) => ({
+  driver_id: selectedDriverId,
+  ...mapDriverTextFields(formData),
+});
+
+// Get vendor name by ID
+export const getVendorNameById = (vendorId) => {
+  const vendor = staticVendors.find((v) => v.id === vendorId.toString());
+  return vendor ? vendor.name : "Unknown Vendor";
+};
+//  OLD DATA
 
 export const fieldMapping = {
   // Personal / basic info
@@ -49,11 +358,9 @@ export const fieldMapping = {
   profileImage: "photo",
 };
 
-
 export const reverseFieldMapping = Object.fromEntries(
   Object.entries(fieldMapping).map(([frontend, backend]) => [backend, frontend])
 );
-
 
 // Backend field -> Frontend field mapping
 export const backendToFrontendMapping = {
@@ -105,7 +412,6 @@ export const backendToFrontendMapping = {
   photo_url: "photo",
 };
 
-
 export const transformBackendToFormData = (backendData) => {
   if (!backendData) return {};
 
@@ -118,8 +424,11 @@ export const transformBackendToFormData = (backendData) => {
   });
 
   // Map backend file URLs to frontend file fields
- // Preserve local file if selected, otherwise map backend URL
-  transformed.photo = transformed.photo instanceof File ? transformed.photo : backendData.photo_url || null;
+  // Preserve local file if selected, otherwise map backend URL
+  transformed.photo =
+    transformed.photo instanceof File
+      ? transformed.photo
+      : backendData.photo_url || null;
   transformed.license_file = backendData.license_url || null;
   transformed.badge_file = backendData.badge_url || null;
   transformed.bgv_file = backendData.bg_verify_url || null;
@@ -133,17 +442,17 @@ export const transformBackendToFormData = (backendData) => {
   return transformed;
 };
 
-
-
 // Add this to your driverUtility.js file to debug field mapping
 export const logFieldMapping = (formData) => {
-  console.log('=== FIELD MAPPING DEBUG ===');
-  Object.keys(formData).forEach(key => {
+  console.log("=== FIELD MAPPING DEBUG ===");
+  Object.keys(formData).forEach((key) => {
     const backendKey = fieldMapping[key] || key;
     const value = formData[key];
-    console.log(`Frontend: ${key} -> Backend: ${backendKey} | Value: ${value} | Type: ${typeof value}`);
+    console.log(
+      `Frontend: ${key} -> Backend: ${backendKey} | Value: ${value} | Type: ${typeof value}`
+    );
   });
-  console.log('=== END FIELD MAPPING ===');
+  console.log("=== END FIELD MAPPING ===");
 };
 
 // Call this in your handleSubmit before creating FormData
@@ -153,23 +462,32 @@ export const logFieldMapping = (formData) => {
 // You can call this in your component to check the configuration
 
 const debugAPIClient = () => {
-  console.log('🔍 API_CLIENT Debug Information:');
-  console.log('Base URL:', API_CLIENT.defaults?.baseURL);
-  console.log('Timeout:', API_CLIENT.defaults?.timeout);
-  console.log('Headers:', API_CLIENT.defaults?.headers);
-  console.log('Auth Token from localStorage:', localStorage.getItem('access_token'));
+  console.log("🔍 API_CLIENT Debug Information:");
+  console.log("Base URL:", API_CLIENT.defaults?.baseURL);
+  console.log("Timeout:", API_CLIENT.defaults?.timeout);
+  console.log("Headers:", API_CLIENT.defaults?.headers);
+  console.log(
+    "Auth Token from localStorage:",
+    localStorage.getItem("access_token")
+  );
 
   // Check if interceptors are working
-  console.log('Request Interceptors:', API_CLIENT.interceptors.request.handlers.length);
-  console.log('Response Interceptors:', API_CLIENT.interceptors.response.handlers.length);
+  console.log(
+    "Request Interceptors:",
+    API_CLIENT.interceptors.request.handlers.length
+  );
+  console.log(
+    "Response Interceptors:",
+    API_CLIENT.interceptors.response.handlers.length
+  );
 
   // Test a simple GET request to see if connection works
-  API_CLIENT.get('/vendors/')
-    .then(response => {
-      console.log('✅ Connection test successful:', response.status);
+  API_CLIENT.get("/vendors/")
+    .then((response) => {
+      console.log("✅ Connection test successful:", response.status);
     })
-    .catch(error => {
-      console.error('❌ Connection test failed:', error.message);
+    .catch((error) => {
+      console.error("❌ Connection test failed:", error.message);
     });
 };
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Edit, Search } from "lucide-react";
+import { Edit, Plus, Search } from "lucide-react";
 import DynamicTable from "../DynamicTable";
 import ToolBar from "../ui/ToolBar";
 import { Modal } from "../../components/SmallComponents";
@@ -14,6 +14,8 @@ import {
 } from "../../redux/features/managevehicletype/vehicleTypeThunks";
 import { toast } from "react-toastify";
 import VendorSelector from "../vendor/vendordropdown";
+import SearchInput from "@components/ui/SearchInput";
+import SelectField from "../ui/SelectField";
 
 const ManageVehicleTypes = () => {
   const dispatch = useDispatch();
@@ -63,14 +65,14 @@ const ManageVehicleTypes = () => {
     // if cached exists, do nothing (we'll use cached data)
   }, [selectedVendor, fetched, vendorById, dispatch]);
 
-
   const filteredVehicleTypes = vehicleTypes.filter((vt) => {
     if (!vt) return false;
     const name = (vt.name || "").toLowerCase();
     const desc = (vt.description || "").toLowerCase();
     const q = searchTerm.toLowerCase();
     const matchesSearch = name.includes(q) || desc.includes(q);
-    const matchesStatus = activeOnly === undefined || vt.is_active === activeOnly;
+    const matchesStatus =
+      activeOnly === undefined || vt.is_active === activeOnly;
     return matchesSearch && matchesStatus;
   });
 
@@ -173,7 +175,10 @@ const ManageVehicleTypes = () => {
           />
         </button>
 
-        <button onClick={() => handleEdit(row)} className="text-blue-600 p-1.5 rounded">
+        <button
+          onClick={() => handleEdit(row)}
+          className="text-blue-600 p-1.5 rounded"
+        >
           <Edit size={18} />
         </button>
       </div>
@@ -241,21 +246,37 @@ const ManageVehicleTypes = () => {
 
           {/* VendorSelector: should update selectedVendor in Redux.
               DO NOT dispatch fetch here to avoid duplicate calls. */}
-          <VendorSelector onChange={() => { /* noop here */ }} />
+          <VendorSelector
+            onChange={() => {
+              /* noop here */
+            }}
+          />
         </div>
 
         <ToolBar
+          module="driver"
+          className="p-4 bg-white border rounded-lg shadow-sm mb-6"
+          onAddClick={() => {
+            setFormData({ is_active: true });
+            setEditingId(null);
+            setIsModalOpen(true);
+          }}
+          addButtonLabel="Add Driver"
+          addButtonIcon={<Plus size={16} />}
+          searchBar={
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <SearchInput
+                placeholder="Search vehicle type..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-grow"
+              />
+            </div>
+          }
           rightElements={
-            <button
-              onClick={() => {
-                setFormData({ is_active: true });
-                setEditingId(null);
-                setIsModalOpen(true);
-              }}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg"
-            >
-              Add Vehicle Type
-            </button>
+            <div className="flex items-center gap-3">
+              <SelectField className="p-2" />
+            </div>
           }
         />
       </div>

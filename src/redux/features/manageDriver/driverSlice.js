@@ -1,4 +1,3 @@
-// src/redux/features/manageDrivers/driverSlice.js
 import { createSlice, createSelector } from "@reduxjs/toolkit";
 import {
   fetchDriversThunk,
@@ -52,21 +51,8 @@ const driversSlice = createSlice({
         (action.payload - 1) * state.pagination.limit;
     },
     setSelectedDriverVendor: (state, action) => {
-      // Normalize to a primitive vendor id or the string 'all'
-      const payload = action.payload;
-      let vendorId = payload;
-
-      if (payload && typeof payload === "object") {
-        // support shapes like { vendor_id } or { id }
-        vendorId = payload.vendor_id ?? payload.id ?? vendorId;
-      }
-
-      if (vendorId === null || vendorId === undefined) {
-        vendorId = "all";
-      }
-
-      state.selectedVendor = vendorId;
-    },
+      state.selectedVendor = action.payload;
+    }, 
     // Data management actions
     setDriversLoading: (state, action) => {
       state.loading = action.payload;
@@ -130,8 +116,7 @@ const driversSlice = createSlice({
             ? action.payload
             : action.payload || "Failed to fetch drivers";
       })
-
-      // Create driver
+      
       .addCase(createDriverThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -149,43 +134,38 @@ const driversSlice = createSlice({
       })
       .addCase(createDriverThunk.rejected, (state, action) => {
         state.loading = false;
-        // don’t force hasFetched here; only fetching should control that
-        state.error =
-          action.payload?.message || "Failed to create driver";
+        state.hasFetched = true;
+        state.error = action.payload?.message || "Failed to create driver";
       })
-
-      // Update driver
-      .addCase(updateDriverThunk.pending, (state) => {
+        .addCase(updateDriverThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
-      })
-      .addCase(updateDriverThunk.fulfilled, (state, action) => {
-        state.loading = false;
-        state.error = null;
-        const updatedDriver = action.payload;
+        })
+       .addCase(updateDriverThunk.fulfilled, (state, action) => {
+          state.loading = false;
+          const updatedDriver = action.payload;
 
-        if (updatedDriver) {
-          state.entities[updatedDriver.driver_id] = updatedDriver;
+          if (updatedDriver) {
+            // Map backend fields to frontend fields if needed
+            state.entities[updatedDriver.driver_id] = updatedDriver;
 
-          if (!state.ids.includes(updatedDriver.driver_id)) {
-            state.ids.push(updatedDriver.driver_id);
+            // Also add to ids if not present
+            if (!state.ids.includes(updatedDriver.driver_id)) {
+              state.ids.push(updatedDriver.driver_id);
+            }
           }
-        }
-      })
-      .addCase(updateDriverThunk.rejected, (state, action) => {
-        state.loading = false;
-        state.error =
-          action.payload?.message || "Failed to update driver";
-      })
-
-      // Fetch drivers by vendor
-      .addCase(fetchDriversByVendorThunk.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchDriversByVendorThunk.fulfilled, (state, action) => {
-        state.loading = false;
-        state.error = null;
+        })
+        .addCase(updateDriverThunk.rejected, (state, action) => {
+          state.loading = false;
+          state.error = action.payload?.message || "Failed to update driver";
+        })
+        .addCase(fetchDriversByVendorThunk.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+          })
+        .addCase(fetchDriversByVendorThunk.fulfilled, (state, action) => {
+          state.loading = false;
+          state.error = null;
 
         const { vendorId, items } = action.payload;
 
@@ -200,24 +180,25 @@ const driversSlice = createSlice({
         // Cache vendor data
         state.byVendor[vendorId] = { entities, ids };
 
-        // Also set active listing
-        state.entities = entities;
-        state.ids = ids;
-      })
-      .addCase(fetchDriversByVendorThunk.rejected, (state, action) => {
-        state.loading = false;
-        state.error =
-          action.payload || "Failed to fetch vendor-specific drivers";
-      });
-  },
-});
+          // Also set active listing
+          state.entities = entities;
+          state.ids = ids;
+        })
 
-// Selectors
-const selectDriverState = (state) => state.drivers;
+        .addCase(fetchDriversByVendorThunk.rejected, (state, action) => {
+          state.loading = false;
+          state.error = action.payload || "Failed to fetch vendor-specific drivers";
+        });
+
+    }
+  });
+
+// Selectors (same as before)
+const selectDriverState = state => state.drivers;
 
 export const selectAllDrivers = createSelector(
   [selectDriverState],
-  (drivers) => drivers.ids.map((id) => drivers.entities[id])
+  (drivers) => drivers.ids.map(id => drivers.entities[id])
 );
 
 export const selectLoading = (state) => state.drivers.loading;
@@ -229,48 +210,40 @@ export const selectPagination = (state) => state.drivers.pagination;
 export const selectStatusOptions = createSelector(
   (state) => state.drivers,
   () => [
-    { value: "all", label: "ALL" },
-    { value: "active", label: "Active" },
-    { value: "inactive", label: "Inactive" },
+    { value: 'all', label: 'ALL' },
+    { value: 'active', label: 'Active' },
+    { value: 'inactive', label: 'Inactive' }
   ]
 );
 
+// export const selectVerificationOptions = createSelector(
+//   (state) => state.drivers,
+//   () => [
+//     { value: 'all', label: 'ALL' },
+//     { value: 'pending', label: 'Pending' },
+//     { value: 'approved', label: 'Approved' },
+//     { value: 'rejected', label: 'Rejected' }
+//   ]
+// );
+
+
+
 export const selectFilteredDrivers = createSelector(
   [selectAllDrivers, selectFilters],
-  (drivers, filters) =>
-    drivers.filter((driver) => {
-      const matchesSearch =
-        filters.searchTerm === "" ||
-        [
-          driver.name,
-          driver.email,
-          driver.phone,           // ✅ changed from mobile_number → phone
-          driver.license_number,
-        ].some(
-          (field) =>
-            field &&
-            field
-              .toString()
-              .toLowerCase()
-              .includes(filters.searchTerm.toLowerCase())
-        );
+  (drivers, filters) => drivers.filter(driver => {
+    const matchesSearch = filters.searchTerm === '' || 
+      [driver.name, driver.email, driver.mobile_number, driver.license_number]
+        .some(field => field && field.toString().toLowerCase().includes(filters.searchTerm.toLowerCase()));
 
-      const matchesStatus =
-        filters.statusFilter === "all" ||
-        (filters.statusFilter === "active" && driver.is_active) ||
-        (filters.statusFilter === "inactive" && !driver.is_active);
+    
+    const matchesStatus = filters.statusFilter === 'all' || 
+      (filters.statusFilter === 'active' && driver.is_active) || 
+      (filters.statusFilter === 'inactive' && !driver.is_active);
 
-      const matchesVerification =
-        filters.verificationFilter === "all" ||
-        [
-          "bgv_status",
-          "police_verification_status",
-          "medical_verification_status",
-          "training_verification_status",
-          "eye_test_verification_status",
-        ].some(
-          (field) => driver[field] === filters.verificationFilter
-        );
+    const matchesVerification = filters.verificationFilter === 'all' || 
+      ['bgv_status', 'police_verification_status', 'medical_verification_status', 
+       'training_verification_status', 'eye_test_verification_status']
+        .some(field => driver[field] === filters.verificationFilter);
 
       return matchesSearch && matchesStatus && matchesVerification;
     })
@@ -278,57 +251,38 @@ export const selectFilteredDrivers = createSelector(
 
 export const selectPaginatedDrivers = createSelector(
   [selectFilteredDrivers, selectPagination],
-  (filteredDrivers, pagination) =>
-    filteredDrivers.slice(
-      pagination.skip,
-      pagination.skip + pagination.limit
-    )
+  (filteredDrivers, pagination) => 
+    filteredDrivers.slice(pagination.skip, pagination.skip + pagination.limit)
 );
-
 export const selectCounts = createSelector(
   [selectAllDrivers],
   (drivers) => {
     const now = new Date();
     return {
       total: drivers.length,
-      active: drivers.filter((d) => d.is_active).length,
-
-      pendingVerifications: drivers.filter((driver) =>
-        [
-          "bg_verify_status",
-          "police_verify_status",
-          "medical_verify_status",
-          "training_verify_status",
-          "eye_verify_status",
-        ].some(
-          (field) =>
-            driver[field]?.toLowerCase() === "pending"
-        )
+      active: drivers.filter(d => d.is_active).length,
+      
+      pendingVerifications: drivers.filter(driver => 
+        ['bg_verify_status', 'police_verify_status', 'medical_verify_status', 
+         'training_verify_status', 'eye_verify_status']
+          .some(field => driver[field]?.toLowerCase() === 'pending')
       ).length,
-
-      expiredDocuments: drivers.filter(
-        (driver) =>
-          (driver.license_expiry_date &&
-            new Date(driver.license_expiry_date) < now) ||
-          (driver.badge_expiry_date &&
-            new Date(driver.badge_expiry_date) < now)
+      
+      expiredDocuments: drivers.filter(driver => 
+        (driver.license_expiry_date && new Date(driver.license_expiry_date) < now) ||
+        (driver.badge_expiry_date && new Date(driver.badge_expiry_date) < now)
       ).length,
-
-      rejectedDocuments: drivers.filter((driver) =>
-        [
-          "bg_verify_status",
-          "police_verify_status",
-          "medical_verify_status",
-          "training_verify_status",
-          "eye_verify_status",
-        ].some(
-          (field) =>
-            driver[field]?.toLowerCase() === "rejected"
-        )
-      ).length,
+      
+      rejectedDocuments: drivers.filter(driver => 
+        ['bg_verify_status', 'police_verify_status', 'medical_verify_status', 
+         'training_verify_status', 'eye_verify_status']
+          .some(field => driver[field]?.toLowerCase() === 'rejected')
+      ).length
     };
   }
 );
+
+
 
 export const selectActiveFilters = createSelector(
   [selectFilters],

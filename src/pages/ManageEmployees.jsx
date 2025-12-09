@@ -275,6 +275,7 @@ const ManageEmployees = () => {
   return (
     <div>
       <ToolBar
+        module="employee"
         onAddClick={handleAddClick}
         addButtonLabel="Add employee"
         addButtonIcon={<Plus size={16} />}

@@ -15,7 +15,6 @@ const LiveTracking = ({
   const [routeSearch, setRouteSearch] = useState("");
   const [selectedRouteIds, setSelectedRouteIds] = useState([]);
   const [focusedRouteId, setFocusedRouteId] = useState(null);
-  const [syncLoading, setSyncLoading] = useState(false);
 
   const API_KEY = import.meta.env.VITE_GOOGLE_API || "";
 
@@ -26,11 +25,11 @@ const LiveTracking = ({
         lat:
           selectedCompany.location.latitude ||
           selectedCompany.location.lat ||
-          12.9716,
+          null,
         lng:
           selectedCompany.location.longitude ||
           selectedCompany.location.lng ||
-          77.5946,
+          null,
       };
     }
     return { lat: 12.9716, lng: 77.5946 };

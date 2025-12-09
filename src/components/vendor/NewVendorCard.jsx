@@ -212,12 +212,10 @@ const NewVendorCard = ({
           >
             {isActive ? (
               <>
-                <PowerOff className="w-4 h-4" />
                 <span className="text-xs font-medium">Deactivate</span>
               </>
             ) : (
               <>
-                <Power className="w-4 h-4" />
                 <span className="text-xs font-medium">Activate</span>
               </>
             )}

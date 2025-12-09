@@ -17,7 +17,7 @@ const ToolBar = ({
   searchBarPriority = true, // Whether search bar takes priority on mobile
 }) => {
   return (
-    <div className={`bg-white rounded-lg shadow p-4 ${className}`}>
+    <div className={` shadow p-4 ${className}`}>
       {/* Header section */}
       {(title || subtitle) && (
         <div className="mb-4">

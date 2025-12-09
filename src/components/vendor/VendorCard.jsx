@@ -12,7 +12,7 @@ import {
   Power,
   PowerOff,
 } from "lucide-react";
-import { toggleVendorStatusThunk } from "../../redux/features/vendors/vendorThunk"; 
+import { toggleVendorStatusThunk } from "../../redux/features/vendors/vendorThunk";
 
 const AssignedCompaniesList = ({ companies, loading, error }) => {
   if (loading && !companies.length) {
@@ -53,8 +53,12 @@ const AssignedCompaniesList = ({ companies, loading, error }) => {
             <span className="text-sm font-medium text-gray-800 truncate">
               {company.name}
             </span>
-            <span className="text-xs text-gray-500 truncate">{company.email}</span>
-            <span className="text-xs text-gray-500 truncate">{company.phone}</span>
+            <span className="text-xs text-gray-500 truncate">
+              {company.email}
+            </span>
+            <span className="text-xs text-gray-500 truncate">
+              {company.phone}
+            </span>
           </div>
           <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full ml-2 flex-shrink-0">
             Partner
@@ -88,7 +92,10 @@ const VendorCard = ({ vendor = {}, onAssignEntity, onDeleteVendor }) => {
 
   // ✅ Company list setup
   const companyState = useSelector((state) => state.company || {});
-  const allCompanies = useMemo(() => companyState.data || [], [companyState.data]);
+  const allCompanies = useMemo(
+    () => companyState.data || [],
+    [companyState.data]
+  );
 
   const tenantCompany = useMemo(
     () =>
@@ -117,7 +124,6 @@ const VendorCard = ({ vendor = {}, onAssignEntity, onDeleteVendor }) => {
 
   return (
     <div className="relative bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col h-[440px]">
-      
       {/* Header */}
       <div className="bg-gradient-to-r from-green-600 to-green-700 p-4 text-white flex-shrink-0 relative">
         <div className="flex items-center justify-between">
@@ -141,13 +147,7 @@ const VendorCard = ({ vendor = {}, onAssignEntity, onDeleteVendor }) => {
               : "bg-gray-100 hover:bg-gray-200"
           }`}
           title={isActive ? "Deactivate Vendor" : "Activate Vendor"}
-        >
-          {isActive ? (
-            <Power className="w-5 h-5 text-green-700 transition-transform duration-300 transform rotate-0 hover:scale-110" />
-          ) : (
-            <PowerOff className="w-5 h-5 text-gray-500 transition-transform duration-300 transform hover:scale-110" />
-          )}
-        </button>
+        ></button>
       </div>
 
       {/* Vendor Details */}
@@ -191,7 +191,9 @@ const VendorCard = ({ vendor = {}, onAssignEntity, onDeleteVendor }) => {
 
       {/* Footer */}
       <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center flex-shrink-0">
-        <span className="text-sm font-semibold text-gray-700">{onboardedDate}</span>
+        <span className="text-sm font-semibold text-gray-700">
+          {onboardedDate}
+        </span>
 
         <div className="flex items-center gap-2">
           <button

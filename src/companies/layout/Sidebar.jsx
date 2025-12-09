@@ -7,7 +7,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 
 import { getFilteredSidebar } from "./sidebarConfig";
 import { logout } from "../../redux/features/auth/authSlice";
-import { logDebug } from "../../utils/logger";
+
 
 // Skeleton Loading Components using react-loading-skeleton
 const SkeletonMenuItem = ({ isOpen }) => (
@@ -71,6 +71,15 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
   const [sidebarConfig, setSidebarConfig] = useState([]);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+const authUser = useSelector((state) => state.auth.user);
+
+const companyName =
+  authUser?.tenant?.name ||
+  JSON.parse(sessionStorage.getItem("userPermissions") || "{}")?.user?.tenant?.name ||
+  JSON.parse(sessionStorage.getItem("userPermissions") || "{}")?.tenant?.name ||
+  "—";
+
+
 
   // Get auth state from Redux
   const {
@@ -86,6 +95,27 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
       setSidebarConfig(filteredConfig);
     }
   }, [permissions]);
+
+
+// useEffect(() => {
+//   // 1) Try from Redux
+//   if (authUser?.tenant?.name) {
+//     setCompanyName(authUser.tenant.name);
+//     return;
+//   }
+
+//   // 2) Fallback: from sessionStorage.userPermissions.user.tenant
+//   const stored = sessionStorage.getItem("userPermissions");
+//   if (stored) {
+//     const parsed = JSON.parse(stored);
+
+//     const nameFromUserTenant = parsed?.user?.tenant?.name;
+//     const idFromUserTenant = parsed?.user?.tenant?.tenant_id || parsed?.user?.tenant_id;
+
+//     setCompanyName(nameFromUserTenant || idFromUserTenant || "");
+//   }
+// }, [authUser]);
+
 
   const handleLogout = () => {
     dispatch(logout());
@@ -175,7 +205,10 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
         <div className="p-4 border-b border-sidebar-primary-200/30 flex items-center justify-between bg-sidebar-primary-800/50 backdrop-blur-sm">
           {isOpen && (
             <>
-              <h2 className="text-xl font-bold text-white">Company Name</h2>
+            <h2 className="text-xl font-bold text-white">
+              {companyName || "—"}
+            </h2>
+
               {!isMobile && (
                 <button
                   onClick={togglePin}

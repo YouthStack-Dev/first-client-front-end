@@ -8,6 +8,7 @@ import VendorRouteManagement from "../components/RouteManagement/VendorRouteMana
 import ManageDrivers from "../pages/ManageDrivers";
 import VehicleManagement from "../pages/VehicleManagement";
 import EmployeeForm from "../components/departments/EmployeeForm";
+import NewDriverManagement from "../pages/NewDriverManagement";
 
 export const VendorRoutes = () => (
   <Route element={<VendorLayout type="vendor" />}>
@@ -30,6 +31,7 @@ export const VendorRoutes = () => (
     />
     <Route path="reports" element={<h1>Vendor Reports</h1>} />
     <Route path="drivers" element={<ManageDrivers />} />
+    <Route path="driverform" element={<NewDriverManagement />} />
     <Route path="vehicles" element={<VehicleManagement />} />
   </Route>
 );

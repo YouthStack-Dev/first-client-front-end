@@ -18,8 +18,9 @@ import {
 } from "lucide-react";
 
 import { API_CLIENT } from "../../Api/API_Client";
-import { logError, logDebug } from "../../utils/logger";
+import { logDebug } from "../../utils/logger";
 import endpoint from "../../Api/Endpoints";
+import { useValidation } from "../../hooks/useValidation";
 
 const VendorUsersModal = ({
   isOpen,
@@ -32,10 +33,14 @@ const VendorUsersModal = ({
 }) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [vendorOptions, setVendorOptions] = useState([]);
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
-
+  // Use the validation hook
+  const { errors, validateForm, clearError } = useValidation(
+    "vendorUser",
+    mode === "create" ? "create" : "edit"
+  );
+  logDebug(" this is the error ", errors);
   // Form state
   const [formData, setFormData] = useState({
     name: "",
@@ -45,9 +50,6 @@ const VendorUsersModal = ({
     is_active: true,
     password: "",
   });
-
-  // Validation errors
-  const [errors, setErrors] = useState({});
 
   // Initialize form when modal opens or data changes
   useEffect(() => {
@@ -73,7 +75,7 @@ const VendorUsersModal = ({
           );
           if (vendor) {
             setSelectedVendor({
-              value: vendor.id || vendor.vendor_id,
+              value: vendor.vendor_id,
               label: vendor.name || vendor.vendor_name || `Vendor ${vendor.id}`,
             });
           }
@@ -91,25 +93,10 @@ const VendorUsersModal = ({
         setSelectedVendor(null);
       }
 
-      // Clear errors when modal opens
-      setErrors({});
-
       // Set edit mode based on modal mode prop
       setIsEditMode(mode === "create" || mode === "edit");
     }
   }, [isOpen, initialData, mode, vendors]);
-
-  // Convert vendors to react-select options
-  useEffect(() => {
-    if (vendors && vendors.length > 0) {
-      const options = vendors.map((vendor) => ({
-        value: vendor.id || vendor.vendor_id,
-        label: vendor.name || vendor.vendor_name || `Vendor ${vendor.id}`,
-        ...vendor,
-      }));
-      setVendorOptions(options);
-    }
-  }, [vendors]);
 
   // Handle input changes
   const handleInputChange = (e) => {
@@ -120,13 +107,7 @@ const VendorUsersModal = ({
     }));
 
     // Clear error for this field when user starts typing
-    if (errors[name]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
+    clearError(name);
   };
 
   // Handle vendor selection
@@ -138,13 +119,7 @@ const VendorUsersModal = ({
     }));
 
     // Clear vendor error if exists
-    if (errors.vendor_id) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors.vendor_id;
-        return newErrors;
-      });
-    }
+    clearError("vendor_id");
   };
 
   // Toggle password visibility
@@ -152,80 +127,51 @@ const VendorUsersModal = ({
     setShowPassword(!showPassword);
   };
 
-  // Validate form
-  const validateForm = () => {
-    const newErrors = {};
-
-    // Vendor validation
-    if (!formData.vendor_id) {
-      newErrors.vendor_id = "Vendor is required";
-    }
-
-    // Name validation
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
-    } else if (formData.name.trim().length < 2) {
-      newErrors.name = "Name must be at least 2 characters";
-    }
-
-    // Email validation
-    const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = "Invalid email address";
-    }
-
-    // Phone validation
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required";
-    } else if (!phoneRegex.test(formData.phone.replace(/\D/g, ""))) {
-      newErrors.phone = "Phone must be 10 digits";
-    }
-
-    // Password validation for create mode
-    if (mode === "create" && !formData.password) {
-      newErrors.password = "Password is required";
-    } else if (mode === "create" && formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // Handle form submission
+  // In the handleSubmit function, update it like this:
   const handleSubmit = async (e) => {
     e.preventDefault();
+    logDebug(" this is the data getting submitted ", formData);
+    // Validate form using Zod schema
+    const validationResult = validateForm(formData);
 
-    // Validate form
-    if (!validateForm()) {
+    if (!validationResult.isValid) {
+      // Check if there are specific field errors
+      const hasFieldErrors = Object.keys(validationResult.errors).some(
+        (key) => key !== "general"
+      );
+      if (hasFieldErrors) {
+        toast.error("Please fix the validation errors");
+      } else if (validationResult.errors.general) {
+        toast.error(validationResult.errors.general);
+      }
       return;
     }
 
     setIsLoading(true);
     try {
+      // Use validated data from Zod parsing
+      const validatedData = validationResult.validatedData;
+
       // Prepare payload
       const payload = {
-        ...formData,
-        vendor_id: parseInt(formData.vendor_id) || formData.vendor_id,
-        is_active: formData.is_active === true || formData.is_active === "true",
+        ...validatedData,
+        // Ensure vendor_id is a number
+        vendor_id: parseInt(validatedData.vendor_id) || validatedData.vendor_id,
       };
 
       logDebug("Submitting vendor user data:", payload);
 
       let response;
       if (mode === "create") {
-        response = await API_CLIENT.post(endpoint.createVendorUser, payload);
+        response = await API_CLIENT.post(endpoint.VendorUser, payload);
         toast.success("Vendor user created successfully!");
       } else if (mode === "edit" && initialData?.id) {
-        // For edit, don't send password if empty (for partial updates)
-        if (!payload.password) {
+        // For edit, remove password if it's empty string
+        if (payload.password === "") {
           delete payload.password;
         }
         response = await API_CLIENT.put(
-          `${endpoint.updateVendorUser}/${initialData.id}`,
+          `${endpoint.VendorUser}/${initialData.id}`,
           payload
         );
         toast.success("Vendor user updated successfully!");
@@ -244,10 +190,64 @@ const VendorUsersModal = ({
       // Close modal
       onClose();
     } catch (error) {
-      logError("Error saving vendor user:", error);
-      const errorMessage =
-        error.response?.data?.message || "Failed to save vendor user";
-      toast.error(errorMessage);
+      // Handle FastAPI-style validation errors (Pydantic errors in "detail" array)
+      if (error.response?.data?.detail) {
+        const validationErrors = error.response.data.detail;
+
+        // Check if it's a list of validation errors
+        if (Array.isArray(validationErrors)) {
+          // Extract and display each validation error
+          validationErrors.forEach((err) => {
+            // Get field name from location array (usually last element)
+            const fieldPath = err.loc || [];
+            const field =
+              fieldPath.length > 0
+                ? fieldPath[fieldPath.length - 1] // Get the last element (field name)
+                : "unknown_field";
+            const message = err.msg || "Validation error";
+
+            // Display error for specific field
+            toast.error(`${field}: ${message}`);
+
+            // If you have field-specific error states, you can set them here
+            // setFieldErrors(prev => ({ ...prev, [field]: message }));
+          });
+
+          // Log validation errors
+          console.error("API validation errors:", validationErrors);
+        }
+        // Handle single error message (non-array detail)
+        else if (typeof validationErrors === "string") {
+          toast.error(validationErrors);
+        }
+        // Handle error object
+        else if (validationErrors.message) {
+          toast.error(validationErrors.message);
+        }
+      }
+      // Handle non-FastAPI validation errors (legacy format)
+      else if (error.response?.data?.errors) {
+        const validationErrors = error.response.data.errors;
+
+        // Extract and display each validation error
+        validationErrors.forEach((err) => {
+          const field = err.loc ? err.loc[err.loc.length - 1] : "unknown_field";
+          const message = err.msg || "Validation error";
+
+          // Display error for specific field
+          toast.error(`${field}: ${message}`);
+        });
+
+        console.error("API validation errors:", validationErrors);
+      }
+      // Fallback to general error message
+      else {
+        const errorMessage =
+          error.response?.data?.message ||
+          error.response?.data?.detail ||
+          "Failed to save vendor user";
+        toast.error(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -256,14 +256,12 @@ const VendorUsersModal = ({
   // Toggle edit mode (for view mode)
   const toggleEditMode = () => {
     setIsEditMode(!isEditMode);
-    // Clear errors when toggling edit mode
-    setErrors({});
+    clearError(); // Clear all errors
   };
 
   // Handle modal close
   const handleClose = () => {
     setIsEditMode(mode === "create" || mode === "edit");
-    setErrors({});
     setShowPassword(false);
     onClose();
   };
@@ -329,7 +327,7 @@ const VendorUsersModal = ({
               <div className="relative">
                 <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
                 <Select
-                  options={vendorOptions}
+                  options={vendors}
                   value={selectedVendor}
                   onChange={handleVendorSelect}
                   isDisabled={mode === "view" && !isEditMode}
