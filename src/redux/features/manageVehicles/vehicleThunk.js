@@ -2,7 +2,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { API_CLIENT } from "../../../Api/API_Client";
 
-
 // export const fetchVehiclesThunk = createAsyncThunk(
 //   "vehicles/fetchVehicles",
 //   async (_, { rejectWithValue }) => {
@@ -11,7 +10,7 @@ import { API_CLIENT } from "../../../Api/API_Client";
 //       if (!response.data?.success) {
 //         return rejectWithValue(response.data?.message || "Failed to fetch vehicles");
 //       }
-//       return response.data.data; 
+//       return response.data.data;
 //     } catch (err) {
 //       return rejectWithValue(err.response?.data || err.message);
 //     }
@@ -22,12 +21,26 @@ export const fetchVehiclesThunk = createAsyncThunk(
   "vehicles/fetchVehicles",
   async (params = {}, { rejectWithValue }) => {
     try {
-      const { vendor_id } = params;
-      const query = vendor_id ? `?vendor_id=${vendor_id}` : "";
+      const { vendor_id, skip = 0, limit = 10 } = params;
+
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+
+      if (vendor_id) {
+        queryParams.append("vendor_id", vendor_id);
+      }
+
+      // Always include pagination parameters
+      queryParams.append("skip", skip);
+      queryParams.append("limit", limit);
+
+      const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
       const response = await API_CLIENT.get(`/v1/vehicles/${query}`);
 
       if (!response.data?.success) {
-        return rejectWithValue(response.data?.message || "Failed to fetch vehicles");
+        return rejectWithValue(
+          response.data?.message || "Failed to fetch vehicles"
+        );
       }
 
       // ✅ Correctly extract items array from nested structure
@@ -38,17 +51,34 @@ export const fetchVehiclesThunk = createAsyncThunk(
         ? rawData
         : [];
 
-      console.log("✅ Thunk returning vendor_id:", vendor_id, "items:", items.length);
+      // Get total count from response
+      const total = rawData?.total || items.length;
+
+      console.log("✅ Thunk returning:", {
+        vendor_id,
+        items: items.length,
+        skip,
+        limit,
+        total,
+      });
 
       // ✅ Return normalized structure that reducer expects
-      return { vendor_id, items };
+      return {
+        vendor_id,
+        items,
+        pagination: {
+          skip,
+          limit,
+          total,
+          hasMore: skip + limit < total,
+        },
+      };
     } catch (err) {
       console.error("❌ Fetch vehicles failed:", err);
       return rejectWithValue(err.response?.data || err.message);
     }
   }
 );
-
 
 export const createVehicleThunk = createAsyncThunk(
   "vehicles/createVehicle",
@@ -64,21 +94,22 @@ export const createVehicleThunk = createAsyncThunk(
     } catch (error) {
       console.error("Error creating vehicle:", error);
       return rejectWithValue(
-        error.response?.data || { message: error.message || "Something went wrong" }
+        error.response?.data || {
+          message: error.message || "Something went wrong",
+        }
       );
     }
   }
 );
-
-
 
 export const updateVehicleThunk = createAsyncThunk(
   "vehicle/update",
   async ({ vehicle_id, data }, { rejectWithValue }) => {
     try {
       const response = await API_CLIENT.put(
-        `/v1/vehicles/${vehicle_id}`,data,
-         {
+        `/v1/vehicles/${vehicle_id}`,
+        data,
+        {
           headers: {
             "Content-Type": "multipart/form-data",
           },
@@ -87,7 +118,9 @@ export const updateVehicleThunk = createAsyncThunk(
       return response.data;
     } catch (error) {
       console.error("Error updating vehicle:", error.response || error.message);
-      return rejectWithValue(error.response?.data || "Failed to update vehicle");
+      return rejectWithValue(
+        error.response?.data || "Failed to update vehicle"
+      );
     }
   }
 );
@@ -101,7 +134,9 @@ export const toggleVehicleStatus = createAsyncThunk(
       );
 
       if (!response.data?.success) {
-        return rejectWithValue(response.data?.message || "Failed to toggle vehicle status");
+        return rejectWithValue(
+          response.data?.message || "Failed to toggle vehicle status"
+        );
       }
 
       return {

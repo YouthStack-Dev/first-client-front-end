@@ -1,8 +1,27 @@
 // components/EscortTable.jsx
 import React from "react";
-import { Edit2, Trash2, Eye } from "lucide-react";
+import {
+  Edit2,
+  Trash2,
+  Eye,
+  ToggleLeft,
+  ToggleRight,
+  Edit,
+} from "lucide-react";
+// import ReusableButton from "./ReusableButton";
+// import ReusableToggle from "./ReusableToggle";
+import ReusableButton from "../ui/ReusableButton";
+import ReusableToggle from "../ui/ReusableToggle";
+import { logDebug } from "../../utils/logger";
 
-const EscortTable = ({ escorts, vendors, onView, onEdit, onDelete }) => {
+const EscortTable = ({
+  escorts,
+  vendors,
+  onView,
+  onEdit,
+  onDelete,
+  onToggleActive,
+}) => {
   const getVendorName = (vendorId) => {
     return vendors.find((v) => v.value === vendorId)?.label || "N/A";
   };
@@ -67,29 +86,54 @@ const EscortTable = ({ escorts, vendors, onView, onEdit, onDelete }) => {
                   {escort.gender || "-"}
                 </td>
                 <td className="px-4 py-3">
-                  <StatusBadge
+                  <ReusableToggle
+                    module="escort"
+                    action="toggle-active"
                     isActive={escort.is_active}
-                    activeText="Active"
-                    inactiveText="Inactive"
-                    activeClass="bg-green-100 text-green-800"
-                    inactiveClass="bg-red-100 text-red-800"
+                    onToggle={() => logDebug("Active toffle clicked ")}
+                    activeLabel="Active"
+                    inactiveLabel="Inactive"
+                    size="sm"
                   />
                 </td>
                 <td className="px-4 py-3">
-                  <StatusBadge
+                  <ReusableToggle
+                    module="escort"
+                    action="toggle-available"
                     isActive={escort.is_available}
-                    activeText="Available"
-                    inactiveText="Unavailable"
-                    activeClass="bg-blue-100 text-blue-800"
-                    inactiveClass="bg-gray-100 text-gray-800"
+                    onToggle={() => logDebug(" TOggle clicked ")}
+                    activeLabel="Available"
+                    inactiveLabel="Unavailable"
+                    size="sm"
                   />
                 </td>
                 <td className="px-4 py-3">
-                  <ActionButtons
-                    onView={() => onView(escort)}
-                    onEdit={() => onEdit(escort)}
-                    onDelete={() => onDelete(escort.escort_id)}
-                  />
+                  <div className="flex gap-2">
+                    <ReusableButton
+                      module="escort"
+                      action="view"
+                      icon={Eye}
+                      title="View Escort"
+                      onClick={() => onView(escort)}
+                      className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all"
+                    />
+                    <ReusableButton
+                      module="escort"
+                      action="update"
+                      icon={Edit}
+                      title="Edit Escort"
+                      onClick={() => onEdit(escort)}
+                      className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all"
+                    />
+                    <ReusableButton
+                      module="escort"
+                      action="delete"
+                      icon={Trash2}
+                      title="Delete Escort"
+                      onClick={() => onDelete(escort.escort_id)}
+                      className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all"
+                    />
+                  </div>
                 </td>
               </tr>
             ))}
@@ -99,47 +143,5 @@ const EscortTable = ({ escorts, vendors, onView, onEdit, onDelete }) => {
     </div>
   );
 };
-
-const StatusBadge = ({
-  isActive,
-  activeText,
-  inactiveText,
-  activeClass,
-  inactiveClass,
-}) => (
-  <span
-    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-      isActive ? activeClass : inactiveClass
-    }`}
-  >
-    {isActive ? activeText : inactiveText}
-  </span>
-);
-
-const ActionButtons = ({ onView, onEdit, onDelete }) => (
-  <div className="flex gap-2">
-    <button
-      onClick={onView}
-      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-      title="View"
-    >
-      <Eye size={16} />
-    </button>
-    <button
-      onClick={onEdit}
-      className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors"
-      title="Edit"
-    >
-      <Edit2 size={16} />
-    </button>
-    <button
-      onClick={onDelete}
-      className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-      title="Delete"
-    >
-      <Trash2 size={16} />
-    </button>
-  </div>
-);
 
 export default EscortTable;

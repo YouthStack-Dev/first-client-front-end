@@ -1,5 +1,6 @@
 import { Briefcase, Eye, FileText, Shield } from "lucide-react";
 import { API_CLIENT } from "../../Api/API_Client";
+import { validationRules } from "../../validations/core/helpers";
 
 export const defaultFormData = {
   name: "",
@@ -307,6 +308,86 @@ export const getVendorNameById = (vendorId) => {
   const vendor = staticVendors.find((v) => v.id === vendorId.toString());
   return vendor ? vendor.name : "Unknown Vendor";
 };
+
+export const validateField = (name, value, formData) => {
+  switch (name) {
+    // Personal Details
+    case "email":
+      return validationRules.validateEmail(value);
+
+    case "mobileNumber":
+      return validationRules.validateMobileNumber(value);
+
+    case "dateOfBirth":
+      return validationRules.validateDateOfBirth(value);
+
+    // Expiry Dates
+    case "drivingLicenseExpiry":
+      return validationRules.validateFutureDate(
+        value,
+        "Driving license expiry"
+      );
+
+    case "policeVerificationExpiry":
+      return validationRules.validateFutureDate(
+        value,
+        "Police verification expiry"
+      );
+
+    case "medicalCertificateExpiry":
+      return validationRules.validateFutureDate(
+        value,
+        "Medical certificate expiry"
+      );
+
+    case "altGovtIdExpiry":
+      return validationRules.validateFutureDate(value, "ID expiry date");
+
+    // Document Dates (should be in past)
+    case "drivingLicenseDate":
+      return validationRules.validatePastDate(
+        value,
+        "Driving license issue date"
+      );
+
+    // Alternate Government ID validation
+    case "altGovtIdNumber":
+      if (!formData.altGovtIdType || !value) return null;
+
+      switch (formData.altGovtIdType) {
+        case "aadhar":
+          return validationRules.validateAadhar(value);
+        case "pan":
+          return validationRules.validatePAN(value);
+        case "passport":
+          if (!/^[A-Z][0-9]{7}$|^[A-Z]{2}[0-9]{7}$/.test(value)) {
+            return "Please enter a valid passport number";
+          }
+          return null;
+        default:
+          return null;
+      }
+
+    // Required field validation
+    case "code":
+    case "name":
+    case "permanentAddress":
+    case "currentAddress":
+      if (!value || value.trim() === "") {
+        return `${name.charAt(0).toUpperCase() + name.slice(1)} is required`;
+      }
+      return null;
+
+    // Gender validation
+    case "gender":
+      if (!value) return "Please select gender";
+      return null;
+
+    default:
+      return null;
+  }
+};
+
 //  OLD DATA
 
 export const fieldMapping = {

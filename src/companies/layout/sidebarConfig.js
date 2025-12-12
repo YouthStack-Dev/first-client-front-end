@@ -47,13 +47,6 @@ export const baseSidebarConfig = [
       {
         title: "Manage Drivers",
         icon: Users,
-        path: "/companies/drivers",
-        permission: "driver.read",
-        icon: Users,
-      },
-      {
-        title: " New Manage Drivers",
-        icon: Users,
         path: "/companies/driverform",
         permission: "driver.read",
         icon: Users,
@@ -61,7 +54,7 @@ export const baseSidebarConfig = [
       {
         title: "Vehicles",
         icon: Car,
-        path: "/companies/vehicles",
+        path: "/companies/vehicles-management",
         permission: "vehicle.read",
         icon: Car,
       },
@@ -85,7 +78,7 @@ export const baseSidebarConfig = [
         icon: Clock,
       },
       {
-        title: "Cutoff Management",
+        title: "Config Management",
         icon: Clock,
         path: "/companies/cutoff",
         permission: "cutoff.read",

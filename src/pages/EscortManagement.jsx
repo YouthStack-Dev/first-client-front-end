@@ -17,7 +17,7 @@ import { genderOptions } from "../components/escort/constants";
 
 import EscortTable from "../components/escort/EscortTable";
 import EscortFormModal from "../components/modals/EscortFormModal";
-import { DownloadCloud, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useVendorOptions } from "../hooks/useVendorOptions";
 
 const EscortManagement = () => {
@@ -89,7 +89,7 @@ const EscortManagement = () => {
     return !Object.keys(newErrors).length;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) return;
 
     if (modalMode === "create") {
@@ -102,6 +102,9 @@ const EscortManagement = () => {
         })
       );
     }
+
+    // refetch list
+    dispatch(fetchEscortsThunk());
 
     setIsModalOpen(false);
   };

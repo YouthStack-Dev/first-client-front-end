@@ -144,7 +144,6 @@ const ShiftManagement = () => {
         className="p-4 bg-white border rounded-lg shadow-sm mb-6"
         onAddClick={handleAddClick}
         addButtonLabel="Add Shift"
-        addButtonIcon={<Plus size={16} />}
         rightElements={
           <div className="flex items-center gap-3">
             {/* Export Button */}

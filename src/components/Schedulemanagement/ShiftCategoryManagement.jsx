@@ -16,16 +16,15 @@ const ShiftCategoryManagement = () => {
   // Sample data - replace with actual API data
   const [categories, setCategories] = useState([]);
 
-
   const fetchcompanyShiftCategory = async () => {
-    const response = await API_CLIENT.get('/shifts/categories');
+    const response = await API_CLIENT.get("/shifts/categories");
     setCategories(response.data.data.categories);
   };
-  
+
   useEffect(() => {
     fetchcompanyShiftCategory();
   }, []);
-  
+
   const handleAddClick = () => {
     setEditingCategory(null);
     setIsModalOpen(true);
@@ -44,25 +43,27 @@ const ShiftCategoryManagement = () => {
   const handleFormSubmit = (formData) => {
     if (editingCategory) {
       // Update existing category
-      setCategories(prev => prev.map(cat => 
-        cat.id === editingCategory.id 
-          ? { ...cat, ...formData }
-          : cat
-      ));
+      setCategories((prev) =>
+        prev.map((cat) =>
+          cat.id === editingCategory.id ? { ...cat, ...formData } : cat
+        )
+      );
     } else {
       // Add new category
       const newCategory = {
-        id: Math.max(...categories.map(c => c.id)) + 1,
-        ...formData
+        id: Math.max(...categories.map((c) => c.id)) + 1,
+        ...formData,
       };
-      setCategories(prev => [...prev, newCategory]);
+      setCategories((prev) => [...prev, newCategory]);
     }
     setIsModalOpen(false);
     setEditingCategory(null);
   };
 
   const handleDeleteConfirm = () => {
-    setCategories(prev => prev.filter(cat => cat.id !== categoryToDelete.id));
+    setCategories((prev) =>
+      prev.filter((cat) => cat.id !== categoryToDelete.id)
+    );
     setIsDeleteModalOpen(false);
     setCategoryToDelete(null);
   };
@@ -72,9 +73,10 @@ const ShiftCategoryManagement = () => {
   };
 
   // Filter categories based on search term
-  const filteredCategories = categories.filter(category =>
-    category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    category.description.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCategories = categories.filter(
+    (category) =>
+      category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      category.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -82,7 +84,6 @@ const ShiftCategoryManagement = () => {
       <ToolBar
         onAddClick={handleAddClick}
         addButtonLabel="Add Category"
-        addButtonIcon={<Plus size={16} />}
         className="p-4 bg-white border rounded shadow-sm"
         searchBar={
           <input
@@ -115,15 +116,22 @@ const ShiftCategoryManagement = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredCategories.length === 0 ? (
                 <tr>
-                  <td colSpan="3" className="px-6 py-8 text-center text-gray-500">
-                    {searchTerm ? 'No categories found matching your search.' : 'No categories available.'}
+                  <td
+                    colSpan="3"
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
+                    {searchTerm
+                      ? "No categories found matching your search."
+                      : "No categories available."}
                   </td>
                 </tr>
               ) : (
                 filteredCategories.map((category) => (
                   <tr key={category.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{category.name}</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {category.name}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-600 max-w-xs">
@@ -163,7 +171,7 @@ const ShiftCategoryManagement = () => {
           setIsModalOpen(false);
           setEditingCategory(null);
         }}
-        title={editingCategory ? 'Edit Shift Category' : 'Add Shift Category'}
+        title={editingCategory ? "Edit Shift Category" : "Add Shift Category"}
         size="md"
       >
         <CategoryForm

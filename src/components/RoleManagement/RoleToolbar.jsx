@@ -1,6 +1,6 @@
-import { Plus, Search } from 'lucide-react';
-import { useState } from 'react';
-import ToolBar from '../ui/ToolBar';
+import { Plus, Search } from "lucide-react";
+import { useState } from "react";
+import ToolBar from "../ui/ToolBar";
 
 const RoleToolbar = ({ onCreateClick, searchTerm, setSearchTerm }) => {
   return (
@@ -9,7 +9,6 @@ const RoleToolbar = ({ onCreateClick, searchTerm, setSearchTerm }) => {
       subtitle="Create and manage roles within your permissions"
       onAddClick={onCreateClick}
       addButtonLabel="Create Role"
-      addButtonIcon={<Plus className="w-4 h-4" />}
       searchBar={
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -22,8 +21,8 @@ const RoleToolbar = ({ onCreateClick, searchTerm, setSearchTerm }) => {
           />
         </div>
       }
-      leftElements={null} 
-      rightElements={null} 
+      leftElements={null}
+      rightElements={null}
       mobileLayout="stacked"
       searchBarPriority={true}
       className="mb-6"

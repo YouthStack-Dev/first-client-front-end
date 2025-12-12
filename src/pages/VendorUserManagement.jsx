@@ -255,7 +255,6 @@ const VendorUserManagement = () => {
       <ToolBar
         onAddClick={handleCreateVendorUser}
         addButtonLabel="Vendor User"
-        addButtonIcon={<UserPlus size={16} />}
         className="p-4 bg-white border rounded-lg shadow-sm mb-6"
         searchBar={
           <div className="flex flex-col sm:flex-row gap-3 w-full">
