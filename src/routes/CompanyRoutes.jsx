@@ -48,7 +48,7 @@ export const CompanyRoutes = () => (
     <Route path="scheduling" element={<Schedulemanagement />} />
     <Route path="employees/create" element={<EmployeeForm />} />
     <Route path="cutoff" element={<CutoffManagement />} />
-    <Route path="vehicles" element={<VehicleManagement />} />
+    <Route path="vehicles-management" element={<VehicleManagement />} />
     <Route path="vendors" element={<VendorManagement />} />
     <Route path="new-vendor-management" element={<NewVendorManagement />} />
     <Route path="profile" element={<ProfilePage />} />

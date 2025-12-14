@@ -134,7 +134,6 @@ const ShiftManagement = () => {
       <ToolBar
         onAddClick={() => setShowShiftModal(true)}
         addButtonLabel="New Shift"
-        addButtonIcon={<Plus />}
         leftContent={
           <div className="flex items-center space-x-4">
             <div className="w-64">

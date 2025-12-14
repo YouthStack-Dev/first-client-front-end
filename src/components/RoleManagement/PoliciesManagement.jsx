@@ -1,9 +1,8 @@
-import { UsersRound } from "lucide-react";
+import { FileText, Plus, UsersRound } from "lucide-react";
 import ToolBar from "../ui/ToolBar";
-import SearchBar from "./SearchBar";
 import { logDebug } from "../../utils/logger";
 import { useEffect, useState, useMemo } from "react";
-import { PolicyCard } from "./PolicyCard";
+import { PolicyTable } from "./PolicyCard";
 import { PolicyForm } from "../modals/PolicyFromModal";
 import Select from "react-select";
 import { useDispatch, useSelector } from "react-redux";
@@ -164,7 +163,6 @@ const PoliciesManagement = () => {
         module={"policy"}
         onAddClick={handleAddClick}
         addButtonLabel="Policy"
-        addButtonIcon={<UsersRound size={16} />}
         className="p-4 bg-white border rounded shadow-sm mb-4"
         searchBar={
           <div className="flex flex-col sm:flex-row gap-3 w-full">
@@ -208,32 +206,39 @@ const PoliciesManagement = () => {
         }
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-1">
-        {filteredPolicies.map((policy) => (
-          <PolicyCard
-            key={policy.policy_id}
-            policy={policy}
+      <div className="px-5">
+        {filteredPolicies.length > 0 ? (
+          <PolicyTable
+            policies={filteredPolicies}
             onEdit={handleEdit}
             onDelete={handleDelete}
           />
-        ))}
-
-        {filteredPolicies.length === 0 && (
-          <div className="col-span-full text-center py-12">
-            <div className="text-gray-500 text-lg">
-              {searchQuery || selectedFilter
-                ? `No policies found matching your criteria`
-                : "No policies available"}
-            </div>
-            <div className="text-gray-400 text-sm mt-2">
-              {searchQuery || selectedFilter
-                ? "Try adjusting your search terms or filters"
-                : "Create your first policy to get started"}
+        ) : (
+          <div className="w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+            <div className="text-center py-12">
+              <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <div className="text-gray-700 text-lg font-medium mb-2">
+                {searchQuery || selectedFilter
+                  ? "No policies found"
+                  : "No policies available"}
+              </div>
+              <div className="text-gray-500 text-sm max-w-md mx-auto">
+                {searchQuery || selectedFilter
+                  ? "Try adjusting your search terms or filters"
+                  : "Get started by creating your first policy"}
+              </div>
+              <button
+                onClick={() => handleCreateNew()} // Assuming you have a create function
+                className="mt-6 inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md"
+              >
+                <Plus className="mr-2" size={18} />
+                Create New Policy
+              </button>
             </div>
           </div>
         )}
       </div>
-
       <PolicyForm
         policy={selectedPolicy}
         isOpen={isModalOpen}

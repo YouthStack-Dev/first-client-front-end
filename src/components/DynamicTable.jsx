@@ -1,5 +1,5 @@
-import React from 'react';
-import { ChevronLeft, ChevronRight, Edit, Trash2, Clock } from 'lucide-react';
+import React from "react";
+import { ChevronLeft, ChevronRight, Edit, Trash2, Clock } from "lucide-react";
 
 const DynamicTable = React.memo(
   ({
@@ -24,22 +24,28 @@ const DynamicTable = React.memo(
         <div className="overflow-auto max-h-[600px]">
           <table className="min-w-full table-fixed border-collapse">
             {/* Table Head */}
-            <thead className="bg-gray-50 border-b sticky top-0 z-10">
+            <thead className="bg-gray-50 border-b sticky top-0 z-1">
               <tr className="text-left text-gray-600 text-sm">
                 <th className="px-4 py-3 w-12">
                   <input
                     type="checkbox"
                     onChange={(e) =>
-                      data.forEach((item) => onSelectItem(item, e.target.checked))
+                      data.forEach((item) =>
+                        onSelectItem(item, e.target.checked)
+                      )
                     }
-                    checked={data.length > 0 && selectedItems.length === data.length}
+                    checked={
+                      data.length > 0 && selectedItems.length === data.length
+                    }
                     className="accent-blue-600"
                   />
                 </th>
                 {headers.map((header, index) => (
                   <th
                     key={index}
-                    className={`px-4 py-3 font-medium text-gray-700 whitespace-normal ${header.className || 'w-[16.66%]'}`}
+                    className={`px-4 py-3 font-medium text-gray-700 whitespace-normal ${
+                      header.className || "w-[16.66%]"
+                    }`}
                   >
                     {header.label}
                   </th>
@@ -52,7 +58,10 @@ const DynamicTable = React.memo(
             <tbody>
               {data.length === 0 ? (
                 <tr>
-                  <td colSpan={headers.length + 2} className="p-4 text-center text-gray-500">
+                  <td
+                    colSpan={headers.length + 2}
+                    className="p-4 text-center text-gray-500"
+                  >
                     No records found
                   </td>
                 </tr>
@@ -73,9 +82,13 @@ const DynamicTable = React.memo(
                     {headers.map((header, colIndex) => (
                       <td
                         key={colIndex}
-                        className={`px-4 py-3 text-sm text-gray-700 break-words whitespace-normal ${header.className || 'w-[16.66%]'}`}
+                        className={`px-4 py-3 text-sm text-gray-700 break-words whitespace-normal ${
+                          header.className || "w-[16.66%]"
+                        }`}
                       >
-                        {header.render ? header.render(item) : item[header.key] ?? '-'}
+                        {header.render
+                          ? header.render(item)
+                          : item[header.key] ?? "-"}
                       </td>
                     ))}
                     <td className="px-4 py-2 w-36">
@@ -128,7 +141,11 @@ const DynamicTable = React.memo(
             onClick={onPrev}
             disabled={currentPage === 1}
             className={`flex items-center gap-2 px-4 py-2 rounded transition 
-              ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              ${
+                currentPage === 1
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
           >
             <ChevronLeft size={18} />
             Prev
@@ -138,7 +155,11 @@ const DynamicTable = React.memo(
             onClick={onNext}
             disabled={currentPage === totalPages}
             className={`flex items-center gap-2 px-4 py-2 rounded transition 
-              ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+              ${
+                currentPage === totalPages
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
           >
             Next
             <ChevronRight size={18} />

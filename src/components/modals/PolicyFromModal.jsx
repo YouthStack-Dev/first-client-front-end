@@ -12,6 +12,8 @@ import {
   transformPermissionsToModules,
   transformPermissionsToModulesWithDefaults,
 } from "../../utils/permissionModules";
+import { useSelector } from "react-redux";
+import { selectPermissions } from "../../redux/features/auth/authSlice";
 
 export const PolicyForm = ({
   policy,
@@ -31,33 +33,9 @@ export const PolicyForm = ({
   });
 
   logDebug(`PolicyForm opened in ${currentMode} mode`);
+  logDebug(`Selected Policies `, policy);
 
   // Different permission sets for different modes
-  const createModePermissions = [
-    {
-      module: "User Management",
-      description: "Manage users and their roles",
-      icon: "👥",
-      actions: [
-        { id: "user_create", name: "Create Users", enabled: false },
-        { id: "user_read", name: "View Users", enabled: false },
-        { id: "user_update", name: "Edit Users", enabled: false },
-        { id: "user_delete", name: "Delete Users", enabled: false },
-      ],
-    },
-    {
-      module: "Content Management",
-      description: "Manage website content",
-      icon: "📝",
-      actions: [
-        { id: "content_create", name: "Create Content", enabled: false },
-        { id: "content_read", name: "View Content", enabled: false },
-        { id: "content_update", name: "Edit Content", enabled: false },
-        { id: "content_delete", name: "Delete Content", enabled: false },
-        { id: "content_publish", name: "Publish Content", enabled: false },
-      ],
-    },
-  ];
 
   const viewEditPermissions = [
     {
@@ -123,14 +101,14 @@ export const PolicyForm = ({
       ],
     },
   ];
-
-  const data = transformPermissionsToModules(dummyPermission);
-
-  logDebug("Transformed prmission modules data:", data);
+  const permission = useSelector(selectPermissions);
+  const policiesPermission = policy?.permissions;
+  logDebug(" this is the permission of policies ");
+  const createModePermissions = transformPermissionsToModules(dummyPermission);
 
   const enabled = transformPermissionsToModulesWithDefaults(
     dummyPermission,
-    existingPermission
+    permission
   );
 
   logDebug("Enabled permission modules data:", enabled);
@@ -405,7 +383,7 @@ export const PolicyForm = ({
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {data.map((module, moduleIndex) => (
+              {createModePermissions.map((module, moduleIndex) => (
                 <ModuleCard
                   key={moduleIndex}
                   module={module}

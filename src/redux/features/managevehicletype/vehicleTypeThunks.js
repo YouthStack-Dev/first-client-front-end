@@ -16,31 +16,39 @@ export const fetchVehicleTypes = createAsyncThunk(
         return response.data.data.items;
       }
 
-      return rejectWithValue(response.data?.message || "Failed to fetch vehicle types");
+      return rejectWithValue(
+        response.data?.message || "Failed to fetch vehicle types"
+      );
     } catch (error) {
       return rejectWithValue(error.message || "Unexpected error");
     }
   }
 );
-
 
 export const createVehicleType = createAsyncThunk(
   "vehicleType/createVehicleTypeThunk",
   async (vehicleTypeData, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.post(`/v1/vehicle-types/`, vehicleTypeData);
+      const response = await API_CLIENT.post(
+        `/v1/vehicle-types/`,
+        vehicleTypeData
+      );
 
-      if ((response.status === 200 || response.status === 201) && response.data) {
+      if (
+        (response.status === 200 || response.status === 201) &&
+        response.data
+      ) {
         return response.data.data;
       }
 
-      return rejectWithValue(response.data?.message || "Failed to create vehicle type");
+      return rejectWithValue(
+        response.data?.message || "Failed to create vehicle type"
+      );
     } catch (error) {
       return rejectWithValue(error.message || "Unexpected error");
     }
   }
 );
-
 
 export const updateVehicleType = createAsyncThunk(
   "vehicleType/updateVehicleTypeThunk",
@@ -52,41 +60,49 @@ export const updateVehicleType = createAsyncThunk(
         return response.data.data;
       }
 
-      return rejectWithValue(response.data?.message || "Failed to update vehicle type");
+      return rejectWithValue(
+        response.data?.message || "Failed to update vehicle type"
+      );
     } catch (error) {
       return rejectWithValue(error.message || "Unexpected error");
     }
   }
 );
-
 
 export const toggleVehicleTypeStatus = createAsyncThunk(
   "vehicleType/toggleVehicleTypeStatusThunk",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.patch(`/v1/vehicle-types/${id}/toggle-status`);
+      const response = await API_CLIENT.patch(
+        `/v1/vehicle-types/${id}/toggle-status`
+      );
 
       if (response.status === 200 && response.data?.success) {
         return response.data.data;
       }
 
-      return rejectWithValue(response.data?.message || "Failed to toggle vehicle type status");
+      return rejectWithValue(
+        response.data?.message || "Failed to toggle vehicle type status"
+      );
     } catch (error) {
       return rejectWithValue(error.message || "Unexpected error");
     }
   }
 );
 
+// Updated thunk to accept parameters
 export const fetchVendorVehicleTypes = createAsyncThunk(
   "vehicleTypes/fetchVendorVehicleTypes",
-  async (vendorId, { rejectWithValue }) => {
+  async ({ vendorId, skip = 0, limit = 100 }, { rejectWithValue }) => {
     try {
       const response = await API_CLIENT.get(
-        `/v1/vehicle-types/?vendor_id=${vendorId}`
+        `/v1/vehicle-types/?vendor_id=${vendorId}&skip=${skip}&limit=${limit}`
       );
       return { vendorId, items: response.data.data.items };
     } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to fetch vendor vehicles");
+      return rejectWithValue(
+        error.response?.data || "Failed to fetch vendor vehicles"
+      );
     }
   }
 );

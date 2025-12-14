@@ -1,5 +1,6 @@
 import { Briefcase, Eye, FileText, Shield } from "lucide-react";
 import { API_CLIENT } from "../../Api/API_Client";
+import { validationRules } from "../../validations/core/helpers";
 
 export const defaultFormData = {
   name: "",
@@ -307,6 +308,179 @@ export const getVendorNameById = (vendorId) => {
   const vendor = staticVendors.find((v) => v.id === vendorId.toString());
   return vendor ? vendor.name : "Unknown Vendor";
 };
+
+export const validateField = (name, value, formData) => {
+  switch (name) {
+    // Personal Details
+    case "email":
+      return validationRules.validateEmail(value);
+
+    case "mobileNumber":
+      return validationRules.validateMobileNumber(value);
+
+    case "dateOfBirth":
+      return validationRules.validateDateOfBirth(value);
+
+    // Expiry Dates
+    case "drivingLicenseExpiry":
+      return validationRules.validateFutureDate(
+        value,
+        "Driving license expiry"
+      );
+
+    case "policeVerificationExpiry":
+      return validationRules.validateFutureDate(
+        value,
+        "Police verification expiry"
+      );
+
+    case "medicalCertificateExpiry":
+      return validationRules.validateFutureDate(
+        value,
+        "Medical certificate expiry"
+      );
+
+    case "altGovtIdExpiry":
+      return validationRules.validateFutureDate(value, "ID expiry date");
+
+    // Document Dates (should be in past)
+    case "drivingLicenseDate":
+      return validationRules.validatePastDate(
+        value,
+        "Driving license issue date"
+      );
+
+    // Alternate Government ID validation
+    case "altGovtIdNumber":
+      if (!formData.altGovtIdType || !value) return null;
+
+      switch (formData.altGovtIdType) {
+        case "aadhar":
+          return validationRules.validateAadhar(value);
+        case "pan":
+          return validationRules.validatePAN(value);
+        case "passport":
+          if (!/^[A-Z][0-9]{7}$|^[A-Z]{2}[0-9]{7}$/.test(value)) {
+            return "Please enter a valid passport number";
+          }
+          return null;
+        default:
+          return null;
+      }
+
+    // Required field validation
+    case "code":
+    case "name":
+    case "permanentAddress":
+    case "currentAddress":
+      if (!value || value.trim() === "") {
+        return `${name.charAt(0).toUpperCase() + name.slice(1)} is required`;
+      }
+      return null;
+
+    // Gender validation
+    case "gender":
+      if (!value) return "Please select gender";
+      return null;
+
+    default:
+      return null;
+  }
+};
+
+// src/config/formConfig.js
+export const driverFormConfig = {
+  requiredFields: {
+    code: true,
+    name: true,
+    gender: true,
+    email: true,
+    mobileNumber: true,
+    password: true, // only for create mode
+    dateOfBirth: true,
+    dateOfJoining: true,
+    permanentAddress: true,
+    currentAddress: true,
+    drivingLicenseFile: true,
+    aadharFile: true,
+    panFile: true,
+    policeVerificationFile: true,
+    alternateGovtIdFile: true,
+  },
+
+  // You can override these per mode
+  getRequiredFields: (mode = "create") => {
+    const required = { ...driverFormConfig.requiredFields };
+
+    // Remove password validation for edit mode
+    if (mode !== "create") {
+      delete required.password;
+    }
+
+    return required;
+  },
+};
+
+export const formatBackendError = (err) => {
+  logDebug("this is the error", err);
+
+  const data = err?.data || err?.response?.data;
+
+  /* ---------------------------------------------
+   * 1️⃣ FastAPI / Pydantic validation errors
+   * --------------------------------------------- */
+  if (Array.isArray(data?.detail)) {
+    const header = "Submission failed due to the following errors:";
+    const lines = data.detail.map((d, idx) => {
+      const path =
+        Array.isArray(d.loc) && d.loc.length > 1
+          ? d.loc.slice(1).join(".")
+          : "unknown_field";
+      const msg = d.msg || "Invalid value";
+      return `${idx + 1}. ${path}: ${msg}`;
+    });
+
+    return `${header}\n${lines.join("\n")}`;
+  }
+
+  /* ---------------------------------------------
+   * 2️⃣ Duplicate / business logic errors
+   * --------------------------------------------- */
+  if (data?.error_code === "DUPLICATE_RESOURCE") {
+    let message = data.message || "Duplicate resource detected.";
+
+    const conflicts = data?.details?.conflicting_fields;
+    if (conflicts && typeof conflicts === "object") {
+      const fields = Object.entries(conflicts)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(", ");
+
+      message += `\n\nConflicting values:\n${fields}`;
+    }
+
+    return message;
+  }
+
+  /* ---------------------------------------------
+   * 3️⃣ Generic backend message
+   * --------------------------------------------- */
+  if (typeof data?.message === "string") {
+    return data.message;
+  }
+
+  /* ---------------------------------------------
+   * 4️⃣ Axios / JS error message
+   * --------------------------------------------- */
+  if (err?.message) {
+    return err.message;
+  }
+
+  /* ---------------------------------------------
+   * 5️⃣ Fallback
+   * --------------------------------------------- */
+  return "An unknown error occurred while submitting the form.";
+};
+
 //  OLD DATA
 
 export const fieldMapping = {

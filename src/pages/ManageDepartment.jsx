@@ -487,7 +487,6 @@ const ManageDepartment = () => {
         onAddClick={handleAddClick}
         module="team"
         addButtonLabel="Department"
-        addButtonIcon={<UsersRound size={16} />}
         className="p-4 bg-white border rounded shadow-sm mb-4"
         searchBar={
           <div className="flex flex-col sm:flex-row gap-3 w-full">

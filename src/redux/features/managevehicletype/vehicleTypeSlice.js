@@ -1,14 +1,20 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchVehicleTypes, createVehicleType, updateVehicleType,toggleVehicleTypeStatus,fetchVendorVehicleTypes  } from "./vehicleTypeThunks";
+import {
+  fetchVehicleTypes,
+  createVehicleType,
+  updateVehicleType,
+  toggleVehicleTypeStatus,
+  fetchVendorVehicleTypes,
+} from "./vehicleTypeThunks";
 
 const initialState = {
-  byId: {},        // normalized data: id -> vehicleType
-  allIds: [],      // list of ids for ordering
+  byId: {}, // normalized data: id -> vehicleType
+  allIds: [], // list of ids for ordering
   loading: false,
   error: null,
-   fetched: false,
+  fetched: false,
 
-     vendorById: {},         // vendorId -> items[]
+  vendorById: {}, // vendorId -> items[]
   vendorLoading: false,
   vendorError: null,
 };
@@ -23,7 +29,7 @@ const vehicleTypeSlice = createSlice({
       state.loading = false;
       state.error = null;
 
-       // ⭐ Also reset vendor data
+      // ⭐ Also reset vendor data
       state.vendorById = {};
       state.vendorLoading = false;
       state.vendorError = null;
@@ -39,7 +45,7 @@ const vehicleTypeSlice = createSlice({
       })
       .addCase(fetchVehicleTypes.fulfilled, (state, action) => {
         state.loading = false;
-        state.fetched = true; 
+        state.fetched = true;
 
         const byId = {};
         const allIds = [];
@@ -70,7 +76,10 @@ const vehicleTypeSlice = createSlice({
         const newType = action.payload;
         if (newType) {
           // Ensure new type has a unique id
-          const id = newType.id || newType.vehicle_type_id || `${newType.name}-${Date.now()}`;
+          const id =
+            newType.id ||
+            newType.vehicle_type_id ||
+            `${newType.name}-${Date.now()}`;
           state.byId[id] = { ...newType, id };
           if (!state.allIds.includes(id)) {
             state.allIds.push(id);
@@ -102,9 +111,9 @@ const vehicleTypeSlice = createSlice({
       .addCase(updateVehicleType.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to update vehicle type";
-      }) 
+      })
 
-       // ===== TOGGLE STATUS =====
+      // ===== TOGGLE STATUS =====
       .addCase(toggleVehicleTypeStatus.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -139,7 +148,8 @@ const vehicleTypeSlice = createSlice({
       })
       .addCase(fetchVendorVehicleTypes.rejected, (state, action) => {
         state.vendorLoading = false;
-        state.vendorError = action.payload || "Failed to fetch vendor vehicle types";
+        state.vendorError =
+          action.payload || "Failed to fetch vendor vehicle types";
       });
   },
 });

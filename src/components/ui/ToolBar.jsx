@@ -8,7 +8,6 @@ const ToolBar = ({
   subtitle,
   onAddClick,
   addButtonLabel,
-  addButtonIcon,
   className = "",
   searchBar = null,
   leftElements = null,
