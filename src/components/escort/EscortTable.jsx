@@ -1,18 +1,9 @@
 // components/EscortTable.jsx
 import React from "react";
-import {
-  Edit2,
-  Trash2,
-  Eye,
-  ToggleLeft,
-  ToggleRight,
-  Edit,
-} from "lucide-react";
-// import ReusableButton from "./ReusableButton";
-// import ReusableToggle from "./ReusableToggle";
+import { Trash2, Eye, Edit } from "lucide-react";
+
 import ReusableButton from "../ui/ReusableButton";
 import ReusableToggle from "../ui/ReusableToggle";
-import { logDebug } from "../../utils/logger";
 
 const EscortTable = ({
   escorts,
@@ -21,6 +12,7 @@ const EscortTable = ({
   onEdit,
   onDelete,
   onToggleActive,
+  onToggleAvailable,
 }) => {
   const getVendorName = (vendorId) => {
     return vendors.find((v) => v.value === vendorId)?.label || "N/A";
@@ -90,7 +82,7 @@ const EscortTable = ({
                     module="escort"
                     action="toggle-active"
                     isActive={escort.is_active}
-                    onToggle={() => logDebug("Active toffle clicked ")}
+                    onToggle={() => onToggleActive(escort)}
                     activeLabel="Active"
                     inactiveLabel="Inactive"
                     size="sm"
@@ -101,7 +93,7 @@ const EscortTable = ({
                     module="escort"
                     action="toggle-available"
                     isActive={escort.is_available}
-                    onToggle={() => logDebug(" TOggle clicked ")}
+                    onToggle={() => onToggleAvailable(escort)}
                     activeLabel="Available"
                     inactiveLabel="Unavailable"
                     size="sm"

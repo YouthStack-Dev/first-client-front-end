@@ -33,11 +33,9 @@ const SavedRouteCard = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showDeleteRouteModal, setShowDeleteRouteModal] = useState(false);
-  const [showDeleteBookingModal, setShowDeleteBookingModal] = useState(false);
   const [showUpdateRouteModal, setShowUpdateRouteModal] = useState(false);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
-  const [selectedBookingId, setSelectedBookingId] = useState(null);
   // Safe value renderer to prevent object rendering errors
   const renderSafeValue = (value, fallback = "N/A") => {
     if (value === null || value === undefined) return fallback;
@@ -285,16 +283,13 @@ const SavedRouteCard = ({
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-gray-900">
-                    {renderSafeValue(route.route_code)}
+                    ID {renderSafeValue(route.route_id)}
                   </span>
                   <span
                     className={`flex items-center gap-1 text-xs px-2 py-1 rounded border ${routeStatusInfo.color}`}
                   >
                     {routeStatusInfo.icon}
                     {renderSafeValue(route.status)}
-                  </span>
-                  <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded">
-                    ID: {renderSafeValue(route.route_id)}
                   </span>
 
                   {/* Warning badges for restricted routes */}

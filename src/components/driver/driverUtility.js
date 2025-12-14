@@ -388,6 +388,99 @@ export const validateField = (name, value, formData) => {
   }
 };
 
+// src/config/formConfig.js
+export const driverFormConfig = {
+  requiredFields: {
+    code: true,
+    name: true,
+    gender: true,
+    email: true,
+    mobileNumber: true,
+    password: true, // only for create mode
+    dateOfBirth: true,
+    dateOfJoining: true,
+    permanentAddress: true,
+    currentAddress: true,
+    drivingLicenseFile: true,
+    aadharFile: true,
+    panFile: true,
+    policeVerificationFile: true,
+    alternateGovtIdFile: true,
+  },
+
+  // You can override these per mode
+  getRequiredFields: (mode = "create") => {
+    const required = { ...driverFormConfig.requiredFields };
+
+    // Remove password validation for edit mode
+    if (mode !== "create") {
+      delete required.password;
+    }
+
+    return required;
+  },
+};
+
+export const formatBackendError = (err) => {
+  logDebug("this is the error", err);
+
+  const data = err?.data || err?.response?.data;
+
+  /* ---------------------------------------------
+   * 1️⃣ FastAPI / Pydantic validation errors
+   * --------------------------------------------- */
+  if (Array.isArray(data?.detail)) {
+    const header = "Submission failed due to the following errors:";
+    const lines = data.detail.map((d, idx) => {
+      const path =
+        Array.isArray(d.loc) && d.loc.length > 1
+          ? d.loc.slice(1).join(".")
+          : "unknown_field";
+      const msg = d.msg || "Invalid value";
+      return `${idx + 1}. ${path}: ${msg}`;
+    });
+
+    return `${header}\n${lines.join("\n")}`;
+  }
+
+  /* ---------------------------------------------
+   * 2️⃣ Duplicate / business logic errors
+   * --------------------------------------------- */
+  if (data?.error_code === "DUPLICATE_RESOURCE") {
+    let message = data.message || "Duplicate resource detected.";
+
+    const conflicts = data?.details?.conflicting_fields;
+    if (conflicts && typeof conflicts === "object") {
+      const fields = Object.entries(conflicts)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(", ");
+
+      message += `\n\nConflicting values:\n${fields}`;
+    }
+
+    return message;
+  }
+
+  /* ---------------------------------------------
+   * 3️⃣ Generic backend message
+   * --------------------------------------------- */
+  if (typeof data?.message === "string") {
+    return data.message;
+  }
+
+  /* ---------------------------------------------
+   * 4️⃣ Axios / JS error message
+   * --------------------------------------------- */
+  if (err?.message) {
+    return err.message;
+  }
+
+  /* ---------------------------------------------
+   * 5️⃣ Fallback
+   * --------------------------------------------- */
+  return "An unknown error occurred while submitting the form.";
+};
+
 //  OLD DATA
 
 export const fieldMapping = {

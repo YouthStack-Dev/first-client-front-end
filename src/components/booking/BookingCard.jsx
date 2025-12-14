@@ -1,4 +1,11 @@
-import { Calendar, Clock, MapPin, Navigation, XCircle } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Navigation,
+  XCircle,
+  Key,
+} from "lucide-react";
 
 const BookingCard = ({
   booking,
@@ -20,8 +27,8 @@ const BookingCard = ({
 
     // For demo purposes, let's assume booking_time is in format "18:30"
     // You can replace this with your actual time field
-    const [hours, minutes] = booking.booking_time
-      ? booking.booking_time.split(":").map(Number)
+    const [hours, minutes] = booking.shift_time
+      ? booking.shift_time.split(":").map(Number)
       : [12, 40]; // Default static time
 
     // Set the booking datetime with the actual time
@@ -39,6 +46,10 @@ const BookingCard = ({
   };
 
   const canCancel = canCancelBooking();
+
+  // Check if any OTP exists
+  const hasAnyOTP =
+    booking.escort_otp || booking.boarding_otp || booking.deboarding_otp;
 
   return (
     <div
@@ -65,7 +76,7 @@ const BookingCard = ({
               <Clock className="w-4 h-4 text-gray-500" />
               <span className="text-sm text-gray-600">
                 {/* Show booking time if available, otherwise use static time */}
-                {booking.booking_time || "18:30"} • Shift {booking.shift_id}
+                {booking.shift_time || "18:30"}
               </span>
               {getShiftType(booking.shift_id)}
             </div>
@@ -80,15 +91,85 @@ const BookingCard = ({
               </div>
             )}
 
-            {/* OTP */}
-            {booking.OTP && (
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-sm font-medium text-gray-700">OTP:</span>
-                <span className="text-sm text-blue-600 font-semibold">
-                  {booking.OTP}
-                </span>
+            {/* OTP Section - Show if any OTP exists */}
+            {hasAnyOTP && (
+              <div className="mt-3 p-2 bg-blue-50 rounded-md border border-blue-100">
+                <div className="flex items-center gap-2 mb-1">
+                  <Key className="w-3 h-3 text-blue-600" />
+                  <span className="text-xs font-medium text-blue-700">
+                    OTPs
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {/* Escort OTP */}
+                  {booking.escort_otp && (
+                    <div className="flex flex-col">
+                      <span className="text-xs text-gray-600">Escort OTP</span>
+                      <span className="text-sm font-semibold text-blue-600">
+                        {booking.escort_otp}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Boarding OTP */}
+                  {booking.boarding_otp && (
+                    <div className="flex flex-col">
+                      <span className="text-xs text-gray-600">
+                        Boarding OTP
+                      </span>
+                      <span className="text-sm font-semibold text-blue-600">
+                        {booking.boarding_otp}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Deboarding OTP */}
+                  {booking.deboarding_otp && (
+                    <div className="flex flex-col">
+                      <span className="text-xs text-gray-600">
+                        Deboarding OTP
+                      </span>
+                      <span className="text-sm font-semibold text-blue-600">
+                        {booking.deboarding_otp}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
+
+            {/* Alternative: Show OTPs inline if you prefer a simpler layout */}
+            {/* 
+            {hasAnyOTP && (
+              <div className="flex items-center gap-4 mt-2 flex-wrap">
+                {booking.escort_otp && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-gray-600">Escort:</span>
+                    <span className="text-sm font-semibold text-blue-600">
+                      {booking.escort_otp}
+                    </span>
+                  </div>
+                )}
+                {booking.boarding_otp && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-gray-600">Boarding:</span>
+                    <span className="text-sm font-semibold text-blue-600">
+                      {booking.boarding_otp}
+                    </span>
+                  </div>
+                )}
+                {booking.deboarding_otp && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-gray-600">Deboarding:</span>
+                    <span className="text-sm font-semibold text-blue-600">
+                      {booking.deboarding_otp}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+            */}
           </div>
         </div>
 

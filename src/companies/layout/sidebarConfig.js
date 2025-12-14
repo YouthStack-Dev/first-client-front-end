@@ -93,7 +93,7 @@ export const baseSidebarConfig = [
       },
       {
         title: "Vendor Management",
-        path: "/companies/vendors",
+        path: "/companies/new-vendor-management",
         permission: "vendor.read",
         icon: Store,
       },

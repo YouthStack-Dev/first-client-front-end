@@ -6,11 +6,14 @@ import {
   createEscortThunk,
   updateEscortThunk,
   deleteEscortThunk,
+  toggleEscortActiveThunk,
+  toggleEscortAvailableThunk,
 } from "../redux/features/escort/escortThunks";
 
 import {
   escortSelectors,
   selectEscortLoading,
+  selectEscortError,
 } from "../redux/features/escort/escortSlice";
 
 import { genderOptions } from "../components/escort/constants";
@@ -25,14 +28,16 @@ const EscortManagement = () => {
 
   const escorts = useSelector(escortSelectors.selectAll);
   const loading = useSelector(selectEscortLoading);
+  const serverError = useSelector(selectEscortError);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");
   const [selectedEscort, setSelectedEscort] = useState(null);
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState(getInitialFormData());
-  const [errors, setErrors] = useState({});
+  const [formErrors, setFormErrors] = useState({});
   const vendors = useVendorOptions();
+
   function getInitialFormData() {
     return {
       vendor_id: null,
@@ -54,7 +59,7 @@ const EscortManagement = () => {
     setModalMode("create");
     setSelectedEscort(null);
     setFormData(getInitialFormData());
-    setErrors({});
+    setFormErrors({});
     setIsModalOpen(true);
   };
 
@@ -62,6 +67,7 @@ const EscortManagement = () => {
     setModalMode("edit");
     setSelectedEscort(escort);
     setFormData(escort);
+    setFormErrors({});
     setIsModalOpen(true);
   };
 
@@ -72,9 +78,64 @@ const EscortManagement = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (escortId) => {
-    if (window.confirm("Delete this escort?")) {
-      dispatch(deleteEscortThunk(escortId));
+  const handleDelete = async (escortId) => {
+    if (!window.confirm("Delete this escort?")) return;
+
+    try {
+      // delete
+      await dispatch(deleteEscortThunk(escortId)).unwrap();
+
+      // refetch list after successful delete
+      await dispatch(fetchEscortsThunk()).unwrap();
+    } catch (err) {
+      if (err?.errorCode === "ESCORT_NOT_FOUND") {
+        alert("Escort already deleted or not found.");
+      } else {
+        alert(err?.message || "Failed to delete escort.");
+      }
+
+      // still refetch to sync UI
+      dispatch(fetchEscortsThunk());
+    }
+  };
+
+  const handleOnToggleActive = async (escort) => {
+    try {
+      await dispatch(
+        toggleEscortActiveThunk({
+          id: escort.escort_id,
+          currentState: escort.is_active,
+        })
+      ).unwrap();
+
+      // Refresh the list after successful toggle
+      dispatch(fetchEscortsThunk());
+    } catch (error) {
+      console.error("Failed to toggle active status:", error);
+      // You could show a toast notification here
+      alert(
+        `Failed to update active status: ${error.message || "Unknown error"}`
+      );
+    }
+  };
+
+  const handleOnToggleAvailable = async (escort) => {
+    try {
+      await dispatch(
+        toggleEscortAvailableThunk({
+          id: escort.escort_id,
+          currentState: escort.is_available,
+        })
+      ).unwrap();
+
+      // Refresh the list after successful toggle
+      dispatch(fetchEscortsThunk());
+    } catch (error) {
+      console.error("Failed to toggle available status:", error);
+      // You could show a toast notification here
+      alert(
+        `Failed to update available status: ${error.message || "Unknown error"}`
+      );
     }
   };
 
@@ -85,32 +146,49 @@ const EscortManagement = () => {
     if (!formData.name.trim()) newErrors.name = "Name required";
     if (!formData.phone.trim()) newErrors.phone = "Phone required";
 
-    setErrors(newErrors);
+    setFormErrors(newErrors);
     return !Object.keys(newErrors).length;
   };
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    if (modalMode === "create") {
-      dispatch(createEscortThunk(formData));
-    } else {
-      dispatch(
-        updateEscortThunk({
-          id: selectedEscort.escort_id,
-          data: formData,
-        })
-      );
+    setIsSubmitting(true);
+
+    try {
+      let result;
+      if (modalMode === "create") {
+        result = await dispatch(createEscortThunk(formData)).unwrap();
+      } else {
+        result = await dispatch(
+          updateEscortThunk({
+            id: selectedEscort.escort_id,
+            data: formData,
+          })
+        ).unwrap();
+      }
+
+      // If we get here, the thunk succeeded
+      dispatch(fetchEscortsThunk());
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Form submission error:", error);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // refetch list
-    dispatch(fetchEscortsThunk());
-
-    setIsModalOpen(false);
   };
 
   const handleFormChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    if (formErrors[field]) {
+      setFormErrors((prev) => ({ ...prev, [field]: null }));
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setFormErrors({});
+    setIsSubmitting(false);
   };
 
   return (
@@ -136,19 +214,25 @@ const EscortManagement = () => {
         onView={handleView}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onToggleActive={handleOnToggleActive}
+        onToggleAvailable={handleOnToggleAvailable}
       />
 
       {/* Modal */}
       <EscortFormModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleCloseModal}
         mode={modalMode}
         formData={formData}
-        errors={errors}
+        errors={{
+          ...formErrors,
+          server: serverError,
+        }}
         vendors={vendors}
         genderOptions={genderOptions}
         onChange={handleFormChange}
         onSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
       />
     </div>
   );

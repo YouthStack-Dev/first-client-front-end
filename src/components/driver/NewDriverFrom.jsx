@@ -9,7 +9,6 @@ import {
   User,
   Loader2,
   Building,
-  AlertCircle,
 } from "lucide-react";
 import { API_CLIENT } from "../../Api/API_Client";
 import {
@@ -19,7 +18,6 @@ import {
   documents,
   transformApiToFormData,
   getVendorNameById,
-  validateField,
 } from "./driverUtility";
 import { downloadFile } from "../../utils/downloadUtils";
 import { viewFile } from "../../utils/fileViewUtils";
@@ -30,7 +28,7 @@ import {
 import { useDispatch } from "react-redux";
 import { logDebug } from "../../utils/logger";
 import { useVendorOptions } from "../../hooks/useVendorOptions";
-import { validationRules } from "../../validations/core/helpers";
+import { getTomorrowDate } from "../../validations/core/helpers";
 
 const DriverFormModal = ({
   isOpen,
@@ -48,19 +46,14 @@ const DriverFormModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useDispatch();
   const vendors = useVendorOptions();
-  const [errors, setErrors] = useState({}); // Add errors state
-  const [touched, setTouched] = useState({}); // Add touched state for showing errors only
+
   // Initialize form data when mode or driverData changes
   useEffect(() => {
     if (mode === "create") {
       setFormData(defaultFormData);
-      setErrors({});
-      setTouched({});
     } else if (mode === "edit" || mode === "view") {
       if (driverData) {
         setFormData(transformApiToFormData(driverData));
-        setErrors({});
-        setTouched({});
       }
     }
     setActiveTab("personal");
@@ -86,165 +79,28 @@ const DriverFormModal = ({
     onClose();
   };
 
-  const validateFileField = (fileKey, file) => {
-    // For view mode, no file validation needed
-    if (mode === "view") return null;
-
-    // For edit mode, file might already exist (has path)
-    if (mode === "edit" && file && typeof file === "object" && file.path) {
-      return null; // Existing file, no validation needed
-    }
-
-    // For create mode or new file upload
-    return validationRules.validateFile(file, true);
-  };
-
-  // Handle input change with validation
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-
-    // Mark field as touched
-    setTouched((prev) => ({ ...prev, [name]: true }));
-
-    // Update form data
-    const newFormData = {
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    };
-
-    // Handle same address logic
-    if (name === "isSameAddress" && checked) {
-      newFormData.currentAddress = newFormData.permanentAddress;
-      // Clear current address error if any
-      setErrors((prev) => ({ ...prev, currentAddress: null }));
-    }
-
-    setFormData(newFormData);
-
-    // Validate the field
-    const error = validateField(name, value, newFormData);
-
-    // Update errors state
-    setErrors((prev) => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: error,
+      [name]: type === "checkbox" ? checked : value,
     }));
 
-    // Special case: if permanent address changes and same address is checked, validate current address too
-    if (name === "permanentAddress" && newFormData.isSameAddress) {
-      const currentAddressError = validateField(
-        "currentAddress",
-        value,
-        newFormData
-      );
-      setErrors((prev) => ({
+    if (name === "isSameAddress" && checked) {
+      setFormData((prev) => ({
         ...prev,
-        currentAddress: currentAddressError,
+        currentAddress: prev.permanentAddress,
       }));
     }
   };
 
   const handleFileChange = (fileKey, file) => {
-    // Mark field as touched
-    setTouched((prev) => ({ ...prev, [fileKey]: true }));
-
-    // Validate file
-    const error = validateFileField(fileKey, file);
-
-    // Update errors state
-    setErrors((prev) => ({
+    setFormData((prev) => ({
       ...prev,
-      [fileKey]: error,
+      [fileKey]: file,
     }));
-
-    // Update form data if no error
-    if (!error) {
-      setFormData((prev) => ({
-        ...prev,
-        [fileKey]: file,
-      }));
-    }
-  };
-  // Handle date input blur with validation
-  const handleDateBlur = (e) => {
-    const { name, value } = e.target;
-
-    // Mark as touched
-    setTouched((prev) => ({ ...prev, [name]: true }));
-
-    // Validate if it's an expiry date field
-    if (name.includes("Expiry")) {
-      const error = validationRules.validateFutureDate(value);
-      setErrors((prev) => ({
-        ...prev,
-        [name]: error,
-      }));
-    }
-
-    // Validate date of birth on blur
-    if (name === "dateOfBirth") {
-      const error = validationRules.validateDateOfBirth(value);
-      setErrors((prev) => ({
-        ...prev,
-        [name]: error,
-      }));
-    }
   };
 
-  // Form validation before submission
-  const validateForm = () => {
-    const newErrors = {};
-    let isValid = true;
-
-    // Validate all fields
-    Object.keys(formData).forEach((key) => {
-      // Skip validation for some fields in view mode
-      if (mode === "view") return;
-
-      // For required fields
-      if (
-        [
-          "code",
-          "name",
-          "email",
-          "mobileNumber",
-          "dateOfBirth",
-          "dateOfJoining",
-          "permanentAddress",
-          "currentAddress",
-          "gender",
-        ].includes(key)
-      ) {
-        const error = validateField(key, formData[key], formData);
-        if (error) {
-          newErrors[key] = error;
-          isValid = false;
-        }
-      }
-
-      // For expiry dates (validate if they have value)
-      if (key.includes("Expiry") && formData[key]) {
-        const error = validationRules.validateFutureDate(formData[key]);
-        if (error) {
-          newErrors[key] = error;
-          isValid = false;
-        }
-      }
-
-      // For file fields (in create mode or if file is new in edit mode)
-      if (documents.some((doc) => doc.fileKey === key)) {
-        const file = formData[key];
-        const error = validateFileField(key, file);
-        if (error) {
-          newErrors[key] = error;
-          isValid = false;
-        }
-      }
-    });
-
-    setErrors(newErrors);
-    return isValid;
-  };
   const handleRemoveFile = (fileKey) => {
     setFormData((prev) => ({
       ...prev,
@@ -267,48 +123,161 @@ const DriverFormModal = ({
       apiUrlPrefix: "/v1/vehicles", // change for drivers/vendors/etc.
     });
   };
+
   // Function to download document
   const handleDownloadFile = (file, filename) => {
     downloadFile({
       file,
       filename,
       apiClient: API_CLIENT,
-      setLoading: (v) => setLoadingDocs({ ...loadingDocs, [file.path]: v }),
+      setLoading: (v) =>
+        setLoadingDocs((prev) => ({ ...prev, [file.path]: v })),
       setError,
       apiUrlPrefix: "/v1/vehicles",
     });
   };
+
+  // basic info validation before moving to documents tab
+  const canGoToDocuments = () => {
+    const {
+      code,
+      name,
+      gender,
+      email,
+      mobileNumber,
+      password,
+      dateOfBirth,
+      dateOfJoining,
+      permanentAddress,
+      currentAddress,
+    } = formData;
+
+    if (!code?.trim()) return false;
+    if (!name?.trim()) return false;
+    if (!gender) return false;
+    if (!email?.trim()) return false;
+    if (!mobileNumber?.trim()) return false;
+    if (mode === "create" && !password?.trim()) return false;
+    if (!dateOfBirth) return false;
+    if (!dateOfJoining) return false;
+    if (!permanentAddress?.trim()) return false;
+    if (!currentAddress?.trim()) return false;
+    return true;
+  };
+
+  // documents validation before submit
+  const validateDocuments = () => {
+    const missing = [];
+
+    documents.forEach((doc) => {
+      if (doc.numberKey && !formData[doc.numberKey]) {
+        missing.push(`${doc.label} number`);
+      }
+      if (doc.fileKey && !formData[doc.fileKey]) {
+        missing.push(`${doc.label} file`);
+      }
+      if (doc.id === "alt_govt_id" && doc.typeKey && !formData[doc.typeKey]) {
+        missing.push("Alternate Government ID type");
+      }
+      if (doc.expiryKey && !formData[doc.expiryKey]) {
+        missing.push(`${doc.label} expiry date`);
+      }
+    });
+
+    if (missing.length > 0) {
+      setError(
+        `Please fill all required document fields:\n- ${missing.join("\n- ")}`
+      );
+      return false;
+    }
+    return true;
+  };
+  const formatBackendError = (err) => {
+    logDebug("Backend error:", err);
+
+    const detail = err?.detail || err?.data?.detail;
+
+    /* -----------------------------
+     * 1️⃣ FastAPI / Pydantic validation errors
+     * ----------------------------- */
+    if (Array.isArray(detail)) {
+      const header = "Submission failed due to the following errors:";
+      const lines = detail.map((d, idx) => {
+        const path =
+          Array.isArray(d.loc) && d.loc.length > 1
+            ? d.loc.slice(1).join(".")
+            : "unknown_field";
+
+        const msg = d.msg || "Invalid value";
+        const inputVal =
+          typeof d.input !== "undefined" ? ` (received: ${d.input})` : "";
+
+        return `${idx + 1}. ${path}: ${msg}${inputVal}`;
+      });
+
+      return `${header}\n${lines.join("\n")}`;
+    }
+
+    /* -----------------------------
+     * 2️⃣ Duplicate / Business logic errors
+     * ----------------------------- */
+    if (detail?.error_code === "DUPLICATE_RESOURCE") {
+      const baseMessage =
+        detail.message || "Resource already exists with the same values";
+
+      const conflicts = detail?.details?.conflicting_fields;
+
+      if (conflicts && typeof conflicts === "object") {
+        const fields = Object.entries(conflicts)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join(", ");
+
+        return `${baseMessage}\nConflicting fields → ${fields}`;
+      }
+
+      return baseMessage;
+    }
+
+    /* -----------------------------
+     * 3️⃣ Generic backend message
+     * ----------------------------- */
+    if (detail?.message) {
+      return detail.message;
+    }
+
+    if (err?.message) {
+      return err.message;
+    }
+
+    return "An unknown error occurred while submitting the form.";
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setError(null);
 
-    // Mark all fields as touched to show all errors
-    const allTouched = {};
-    Object.keys(formData).forEach((key) => {
-      allTouched[key] = true;
-    });
-    setTouched(allTouched);
-
-    // Validate form before submission
-    if (!validateForm()) {
-      setIsSubmitting(false);
-      setError("Please fix all validation errors before submitting");
+    if (!canGoToDocuments()) {
+      setError("Please complete all basic information before submitting.");
+      setActiveTab("personal");
       return;
     }
+
+    if (!validateDocuments()) {
+      setActiveTab("documents");
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       if (mode === "create") {
         const payload = buildDriverFormData(formData);
-
         const result = await dispatch(createDriverThunk(payload)).unwrap();
 
         if (onSubmitSuccess) {
           onSubmitSuccess("Driver created successfully!");
         }
         handleClose();
-
-        // You can also use the result data if needed
         console.log("Created driver:", result);
       }
 
@@ -317,7 +286,6 @@ const DriverFormModal = ({
 
         const payload = buildDriverUpdateData(formData, driverData.driver_id);
 
-        // ✅ Correct way - pass a single object with driverId and formData
         const result = await dispatch(
           updateDriverThunk({
             driverId: driverData.driver_id,
@@ -332,30 +300,11 @@ const DriverFormModal = ({
       }
     } catch (err) {
       console.error("Error submitting form:", err);
-
-      if (err.detail && Array.isArray(err.detail)) {
-        const errorList = err.detail
-          .map((error, index) => {
-            const field = error.loc?.slice(1).join(".") || "Unknown field";
-            return `${index + 1}. ${field}: ${error.msg}`;
-          })
-          .join("\n");
-
-        setError(`Validation failed:\n${errorList}`);
-      } else {
-        setError(
-          `Failed to ${mode === "create" ? "create" : "update"} driver. ${
-            err.message || "Unknown error"
-          }`
-        );
-      }
+      const formatted = formatBackendError(err);
+      setError(formatted);
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const shouldShowError = (fieldName) => {
-    return touched[fieldName] && errors[fieldName];
   };
 
   const isReadOnly = mode === "view";
@@ -405,7 +354,7 @@ const DriverFormModal = ({
 
             {/* Error Message */}
             {error && (
-              <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+              <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm whitespace-pre-line">
                 {error + ""}
                 <button
                   onClick={() => setError(null)}
@@ -436,7 +385,17 @@ const DriverFormModal = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setActiveTab("documents")}
+                    onClick={() => {
+                      if (!canGoToDocuments()) {
+                        setError(
+                          "Please complete all basic information before going to Documents."
+                        );
+                        setActiveTab("personal");
+                        return;
+                      }
+                      setError(null);
+                      setActiveTab("documents");
+                    }}
                     className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                       activeTab === "documents"
                         ? "border-blue-500 text-blue-600"
@@ -546,6 +505,7 @@ const DriverFormModal = ({
                           required
                           className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
                         >
+                          <option value="">Select</option>
                           <option value="Male">Male</option>
                           <option value="Female">Female</option>
                           <option value="Other">Other</option>
@@ -563,21 +523,10 @@ const DriverFormModal = ({
                           name="email"
                           value={formData.email}
                           onChange={handleInputChange}
-                          onBlur={handleInputChange} // Validate on blur too
                           disabled={isReadOnly}
                           required
-                          className={`w-full px-3 py-2 text-sm border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 ${
-                            shouldShowError("email")
-                              ? "border-red-300 focus:ring-red-500"
-                              : "border-gray-300"
-                          }`}
+                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
                         />
-                        {shouldShowError("email") && (
-                          <div className="flex items-center gap-1 mt-1 text-xs text-red-600">
-                            <AlertCircle className="w-3 h-3" />
-                            {errors.email}
-                          </div>
-                        )}
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -586,6 +535,7 @@ const DriverFormModal = ({
                         <input
                           type="tel"
                           name="mobileNumber"
+                          max={10}
                           value={formData.mobileNumber}
                           onChange={handleInputChange}
                           disabled={isReadOnly}
@@ -641,7 +591,7 @@ const DriverFormModal = ({
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Vendor
+                          Vendor *
                         </label>
                         {isReadOnly ? (
                           <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded border border-gray-300">
@@ -657,6 +607,7 @@ const DriverFormModal = ({
                             name="vendor_id"
                             value={formData.vendor_id || ""}
                             onChange={handleInputChange}
+                            required
                             className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           >
                             <option value="">Select Vendor</option>
@@ -762,7 +713,6 @@ const DriverFormModal = ({
                                   value={formData[doc.typeKey] || ""}
                                   onChange={handleInputChange}
                                   disabled={isReadOnly}
-                                  required
                                   className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50"
                                 >
                                   <option value="">Select ID Type</option>
@@ -780,7 +730,7 @@ const DriverFormModal = ({
                                 <label className="block text-xs font-medium text-gray-600 mb-1">
                                   {doc.id === "alt_govt_id"
                                     ? "ID Number *"
-                                    : "Number"}
+                                    : "Number *"}
                                 </label>
                                 <input
                                   type="text"
@@ -788,7 +738,6 @@ const DriverFormModal = ({
                                   value={formData[doc.numberKey] || ""}
                                   onChange={handleInputChange}
                                   disabled={isReadOnly}
-                                  required={doc.id === "alt_govt_id"}
                                   className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50"
                                 />
                               </div>
@@ -797,27 +746,17 @@ const DriverFormModal = ({
                             {doc.expiryKey && (
                               <div>
                                 <label className="block text-xs font-medium text-gray-600 mb-1">
-                                  Expiry Date
+                                  Expiry Date *
                                 </label>
                                 <input
                                   type="date"
-                                  name="drivingLicenseExpiry"
-                                  value={formData.drivingLicenseExpiry || ""}
+                                  name={doc.expiryKey}
+                                  min={getTomorrowDate()}
+                                  value={formData[doc.expiryKey] || ""}
                                   onChange={handleInputChange}
-                                  onBlur={handleDateBlur} // Special blur handler for dates
                                   disabled={isReadOnly}
-                                  className={`w-full px-2 py-1.5 text-xs border rounded focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 ${
-                                    shouldShowError("drivingLicenseExpiry")
-                                      ? "border-red-300 focus:ring-red-500"
-                                      : "border-gray-300"
-                                  }`}
+                                  className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50"
                                 />
-                                {shouldShowError("drivingLicenseExpiry") && (
-                                  <div className="flex items-center gap-1 mt-1 text-xs text-red-600">
-                                    <AlertCircle className="w-3 h-3" />
-                                    {errors.drivingLicenseExpiry}
-                                  </div>
-                                )}
                               </div>
                             )}
 
@@ -849,10 +788,10 @@ const DriverFormModal = ({
                                   disabled={isReadOnly}
                                   className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50"
                                 >
+                                  {/* Only allowed values from backend enum */}
                                   <option value="Pending">Pending</option>
-                                  <option value="Verified">Verified</option>
-                                  <option value="Rejected">Rejected</option>
                                   <option value="Approved">Approved</option>
+                                  <option value="Rejected">Rejected</option>
                                 </select>
                               </div>
                             )}
@@ -867,7 +806,7 @@ const DriverFormModal = ({
                                   <span className="text-xs text-gray-700 truncate">
                                     {file instanceof File
                                       ? file.name
-                                      : file.name || "Document.pdf"}
+                                      : file.name || "Document"}
                                     {isLoading && (
                                       <span className="inline-flex items-center ml-2">
                                         <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
@@ -914,14 +853,8 @@ const DriverFormModal = ({
                                 </div>
                               </div>
                             ) : (
-                              <>
-                                <label
-                                  className={`flex items-center justify-center gap-2 w-full px-3 py-2 border-2 border-dashed rounded cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors ${
-                                    shouldShowError(doc.fileKey)
-                                      ? "border-red-300 hover:border-red-400"
-                                      : "border-gray-300"
-                                  }`}
-                                >
+                              !isReadOnly && (
+                                <label className="flex items-center justify-center gap-2 w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
                                   <Upload className="w-4 h-4 text-gray-400" />
                                   <span className="text-xs text-gray-600">
                                     Upload File *
@@ -933,19 +866,12 @@ const DriverFormModal = ({
                                     onChange={(e) =>
                                       handleFileChange(
                                         doc.fileKey,
-                                        e.target.files?.[0]
+                                        e.target.files[0]
                                       )
                                     }
-                                    required
                                   />
                                 </label>
-                                {shouldShowError(doc.fileKey) && (
-                                  <div className="flex items-center gap-1 mt-1 text-xs text-red-600">
-                                    <AlertCircle className="w-3 h-3" />
-                                    {errors[doc.fileKey]}
-                                  </div>
-                                )}
-                              </>
+                              )
                             )}
                           </div>
                         </div>
@@ -956,61 +882,33 @@ const DriverFormModal = ({
               </div>
 
               {/* Footer */}
-              {/* Footer */}
-              <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex flex-col gap-3">
-                {/* Error summary */}
-                {Object.keys(errors).length > 0 && (
-                  <div className="mb-2 p-3 bg-red-50 border border-red-200 rounded">
-                    <div className="flex items-center gap-2 text-red-700 text-sm font-medium">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>
-                        Please fix {Object.keys(errors).length} validation
-                        error(s)
-                      </span>
-                    </div>
-                    <ul className="mt-2 text-xs text-red-600 list-disc pl-4">
-                      {Object.entries(errors)
-                        .slice(0, 3)
-                        .map(([field, error]) => (
-                          <li key={field} className="truncate">
-                            {error}
-                          </li>
-                        ))}
-                      {Object.keys(errors).length > 3 && (
-                        <li>... and {Object.keys(errors).length - 3} more</li>
-                      )}
-                    </ul>
-                  </div>
-                )}
-
-                <div className="flex justify-end gap-3">
+              <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  disabled={isSubmitting}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                {!isReadOnly && (
                   <button
-                    type="button"
-                    onClick={handleClose}
+                    type="submit"
                     disabled={isSubmitting}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Cancel
+                    {isSubmitting ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {mode === "create" ? "Creating..." : "Saving..."}
+                      </span>
+                    ) : mode === "create" ? (
+                      "Create Driver"
+                    ) : (
+                      "Save Changes"
+                    )}
                   </button>
-                  {!isReadOnly && (
-                    <button
-                      type="submit"
-                      disabled={isSubmitting || Object.keys(errors).length > 0}
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSubmitting ? (
-                        <span className="flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          {mode === "create" ? "Creating..." : "Saving..."}
-                        </span>
-                      ) : mode === "create" ? (
-                        "Create Driver"
-                      ) : (
-                        "Save Changes"
-                      )}
-                    </button>
-                  )}
-                </div>
+                )}
               </div>
             </form>
           </div>
@@ -1053,7 +951,7 @@ const DriverFormModal = ({
                 <iframe
                   src={previewDoc}
                   title="Document Preview"
-                  className="w-full h-full min-h-[600px]"
+                  className="w-full h-full min-h=[600px]"
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center h-full">

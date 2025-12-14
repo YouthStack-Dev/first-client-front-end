@@ -2,7 +2,8 @@
 import React from "react";
 import { X, Check } from "lucide-react";
 import Select from "react-select";
-
+import { logDebug } from "../../utils/logger";
+// components/EscortFormModal.jsx - Update the component
 const EscortFormModal = ({
   isOpen,
   onClose,
@@ -13,13 +14,14 @@ const EscortFormModal = ({
   genderOptions,
   onChange,
   onSubmit,
+  isSubmitting, // Add this prop
 }) => {
   if (!isOpen) return null;
 
+  logDebug(" this is the error in model ,", errors);
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Modal Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-900">
             {mode === "create" && "Create Escort"}
@@ -36,6 +38,17 @@ const EscortFormModal = ({
 
         {/* Modal Body */}
         <div className="px-6 py-4">
+          {/* Display server error at the top */}
+          {errors.server && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 text-sm">
+                {typeof errors.server === "string"
+                  ? errors.server
+                  : errors.server?.message ||
+                    "An error occurred. Please try again."}
+              </p>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             {/* Vendor */}
             <div className="col-span-2">
@@ -153,17 +166,28 @@ const EscortFormModal = ({
         <div className="sticky bottom-0 bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+            disabled={isSubmitting}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
           >
             {mode === "view" ? "Close" : "Cancel"}
           </button>
           {mode !== "view" && (
             <button
               onClick={onSubmit}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              disabled={isSubmitting}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Check size={18} />
-              {mode === "create" ? "Create" : "Save Changes"}
+              {isSubmitting ? (
+                <>
+                  <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                  {mode === "create" ? "Creating..." : "Saving..."}
+                </>
+              ) : (
+                <>
+                  <Check size={18} />
+                  {mode === "create" ? "Create" : "Save Changes"}
+                </>
+              )}
             </button>
           )}
         </div>
