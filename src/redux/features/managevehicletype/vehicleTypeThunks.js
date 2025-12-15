@@ -1,27 +1,26 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { API_CLIENT } from "../../../Api/API_Client";
 
-export const fetchVehicleTypes = createAsyncThunk(
-  "vehicleType/fetchVehicleTypeThunk",
-  async ({ active_only } = {}, { rejectWithValue }) => {
+export const fetchVehicleTypesThunk = createAsyncThunk(
+  "vehicleType/fetch",
+  async (params, { rejectWithValue }) => {
     try {
-      let url = "/v1/vehicle-types/";
-      if (active_only !== undefined && active_only !== null) {
-        url += `?active_only=${active_only}`;
-      }
+      const response = await API_CLIENT.get("/v1/vehicle-types/", {
+        params,
+      });
 
-      const response = await API_CLIENT.get(url);
-
-      if (response.status === 200 && response.data?.success) {
-        return response.data.data.items;
-      }
-
-      return rejectWithValue(response.data?.message || "Failed to fetch vehicle types");
-    } catch (error) {
-      return rejectWithValue(error.message || "Unexpected error");
+      return {
+        items: response.data.data.items,
+        append: params?.append || false,
+      };
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data || "Failed to fetch vehicle types"
+      );
     }
   }
 );
+
 
 
 export const createVehicleType = createAsyncThunk(
@@ -73,20 +72,6 @@ export const toggleVehicleTypeStatus = createAsyncThunk(
       return rejectWithValue(response.data?.message || "Failed to toggle vehicle type status");
     } catch (error) {
       return rejectWithValue(error.message || "Unexpected error");
-    }
-  }
-);
-
-export const fetchVendorVehicleTypes = createAsyncThunk(
-  "vehicleTypes/fetchVendorVehicleTypes",
-  async (vendorId, { rejectWithValue }) => {
-    try {
-      const response = await API_CLIENT.get(
-        `/v1/vehicle-types/?vendor_id=${vendorId}`
-      );
-      return { vendorId, items: response.data.data.items };
-    } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to fetch vendor vehicles");
     }
   }
 );

@@ -5,12 +5,24 @@ import { API_CLIENT } from "../../../Api/API_Client";
 // Fetch all drivers
 export const fetchDriversThunk = createAsyncThunk(
   "drivers/fetchAll",
-  async (_, { getState, rejectWithValue }) => {
+  async (vendorId = undefined, { getState, rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.get("/v1/drivers/vendor");
+      // If caller did not provide vendorId, try to derive from current user
+      let vid = vendorId;
+      if (!vid) {
+        const state = getState();
+        vid = state?.auth?.user?.vendor_user?.vendor_id;
+      }
+
+      if (!vid) {
+        // Avoid calling the vendor endpoint without a vendor_id which results in 400
+        return rejectWithValue({ message: "vendor_id is required to fetch drivers" });
+      }
+
+      const response = await API_CLIENT.get(`/v1/drivers/vendor?vendor_id=${vid}`);
 
       if (response?.data?.success) {
-        return response.data.data.items; 
+        return response.data.data.items;
       } else {
         return rejectWithValue(response.data.message || "Failed to fetch drivers");
       }

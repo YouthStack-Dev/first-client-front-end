@@ -31,6 +31,7 @@ const defaultFormData = {
   eyeTestExpiryDate: '',
   govtIdNumber: '',
   alternateGovtId: '',
+  vendorId: '', // Hidden field for vendor tracking
 
   // Files
   profileImage: null,
@@ -63,13 +64,22 @@ const DriverForm = ({ initialData = null, mode, onClose, vendors = [] }) => {
   const driversLoading = useSelector(state => state.drivers.loading);
 
   useEffect(() => {
-    if (initialData && (mode === "edit" || mode === "view")) {
-      const transformedData = transformBackendToFormData(initialData);
-      setFormData(prev => ({
-        ...prev,
-        ...transformedData,
-        vendorId: initialData.vendor?.vendor_id || '',
-      }));
+    if (initialData) {
+      if (mode === "edit" || mode === "view") {
+        // Edit/view mode: transform backend data
+        const transformedData = transformBackendToFormData(initialData);
+        setFormData(prev => ({
+          ...prev,
+          ...transformedData,
+          vendorId: initialData.vendor?.vendor_id || '',
+        }));
+      } else if (mode === "create") {
+        // Create mode: initialData contains vendor info passed from parent
+        setFormData(prev => ({
+          ...prev,
+          vendorId: initialData.vendor?.vendor_id || '',
+        }));
+      }
     }
   }, [initialData, mode]);
 

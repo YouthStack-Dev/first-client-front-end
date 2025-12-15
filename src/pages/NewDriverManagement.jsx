@@ -298,6 +298,7 @@ const NewDriverManagement = () => {
               className="text-white bg-blue-600 px-3 py-2 rounded-md flex items-center gap-2 hover:bg-blue-700 transition-colors"
               disabled={shouldShowNoVendorMessage}
             />
+            
             <ReusableButton
               module="driver"
               action="read"

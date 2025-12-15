@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Upload, Download } from "lucide-react";
 import Select from "react-select";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchDriversThunk } from "../../redux/features/manageDriver/driverThunks";
-import { fetchVehicleTypes } from "../../redux/features/managevehicletype/vehicleTypeThunks";
+import { fetchDriversByVendorThunk } from "../../redux/features/manageDriver/driverThunks";
+import { fetchVehicleTypesThunk } from "../../redux/features/managevehicletype/vehicleTypeThunks";
 import {
   createVehicleThunk,
   updateVehicleThunk,
@@ -119,7 +119,7 @@ const VehicleForm = ({
 
 useEffect(() => {
   if (!fetched) {
-    dispatch(fetchVehicleTypes());
+    dispatch(fetchVehicleTypesThunk());
   }
 }, [dispatch, fetched]);
 
@@ -129,11 +129,12 @@ useEffect(() => {
 );
 
 useEffect(() => {
-  // ✅ Only fetch if not fetched already
-  if (!hasFetched ) {
-    dispatch(fetchDriversThunk());
+  // ✅ Only fetch drivers for the vendor if not fetched already
+  const vendorToFetch = loggedInVendorId || formData.vendor_id;
+  if (!hasFetched && vendorToFetch) {
+    dispatch(fetchDriversByVendorThunk(vendorToFetch));
   }
-}, [dispatch, hasFetched]);
+}, [dispatch, hasFetched, loggedInVendorId, formData.vendor_id]);
 
 
   const driverOptions = useMemo(() => {

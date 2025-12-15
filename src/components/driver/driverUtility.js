@@ -310,6 +310,9 @@ export const getVendorNameById = (vendorId) => {
 //  OLD DATA
 
 export const fieldMapping = {
+  // Vendor (hidden field)
+  vendorId: "vendor_id",
+
   // Personal / basic info
   name: "name",
   code: "code",
