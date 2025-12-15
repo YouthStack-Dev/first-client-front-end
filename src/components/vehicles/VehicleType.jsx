@@ -130,6 +130,11 @@ const ManageVehicleTypes = () => {
       className: "w-[380px] truncate text-gray-600",
     },
     {
+      label: "Seats",
+      key: "seats",
+      className: "w-[120px] text-center",
+    },
+    {
       label: "Status",
       key: "status",
       className: "w-[140px] text-center",
@@ -297,6 +302,19 @@ const ManageVehicleTypes = () => {
           onChange={(e) =>
             setSelectedVehicleType((p) => ({ ...p, name: e.target.value }))
           }
+        />
+
+        <InputField
+              label="Number of Seats"
+              type="number"
+              value={selectedVehicleType?.seats || ""}
+              readOnly={modalMode === "view"}
+              onChange={(e) =>
+                setSelectedVehicleType((p) => ({
+                  ...p,
+                  seats: Number(e.target.value),
+                }))
+              }
         />
 
         <InputField
