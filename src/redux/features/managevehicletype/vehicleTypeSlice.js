@@ -11,10 +11,11 @@ import {
 } from "./vehicleTypeThunks";
 
 /* ------------------------------------------------------
-   ENTITY ADAPTER (same as newDriver)
+   ENTITY ADAPTER
 ------------------------------------------------------ */
 const vehicleTypeAdapter = createEntityAdapter({
-  selectId: (item) => item.vehicle_type_id || item.id,
+  selectId: (item) => item.vehicle_type_id,
+  sortComparer: (a, b) => a.vehicle_type_id - b.vehicle_type_id,
 });
 
 /* ------------------------------------------------------
@@ -57,18 +58,13 @@ const vehicleTypeSlice = createSlice({
       })
 
       .addCase(fetchVehicleTypesThunk.fulfilled, (state, action) => {
-        const { items = [], append = false } = action.payload;
-
-        if (append) {
-          vehicleTypeAdapter.upsertMany(state, items);
-        } else {
-          vehicleTypeAdapter.setAll(state, items);
-        }
+        const { items = [] } = action.payload;
+        // console.log("📥 API Response - Items count:", items.length, "Data:", items);  // DEBUG: What API sent
+        vehicleTypeAdapter.setAll(state, items);
 
         state.loading = false;
         state.loaded = true;
         state.total = items.length;
-        state.error = null;
       })
 
       .addCase(fetchVehicleTypesThunk.rejected, (state, action) => {
@@ -89,7 +85,8 @@ const vehicleTypeSlice = createSlice({
 
       .addCase(createVehicleType.fulfilled, (state, action) => {
         state.loading = false;
-        if (action.payload) {
+
+        if (action.payload?.vehicle_type_id) {
           vehicleTypeAdapter.addOne(state, action.payload);
           state.total += 1;
         }
@@ -102,17 +99,40 @@ const vehicleTypeSlice = createSlice({
       })
 
       /* ================= UPDATE ================= */
+      .addCase(updateVehicleType.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+
       .addCase(updateVehicleType.fulfilled, (state, action) => {
-        if (action.payload) {
+        state.loading = false;
+
+        if (action.payload?.vehicle_type_id) {
           vehicleTypeAdapter.upsertOne(state, action.payload);
         }
       })
 
+      .addCase(updateVehicleType.rejected, (state, action) => {
+        state.loading = false;
+        state.error =
+          action.payload || "Failed to update vehicle type";
+      })
+
       /* ================= TOGGLE STATUS ================= */
+      .addCase(toggleVehicleTypeStatus.pending, (state) => {
+        // ❗ DO NOT block UI with full loading spinner
+        state.error = null;
+      })
+
       .addCase(toggleVehicleTypeStatus.fulfilled, (state, action) => {
-        if (action.payload) {
+        if (action.payload?.vehicle_type_id) {
           vehicleTypeAdapter.upsertOne(state, action.payload);
         }
+      })
+
+      .addCase(toggleVehicleTypeStatus.rejected, (state, action) => {
+        state.error =
+          action.payload || "Failed to toggle vehicle type status";
       });
   },
 });
@@ -125,11 +145,12 @@ export const { clearVehicleTypes } = vehicleTypeSlice.actions;
 export default vehicleTypeSlice.reducer;
 
 /* ------------------------------------------------------
-   SELECTORS (same pattern as newDriver)
+   SELECTORS
 ------------------------------------------------------ */
-export const vehicleTypeSelectors = vehicleTypeAdapter.getSelectors(
-  (state) => state.vehicleType
-);
+export const vehicleTypeSelectors =
+  vehicleTypeAdapter.getSelectors(
+    (state) => state.vehicleType
+  );
 
 export const selectVehicleTypesLoading = (state) =>
   state.vehicleType.loading;

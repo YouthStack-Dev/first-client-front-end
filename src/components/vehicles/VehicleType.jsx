@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Eye, Edit, History } from "lucide-react";
+import { History, Building } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import Select from "react-select";
 
 import ToolBar from "../ui/ToolBar";
-import DynamicTable from "../DynamicTable";
 import SearchInput from "@components/ui/SearchInput";
 import SelectField from "../ui/SelectField";
 import ReusableButton from "../ui/ReusableButton";
-import ReusableToggleButton from "../ui/ReusableToggleButton";
 import { Modal } from "../../components/SmallComponents";
 import InputField from "../InputField";
+
+import VehicleTypeList from "../vehicles/VehicleTypeList";
 
 import {
   fetchVehicleTypesThunk,
@@ -30,15 +30,45 @@ import { toast } from "react-toastify";
 
 const MODULE = "vehicle-type";
 
+// Embedded debounce hook (no external file needed)
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    // console.log(`🔄 Debounce timer started for "${value}" (delay: ${delay}ms)`);  // DEBUG: See if timer fires
+    const handler = setTimeout(() => {
+      // console.log(`✅ Debounced value updated to "${value}"`);  // DEBUG: Confirm update
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      // console.log(`🛑 Debounce cleared (user still typing)`);  // DEBUG: See cancellations
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
 const ManageVehicleTypes = () => {
   const dispatch = useDispatch();
 
+  /* ================= USER ================= */
   const user = useSelector(selectCurrentUser);
   const isVendorUser = user?.type === "vendor";
 
+  /* ================= DATA ================= */
   const vehicleTypes = useSelector(vehicleTypeSelectors.selectAll);
   const loading = useSelector(selectVehicleTypesLoading);
 
+  const vendors = useVendorOptions();
+
+  const getVendorLabelById = useCallback(
+    (id) => vendors.find((v) => v.value === id)?.label || "—",
+    [vendors]
+  );
+
+  /* ================= STATE ================= */
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");
   const [selectedVehicleType, setSelectedVehicleType] = useState(null);
@@ -47,37 +77,53 @@ const ManageVehicleTypes = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [status, setStatus] = useState("All");
 
-  const vendors = useVendorOptions();
+  // Debounce searchTerm (increased to 500ms for testing)
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  // ================= PARAM BUILDER =================
+  /* ================= PARAM BUILDER ================= */
   const buildFetchParams = useCallback(() => {
     const params = {};
 
-    if (isVendorUser) params.vendor_id = user.vendor_id;
-    else if (selectedVendor?.value) params.vendor_id = selectedVendor.value;
-    else return null;
+    if (isVendorUser) {
+      params.vendor_id = user.vendor_id;
+    } else if (selectedVendor?.value) {
+      params.vendor_id = selectedVendor.value;
+    } else {
+      return null;
+    }
 
-    if (searchTerm.trim()) params.search = searchTerm.trim();
-    if (status !== "All") params.status = status;
+    if (debouncedSearchTerm.trim()) {
+      params.name = debouncedSearchTerm.trim();
+    }
 
+    if (status === "Active") params.active_only = 1;
+    if (status === "Inactive") params.active_only = 0;
+
+    // console.log("📦 Built params for fetch:", params);  // DEBUG: Check search/is_active in params
     return params;
-  }, [isVendorUser, user?.vendor_id, selectedVendor, searchTerm, status]);
+  }, [isVendorUser, user?.vendor_id, selectedVendor, debouncedSearchTerm, status]);
 
+  /* ================= FETCH ================= */
   useEffect(() => {
     const params = buildFetchParams();
-    if (params) dispatch(fetchVehicleTypesThunk(params));
+    if (params) {
+      // console.log("🚀 Dispatching fetch with params:", params);  // DEBUG: Confirm dispatch trigger
+      dispatch(fetchVehicleTypesThunk(params));
+    } else {
+      // console.log("⏭️ Skipping fetch (no params)");  // DEBUG: Vendor check
+    }
   }, [buildFetchParams, dispatch]);
 
   const shouldShowNoVendorMessage = !isVendorUser && !selectedVendor;
 
-  // ================= CLEAR FILTERS (ADDED) =================
+  /* ================= FILTERS ================= */
   const handleClearFilters = () => {
     setSearchTerm("");
     setStatus("All");
-    if (!isVendorUser) setSelectedVendor(null);
+    // Vendor stays selected
   };
 
-  // ================= MODAL =================
+  /* ================= MODAL ================= */
   const handleOpenCreateModal = () => {
     if (!isVendorUser && !selectedVendor) {
       toast.warning("Please select a vendor first");
@@ -88,19 +134,23 @@ const ManageVehicleTypes = () => {
     setSelectedVehicleType({
       name: "",
       description: "",
+      seats: "",
       is_active: true,
       vendor_id: isVendorUser ? user.vendor_id : selectedVendor.value,
     });
     setIsModalOpen(true);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
     try {
       if (modalMode === "edit") {
         await dispatch(
           updateVehicleType({
             id: selectedVehicleType.vehicle_type_id,
             payload: selectedVehicleType,
+            vendor_id: selectedVehicleType.vendor_id,
           })
         ).unwrap();
         toast.success("Vehicle type updated");
@@ -117,43 +167,7 @@ const ManageVehicleTypes = () => {
     }
   };
 
-  // ================= TABLE HEADERS (ADDED ACTIONS) =================
-  const headers = [
-    {
-      label: "Vehicle Type",
-      key: "name",
-      className: "w-[220px] font-medium truncate",
-    },
-    {
-      label: "Description",
-      key: "description",
-      className: "w-[380px] truncate text-gray-600",
-    },
-    {
-      label: "Seats",
-      key: "seats",
-      className: "w-[120px] text-center",
-    },
-    {
-      label: "Status",
-      key: "status",
-      className: "w-[140px] text-center",
-      render: (row) => (
-        <div className="flex justify-center">
-          <ReusableToggleButton
-            module={MODULE}
-            action="update"
-            isChecked={row.is_active}
-            onToggle={() =>
-              dispatch(toggleVehicleTypeStatus(row.vehicle_type_id))
-            }
-            size="small"
-          />
-        </div>
-      ),
-    },
-  ];
-
+  /* ================= UI ================= */
   return (
     <div className="p-4 md:p-6">
       <ToolBar
@@ -162,109 +176,89 @@ const ManageVehicleTypes = () => {
         addButtonLabel="Vehicle Type"
         addButtonDisabled={shouldShowNoVendorMessage}
         searchBar={
-          <div className="flex flex-col sm:flex-row gap-3 w-full">
+          <div className="flex gap-3 w-full">
             <SearchInput
+              key="search"
               placeholder="Search vehicle types..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                // console.log(`⌨️ Raw search change: "${e.target.value}"`);  // DEBUG: Per-keystroke input
+                setSearchTerm(e.target.value);
+              }}
               disabled={shouldShowNoVendorMessage}
-              className="flex-grow"
             />
             <button
               onClick={handleClearFilters}
-              className="px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-md"
+              className="px-4 py-2 text-sm bg-gray-200 rounded-md"
               disabled={shouldShowNoVendorMessage}
             >
-              Clear Filters
+              Clear
             </button>
           </div>
         }
         rightElements={
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex gap-3 items-center">
             <ReusableButton
               module="audit_log"
               action="read"
               icon={History}
               title="Audit History"
               disabled={shouldShowNoVendorMessage}
-              className="bg-blue-600 text-white px-3 py-2 rounded-md"
             />
 
             {!isVendorUser && (
-              <div className="min-w-[200px]">
-                <Select
-                  options={vendors}
-                  value={selectedVendor}
-                  onChange={setSelectedVendor}
-                  placeholder="Select vendor..."
-                  isClearable
-                  menuPortalTarget={document.body}
-                  menuPosition="fixed"
-                  styles={{
-                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                  }}
-                />
-              </div>
+              <Select
+                options={vendors}
+                value={selectedVendor}
+                onChange={setSelectedVendor}
+                placeholder="Select vendor..."
+                isClearable
+              />
             )}
 
             <SelectField
               value={status}
-              onChange={setStatus}
+              onChange={(newStatus) => {
+                console.log(`🔄 Status changed to: "${newStatus}"`);  // DEBUG: Status trigger
+                setStatus(newStatus);
+              }}
               options={[
                 { label: "All Status", value: "All" },
                 { label: "Active", value: "Active" },
                 { label: "Inactive", value: "Inactive" },
               ]}
-              className="min-w-[140px]"
               disabled={shouldShowNoVendorMessage}
             />
           </div>
         }
       />
 
-      {shouldShowNoVendorMessage && (
-        <div className="mt-6 p-4 bg-yellow-50 border rounded-lg text-center">
-          Please select a vendor to view vehicle types
-        </div>
-      )}
-
       {!shouldShowNoVendorMessage && (
-        <DynamicTable
-          className="table-fixed"
-          headers={headers}
-          data={vehicleTypes}
+        <VehicleTypeList
+          vehicleTypes={vehicleTypes}
           loading={loading}
-          showCheckboxes={false}
-          renderActions={(row) => (
-            <div className="flex justify-center gap-2">
-              <ReusableButton
-                  module={MODULE}        // ✅ REQUIRED
-                  action="read"          // ✅ REQUIRED
-                  icon={Eye}
-                  title="View"
-                  onClick={() => {
-                    setSelectedVehicleType(row);
-                    setModalMode("view");
-                    setIsModalOpen(true);
-                  }}
-                />
-              <ReusableButton
-                module={MODULE}        // ✅ REQUIRED
-                action="update"        // ✅ REQUIRED
-                icon={Edit}
-                title="Edit"
-                onClick={() => {
-                  setSelectedVehicleType(row);
-                  setModalMode("edit");
-                  setIsModalOpen(true);
-                }}
-              />
-            </div>
-          )}
+          onView={(row) => {
+            setSelectedVehicleType(row);
+            setModalMode("view");
+            setIsModalOpen(true);
+          }}
+          onEdit={(row) => {
+            setSelectedVehicleType(row);
+            setModalMode("edit");
+            setIsModalOpen(true);
+          }}
+          onStatusToggle={(row) =>
+            dispatch(
+              toggleVehicleTypeStatus({
+                id: row.vehicle_type_id,
+                vendor_id: row.vendor_id,
+                is_active: !row.is_active,
+              })
+            )
+          }
         />
       )}
 
-      {/* MODAL */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -280,18 +274,25 @@ const ManageVehicleTypes = () => {
         {!isVendorUser && (
           <div className="mb-3">
             <label className="text-xs font-medium">Vendor</label>
-            <Select
-              options={vendors}
-              value={vendors.find(
-                (v) => v.value === selectedVehicleType?.vendor_id
-              )}
-              onChange={(opt) =>
-                setSelectedVehicleType((p) => ({
-                  ...p,
-                  vendor_id: opt?.value,
-                }))
-              }
-            />
+            {modalMode === "view" ? (
+              <div className="flex items-center gap-2 p-2 border rounded">
+                <Building size={14} />
+                {getVendorLabelById(selectedVehicleType?.vendor_id)}
+              </div>
+            ) : (
+              <Select
+                options={vendors}
+                value={vendors.find(
+                  (v) => v.value === selectedVehicleType?.vendor_id
+                )}
+                onChange={(opt) =>
+                  setSelectedVehicleType((p) => ({
+                    ...p,
+                    vendor_id: opt?.value,
+                  }))
+                }
+              />
+            )}
           </div>
         )}
 
@@ -305,16 +306,16 @@ const ManageVehicleTypes = () => {
         />
 
         <InputField
-              label="Number of Seats"
-              type="number"
-              value={selectedVehicleType?.seats || ""}
-              readOnly={modalMode === "view"}
-              onChange={(e) =>
-                setSelectedVehicleType((p) => ({
-                  ...p,
-                  seats: Number(e.target.value),
-                }))
-              }
+          label="Number of Seats"
+          type="number"
+          value={selectedVehicleType?.seats || ""}
+          readOnly={modalMode === "view"}
+          onChange={(e) =>
+            setSelectedVehicleType((p) => ({
+              ...p,
+              seats: e.target.value === "" ? "" : Number(e.target.value),
+            }))
+          }
         />
 
         <InputField
@@ -329,7 +330,7 @@ const ManageVehicleTypes = () => {
           }
         />
 
-        <div className="flex items-center gap-2 mt-3">
+        <div className="flex gap-2 mt-3">
           <input
             type="checkbox"
             checked={selectedVehicleType?.is_active}
@@ -341,7 +342,7 @@ const ManageVehicleTypes = () => {
               }))
             }
           />
-          <label className="text-sm">Is Active</label>
+          <label>Is Active</label>
         </div>
       </Modal>
     </div>
