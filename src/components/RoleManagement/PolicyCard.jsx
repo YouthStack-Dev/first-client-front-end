@@ -58,9 +58,10 @@ export const PolicyTable = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
-            {policies.map((policy) => (
+            {policies.map((policy, index) => (
               <PolicyTableRow
-                key={policy.policy_id}
+                key={index}
+                index={index}
                 policy={policy}
                 onEdit={onEdit}
                 onDelete={onDelete}
@@ -73,7 +74,7 @@ export const PolicyTable = ({
   );
 };
 
-export const PolicyTableRow = ({ policy, onEdit, onDelete }) => {
+export const PolicyTableRow = ({ index, policy, onEdit, onDelete }) => {
   return (
     <tr className="hover:bg-gray-50 transition-colors duration-150">
       <td className="py-4 px-6 whitespace-nowrap">
@@ -82,7 +83,7 @@ export const PolicyTableRow = ({ policy, onEdit, onDelete }) => {
             <FileText className="text-blue-600" size={16} />
           </div>
           <span className="ml-3 inline-flex items-center text-xs font-medium text-gray-700 bg-gray-100 px-2.5 py-1 rounded-full">
-            {policy.id || policy.policy_id}
+            {index + 1}
           </span>
         </div>
       </td>

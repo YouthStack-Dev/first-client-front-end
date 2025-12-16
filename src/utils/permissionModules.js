@@ -1,8 +1,26 @@
-export const transformPermissionsToModules = (permissionsData) => {
-  // Group permissions by module
+// Function to transform permissions for different modes
+
+// Transform policy permissions to map for easy lookup
+const getPolicyPermissionsMap = (policy) => {
+  const policyPermissionsMap = {};
+  if (policy?.permissions) {
+    policy.permissions.forEach((perm) => {
+      const key = `${perm.module}-${perm.action}`;
+      policyPermissionsMap[key] = {
+        ...perm,
+        isEnabled: true,
+      };
+    });
+  }
+  return policyPermissionsMap;
+};
+
+export const transformPermissionsForMode = (mode, policy, allPermissions) => {
+  const policyPermissionsMap = getPolicyPermissionsMap(policy);
+
   const modulesMap = {};
 
-  permissionsData?.forEach((permission) => {
+  allPermissions?.forEach((permission) => {
     const { module, action, permission_id, is_active } = permission;
 
     // Skip if permission is not active
@@ -17,13 +35,27 @@ export const transformPermissionsToModules = (permissionsData) => {
       };
     }
 
-    // Add action to the module with enabled set to false
+    // Determine if permission should be enabled based on mode
+    let isEnabled = false;
+    const key = `${module}-${action}`;
+
+    if (mode === "view" || mode === "edit") {
+      // For view and edit modes, check if permission exists in policy
+      isEnabled = policyPermissionsMap[key] !== undefined;
+    } else if (mode === "create") {
+      // For create mode, all permissions are disabled initially
+      isEnabled = false;
+    }
+
+    // Add action to the module
     modulesMap[module].actions.push({
       id: permission_id,
       name: action.charAt(0).toUpperCase() + action.slice(1), // Capitalize action name
-      enabled: false, // Always set to false initially
-      action: action, // Keep the original action type
+      enabled: isEnabled,
+      action: action,
       permission_id: permission_id,
+      module: module,
+      description: permission.description || "",
     });
   });
 
@@ -31,37 +63,4 @@ export const transformPermissionsToModules = (permissionsData) => {
   return Object.values(modulesMap).filter(
     (module) => module.actions.length > 0
   );
-};
-// Alternative: If you want to start with all permissions disabled
-export const transformPermissionsToModulesWithDefaults = (
-  permissionsData,
-  enabledPermissions = []
-) => {
-  const modulesMap = {};
-
-  permissionsData?.forEach((permission) => {
-    const { module, action, permission_id } = permission;
-
-    if (!modulesMap[module]) {
-      modulesMap[module] = {
-        module: module,
-        actions: [],
-      };
-    }
-
-    // Check if this permission is enabled (from existing role permissions)
-    const isEnabled = enabledPermissions.some(
-      (perm) => perm.module === module && perm.action.includes(action)
-    );
-
-    modulesMap[module].actions.push({
-      id: permission_id,
-      name: action.charAt(0).toUpperCase() + action.slice(1),
-      enabled: isEnabled,
-      action: action,
-      permission_id: permission_id,
-    });
-  });
-
-  return Object.values(modulesMap);
 };
