@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import RoleCard from "./RoleCard";
 import RoleForm from "./RoleForm";
 import SearchBar from "./SearchBar";
@@ -22,13 +22,15 @@ import {
 import ReusableButton from "../ui/ReusableButton";
 
 import PoliciesManagement from "./PoliciesManagement";
+import { fetchRolesThunk } from "../../redux/features/Permissions/permissionsThunk";
+import { useDispatch } from "react-redux";
 
 const RoleManagement = () => {
   const [activeTab, setActiveTab] = useState("roles"); // "roles" or "policies"
   const [roles, setRoles] = useState(dummyRoledata);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const dispatch = useDispatch();
   // Modal states
   const [showRoleFormModal, setShowRoleFormModal] = useState(false);
   const [showAssignedUsersModal, setShowAssignedUsersModal] = useState(false);
@@ -88,6 +90,9 @@ const RoleManagement = () => {
     return formattedPermissions;
   };
 
+  useEffect(() => {
+    dispatch(fetchRolesThunk);
+  }, []);
   // Convert back to the original permissions format
   const convertPermissionsFromForm = (permissions) => {
     const originalFormat = {};
