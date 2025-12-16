@@ -13,6 +13,7 @@ const initialState = {
   loading: false,
   creating: false,
   updating: false,
+  fetched: false, //
   toggling: false, // for toggle status
   selectedVendor: null,
   error: null,
@@ -38,10 +39,12 @@ const vendorSlice = createSlice({
       })
       .addCase(fetchVendorsThunk.fulfilled, (state, action) => {
         state.loading = false;
+        state.fetched = true; // ✅ MARK AS FETCHED
+
         const vendors = action.payload || [];
         state.data = vendors;
 
-        // Build map
+        // Build tenant map
         state.vendorsByTenant = vendors.reduce((acc, v) => {
           if (!acc[v.tenant_id]) acc[v.tenant_id] = [];
           acc[v.tenant_id].push(v);
