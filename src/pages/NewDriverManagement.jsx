@@ -561,6 +561,7 @@ const NewDriverManagement = () => {
         driverData={selectedDriver}
         onSubmitSuccess={handleSubmitSuccess}
         vendorId={isVendorUser ? user.vendor_id : selectedVendor?.value}
+        vendor={vendors}
       />
 
       {/* Audit History Modal */}

@@ -36,6 +36,7 @@ const DriverFormModal = ({
   mode = "create", // create, edit, view
   driverData = null,
   onSubmitSuccess,
+  vendor,
 }) => {
   const [formData, setFormData] = useState(defaultFormData);
   const [activeTab, setActiveTab] = useState("personal");
@@ -45,7 +46,6 @@ const DriverFormModal = ({
   const [previewContentType, setPreviewContentType] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useDispatch();
-  const vendors = useVendorOptions();
 
   // Initialize form data when mode or driverData changes
   useEffect(() => {
