@@ -28,7 +28,7 @@ const VehicleTypeList = ({
   return (
     <div className="rounded-lg overflow-hidden shadow-sm mt-2 bg-blue-50">
       {/* TABLE */}
-      <div className="overflow-auto h-[620px]">
+      <div className="overflow-auto h-[500px]">
         <table className="min-w-full border-collapse">
           <thead className="bg-gray-50 border-b sticky top-0">
             <tr className="text-gray-600">

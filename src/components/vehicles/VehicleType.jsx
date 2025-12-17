@@ -204,6 +204,7 @@ const ManageVehicleTypes = () => {
               icon={History}
               title="Audit History"
               disabled={shouldShowNoVendorMessage}
+              className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md"
             />
 
             {!isVendorUser && (

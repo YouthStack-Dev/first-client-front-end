@@ -1,370 +1,281 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Edit, Eye } from "lucide-react";
-import ReusableButton from "../ui/ReusableButton";
-import ReusableToggleButton from "../ui/ReusableToggleButton";
-import Modal from "@components/modals/Modal";
-import VehicleForm from "./VehicleForm";
+import { History } from "lucide-react";
 import { toast } from "react-toastify";
-import { fetchVehiclesThunk, toggleVehicleStatus } from "../../redux/features/manageVehicles/vehicleThunk";
-import {
-  setRcNumberFilter,
-  setStatusFilter,
-  setPage,
-  updateVehicle,
-} from "../../redux/features/manageVehicles/vehicleSlice";
-import VendorSelector from "../vendor/vendordropdown";
-import { selectCurrentUser } from "../../redux/features/auth/authSlice";
-import { setActiveVendor } from "../../redux/features/manageVehicles/vehicleSlice";
+import Select from "react-select";
+
+import ToolBar from "../ui/ToolBar";
+import SearchInput from "../ui/SearchInput";
+import SelectField from "../ui/SelectField";
+import ReusableButton from "../ui/ReusableButton";
+import Modal from "@components/modals/Modal";
+
+import { NewVehicleList } from "./NewVehicleList";
+import VehicleForm from "./VehicleForm";
 
 import {
-  selectPaginatedVehicles,
-  selectVehicleCounts,
-  selectFilters,
-  selectPagination,
-  selectLoading,
-  selectHasFetched,
+  fetchVehiclesThunk,
+  toggleVehicleStatus,
+} from "../../redux/features/manageVehicles/vehicleThunk";
+
+import { selectCurrentUser } from "../../redux/features/auth/authSlice";
+import {
+  selectVehicles,
+  selectVehiclesLoading,
+  selectVehiclesTotal,
 } from "../../redux/features/manageVehicles/vehicleSelectors";
 
+import { useVendorOptions } from "../../hooks/useVendorOptions";
 
+/* ======================================================
+   🔁 DEBOUNCE HOOK (SAME AS VEHICLE TYPES)
+====================================================== */
+const useDebounce = (value, delay = 500) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
 
-const VehicleList = ({
-  vehicles,
-  onNext,
-  onPrev,
-  currentPage,
-  totalPages,
-  isLoading,
-  handleEdit,
-  handleView,
-
-  handleToggle,
-}) => (
-  <div className="rounded-lg border bg-white shadow-sm mt-4">
-    <div className="overflow-auto max-h-[500px]">
-      <table className="min-w-full border-collapse text-sm">
-        <thead className="bg-gray-100 sticky top-0 z-10">
-          <tr className="text-left text-gray-700">
-            <th className="px-4 py-2">S. No.</th>
-            <th className="px-4 py-2">Vehicle Type ID</th>
-            <th className="px-4 py-2">RC Number</th>
-            <th className="px-4 py-2">Driver</th>
-            <th className="px-4 py-2">RC Expiry</th>
-            <th className="px-4 py-2">Insurance Expiry</th>
-            <th className="px-4 py-2">Permit Expiry</th>
-            <th className="px-4 py-2">PUC Expiry</th>
-            <th className="px-4 py-2">Fitness Expiry</th>
-            <th className="px-4 py-2 text-center">Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {isLoading ? (
-            <tr>
-              <td colSpan="10" className="text-center p-4 text-gray-500">
-                Loading...
-              </td>
-            </tr>
-          ) : vehicles.length === 0 ? (
-            <tr>
-              <td colSpan="10" className="text-center p-4 text-gray-500">
-                No vehicles found
-              </td>
-            </tr>
-          ) : (
-            vehicles.map((vehicle, index) => (
-              <tr
-                key={vehicle.vehicle_id}
-                className="border-t hover:bg-gray-50 transition-all"
-              >
-                <td className="px-4 py-2">
-                  {index + 1 + (currentPage - 1) * 10}
-                </td>
-                <td className="px-4 py-2">{vehicle.vehicle_type_id || "-"}</td>
-                <td className="px-4 py-2">{vehicle.rc_number || "-"}</td>
-                <td className="px-4 py-2">
-                  {vehicle.driver_id ? vehicle.driver_id : "Unassigned"}
-                </td>
-                <td className="px-4 py-2">
-                  {vehicle.rc_expiry_date?.split("T")[0] || "-"}
-                </td>
-                <td className="px-4 py-2">
-                  {vehicle.insurance_expiry_date?.split("T")[0] || "-"}
-                </td>
-                <td className="px-4 py-2">
-                  {vehicle.permit_expiry_date?.split("T")[0] || "-"}
-                </td>
-                <td className="px-4 py-2">
-                  {vehicle.puc_expiry_date?.split("T")[0] || "-"}
-                </td>
-                <td className="px-4 py-2">
-                  {vehicle.fitness_expiry_date?.split("T")[0] || "-"}
-                </td>
-                <td className="px-4 py-2 text-center">
-                  <div className="flex justify-center items-center gap-4">
-                    <div className="flex gap-2">
-                      <ReusableButton
-                        module="vehicle"
-                        action="read"
-                        icon={Eye}
-                        title="View Vehicle"
-                        onClick={() => handleView(vehicle)}
-                        className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all"
-                      />
-                      <ReusableButton
-                        module="vehicle"
-                        action="update"
-                        icon={Edit}
-                        title="Edit Vehicle"
-                        onClick={() => handleEdit(vehicle)}
-                        className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all"
-                      />
-                    </div>
-
-                    <ReusableToggleButton
-                      module="vehicle"
-                      action="update"
-                      isChecked={vehicle.is_active ?? true}
-                      onToggle={() => handleToggle(vehicle.vehicle_id)}
-                      labels={{ on: "Active", off: "Inactive" }}
-                      size="small"
-                      className="scale-90"
-                    />
-                  </div>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
-
-    {/* Pagination */}
-    <div className="flex justify-center items-center gap-4 py-4">
-      <button
-        onClick={onPrev}
-        disabled={currentPage === 1}
-        className={`flex items-center gap-2 px-4 py-2 rounded ${currentPage === 1
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-          }`}
-      >
-        Prev
-      </button>
-      <span className="text-sm text-gray-700 font-medium">
-        Page {currentPage} of {totalPages}
-      </span>
-      <button
-        onClick={onNext}
-        disabled={currentPage === totalPages}
-        className={`flex items-center gap-2 px-4 py-2 rounded ${currentPage === totalPages
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-            : "bg-blue-600 text-white hover:bg-blue-700"
-          }`}
-      >
-        Next
-      </button>
-    </div>
-  </div>
-);
-
-const ManageVehicles = () => {
-  const dispatch = useDispatch();
-  const vehicles = useSelector(selectPaginatedVehicles);
-  const filters = useSelector(selectFilters);
-  const pagination = useSelector(selectPagination);
-  const { total } = useSelector(selectVehicleCounts);
-  const loading = useSelector(selectLoading);
-  const hasFetched = useSelector(selectHasFetched);
-  const currentUser = useSelector(selectCurrentUser);
-const userType = currentUser?.type; // "employee" or "vendor"
-const tenantId = currentUser?.employee?.tenant_id;
-const vendorId = currentUser?.vendor_user?.vendor_id;
-
-
-  const [vehicleModal, setVehicleModal] = useState(false);
-  const [editVehicle, setEditVehicle] = useState(null);
-
-  const byVendor = useSelector((state) => state.vehicles.byVendor);
-
-  // Fetch all vehicles on mount
   useEffect(() => {
-    if (!hasFetched) {
-      dispatch(fetchVehiclesThunk());
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
+const NewVehicleManagement = () => {
+  const dispatch = useDispatch();
+
+  /* ================= USER ================= */
+  const user = useSelector(selectCurrentUser);
+  const isVendorUser = user?.type === "vendor";
+  const vendorId = user?.vendor_user?.vendor_id;
+
+  /* ================= REDUX DATA ================= */
+  const vehicles = useSelector(selectVehicles);
+  const loading = useSelector(selectVehiclesLoading);
+  const totalItems = useSelector(selectVehiclesTotal);
+
+  /* ================= VENDORS ================= */
+  const vendors = useVendorOptions();
+
+  /* ================= LOCAL STATE ================= */
+  const [selectedVendor, setSelectedVendor] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  const [status, setStatus] = useState("All");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("create");
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+
+  /* ================= FETCH PARAM BUILDER ================= */
+  const buildFetchParams = useCallback(() => {
+    const params = {
+      skip: (currentPage - 1) * itemsPerPage,
+      limit: itemsPerPage,
+    };
+
+    // 🔥 Vendor logic (same as Vehicle Types)
+    if (isVendorUser) {
+      params.vendor_id = vendorId;
+    } else if (selectedVendor?.value) {
+      params.vendor_id = selectedVendor.value;
+    } else {
+      return null; // ❌ do not fetch without vendor
     }
-  }, [dispatch, hasFetched]);
 
-  // useEffect(() => {
-  //   if (userType === "vendor" && vendorId) {
-  //     const cached = store.getState().vehicles.byVendor?.[vendorId];
-  //     if (!cached || !cached.ids?.length) {
-  //       dispatch(fetchVehiclesThunk({ vendor_id: vendorId }));
-  //     }
-  //   } else if (userType === "employee" && !hasFetched) {
-  //     dispatch(fetchVehiclesThunk());
-  //   }
-  // }, [dispatch, userType, vendorId, hasFetched]);
+    // 🔍 Debounced search
+    if (debouncedSearchTerm.trim()) {
+      params.search = debouncedSearchTerm.trim();
+    }
 
+    // 🔄 Status mapping
+    if (status === "Active") params.is_active = true;
+    if (status === "Inactive") params.is_active = false;
 
+    return params;
+  }, [
+    currentPage,
+    itemsPerPage,
+    isVendorUser,
+    vendorId,
+    selectedVendor,
+    debouncedSearchTerm,
+    status,
+  ]);
 
-  const totalPages = Math.ceil(total / pagination.limit) || 1;
+  /* ================= FETCH ================= */
+  useEffect(() => {
+    const params = buildFetchParams();
+    if (params) {
+      dispatch(fetchVehiclesThunk(params));
+    }
+  }, [buildFetchParams, dispatch]);
 
-  const handleEdit = (vehicle) => {
-    setEditVehicle(vehicle);
-    setVehicleModal(true);
+  /* ================= HANDLERS ================= */
+  const handleOpenCreate = () => {
+    if (!isVendorUser && !selectedVendor) {
+      toast.warning("Please select a vendor first");
+      return;
+    }
+    setModalMode("create");
+    setSelectedVehicle(null);
+    setIsModalOpen(true);
   };
 
-  const handleView = (vehicle) => {
-    setEditVehicle(vehicle);
-    setVehicleModal(true);
-  };
-
-  const handleToggle = async (vehicleId) => {
-    const vehicle = vehicles.find((v) => v.vehicle_id === vehicleId);
-    if (!vehicle) return;
-
-    const newStatus = !vehicle.is_active;
-
-    dispatch(updateVehicle({ ...vehicle, is_active: newStatus }));
-
+  const handleToggle = async (vehicle) => {
     try {
-      const result = await dispatch(
-        toggleVehicleStatus({ vehicleId, isActive: newStatus })
-      ).unwrap(); // unwrap will throw if rejected
-
-      // --- 3️⃣ Success toast ---
-      toast.success(
-        `Vehicle ${vehicle.rc_number || vehicleId} is now ${newStatus ? "Active" : "Inactive"
-        }`
-      );
-    } catch (err) {
-      // --- 4️⃣ Revert state on failure ---
-      dispatch(updateVehicle(vehicle));
-      toast.error(err?.message || "Failed to update vehicle status");
+      await dispatch(
+        toggleVehicleStatus({
+          vehicleId: vehicle.vehicle_id,
+          isActive: !vehicle.is_active,
+        })
+      ).unwrap();
+      toast.success("Vehicle status updated");
+    } catch {
+      toast.error("Failed to update vehicle status");
     }
   };
 
-
-  const onPrev = () => {
-    const prevPage = pagination.skip / pagination.limit;
-    if (prevPage > 0) dispatch(setPage(prevPage));
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setStatus("All");
+    setCurrentPage(1);
+    if (!isVendorUser) setSelectedVendor(null);
   };
 
-  const onNext = () => {
-    const nextPage = pagination.skip / pagination.limit + 2;
-    if (nextPage <= totalPages) dispatch(setPage(nextPage));
-  };
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const shouldShowNoVendorMessage = !isVendorUser && !selectedVendor;
 
+  /* ================= UI ================= */
   return (
-    <div className="p-4 space-y-4">
-      {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white shadow-sm p-4 rounded-lg">
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          {/* Search RC Number */}
-          <div className="relative w-full sm:w-64">
-            <input
-              type="text"
-              placeholder="Search RC Number..."
-              value={filters.rc_number}
-              onChange={(e) => dispatch(setRcNumberFilter(e.target.value))}
-              className="pl-3 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
+    <div className="p-4 md:p-6">
+      <ToolBar
+        onAddClick={handleOpenCreate}
+        module="vehicle"
+        addButtonLabel="Vehicle"
+        addButtonDisabled={shouldShowNoVendorMessage}
+        searchBar={
+          <div className="flex gap-3 w-full">
+            <SearchInput
+              placeholder="Search by RC Number..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              disabled={shouldShowNoVendorMessage}
+            />
+            <button
+              onClick={handleClearFilters}
+              className="px-4 py-2 bg-gray-200 rounded-md"
+              disabled={shouldShowNoVendorMessage}
+            >
+              Clear
+            </button>
+          </div>
+        }
+        rightElements={
+          <div className="flex items-center gap-3">
+            <ReusableButton
+              module="audit_log"
+              action="read"
+              icon={History}
+              title="Audit History"
+              disabled={shouldShowNoVendorMessage}
+              className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md"
+            />
+
+            {!isVendorUser && (
+              <Select
+                options={vendors}
+                value={selectedVendor}
+                onChange={setSelectedVendor}
+                placeholder="Select vendor..."
+                isClearable
+              />
+            )}
+
+            <SelectField
+              value={status}
+              onChange={setStatus}
+              disabled={shouldShowNoVendorMessage}
+              options={[
+                { label: "All Status", value: "All" },
+                { label: "Active", value: "Active" },
+                { label: "Inactive", value: "Inactive" },
+              ]}
             />
           </div>
-
-          {/* Status Dropdown */}
-          <select
-            value={filters.is_active}
-            onChange={(e) => dispatch(setStatusFilter(e.target.value))}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full sm:w-auto"
-          >
-            <option value="all">All Status</option>
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </select>
-          
-           {/* Vendor Selector */}
-            {userType === "employee" && (
-              <VendorSelector
-                onChange={(vendor) => {
-                  const vendorId = vendor.vendor_id;
-                  dispatch(setPage(1));
-
-                // ✅ Handle "All Vendors" case properly
-                if (vendorId === "all") {
-                  console.log("🌍 Showing all tenant vehicles");
-                  dispatch(setActiveVendor("ALL"));
-
-                    const cachedAll = byVendor?.ALL;
-                    if (cachedAll && cachedAll.ids?.length) {
-                      // ✅ Restore from cache instantly — no API call needed
-                      console.log("✅ Using cached ALL vehicles:", cachedAll.ids.length);
-                      return;
-                    }
-
-                      // ❗ If "ALL" cache doesn’t exist (e.g., after visiting a vendor with 0 vehicles)
-                      console.log("🔄 Fetching ALL tenant vehicles again...");
-                      dispatch(fetchVehiclesThunk()); // fetch all tenant-wide vehicles
-                      return;
-                    }
-
-                // ✅ Handle specific vendor
-                  const cached = byVendor?.[vendorId];
-                  if (cached && cached.ids?.length) {
-                    console.log("✅ Using cached vehicles for vendor:", vendorId);
-                    dispatch(setActiveVendor(vendorId));
-                  } else {
-                    console.log("Fetching vehicles for vendor:", vendorId);
-                    dispatch(fetchVehiclesThunk({ vendor_id: vendorId }));
-                  }
-                }}
-              />
-           )}
-        </div>
-
-        {/* Add Vehicle Button */}
-        <button
-          onClick={() => {
-            setEditVehicle(null);
-            setVehicleModal(true);
-          }}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 w-full sm:w-auto"
-        >
-          Add Vehicle
-        </button>
-      </div>
-
-      {/* Vehicle Table */}
-      <VehicleList
-        vehicles={vehicles}
-        onNext={onNext}
-        onPrev={onPrev}
-        currentPage={pagination.skip / pagination.limit + 1}
-        totalPages={totalPages}
-        isLoading={loading}
-        handleEdit={handleEdit}
-        handleView={handleView}
-        handleToggle={handleToggle}
+        }
       />
 
-      {/* Modal */}
-        <Modal
-          isOpen={vehicleModal}
-          onClose={() => setVehicleModal(false)}
-          title={editVehicle ? "Edit Vehicle" : "Add Vehicle"}
-          size="xl"
-          hideFooter={true}
-        >
-          <VehicleForm
-            mode={editVehicle ? "edit" : "create"}  
-            initialData={editVehicle || {}}
-            onFormChange={() => {}}
-            onClose={() => setVehicleModal(false)}
-            isEdit={!!editVehicle}
-          />
-        </Modal>
+      {/* EMPTY STATE */}
+      {shouldShowNoVendorMessage && (
+        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-300 rounded-lg text-center">
+          <p className="text-yellow-800 font-medium">
+            Please select a vendor to view vehicles
+          </p>
+        </div>
+      )}
 
+      {/* LIST */}
+      {!shouldShowNoVendorMessage && (
+        <>
+          {loading ? (
+            <div className="mt-6 text-center">Loading vehicles...</div>
+          ) : (
+            <NewVehicleList
+              vehicles={vehicles}
+              onEdit={(v) => {
+                setSelectedVehicle(v);
+                setModalMode("edit");
+                setIsModalOpen(true);
+              }}
+              onView={(v) => {
+                setSelectedVehicle(v);
+                setModalMode("view");
+                setIsModalOpen(true);
+              }}
+              onStatusToggle={handleToggle}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={setItemsPerPage}
+              showPagination
+            />
+          )}
+        </>
+      )}
+
+      {/* MODAL */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={
+          modalMode === "edit"
+            ? "Edit Vehicle"
+            : modalMode === "view"
+            ? "View Vehicle"
+            : "Add Vehicle"
+        }
+        size="xl"
+        hideFooter
+      >
+        <VehicleForm
+          mode={modalMode}
+          initialData={selectedVehicle || {}}
+          onClose={() => setIsModalOpen(false)}
+          vendorId={isVendorUser ? vendorId : selectedVendor?.value}
+        />
+      </Modal>
     </div>
   );
 };
 
-export default React.memo(ManageVehicles);
+export default NewVehicleManagement;

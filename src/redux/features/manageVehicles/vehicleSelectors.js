@@ -1,9 +1,9 @@
-// src/redux/features/manageVehicles/vehicleSelectors.js
-import { createSelector } from '@reduxjs/toolkit';
-import { initialState } from './vehicleSlice'; // import initialState if needed
+import { createSelector } from "@reduxjs/toolkit";
+// import { initialState } from "./vehicleSlice";
 
 // --- Base selector ---
-export const selectVehicleState = (state) => state.vehicles || initialState;
+export const selectVehicleState = (state) =>
+  state.vehicles ;
 
 // --- Basic selectors ---
 export const selectVehicleEntities = createSelector(
@@ -26,11 +26,16 @@ export const selectPagination = createSelector(
   (state) => state.pagination || { ...initialState.pagination }
 );
 
+// --- Loading & error ---
 export const selectLoading = createSelector(
   [selectVehicleState],
   (state) => state.loading
 );
 
+// ✅ Aliases for NEW Driver-style Vehicle pages
+export const selectVehiclesLoading = selectLoading;
+
+// --- Error & fetch flag ---
 export const selectError = createSelector(
   [selectVehicleState],
   (state) => state.error
@@ -44,36 +49,57 @@ export const selectHasFetched = createSelector(
 // --- All vehicles ---
 export const selectAllVehicles = createSelector(
   [selectVehicleEntities, selectVehicleIds],
-  (entities, ids) => ids.map(id => entities[id]).filter(Boolean)
+  (entities, ids) => ids.map((id) => entities[id]).filter(Boolean)
 );
 
-// --- Filtered vehicles ---
+// ✅ Alias for NEW pages
+export const selectVehicles = selectAllVehicles;
+
+// --- Filtered vehicles (OLD pages) ---
 export const selectFilteredVehicles = createSelector(
   [selectAllVehicles, selectFilters],
   (vehicles, filters) => {
-    const { rc_number, vehicle_type_id, driver_id, is_active, vendor_id } = filters;
+    const {
+      rc_number,
+      vehicle_type_id,
+      driver_id,
+      is_active,
+      vendor_id,
+    } = filters;
 
     const rcFilter = rc_number?.toLowerCase().trim();
 
-    return vehicles.filter(vehicle => {
+    return vehicles.filter((vehicle) => {
       if (!vehicle) return false;
 
       const vehicleRc = vehicle.rc_number?.toLowerCase() || "";
 
       const matchesRc = !rcFilter || vehicleRc.includes(rcFilter);
-      const matchesType = vehicle_type_id === 'all' || vehicle.vehicle_type_id?.toString() === vehicle_type_id;
-      const matchesDriver = driver_id === 'all' || vehicle.driver_id?.toString() === driver_id;
-      const matchesStatus = is_active === 'all' || vehicle.is_active === (is_active === 'true');
-      const matchesVendor = vendor_id === 'all' || vehicle.vendor_id?.toString() === vendor_id;
+      const matchesType =
+        vehicle_type_id === "all" ||
+        vehicle.vehicle_type_id?.toString() === vehicle_type_id;
+      const matchesDriver =
+        driver_id === "all" ||
+        vehicle.driver_id?.toString() === driver_id;
+      const matchesStatus =
+        is_active === "all" ||
+        vehicle.is_active === (is_active === "true");
+      const matchesVendor =
+        vendor_id === "all" ||
+        vehicle.vendor_id?.toString() === vendor_id;
 
-      return matchesRc && matchesType && matchesDriver && matchesStatus && matchesVendor;
+      return (
+        matchesRc &&
+        matchesType &&
+        matchesDriver &&
+        matchesStatus &&
+        matchesVendor
+      );
     });
   }
 );
 
-
-
-// --- Paginated vehicles ---
+// --- Paginated vehicles (OLD pages) ---
 export const selectPaginatedVehicles = createSelector(
   [selectFilteredVehicles, selectPagination],
   (vehicles, pagination) => {
@@ -87,18 +113,24 @@ export const selectVehicleCounts = createSelector(
   [selectAllVehicles],
   (vehicles) => {
     const total = vehicles.length;
-    const active = vehicles.filter(v => v.is_active).length;
+    const active = vehicles.filter((v) => v.is_active).length;
     const inactive = total - active;
     return { total, active, inactive };
   }
 );
 
-// --- Status options for dropdown ---
+// ✅ Alias for NEW pages (THIS FIXES YOUR ERROR)
+export const selectVehiclesTotal = createSelector(
+  [selectVehicleCounts],
+  (counts) => counts.total
+);
+
+// --- Status dropdown options ---
 export const selectStatusOptions = createSelector(
   [selectVehicleCounts],
   (counts) => [
-    { value: 'all', label: `All (${counts.total})` },
-    { value: 'true', label: `Active (${counts.active})` },
-    { value: 'false', label: `Inactive (${counts.inactive})` },
+    { value: "all", label: `All (${counts.total})` },
+    { value: "true", label: `Active (${counts.active})` },
+    { value: "false", label: `Inactive (${counts.inactive})` },
   ]
 );
