@@ -14,9 +14,13 @@ import {
    ENTITY ADAPTER
 ------------------------------------------------------ */
 const vehicleTypeAdapter = createEntityAdapter({
-  selectId: (item) => item.vehicle_type_id,
-  sortComparer: (a, b) => a.vehicle_type_id - b.vehicle_type_id,
+  selectId: (item) =>
+    item.vehicle_type_id ?? item.vehicle_type?.vehicle_type_id,
+  sortComparer: (a, b) =>
+    (a.vehicle_type_id ?? a.vehicle_type?.vehicle_type_id) -
+    (b.vehicle_type_id ?? b.vehicle_type?.vehicle_type_id),
 });
+
 
 /* ------------------------------------------------------
    INITIAL STATE

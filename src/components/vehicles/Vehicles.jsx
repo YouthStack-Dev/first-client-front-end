@@ -11,7 +11,7 @@ import ReusableButton from "../ui/ReusableButton";
 import Modal from "@components/modals/Modal";
 
 import { NewVehicleList } from "./NewVehicleList";
-import VehicleForm from "./VehicleForm";
+import VehicleFormModal from "./VehicleFormModal";
 
 import {
   fetchVehiclesThunk,
@@ -254,26 +254,15 @@ const NewVehicleManagement = () => {
       )}
 
       {/* MODAL */}
-      <Modal
+      <VehicleFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={
-          modalMode === "edit"
-            ? "Edit Vehicle"
-            : modalMode === "view"
-            ? "View Vehicle"
-            : "Add Vehicle"
-        }
-        size="xl"
-        hideFooter
-      >
-        <VehicleForm
-          mode={modalMode}
-          initialData={selectedVehicle || {}}
-          onClose={() => setIsModalOpen(false)}
-          vendorId={isVendorUser ? vendorId : selectedVendor?.value}
-        />
-      </Modal>
+        mode={modalMode}
+        vehicleData={selectedVehicle}
+        onSubmitSuccess={() => {
+          toast.success("Vehicle saved successfully");
+        }}
+      />
     </div>
   );
 };
