@@ -1,34 +1,28 @@
 import { useSelector, useDispatch } from "react-redux";
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import { fetchVendorsThunk } from "../redux/features/vendors/vendorThunk";
 
-export const useVendorOptions = (tenantId = null) => {
+export const useVendorOptions = (tenantId = null, shouldFetch = false) => {
   const dispatch = useDispatch();
 
-  // Local flags to avoid double fetch (no need in slice)
-  const [initialized, setInitialized] = useState(false);
+  const {
+    data: vendors = [],
+    vendorsByTenant = {},
+    fetched,
+    loading,
+  } = useSelector((state) => state.vendor || {});
 
-  const { data: vendors = [], vendorsByTenant = {} } = useSelector(
-    (state) => state.vendor || {}
-  );
-
-  // ⭐ Auto-fetch vendors when hook is first used
+  // 🔥 Fetch ONLY when shouldFetch is true
   useEffect(() => {
-    if (!initialized) {
-      setInitialized(true);
+    if (shouldFetch && !fetched && !loading) {
       dispatch(fetchVendorsThunk());
     }
-  }, [initialized, dispatch]);
+  }, [shouldFetch, fetched, loading, dispatch]);
 
-  // Pick vendor list
   const vendorList = tenantId ? vendorsByTenant[tenantId] || [] : vendors;
 
-  const vendorOptions = [
-    ...vendorList.map((vendor) => ({
-      value: vendor.vendor_id,
-      label: vendor.name,
-    })),
-  ];
-
-  return vendorOptions;
+  return vendorList.map((vendor) => ({
+    value: vendor.vendor_id,
+    label: vendor.name,
+  }));
 };
