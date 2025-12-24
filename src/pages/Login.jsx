@@ -347,13 +347,6 @@ export const Login = () => {
             )}
           </button>
         </form>
-
-        {/* Additional Links */}
-        <div className="mt-6 text-center text-sm text-gray-500">
-          <a href="/forgot-password" className="text-blue-600 hover:underline">
-            Forgot password?
-          </a>
-        </div>
       </div>
     </div>
   );

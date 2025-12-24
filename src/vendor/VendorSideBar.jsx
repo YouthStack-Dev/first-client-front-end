@@ -21,6 +21,10 @@ const VendorSidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [filteredMenuItems, setFilteredMenuItems] = useState([]);
 
+  const sessionStr = sessionStorage.getItem("userPermissions");
+  const session = sessionStr ? JSON.parse(sessionStr) : null;
+  const vendorDetails = session?.user?.vendor;
+
   // Get permissions from Redux store
   const { permissions, loading: authLoading } = useSelector(
     (state) => state.auth
@@ -114,7 +118,7 @@ const VendorSidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
           <>
             <div className="flex flex-col">
               <h2 className="text-lg font-bold text-white">
-                {vendorData.companyName}
+                {vendorDetails?.name}
               </h2>
               <span className="text-xs text-indigo-300">Vendor Portal</span>
             </div>

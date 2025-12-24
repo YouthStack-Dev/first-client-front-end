@@ -2,7 +2,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { fetchVendorsThunk } from "../redux/features/vendors/vendorThunk";
 
-export const useVendorOptions = (tenantId = null) => {
+export const useVendorOptions = (tenantId = null, shouldFetch = false) => {
   const dispatch = useDispatch();
 
   const {
@@ -12,12 +12,12 @@ export const useVendorOptions = (tenantId = null) => {
     loading,
   } = useSelector((state) => state.vendor || {});
 
-  // 🔥 Fetch ONLY ONCE globally
+  // 🔥 Fetch ONLY when shouldFetch is true
   useEffect(() => {
-    if (!fetched && !loading) {
+    if (shouldFetch && !fetched && !loading) {
       dispatch(fetchVendorsThunk());
     }
-  }, [fetched, loading, dispatch]);
+  }, [shouldFetch, fetched, loading, dispatch]);
 
   const vendorList = tenantId ? vendorsByTenant[tenantId] || [] : vendors;
 

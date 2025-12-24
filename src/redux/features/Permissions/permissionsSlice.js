@@ -26,7 +26,6 @@ const permissionsSlice = createSlice({
 
     fetchedPermissions: false,
     fetchedRoles: false,
-    fetchedPolicies: false,
   },
   reducers: {
     resetPermissions: (state) => {
@@ -49,7 +48,6 @@ const permissionsSlice = createSlice({
 
       state.fetchedPermissions = false;
       state.fetchedRoles = false;
-      state.fetchedPolicies = false;
     },
   },
   extraReducers: (builder) => {
@@ -102,7 +100,6 @@ const permissionsSlice = createSlice({
         state.policiesLoading = false;
         state.policies = action.payload;
         state.policiesLoaded = true; // Set to true when loaded
-        state.fetchedPolicies = true;
       })
       .addCase(fetchPoliciesThunk.rejected, (state, action) => {
         state.policiesLoading = false;
