@@ -1,614 +1,619 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { UserPlus, UsersRound, History, Trash } from "lucide-react";
-import DepartmentForm from "@components/departments/DepartmentForm";
-import DepartmentList from "@components/departments/DepartmentList";
-import { useDispatch, useSelector } from "react-redux";
-import { API_CLIENT } from "../Api/API_Client";
-import { setTeams } from "../redux/features/user/userSlice";
-import { logDebug, logError } from "../utils/logger";
-import ToolBar from "@components/ui/ToolBar";
-import SearchInput from "@components/ui/SearchInput";
-import Modal from "@components/modals/Modal";
-import { toast } from "react-toastify";
-import ReusableButton from "../components/ui/ReusableButton";
-import endpoint from "../Api/Endpoints";
-import AuditLogsModal from "../components/modals/AuditLogsModal";
-import SelectField from "../components/ui/SelectField";
+import React, { useState, useEffect } from "react";
 import {
-  selectCompaniesFetched,
-  selectCompaniesFromRedux,
-} from "../redux/features/company/companyslice";
-import { fetchCompaniesThunk } from "../redux/features/company/companyThunks";
-import { selectCurrentUser } from "../redux/features/auth/authSlice";
+  X,
+  Shield,
+  Search,
+  Trash2,
+  Eye,
+  Plus,
+  Check,
+  AlertCircle,
+  Edit2,
+} from "lucide-react";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  selectPolicies,
+  policiesLoading,
+  policiesLoaded,
+  policiesError,
+} from "../redux/features/Permissions/permissionsSlice";
+import ReusableButton from "../components/ui/ReusableButton";
+import { logDebug } from "../utils/logger";
+import { fetchPoliciesThunk } from "../redux/features/Permissions/permissionsThunk";
 
-const ManageDepartment = () => {
-  const navigate = useNavigate();
+const RoleForm = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  mode = "create", // 'create', 'edit', or 'view'
+  initialData = null,
+  roleDetailsError = null,
+}) => {
   const dispatch = useDispatch();
-  const [showAuditModal, setShowAuditModal] = useState(false);
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
-  const [totalItems, setTotalItems] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+
+  // Redux selectors
+  const policies = useSelector(selectPolicies);
+  const loading = useSelector(policiesLoading);
+  const loaded = useSelector(policiesLoaded);
+  const policiesErrorState = useSelector(policiesError);
+
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    tenant_id: null,
+    is_active: true,
+    policy_ids: [],
+  });
   const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [selectedCompany, setSelectedCompany] = useState("");
-  const user = useSelector(selectCurrentUser);
+  const [availablePolicies, setAvailablePolicies] = useState([]);
+  const [selectedPolicies, setSelectedPolicies] = useState([]);
 
-  logDebug(" This is the user", user?.type);
+  logDebug("the selected role in role form ", initialData);
+  const isViewMode = mode === "view";
+  const isEditMode = mode === "edit";
+  const isCreateMode = mode === "create";
 
-  // Get tenant from localStorage for non-admin users
-  const getTenantFromLocalStorage = () => {
-    try {
-      const tenantData = localStorage.getItem("tenant");
-      if (tenantData) {
-        const parsedTenant = JSON.parse(tenantData);
-        return parsedTenant.tenant_id || "";
-      }
-    } catch (error) {
-      logError("Error getting tenant from localStorage:", error);
+  // Fetch policies on mount if not loaded
+  useEffect(() => {
+    if (isOpen && !loaded) {
+      const tenantId = initialData?.tenant_id || null;
+      dispatch(fetchPoliciesThunk({ tenant_id: tenantId }));
     }
-    return "";
+  }, [isOpen, loaded, dispatch, initialData?.tenant_id]);
+
+  // Transform policies from Redux store to match expected format
+  const transformPolicies = (apiPolicies) => {
+    return apiPolicies.map((policy) => ({
+      policy_id: policy.id || policy.policy_id,
+      name: policy.name,
+      description: policy.description || "",
+      is_active: policy.is_active !== false,
+      is_system_policy: policy.is_system_policy || false,
+      tenant_id: policy.tenant_id,
+      permissions: policy.permissions || [],
+    }));
   };
 
-  // Initialize selectedCompany based on user type
+  // Initialize form when modal opens or data changes
   useEffect(() => {
-    if (!user) return; // Wait until user is loaded
+    if (!isOpen) return;
 
-    logDebug("User in useEffect:", user);
-    logDebug("User type in useEffect:", user?.type);
+    if (policies && policies.length > 0) {
+      const allPolicies = transformPolicies(policies);
 
-    if (user.type !== "admin") {
-      const tenantId = getTenantFromLocalStorage();
-      if (tenantId) {
-        setSelectedCompany(tenantId);
-        // Fetch departments immediately for non-admin users
-        fetchDepartments(tenantId);
-      } else {
-        toast.error(
-          "No tenant information found. Please contact administrator."
-        );
-      }
-    } else {
-      logDebug("Admin user detected, waiting for company selection");
-    }
-  }, [user]); // Runs when user changes
-
-  // Modal states
-  const [isDepartmentModalOpen, setIsDepartmentModalOpen] = useState(false);
-
-  // Audit log state
-  const [auditLogs, setAuditLogs] = useState([]);
-  const [isAuditLogLoading, setIsAuditLogLoading] = useState(false);
-
-  // Pull teams from Redux slice
-  const teamsById = useSelector((state) => state.user.teams.byId);
-  const teamIds = useSelector((state) => state.user.teams.allIds);
-
-  // Fixed teams mapping
-  const teams = teamIds?.map((id) => teamsById[id]) || [];
-
-  const [selectedDepartments, setSelectedDepartments] = useState([]);
-  const [editingTeam, setEditingTeam] = useState(null);
-
-  // Get companies data from Redux (only for admin users)
-  const companies = useSelector(selectCompaniesFromRedux);
-  const companiesFetched = useSelector(selectCompaniesFetched);
-
-  // Generate company options from fetched data (only for admin users)
-  const companyOptions = React.useMemo(() => {
-    const options = [{ value: "", label: "All Companies" }];
-
-    if (user?.type === "admin" && companies && companies.length > 0) {
-      companies.forEach((company) => {
-        options.push({
-          value: company.tenant_id || company.id || company.company_id,
-          label:
-            company.name ||
-            company.company_name ||
-            `Company ${company.tenant_id}`,
+      if (mode === "create") {
+        // Clear everything for create mode
+        setFormData({
+          name: "",
+          description: "",
+          tenant_id: null,
+          is_active: true,
+          policy_ids: [],
         });
+        setSelectedPolicies([]);
+        setAvailablePolicies(allPolicies);
+      } else if (initialData && (mode === "edit" || mode === "view")) {
+        // Handle edit/view mode with initial data
+        const selected =
+          initialData.policies?.map((policy) => ({
+            policy_id: policy.policy_id,
+            name: policy.name,
+            description: policy.description || "",
+            is_active: policy.is_active !== false,
+            is_system_policy: policy.is_system_policy || false,
+            tenant_id: policy.tenant_id,
+            permissions: policy.permissions || [],
+          })) || [];
+
+        const selectedIds = selected.map((p) => p.policy_id);
+
+        setSelectedPolicies(selected);
+        setAvailablePolicies(
+          allPolicies.filter(
+            (policy) => !selectedIds.includes(policy.policy_id)
+          )
+        );
+
+        setFormData({
+          name: initialData.name || "",
+          description: initialData.description || "",
+          tenant_id: initialData.tenant_id || null,
+          is_active:
+            initialData.is_active !== undefined ? initialData.is_active : true,
+          policy_ids: selectedIds,
+        });
+      }
+    }
+  }, [isOpen, policies, mode, initialData]);
+
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        name: "",
+        description: "",
+        tenant_id: null,
+        is_active: true,
+        policy_ids: [],
       });
+      setSelectedPolicies([]);
+      setAvailablePolicies([]);
+      setSearchTerm("");
     }
+  }, [isOpen]);
 
-    logDebug("Generated company options:", options);
-    return options;
-  }, [companies, user?.type]); // Use user?.type directly
-
-  // Fetch companies only for admin users
-  useEffect(() => {
-    if (!user) return; // Wait until user is loaded
-
-    if (user.type === "admin" && !companiesFetched) {
-      logDebug("Fetching companies for admin user");
-      dispatch(fetchCompaniesThunk());
-    }
-  }, [dispatch, companiesFetched, user]); // Use user as dependency
-
-  // Debounce search term
-  useEffect(() => {
-    const timerId = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 500); // 500ms debounce delay
-
-    return () => {
-      clearTimeout(timerId);
-    };
-  }, [searchTerm]);
-
-  // Filter teams locally first
-  const filteredTeams = teams.filter((team) =>
-    team?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter available policies based on search
+  const filteredPolicies = availablePolicies.filter(
+    (policy) =>
+      policy.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      policy.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Handle search input change
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1); // Reset to first page when searching
+  const handleAddPolicy = (policy) => {
+    if (isViewMode) return;
+
+    setSelectedPolicies((prev) => [...prev, policy]);
+    setAvailablePolicies((prev) =>
+      prev.filter((p) => p.policy_id !== policy.policy_id)
+    );
+    setFormData((prev) => ({
+      ...prev,
+      policy_ids: [...prev.policy_ids, policy.policy_id],
+    }));
   };
 
-  // Handle company selection change - ONLY for admin users
-  const handleCompanyChange = async (companyId) => {
-    setSelectedCompany(companyId);
-    setCurrentPage(1);
-    setSearchTerm("");
-    setDebouncedSearchTerm("");
+  const handleRemovePolicy = (policyId) => {
+    if (isViewMode) return;
 
-    // Only make API call if a company is selected (not empty/"All Companies")
-    if (companyId && companyId !== "") {
-      await fetchDepartmentsByCompany(companyId);
-    } else {
-      // If "All Companies" is selected, clear the departments
-      dispatch(setTeams([]));
-      setTotalItems(0);
-    }
-  };
+    logDebug("Removing policy with ID:", policyId);
 
-  // Handle add button click
-  const handleAddClick = () => {
-    setEditingTeam(null);
-    setIsDepartmentModalOpen(true);
-  };
+    const policyToRemove = selectedPolicies.find(
+      (p) => p.policy_id === policyId
+    );
 
-  // Fetch departments for specific company (for admin users)
-  const fetchDepartmentsByCompany = async (companyId, page = 1, limit = 10) => {
-    if (!companyId) return;
-
-    setIsLoading(true);
-    try {
-      const params = {
-        skip: (page - 1) * limit,
-        limit,
-        tenant_id: companyId, // Always include tenant_id when company is selected
-      };
-
-      logDebug("Fetching departments by company with params:", params);
-      const { data } = await API_CLIENT.get(endpoint.getDepartments, {
-        params,
-      });
-      logDebug("Fetched departments by company response:", data);
-
-      // Handle different response structures
-      const departmentsData = data?.data || data;
-
-      let processedData;
-      if (departmentsData?.items) {
-        processedData = {
-          items: departmentsData.items,
-          totalCount:
-            departmentsData.totalCount ||
-            departmentsData.total ||
-            departmentsData.items.length,
-        };
-      } else if (Array.isArray(departmentsData)) {
-        processedData = {
-          items: departmentsData,
-          totalCount: departmentsData.length,
-        };
-      } else {
-        processedData = {
-          items: [],
-          totalCount: 0,
-        };
-      }
-
-      dispatch(setTeams(processedData.items));
-      setTotalItems(processedData.totalCount);
-
-      // Show toast if no results
-      if (processedData.items.length === 0) {
-        const selectedCompanyName =
-          companyOptions.find((opt) => opt.value === companyId)?.label ||
-          "Selected company";
-        toast.info(`No departments found for ${selectedCompanyName}`);
-      }
-    } catch (error) {
-      logError("Error fetching departments by company:", error);
-      toast.error("Failed to fetch departments");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Generic fetch departments function (for non-admin users)
-  const fetchDepartments = async (tenantId = null, page = 1, limit = 10) => {
-    setIsLoading(true);
-    try {
-      const params = {
-        skip: (page - 1) * limit,
-        limit,
-      };
-
-      // For non-admin users, always use tenant_id from localStorage
-      if (!tenantId && user?.type !== "admin") {
-        tenantId = getTenantFromLocalStorage();
-      }
-
-      // Add tenant_id if available
-      if (tenantId) {
-        params.tenant_id = tenantId;
-      }
-
-      logDebug("Fetching departments with params:", params);
-      const { data } = await API_CLIENT.get(endpoint.getDepartments, {
-        params,
-      });
-
-      // Handle response
-      const departmentsData = data?.data || data;
-      let processedData;
-
-      if (departmentsData?.items) {
-        processedData = {
-          items: departmentsData.items,
-          totalCount:
-            departmentsData.totalCount ||
-            departmentsData.total ||
-            departmentsData.items.length,
-        };
-      } else if (Array.isArray(departmentsData)) {
-        processedData = {
-          items: departmentsData,
-          totalCount: departmentsData.length,
-        };
-      } else {
-        processedData = {
-          items: [],
-          totalCount: 0,
-        };
-      }
-
-      dispatch(setTeams(processedData.items));
-      setTotalItems(processedData.totalCount);
-
-      if (processedData.items.length === 0) {
-        toast.info("No departments found");
-      }
-    } catch (error) {
-      logError("Error fetching departments:", error);
-      toast.error("Failed to fetch departments");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Fetch departments with search (only when search term is used)
-  const fetchDepartmentsWithSearch = async (
-    page = 1,
-    limit = 10,
-    search = ""
-  ) => {
-    setIsLoading(true);
-    try {
-      const params = {
-        skip: (page - 1) * limit,
-        limit,
-      };
-
-      // Add search parameter if provided
-      if (search && search.length > 0) {
-        params.name = search;
-      }
-
-      // For non-admin users, always use tenant from localStorage
-      if (user?.type !== "admin") {
-        const tenantId = getTenantFromLocalStorage();
-        if (tenantId) {
-          params.tenant_id = tenantId;
-        }
-      } else if (selectedCompany && selectedCompany !== "") {
-        // For admin users, use selected company
-        params.tenant_id = selectedCompany;
-      }
-
-      logDebug("Fetching departments with search params:", params);
-      const { data } = await API_CLIENT.get(endpoint.getDepartments, {
-        params,
-      });
-
-      // Handle response
-      const departmentsData = data?.data || data;
-      let processedData;
-
-      if (departmentsData?.items) {
-        processedData = {
-          items: departmentsData.items,
-          totalCount:
-            departmentsData.totalCount ||
-            departmentsData.total ||
-            departmentsData.items.length,
-        };
-      } else if (Array.isArray(departmentsData)) {
-        processedData = {
-          items: departmentsData,
-          totalCount: departmentsData.length,
-        };
-      } else {
-        processedData = {
-          items: [],
-          totalCount: 0,
-        };
-      }
-
-      dispatch(setTeams(processedData.items));
-      setTotalItems(processedData.totalCount);
-
-      if (search && processedData.items.length === 0) {
-        toast.info("Nothing found on search");
-      }
-    } catch (error) {
-      logError("Error fetching departments with search:", error);
-      toast.error("Failed to fetch departments");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Load teams only when search term changes (not on initial load)
-  useEffect(() => {
-    if (debouncedSearchTerm && debouncedSearchTerm.length > 0) {
-      fetchDepartmentsWithSearch(
-        currentPage,
-        itemsPerPage,
-        debouncedSearchTerm
+    if (policyToRemove) {
+      setSelectedPolicies((prev) =>
+        prev.filter((p) => p.policy_id !== policyId)
       );
-    }
-  }, [debouncedSearchTerm, currentPage]);
-
-  // Reset to first page when search term changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearchTerm]);
-
-  // Fetch audit logs when modal opens
-  const fetchAuditLogs = async () => {
-    setIsAuditLogLoading(true);
-    try {
-      const response = await API_CLIENT.get("/api/audit/departmentsLogs");
-      setAuditLogs(response.data.data || response.data || []);
-    } catch (error) {
-      logError("Error fetching audit logs:", error);
-      if (error.response?.status === 404) {
-        setAuditLogs([]);
-        toast.info("No audit logs found");
-      } else {
-        toast.error("Failed to fetch audit logs");
-      }
-    } finally {
-      setIsAuditLogLoading(false);
+      setAvailablePolicies((prev) => [...prev, policyToRemove]);
+      setFormData((prev) => ({
+        ...prev,
+        policy_ids: prev.policy_ids.filter((id) => id !== policyId),
+      }));
     }
   };
 
-  // Handle history button click
-  const handleHistoryClick = async () => {
-    setShowAuditModal(true);
+  const handleInputChange = (field, value) => {
+    if (isViewMode) return;
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
-  // Handle department selection
-  const handleSelectDepartment = (departmentId, isSelected) => {
-    setSelectedDepartments((prev) =>
-      isSelected
-        ? [...prev, departmentId]
-        : prev.filter((id) => id !== departmentId)
-    );
-  };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (isViewMode) return onClose();
 
-  const handleSelectAllDepartments = (e) => {
-    if (e.target.checked) {
-      setSelectedDepartments(teamIds);
-    } else {
-      setSelectedDepartments([]);
-    }
-  };
-
-  const handleEdit = (team) => {
-    const teamToEdit = {
-      ...team,
-      department_id: team.id,
-      name: team.name,
+    const submitData = {
+      name: formData.name.trim(),
+      description: formData.description?.trim() || "",
+      is_active: formData.is_active,
+      policy_ids: formData.policy_ids,
+      ...(initialData?.role_id && { role_id: initialData.role_id }),
     };
-    setEditingTeam(teamToEdit);
-    setIsDepartmentModalOpen(true);
-  };
 
-  const handleDelete = async (teamId) => {
-    alert("Delete functionality is currently disabled.");
-  };
-
-  const handleViewEmployees = (
-    departmentId,
-    isActive,
-    depname,
-    memberCount
-  ) => {
-    // Get tenantId - use selectedCompany for admin, localStorage for non-admin
-    let tenantId = selectedCompany;
-    if (!tenantId && user?.type !== "admin") {
-      tenantId = getTenantFromLocalStorage();
+    if (formData.tenant_id) {
+      submitData.tenant_id = formData.tenant_id;
     }
 
-    navigate(
-      `/companies/department/${departmentId}/employees?active=${isActive}&tenantId=${tenantId}`,
-      {
-        state: { isActive, depname, departmentId, memberCount },
-      }
-    );
+    console.log("Submitting role data:", submitData);
+    console.log("Policy IDs to submit:", submitData.policy_ids);
+    onSubmit(submitData);
   };
 
-  const handleFormSuccess = () => {
-    setEditingTeam(null);
-    setIsDepartmentModalOpen(false);
-    // Refresh the list after successful form submission
-    if (user?.type === "admin") {
-      if (selectedCompany && selectedCompany !== "") {
-        fetchDepartmentsByCompany(selectedCompany, currentPage, itemsPerPage);
-      }
-    } else {
-      // For non-admin users, fetch with tenant from localStorage
-      const tenantId = getTenantFromLocalStorage();
-      if (tenantId) {
-        fetchDepartments(tenantId, currentPage, itemsPerPage);
-      }
-    }
-  };
-
-  const handleDepartmentSpecificLog = (departmentId) => {
-    logDebug("Department specific log function invoked for:", departmentId);
-  };
-
-  // Determine which departments to display
-  const displayDepartments =
-    debouncedSearchTerm && filteredTeams.length > 0 ? filteredTeams : teams;
+  if (!isOpen) return null;
 
   return (
-    <div>
-      <ToolBar
-        onAddClick={handleAddClick}
-        module="team"
-        addButtonLabel="Department"
-        className="p-4 bg-white border rounded shadow-sm mb-4"
-        searchBar={
-          <div className="flex flex-col sm:flex-row gap-3 w-full">
-            <SearchInput
-              placeholder="Search departments..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className="flex-grow"
-            />
-          </div>
-        }
-        rightElements={
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[95vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white flex-shrink-0">
           <div className="flex items-center gap-3">
-            {/* Only show company selector for admin users */}
-            {user?.type === "admin" && (
-              <SelectField
-                className="p-2"
-                label="Company"
-                value={selectedCompany}
-                onChange={handleCompanyChange}
-                options={companyOptions}
-                disabled={!companiesFetched || companyOptions.length === 1}
-              />
-            )}
-            <ReusableButton
-              module="team"
-              action="delete"
-              buttonName={"History"}
-              icon={History}
-              title="View Audit History"
-              onClick={handleHistoryClick}
-              className="text-white bg-blue-600 p-1 rounded-md"
-            />
-
-            <ReusableButton
-              module="employee"
-              action="create"
-              buttonName="Employee"
-              icon={UserPlus}
-              title="Create Employee"
-              onClick={() => navigate("/companies/employees/create")}
-              className="flex items-center gap-2 p-1 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
-            />
+            <div
+              className={`p-2 rounded-lg ${
+                isViewMode
+                  ? "bg-gray-100"
+                  : "bg-gradient-to-r from-blue-100 to-indigo-100"
+              }`}
+            >
+              {isViewMode ? (
+                <Eye className="w-5 h-5 text-gray-600" />
+              ) : isEditMode ? (
+                <Edit2 className="w-5 h-5 text-blue-600" />
+              ) : (
+                <Shield className="w-5 h-5 text-indigo-600" />
+              )}
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                {isViewMode
+                  ? "View Role Details"
+                  : isEditMode
+                  ? "Edit Role"
+                  : "Create New Role"}
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                {isViewMode
+                  ? "View role information and assigned policies"
+                  : isEditMode
+                  ? "Modify role details and assigned policies"
+                  : "Define a new role and assign policies"}
+              </p>
+            </div>
           </div>
-        }
-      />
-
-      {/* Show message when no company is selected (only for admin users) */}
-      {user?.type === "admin" && !selectedCompany && (
-        <div className="p-4 mb-4 bg-blue-50 border border-blue-200 rounded-md">
-          <p className="text-blue-800 text-center">
-            Please select a company to view departments
-          </p>
+          <ReusableButton
+            module="role"
+            action="close"
+            icon={X}
+            title="Close Modal"
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-700"
+            size={20}
+            showTooltip={false}
+          />
         </div>
-      )}
 
-      {/* Show message if non-admin user has no tenant info */}
-      {user?.type !== "admin" && !getTenantFromLocalStorage() && (
-        <div className="p-4 mb-4 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-red-800 text-center">
-            No tenant information found. Please contact administrator.
-          </p>
-        </div>
-      )}
+        {/* Form Content */}
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-6 space-y-6">
+              {/* Error Message from parent */}
+              {roleDetailsError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                  <div className="flex items-center">
+                    <AlertCircle className="w-5 h-5 mr-2" />
+                    <span>{roleDetailsError}</span>
+                  </div>
+                </div>
+              )}
 
-      {/* Department List Component */}
-      {/* For admin users: Show only when company is selected */}
-      {/* For non-admin users: Show if tenant exists in localStorage */}
-      {(user?.type === "admin" && selectedCompany) ||
-      (user?.type !== "admin" && getTenantFromLocalStorage()) ? (
-        <DepartmentList
-          departments={displayDepartments}
-          selectedDepartments={selectedDepartments}
-          isLoading={isLoading}
-          searchTerm={searchTerm}
-          onSelectDepartment={handleSelectDepartment}
-          onSelectAllDepartments={handleSelectAllDepartments}
-          onEditDepartment={handleEdit}
-          onDeleteDepartment={handleDelete}
-          onViewEmployees={handleViewEmployees}
-          currentPage={currentPage}
-          totalItems={totalItems}
-          itemsPerPage={itemsPerPage}
-          onPageChange={setCurrentPage}
-          onViewHistory={handleDepartmentSpecificLog}
-          selectedCompany={selectedCompany || getTenantFromLocalStorage()}
-        />
-      ) : null}
+              {/* Policies Error */}
+              {policiesErrorState && !loading && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                  <div className="flex items-center">
+                    <AlertCircle className="w-5 h-5 mr-2" />
+                    <span>Failed to load policies: {policiesErrorState}</span>
+                  </div>
+                </div>
+              )}
 
-      {/* Department Form Modal */}
-      <Modal
-        isOpen={isDepartmentModalOpen}
-        onClose={() => {
-          setIsDepartmentModalOpen(false);
-          setEditingTeam(null);
-        }}
-        title={editingTeam ? "Edit Department" : "Create Department"}
-        size="md"
-      >
-        <DepartmentForm
-          onClose={() => {
-            setIsDepartmentModalOpen(false);
-            setEditingTeam(null);
-          }}
-          onSuccess={handleFormSuccess}
-          initialData={editingTeam}
-          companyOptions={companyOptions}
-          selectedCompany={selectedCompany || getTenantFromLocalStorage()}
-          userType={user?.type}
-        />
-      </Modal>
+              {/* Loading State */}
+              {loading && (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+                    <p className="text-sm text-gray-600">Loading policies...</p>
+                  </div>
+                </div>
+              )}
 
-      <AuditLogsModal
-        isOpen={showAuditModal}
-        onClose={() => setShowAuditModal(false)}
-        moduleName="Team"
-        showUserColumn={true}
-        apimodule="team"
-        selectedCompany={selectedCompany || getTenantFromLocalStorage()}
-      />
+              {/* Basic Information Card */}
+              {!loading && (
+                <div
+                  className={`rounded-xl p-6 border ${
+                    isViewMode
+                      ? "bg-gray-50 border-gray-200"
+                      : "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100"
+                  }`}
+                >
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Basic Information
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Role Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) =>
+                          handleInputChange("name", e.target.value)
+                        }
+                        disabled={isViewMode || loading}
+                        className={`w-full px-4 py-3 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                          isViewMode || loading
+                            ? "bg-gray-100 border-gray-300 text-gray-700"
+                            : "bg-white border-gray-300"
+                        }`}
+                        placeholder="Enter role name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) =>
+                          handleInputChange("description", e.target.value)
+                        }
+                        disabled={isViewMode || loading}
+                        rows={3}
+                        className={`w-full px-4 py-3 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                          isViewMode || loading
+                            ? "bg-gray-100 border-gray-300 text-gray-700"
+                            : "bg-white border-gray-300"
+                        }`}
+                        placeholder="Enter role description"
+                      />
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="is_active"
+                        checked={formData.is_active}
+                        onChange={(e) =>
+                          handleInputChange("is_active", e.target.checked)
+                        }
+                        disabled={isViewMode || loading}
+                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <label
+                        htmlFor="is_active"
+                        className="ml-2 text-sm text-gray-700"
+                      >
+                        Active Role
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Policies Section */}
+              {!loading && (
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                  <div className="p-6 border-b border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      {isCreateMode ? "Assign Policies" : "Assigned Policies"}
+                    </h3>
+
+                    {/* Search Bar - Only show in create/edit modes */}
+                    {(isCreateMode || isEditMode) && (
+                      <div className="mb-6">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <input
+                            type="text"
+                            placeholder="Search policies by name or description..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            disabled={loading}
+                            className="w-full pl-10 pr-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:bg-gray-100"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Selected Policies */}
+                    {selectedPolicies.length > 0 && (
+                      <div className="mb-6">
+                        <h4 className="text-sm font-medium text-gray-700 mb-3">
+                          {isViewMode
+                            ? "Assigned Policies"
+                            : "Selected Policies"}{" "}
+                          ({selectedPolicies.length})
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {selectedPolicies.map((policy) => (
+                            <div
+                              key={policy.policy_id}
+                              className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg"
+                            >
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-sm font-semibold text-blue-900">
+                                    {policy.name}
+                                  </span>
+                                  {policy.is_active ? (
+                                    <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded flex items-center gap-1">
+                                      <Check size={10} /> Active
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded flex items-center gap-1">
+                                      <AlertCircle size={10} /> Inactive
+                                    </span>
+                                  )}
+                                  {policy.is_system_policy && (
+                                    <span className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded">
+                                      System
+                                    </span>
+                                  )}
+                                </div>
+                                {policy.description && (
+                                  <p className="text-xs text-blue-700 mb-2">
+                                    {policy.description}
+                                  </p>
+                                )}
+                              </div>
+                              {!isViewMode && (
+                                <ReusableButton
+                                  module="role"
+                                  action="remove_policy"
+                                  icon={Trash2}
+                                  title={
+                                    policy.is_system_policy && isEditMode
+                                      ? "System policies cannot be removed"
+                                      : "Remove policy"
+                                  }
+                                  onClick={() => {
+                                    handleRemovePolicy(policy.policy_id);
+                                    logDebug(
+                                      "Remove policy from the role clicked",
+                                      policy?.policy_id
+                                    );
+                                  }}
+                                  className={`p-1 rounded transition-colors ml-2 ${
+                                    policy.is_system_policy && isEditMode
+                                      ? "text-gray-400 cursor-not-allowed"
+                                      : "text-red-500 hover:bg-red-100 hover:text-red-600"
+                                  }`}
+                                  disabled={
+                                    policy.is_system_policy && isEditMode
+                                  }
+                                  size={16}
+                                />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Available Policies - Only show in create/edit modes */}
+                    {(isCreateMode || isEditMode) &&
+                      filteredPolicies.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 mb-3">
+                            Available Policies ({filteredPolicies.length})
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
+                            {filteredPolicies.map((policy) => (
+                              <div
+                                key={policy.policy_id}
+                                className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                                onClick={() => handleAddPolicy(policy)}
+                              >
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-sm font-semibold text-gray-900">
+                                      {policy.name}
+                                    </span>
+                                    {policy.is_active ? (
+                                      <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded flex items-center gap-1">
+                                        <Check size={10} /> Active
+                                      </span>
+                                    ) : (
+                                      <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded flex items-center gap-1">
+                                        <AlertCircle size={10} /> Inactive
+                                      </span>
+                                    )}
+                                    {policy.is_system_policy && (
+                                      <span className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded">
+                                        System
+                                      </span>
+                                    )}
+                                  </div>
+                                  {policy.description && (
+                                    <p className="text-xs text-gray-600 mb-2">
+                                      {policy.description}
+                                    </p>
+                                  )}
+                                  <div className="mt-1">
+                                    <span className="text-xs text-gray-500">
+                                      {policy.permissions?.length || 0}{" "}
+                                      permissions
+                                    </span>
+                                  </div>
+                                </div>
+                                <ReusableButton
+                                  module="role"
+                                  action="add_policy"
+                                  icon={Plus}
+                                  title="Add policy to role"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAddPolicy(policy);
+                                  }}
+                                  className="text-gray-400 hover:text-gray-600 ml-2"
+                                  size={16}
+                                  showTooltip={true}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                    {/* Empty States */}
+                    {!loading &&
+                      selectedPolicies.length === 0 &&
+                      isViewMode && (
+                        <div className="text-center py-8 text-gray-500">
+                          <Shield className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                          <p className="text-sm">
+                            No policies assigned to this role
+                          </p>
+                        </div>
+                      )}
+
+                    {(isCreateMode || isEditMode) &&
+                      !loading &&
+                      filteredPolicies.length === 0 &&
+                      searchTerm === "" &&
+                      availablePolicies.length === 0 && (
+                        <div className="text-center py-8 text-gray-500">
+                          <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                          <p className="text-sm">No policies available</p>
+                        </div>
+                      )}
+
+                    {(isCreateMode || isEditMode) &&
+                      !loading &&
+                      filteredPolicies.length === 0 &&
+                      searchTerm !== "" && (
+                        <div className="text-center py-8 text-gray-500">
+                          <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                          <p className="text-sm">
+                            No policies found matching your search
+                          </p>
+                        </div>
+                      )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer Actions */}
+          <div className="border-t border-gray-200 p-6 bg-gray-50 flex-shrink-0">
+            <div className="flex justify-between items-center">
+              <div className="flex gap-3">
+                <ReusableButton
+                  module="role"
+                  action="cancel"
+                  buttonName={isViewMode ? "Close" : "Cancel"}
+                  onClick={onClose}
+                  className="px-6 py-3 text-sm font-medium bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50"
+                  disabled={loading}
+                  loading={loading}
+                  loadingText="Cancelling..."
+                  type="button"
+                  showTooltip={false}
+                />
+                {!isViewMode && (
+                  <ReusableButton
+                    module="role"
+                    action={isCreateMode ? "create" : "update"}
+                    buttonName={isCreateMode ? "Create Role" : "Update Role"}
+                    onClick={handleSubmit}
+                    className="px-6 py-3 text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
+                    disabled={!formData.name.trim() || loading}
+                    loading={loading}
+                    loadingText={isCreateMode ? "Creating..." : "Updating..."}
+                    type="submit"
+                    showTooltip={false}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
 
-export default ManageDepartment;
+export default RoleForm;

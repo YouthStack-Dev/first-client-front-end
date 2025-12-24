@@ -63,7 +63,7 @@ const NewDriverManagement = () => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const skip = (currentPage - 1) * itemsPerPage;
 
-  const vendors = useVendorOptions();
+  const vendors = useVendorOptions(null, !isVendorUser);
 
   // ----------------------------
   // Search Debouncing with Minimum Character Requirement

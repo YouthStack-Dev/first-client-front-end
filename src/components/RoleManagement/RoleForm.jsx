@@ -1,5 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { X, Shield, Search, Trash2, Eye, Plus } from "lucide-react";
+import {
+  X,
+  Shield,
+  Search,
+  Trash2,
+  Eye,
+  Plus,
+  Check,
+  AlertCircle,
+  Edit2,
+} from "lucide-react";
+import { logDebug } from "../../utils/logger";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchPoliciesThunk } from "../../redux/features/Permissions/permissionsThunk";
+import {
+  selectPolicies,
+  policiesLoading,
+  policiesLoaded,
+  policiesError,
+} from "../../redux/features/Permissions/permissionsSlice";
 
 const RoleForm = ({
   isOpen,
@@ -7,12 +26,22 @@ const RoleForm = ({
   onSubmit,
   mode = "create", // 'create', 'edit', or 'view'
   initialData = null,
+  roleDetailsError = null,
+  formError, // New prop
+  isSubmitting, // New prop
 }) => {
+  const dispatch = useDispatch();
+
+  // Redux selectors
+  const policies = useSelector(selectPolicies);
+  const loading = useSelector(policiesLoading);
+  const loaded = useSelector(policiesLoaded);
+  const policiesErrorState = useSelector(policiesError);
+
   const [formData, setFormData] = useState({
     name: "",
-    description: null,
+    description: "",
     tenant_id: null,
-    is_system_role: false,
     is_active: true,
     policy_ids: [],
   });
@@ -20,82 +49,104 @@ const RoleForm = ({
   const [availablePolicies, setAvailablePolicies] = useState([]);
   const [selectedPolicies, setSelectedPolicies] = useState([]);
 
+  logDebug("the selected role in role form ", initialData);
   const isViewMode = mode === "view";
   const isEditMode = mode === "edit";
   const isCreateMode = mode === "create";
 
-  // Mock policies data - replace with your actual API call
-  const mockPolicies = [
-    {
-      id: "POL-001",
-      name: "Data Privacy Policy",
-      description: "GDPR compliance policy",
-    },
-    {
-      id: "POL-002",
-      name: "Remote Work Policy",
-      description: "Guidelines for remote work",
-    },
-    {
-      id: "POL-003",
-      name: "Code of Conduct",
-      description: "Employee behavior standards",
-    },
-    {
-      id: "POL-004",
-      name: "Security Policy",
-      description: "Information security guidelines",
-    },
-    {
-      id: "POL-005",
-      name: "Access Control Policy",
-      description: "System access permissions",
-    },
-    {
-      id: "POL-006",
-      name: "Data Retention Policy",
-      description: "Data storage and deletion rules",
-    },
-  ];
-
+  // Fetch policies on mount if not loaded
   useEffect(() => {
-    if (initialData && (isEditMode || isViewMode)) {
-      setFormData({
-        name: initialData.name || "",
-        description: initialData.description || null,
-        tenant_id: initialData.tenant_id || null,
-        is_system_role: initialData.is_system_role || false,
-        is_active:
-          initialData.is_active !== undefined ? initialData.is_active : true,
-        policy_ids: initialData.policy_ids || [],
-      });
+    if (isOpen && !loaded) {
+      const tenantId = initialData?.tenant_id || null;
+      dispatch(fetchPoliciesThunk({ tenant_id: tenantId }));
+    }
+  }, [isOpen, loaded, dispatch, initialData?.tenant_id]);
 
-      // Set selected policies based on policy_ids
-      const selected = mockPolicies.filter((policy) =>
-        initialData.policy_ids?.includes(policy.id)
-      );
-      setSelectedPolicies(selected);
-    } else if (isCreateMode) {
+  // Transform policies from Redux store to match expected format
+  const transformPolicies = (apiPolicies) => {
+    return apiPolicies.map((policy) => ({
+      policy_id: policy.id || policy.policy_id,
+      name: policy.name,
+      description: policy.description || "",
+      is_active: policy.is_active !== false,
+      is_system_policy: policy.is_system_policy || false,
+      tenant_id: policy.tenant_id,
+      permissions: policy.permissions || [],
+    }));
+  };
+
+  // Initialize form when modal opens or data changes
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (policies && policies.length > 0) {
+      const allPolicies = transformPolicies(policies);
+
+      if (mode === "create") {
+        // Clear everything for create mode
+        setFormData({
+          name: "",
+          description: "",
+          tenant_id: null,
+          is_active: true,
+          policy_ids: [],
+        });
+        setSelectedPolicies([]);
+        setAvailablePolicies(allPolicies);
+      } else if (initialData && (mode === "edit" || mode === "view")) {
+        // Handle edit/view mode with initial data
+        const selected =
+          initialData.policies?.map((policy) => ({
+            policy_id: policy.policy_id,
+            name: policy.name,
+            description: policy.description || "",
+            is_active: policy.is_active !== false,
+            is_system_policy: policy.is_system_policy || false,
+            tenant_id: policy.tenant_id,
+            permissions: policy.permissions || [],
+          })) || [];
+
+        const selectedIds = selected.map((p) => p.policy_id);
+
+        setSelectedPolicies(selected);
+        setAvailablePolicies(
+          allPolicies.filter(
+            (policy) => !selectedIds.includes(policy.policy_id)
+          )
+        );
+
+        setFormData({
+          name: initialData.name || "",
+          description: initialData.description || "",
+          tenant_id: initialData.tenant_id || null,
+          is_active:
+            initialData.is_active !== undefined ? initialData.is_active : true,
+          policy_ids: selectedIds,
+        });
+      }
+    }
+  }, [isOpen, policies, mode, initialData]);
+
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
       setFormData({
         name: "",
-        description: null,
+        description: "",
         tenant_id: null,
-        is_system_role: false,
         is_active: true,
         policy_ids: [],
       });
       setSelectedPolicies([]);
+      setAvailablePolicies([]);
+      setSearchTerm("");
     }
-
-    // Set available policies (all policies minus selected ones)
-    setAvailablePolicies(mockPolicies);
-  }, [initialData, mode, isEditMode, isViewMode, isCreateMode]);
+  }, [isOpen]);
 
   // Filter available policies based on search
   const filteredPolicies = availablePolicies.filter(
     (policy) =>
       policy.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      policy.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       policy.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -103,19 +154,28 @@ const RoleForm = ({
     if (isViewMode) return;
 
     setSelectedPolicies((prev) => [...prev, policy]);
-    setAvailablePolicies((prev) => prev.filter((p) => p.id !== policy.id));
+    setAvailablePolicies((prev) =>
+      prev.filter((p) => p.policy_id !== policy.policy_id)
+    );
     setFormData((prev) => ({
       ...prev,
-      policy_ids: [...prev.policy_ids, policy.id],
+      policy_ids: [...prev.policy_ids, policy.policy_id],
     }));
   };
 
   const handleRemovePolicy = (policyId) => {
     if (isViewMode) return;
 
-    const policyToRemove = selectedPolicies.find((p) => p.id === policyId);
+    logDebug("Removing policy with ID:", policyId);
+
+    const policyToRemove = selectedPolicies.find(
+      (p) => p.policy_id === policyId
+    );
+
     if (policyToRemove) {
-      setSelectedPolicies((prev) => prev.filter((p) => p.id !== policyId));
+      setSelectedPolicies((prev) =>
+        prev.filter((p) => p.policy_id !== policyId)
+      );
       setAvailablePolicies((prev) => [...prev, policyToRemove]);
       setFormData((prev) => ({
         ...prev,
@@ -126,7 +186,6 @@ const RoleForm = ({
 
   const handleInputChange = (field, value) => {
     if (isViewMode) return;
-
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -135,16 +194,25 @@ const RoleForm = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    if (isViewMode) return onClose();
+    if (isViewMode || isSubmitting) return onClose(); // Prevent submission when loading
 
     const submitData = {
-      ...formData,
       name: formData.name.trim(),
-      description: formData.description?.trim() || null,
+      description: formData.description?.trim() || "",
+      is_active: formData.is_active,
+      policy_ids: formData.policy_ids,
+      ...(initialData?.role_id && { role_id: initialData.role_id }),
     };
 
+    if (formData.tenant_id) {
+      submitData.tenant_id = formData.tenant_id;
+    }
+
     console.log("Submitting role data:", submitData);
+    console.log("Policy IDs to submit:", submitData.policy_ids);
+
+    // Clear previous errors when resubmitting
+    // (if you're using local error state in the form)
     onSubmit(submitData);
   };
 
@@ -154,38 +222,48 @@ const RoleForm = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[95vh] flex flex-col">
         {/* Header */}
+        {formError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-red-600 text-sm">{formError}</p>
+          </div>
+        )}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white flex-shrink-0">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-3">
             <div
-              className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+              className={`p-2 rounded-lg ${
                 isViewMode
-                  ? "bg-gray-500"
-                  : "bg-gradient-to-br from-purple-500 to-indigo-600"
+                  ? "bg-gray-100"
+                  : "bg-gradient-to-r from-blue-100 to-indigo-100"
               }`}
             >
               {isViewMode ? (
-                <Eye className="w-5 h-5 text-white" />
+                <Eye className="w-5 h-5 text-gray-600" />
+              ) : isEditMode ? (
+                <Edit2 className="w-5 h-5 text-blue-600" />
               ) : (
-                <Shield className="w-5 h-5 text-white" />
+                <Shield className="w-5 h-5 text-indigo-600" />
               )}
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                {isCreateMode && "Create New Role"}
-                {isEditMode && "Edit Role"}
-                {isViewMode && "View Role Details"}
+              <h2 className="text-xl font-semibold text-gray-900">
+                {isViewMode
+                  ? "View Role Details"
+                  : isEditMode
+                  ? "Edit Role"
+                  : "Create New Role"}
               </h2>
-              <p className="text-sm text-gray-500">
-                {isCreateMode &&
-                  "Define role basic information and assign policies"}
-                {isEditMode && "Update role information and policies"}
-                {isViewMode && "View role information and assigned policies"}
+              <p className="text-sm text-gray-500 mt-1">
+                {isViewMode
+                  ? "View role information and assigned policies"
+                  : isEditMode
+                  ? "Modify role details and assigned policies"
+                  : "Define a new role and assign policies"}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -195,263 +273,331 @@ const RoleForm = ({
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto">
             <div className="p-6 space-y-6">
-              {/* Basic Information Card */}
-              <div
-                className={`rounded-xl p-6 border ${
-                  isViewMode
-                    ? "bg-gray-50 border-gray-200"
-                    : "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100"
-                }`}
-              >
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Basic Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Name Field */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Role Name{" "}
-                      {!isViewMode && <span className="text-red-500">*</span>}
-                    </label>
-                    <input
-                      type="text"
-                      required={!isViewMode}
-                      value={formData.name}
-                      onChange={(e) =>
-                        handleInputChange("name", e.target.value)
-                      }
-                      readOnly={isViewMode}
-                      className={`w-full px-4 py-3 text-sm border rounded-lg transition-all duration-200 ${
-                        isViewMode
-                          ? "bg-gray-100 border-gray-200 text-gray-600 cursor-not-allowed"
-                          : "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      }`}
-                      placeholder="e.g., Content Manager, System Administrator"
-                    />
-                  </div>
-
-                  {/* Description Field */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Description
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.description || ""}
-                      onChange={(e) =>
-                        handleInputChange("description", e.target.value)
-                      }
-                      readOnly={isViewMode}
-                      className={`w-full px-4 py-3 text-sm border rounded-lg transition-all duration-200 ${
-                        isViewMode
-                          ? "bg-gray-100 border-gray-200 text-gray-600 cursor-not-allowed"
-                          : "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      }`}
-                      placeholder="Brief description of this role"
-                    />
-                  </div>
-
-                  {/* System Role Toggle */}
-                  <div className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-gray-200">
-                    <input
-                      type="checkbox"
-                      id="is_system_role"
-                      checked={formData.is_system_role}
-                      onChange={(e) =>
-                        handleInputChange("is_system_role", e.target.checked)
-                      }
-                      disabled={isViewMode}
-                      className={`w-4 h-4 border-gray-300 rounded ${
-                        isViewMode
-                          ? "bg-gray-200 cursor-not-allowed"
-                          : "text-blue-600 focus:ring-blue-500"
-                      }`}
-                    />
-                    <label
-                      htmlFor="is_system_role"
-                      className={`text-sm font-medium ${
-                        isViewMode ? "text-gray-500" : "text-gray-700"
-                      }`}
-                    >
-                      System Role
-                    </label>
-                  </div>
-
-                  {/* Active Status Toggle */}
-                  <div className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-gray-200">
-                    <input
-                      type="checkbox"
-                      id="is_active"
-                      checked={formData.is_active}
-                      onChange={(e) =>
-                        handleInputChange("is_active", e.target.checked)
-                      }
-                      disabled={isViewMode}
-                      className={`w-4 h-4 border-gray-300 rounded ${
-                        isViewMode
-                          ? "bg-gray-200 cursor-not-allowed"
-                          : "text-blue-600 focus:ring-blue-500"
-                      }`}
-                    />
-                    <label
-                      htmlFor="is_active"
-                      className={`text-sm font-medium ${
-                        isViewMode ? "text-gray-500" : "text-gray-700"
-                      }`}
-                    >
-                      Active Role
-                    </label>
+              {/* Error Message from parent */}
+              {roleDetailsError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                  <div className="flex items-center">
+                    <AlertCircle className="w-5 h-5 mr-2" />
+                    <span>{roleDetailsError}</span>
                   </div>
                 </div>
-              </div>
+              )}
+
+              {/* Policies Error */}
+              {policiesErrorState && !loading && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                  <div className="flex items-center">
+                    <AlertCircle className="w-5 h-5 mr-2" />
+                    <span>Failed to load policies: {policiesErrorState}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Loading State */}
+              {loading && (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+                    <p className="text-sm text-gray-600">Loading policies...</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Basic Information Card */}
+              {!loading && (
+                <div
+                  className={`rounded-xl p-6 border ${
+                    isViewMode
+                      ? "bg-gray-50 border-gray-200"
+                      : "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100"
+                  }`}
+                >
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Basic Information
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Role Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) =>
+                          handleInputChange("name", e.target.value)
+                        }
+                        disabled={isViewMode || loading}
+                        className={`w-full px-4 py-3 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                          isViewMode || loading
+                            ? "bg-gray-100 border-gray-300 text-gray-700"
+                            : "bg-white border-gray-300"
+                        }`}
+                        placeholder="Enter role name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) =>
+                          handleInputChange("description", e.target.value)
+                        }
+                        disabled={isViewMode || loading}
+                        rows={3}
+                        className={`w-full px-4 py-3 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                          isViewMode || loading
+                            ? "bg-gray-100 border-gray-300 text-gray-700"
+                            : "bg-white border-gray-300"
+                        }`}
+                        placeholder="Enter role description"
+                      />
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="is_active"
+                        checked={formData.is_active}
+                        onChange={(e) =>
+                          handleInputChange("is_active", e.target.checked)
+                        }
+                        disabled={isViewMode || loading}
+                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <label
+                        htmlFor="is_active"
+                        className="ml-2 text-sm text-gray-700"
+                      >
+                        Active Role
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Policies Section */}
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <div className="p-6 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    {isCreateMode ? "Assign Policies" : "Assigned Policies"}
-                  </h3>
+              {!loading && (
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                  <div className="p-6 border-b border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      {isCreateMode ? "Assign Policies" : "Assigned Policies"}
+                    </h3>
 
-                  {/* Search Bar - Only show in create/edit modes */}
-                  {(isCreateMode || isEditMode) && (
-                    <div className="mb-6">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                          type="text"
-                          placeholder="Search policies by name, ID or description..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="w-full pl-10 pr-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Selected Policies - Show in all modes */}
-                  {selectedPolicies.length > 0 && (
-                    <div className="mb-6">
-                      <h4 className="text-sm font-medium text-gray-700 mb-3">
-                        {isViewMode ? "Assigned Policies" : "Selected Policies"}{" "}
-                        ({selectedPolicies.length})
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {selectedPolicies.map((policy) => (
-                          <div
-                            key={policy.id}
-                            className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg"
-                          >
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-semibold text-blue-900">
-                                  {policy.name}
-                                </span>
-                                <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
-                                  {policy.id}
-                                </span>
-                              </div>
-                              {policy.description && (
-                                <p className="text-xs text-blue-700 mt-1">
-                                  {policy.description}
-                                </p>
-                              )}
-                            </div>
-                            {!isViewMode && (
-                              <button
-                                type="button"
-                                onClick={() => handleRemovePolicy(policy.id)}
-                                className="p-1 text-red-500 hover:bg-red-100 rounded transition-colors"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Available Policies - Only show in create/edit modes */}
-                  {(isCreateMode || isEditMode) && (
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-3">
-                        Available Policies ({filteredPolicies.length})
-                      </h4>
-                      {filteredPolicies.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                          <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                          <p className="text-sm">
-                            {searchTerm
-                              ? "No policies found matching your search"
-                              : "No policies available"}
-                          </p>
+                    {/* Search Bar - Only show in create/edit modes */}
+                    {(isCreateMode || isEditMode) && (
+                      <div className="mb-6">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <input
+                            type="text"
+                            placeholder="Search policies by name or description..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            disabled={loading}
+                            className="w-full pl-10 pr-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:bg-gray-100"
+                          />
                         </div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
-                          {filteredPolicies.map((policy) => (
+                      </div>
+                    )}
+
+                    {/* Selected Policies */}
+                    {selectedPolicies.length > 0 && (
+                      <div className="mb-6">
+                        <h4 className="text-sm font-medium text-gray-700 mb-3">
+                          {isViewMode
+                            ? "Assigned Policies"
+                            : "Selected Policies"}{" "}
+                          ({selectedPolicies.length})
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {selectedPolicies.map((policy) => (
                             <div
-                              key={policy.id}
-                              className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                              onClick={() => handleAddPolicy(policy)}
+                              key={policy.policy_id}
+                              className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg"
                             >
                               <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-semibold text-gray-900">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-sm font-semibold text-blue-900">
                                     {policy.name}
                                   </span>
-                                  <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                                    {policy.id}
-                                  </span>
+                                  {policy.is_active ? (
+                                    <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded flex items-center gap-1">
+                                      <Check size={10} /> Active
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded flex items-center gap-1">
+                                      <AlertCircle size={10} /> Inactive
+                                    </span>
+                                  )}
+                                  {policy.is_system_policy && (
+                                    <span className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded">
+                                      System
+                                    </span>
+                                  )}
                                 </div>
                                 {policy.description && (
-                                  <p className="text-xs text-gray-600 mt-1">
+                                  <p className="text-xs text-blue-700 mb-2">
                                     {policy.description}
                                   </p>
                                 )}
                               </div>
-                              <Plus size={16} className="text-gray-400" />
+                              {!isViewMode && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    handleRemovePolicy(policy.policy_id);
+                                    logDebug(
+                                      "Remove policy from the role clicked",
+                                      policy?.policy_id
+                                    );
+                                  }}
+                                  className="p-1 text-red-500 hover:bg-red-100 rounded transition-colors ml-2"
+                                  disabled={
+                                    policy.is_system_policy && isEditMode
+                                  }
+                                  title={
+                                    policy.is_system_policy && isEditMode
+                                      ? "System policies cannot be removed"
+                                      : "Remove policy"
+                                  }
+                                >
+                                  <Trash2
+                                    size={16}
+                                    className={
+                                      policy.is_system_policy && isEditMode
+                                        ? "opacity-50"
+                                        : ""
+                                    }
+                                  />
+                                </button>
+                              )}
                             </div>
                           ))}
                         </div>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    )}
 
-                  {/* View Mode - Show message if no policies */}
-                  {isViewMode && selectedPolicies.length === 0 && (
-                    <div className="text-center py-8 text-gray-500">
-                      <Shield className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                      <p className="text-sm">
-                        No policies assigned to this role
-                      </p>
-                    </div>
-                  )}
+                    {/* Available Policies - Only show in create/edit modes */}
+                    {(isCreateMode || isEditMode) &&
+                      filteredPolicies.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 mb-3">
+                            Available Policies ({filteredPolicies.length})
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
+                            {filteredPolicies.map((policy) => (
+                              <div
+                                key={policy.policy_id}
+                                className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                                onClick={() => handleAddPolicy(policy)}
+                              >
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-sm font-semibold text-gray-900">
+                                      {policy.name}
+                                    </span>
+                                    {policy.is_active ? (
+                                      <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded flex items-center gap-1">
+                                        <Check size={10} /> Active
+                                      </span>
+                                    ) : (
+                                      <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded flex items-center gap-1">
+                                        <AlertCircle size={10} /> Inactive
+                                      </span>
+                                    )}
+                                    {policy.is_system_policy && (
+                                      <span className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded">
+                                        System
+                                      </span>
+                                    )}
+                                  </div>
+                                  {policy.description && (
+                                    <p className="text-xs text-gray-600 mb-2">
+                                      {policy.description}
+                                    </p>
+                                  )}
+                                  <div className="mt-1">
+                                    <span className="text-xs text-gray-500">
+                                      {policy.permissions?.length || 0}{" "}
+                                      permissions
+                                    </span>
+                                  </div>
+                                </div>
+                                <Plus
+                                  size={16}
+                                  className="text-gray-400 ml-2"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                    {/* Empty States */}
+                    {!loading &&
+                      selectedPolicies.length === 0 &&
+                      isViewMode && (
+                        <div className="text-center py-8 text-gray-500">
+                          <Shield className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                          <p className="text-sm">
+                            No policies assigned to this role
+                          </p>
+                        </div>
+                      )}
+
+                    {(isCreateMode || isEditMode) &&
+                      !loading &&
+                      filteredPolicies.length === 0 &&
+                      searchTerm === "" &&
+                      availablePolicies.length === 0 && (
+                        <div className="text-center py-8 text-gray-500">
+                          <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                          <p className="text-sm">No policies available</p>
+                        </div>
+                      )}
+
+                    {(isCreateMode || isEditMode) &&
+                      !loading &&
+                      filteredPolicies.length === 0 &&
+                      searchTerm !== "" && (
+                        <div className="text-center py-8 text-gray-500">
+                          <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                          <p className="text-sm">
+                            No policies found matching your search
+                          </p>
+                        </div>
+                      )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
           {/* Footer Actions */}
           <div className="border-t border-gray-200 p-6 bg-gray-50 flex-shrink-0">
             <div className="flex justify-between items-center">
-              <div className="text-sm text-gray-500">
-                {selectedPolicies.length} policies assigned
-              </div>
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-3 text-sm font-medium bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                  disabled={loading}
+                  className="px-6 py-3 text-sm font-medium bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50"
                 >
                   {isViewMode ? "Close" : "Cancel"}
                 </button>
                 {!isViewMode && (
                   <button
                     type="submit"
-                    disabled={!formData.name.trim()}
+                    disabled={!formData.name.trim() || loading}
                     className="px-6 py-3 text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
                   >
-                    {isCreateMode ? "Create Role" : "Update Role"}
+                    {loading
+                      ? "Saving..."
+                      : isCreateMode
+                      ? "Create Role"
+                      : "Update Role"}
                   </button>
                 )}
               </div>

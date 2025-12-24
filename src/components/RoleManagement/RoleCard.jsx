@@ -1,24 +1,27 @@
 import React from "react";
-/** @typedef {import('./types').RoleCardProps} RoleCardProps */
-import { Eye, Edit, Trash2, Users, UserPlus } from "lucide-react";
+import { Eye, Edit, Trash2, Users } from "lucide-react";
+import ReusableButton from "../ui/ReusableButton";
 
-/**
- * Renders a simple role card with header, description, and color-coded footer actions.
- * @param {RoleCardProps} props
- * @returns {JSX.Element}
- */
-function RoleCard({
-  role,
-  onEdit,
-  onDelete,
-  onView,
-  onAssignUsers,
-  onViewAssignedUsers,
-}) {
-  // Format date for display
+function RoleCard({ role, onEdit, onDelete, onView }) {
+  // Format date for display - handle API date format
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString();
+
+    // Handle both "2025-12-05T16:20:21.863074" format and others
+    const date = new Date(dateString);
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      // Try to parse as ISO string without microseconds
+      const isoString = dateString.split(".")[0] + "Z";
+      const fallbackDate = new Date(isoString);
+      if (!isNaN(fallbackDate.getTime())) {
+        return fallbackDate.toLocaleDateString();
+      }
+      return "N/A";
+    }
+
+    return date.toLocaleDateString();
   };
 
   return (
@@ -37,20 +40,17 @@ function RoleCard({
           <div className="mt-2 space-y-1">
             <div className="flex items-center text-xs text-gray-500">
               <span className="font-medium">Created:</span>
-              <span className="ml-1">{formatDate(role.createdAt)}</span>
+              <span className="ml-1">{formatDate(role.created_at)}</span>
             </div>
             <div className="flex items-center text-xs text-gray-500">
               <span className="font-medium">Updated:</span>
-              <span className="ml-1">{formatDate(role.updatedAt)}</span>
+              <span className="ml-1">{formatDate(role.updated_at)}</span>
             </div>
-            {role.isSystemLevel && (
+
+            {/* Only show system role badge */}
+            {role.is_system_role && (
               <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
                 System Role
-              </span>
-            )}
-            {!role.isAssignable && (
-              <span className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
-                Not Assignable
               </span>
             )}
           </div>
@@ -59,59 +59,45 @@ function RoleCard({
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-3 border-t border-gray-200 mt-auto">
+        {/* Action Buttons */}
         <div className="flex items-center space-x-2">
-          {/* View Assigned Users Button */}
-          <button
-            onClick={() => onViewAssignedUsers(role)}
-            className="flex items-center justify-center p-2 rounded-md bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors"
-            title="View assigned users"
-          >
-            <Users className="w-4 h-4" />
-          </button>
+          {/* View Button - Always show view */}
+          <ReusableButton
+            module="role"
+            action="read"
+            buttonName=""
+            icon={Eye}
+            title="View details"
+            onClick={() => onView(role)}
+            className="flex items-center justify-center p-2 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+          />
 
-          {/* Assign Users Button - Only show if role is assignable */}
-          {role.isAssignable && (
-            <button
-              onClick={() => onAssignUsers(role)}
-              className="flex items-center justify-center p-2 rounded-md bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
-              title="Assign users to this role"
-            >
-              <UserPlus className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-
-        {/* Action Buttons - Hide for system-level roles */}
-        {!role.isSystemLevel && (
-          <div className="flex items-center space-x-2">
-            {/* View Button */}
-            <button
-              onClick={() => onView(role)}
-              className="flex items-center justify-center p-2 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-              title="View details"
-            >
-              <Eye className="w-3 h-3" />
-            </button>
-
-            {/* Edit Button */}
-            <button
+          {/* Edit Button - Only show if NOT system role */}
+          {!role.is_system_role && (
+            <ReusableButton
+              module="role"
+              action="update"
+              buttonName=""
+              icon={Edit}
+              title="Edit role"
               onClick={() => onEdit(role)}
               className="flex items-center justify-center p-2 rounded-md bg-yellow-50 text-yellow-600 hover:bg-yellow-100 transition-colors"
-              title="Edit role"
-            >
-              <Edit className="w-3 h-3" />
-            </button>
+            />
+          )}
 
-            {/* Delete Button */}
-            <button
+          {/* Delete Button - Only show if NOT system role */}
+          {!role.is_system_role && (
+            <ReusableButton
+              module="role"
+              action="delete"
+              buttonName=""
+              icon={Trash2}
+              title="Delete role"
               onClick={() => onDelete(role)}
               className="flex items-center justify-center p-2 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-              title="Delete role"
-            >
-              <Trash2 className="w-3 h-3" />
-            </button>
-          </div>
-        )}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
