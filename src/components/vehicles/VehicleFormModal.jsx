@@ -3,7 +3,6 @@ import {
   X,
   Upload,
   Download,
-  FileText,
   Loader2,
   Car,
   Eye,
@@ -13,6 +12,7 @@ import {
 import Select from "react-select";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
+
 import { vehicleTypeSelectors } from "../../redux/features/managevehicletype/vehicleTypeSlice";
 import {
   createVehicleThunk,
@@ -20,7 +20,10 @@ import {
   fetchVehiclesThunk,
 } from "../../redux/features/manageVehicles/vehicleThunk";
 import { fetchVehicleTypesThunk } from "../../redux/features/managevehicletype/vehicleTypeThunks";
-import { NewfetchDriversThunk,driversSelectors } from "../../redux/features/manageDriver/newDriverSlice";
+import {
+  NewfetchDriversThunk,
+  driversSelectors,
+} from "../../redux/features/manageDriver/newDriverSlice";
 
 import { useVendorOptions } from "../../hooks/useVendorOptions";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
@@ -39,10 +42,6 @@ import {
 ====================================================== */
 const TABS = ["basic", "documents"];
 
-const selectStyles = {
-  control: (base) => ({ ...base, minHeight: 38 }),
-};
-
 /* ======================================================
    COMPONENT
 ====================================================== */
@@ -60,74 +59,71 @@ const VehicleFormModal = ({
   const isVendorUser = user?.type === "vendor";
   const isReadOnly = mode === "view";
 
+  /* ================= STATE ================= */
   const [activeTab, setActiveTab] = useState("basic");
   const [formData, setFormData] = useState(defaultVehicleFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
- 
+
+  /* ================= VENDOR ID (SINGLE SOURCE OF TRUTH) ================= */
+  const vendorIdFromUser =
+    user?.vendor_user?.vendor_id || user?.vendor_id || null;
+
+  const effectiveVendorId = isVendorUser
+    ? vendorIdFromUser
+    : formData.vendor_id;
+
   /* ================= PREFILL ================= */
- useEffect(() => {
-  if (mode === "create") {
-    setFormData({
-      ...defaultVehicleFormData,
-      is_active: true,
-      ...(isVendorUser ? { vendor_id: user.vendor_id } : {}),
-    });
-  } else if ((mode === "edit" || mode === "view") && vehicleData) {
-    setFormData(transformVehicleApiToFormData(vehicleData));
-  }
+  useEffect(() => {
+    if (mode === "create") {
+      setFormData({
+        ...defaultVehicleFormData,
+        is_active: true,
+        vendor_id: isVendorUser ? null : "",
+      });
+    } else if ((mode === "edit" || mode === "view") && vehicleData) {
+      setFormData(transformVehicleApiToFormData(vehicleData));
+    }
 
-  setActiveTab("basic");
-}, [mode, vehicleData, isVendorUser, user?.vendor_id]);
-
+    setActiveTab("basic");
+  }, [mode, vehicleData, isVendorUser]);
 
   /* ================= VEHICLE TYPES ================= */
- const vehicleTypes = useSelector(vehicleTypeSelectors.selectAll);
+  const vehicleTypes = useSelector(vehicleTypeSelectors.selectAll);
 
-const vehicleTypeOptions = useMemo(
-  () =>
-    vehicleTypes
-      .filter((t) => t.is_active) // optional
-      .map((t) => ({
-        value: t.vehicle_type_id,
-        label: t.name,
-      })),
-  [vehicleTypes]
-);
-
-
-useEffect(() => {
-  if (formData.vendor_id) {
-    dispatch(
-      fetchVehicleTypesThunk({
-        vendor_id: formData.vendor_id,
-      })
-    );
-  }
-}, [dispatch, formData.vendor_id]);
-
-
-  /* ================= DRIVERS ================= */
-const drivers = useSelector(driversSelectors.selectAll);
+  const vehicleTypeOptions = useMemo(
+    () =>
+      vehicleTypes
+        .filter((t) => t.is_active)
+        .map((t) => ({
+          value: t.vehicle_type_id,
+          label: t.name,
+        })),
+    [vehicleTypes]
+  );
 
   useEffect(() => {
-    if (formData.vendor_id) {
-      dispatch( 
-   NewfetchDriversThunk({ 
-   vendor_id: formData.vendor_id, 
-  }) 
- );
+    if (effectiveVendorId) {
+      dispatch(fetchVehicleTypesThunk({ vendor_id: effectiveVendorId }));
     }
-  }, [dispatch, formData.vendor_id]);
+  }, [dispatch, effectiveVendorId]);
 
-const driverOptions = useMemo(
-  () =>
-    drivers.map((d) => ({
-      value: d.driver_id,
-      label: d.name,
-    })),
-  [drivers]
-);
+  /* ================= DRIVERS ================= */
+  const drivers = useSelector(driversSelectors.selectAll);
 
+  useEffect(() => {
+    if (effectiveVendorId) {
+      dispatch(NewfetchDriversThunk({ vendor_id: effectiveVendorId }));
+    }
+  }, [dispatch, effectiveVendorId]);
+
+  const driverOptions = useMemo(
+    () =>
+      drivers.map((d) => ({
+        value: d.driver_id,
+        label: d.name,
+      })),
+    [drivers]
+  );
 
   /* ================= HANDLERS ================= */
   const handleChange = (field, value) => {
@@ -223,7 +219,12 @@ const driverOptions = useMemo(
 
     try {
       if (mode === "create") {
-        await dispatch(createVehicleThunk(buildVehicleFormData(formData))).unwrap();
+        const payload = buildVehicleFormData({
+          ...formData,
+          ...(isVendorUser ? {} : { vendor_id: formData.vendor_id }),
+        });
+
+        await dispatch(createVehicleThunk(payload)).unwrap();
         toast.success("Vehicle created successfully");
       } else {
         await dispatch(
@@ -292,27 +293,39 @@ const driverOptions = useMemo(
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
             {activeTab === "basic" && (
               <div className="grid grid-cols-3 gap-4">
-                {/* Vendor */}
-                <div>
-                  <label className="text-xs font-medium">Vendor *</label>
-                  {isReadOnly ? (
-                    <div className="flex gap-2 items-center p-2 border rounded bg-gray-50">
-                      <Building size={14} />
-                      {vendors.find((v) => v.value === formData.vendor_id)?.label}
-                    </div>
-                  ) : (
-                    <Select
-                      options={vendors}
-                      value={vendors.find(
-                        (v) => v.value === formData.vendor_id
-                      )}
-                      onChange={(opt) =>
-                        handleChange("vendor_id", opt?.value)
-                      }
-                      isDisabled={isVendorUser}
-                    />
-                  )}
-                </div>
+                {/* Vendor – ONLY FOR NON-VENDOR USERS */}
+                {!isVendorUser && (
+                  <div>
+                    <label className="text-xs font-medium">Vendor *</label>
+                    {isReadOnly ? (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded border">
+                        <Building className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm">
+                          {
+                            vendors.find(
+                              (v) => v.value === formData.vendor_id
+                            )?.label
+                          }
+                        </span>
+                      </div>
+                    ) : (
+                      <select
+                        value={formData.vendor_id || ""}
+                        onChange={(e) =>
+                          handleChange("vendor_id", e.target.value)
+                        }
+                        className="w-full px-3 py-2 text-sm border rounded"
+                      >
+                        <option value="">Select Vendor</option>
+                        {vendors.map((v) => (
+                          <option key={v.value} value={v.value}>
+                            {v.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                )}
 
                 {/* Vehicle Type */}
                 <div>
@@ -326,7 +339,6 @@ const driverOptions = useMemo(
                       handleChange("vehicle_type_id", v?.value)
                     }
                     isDisabled={isReadOnly}
-                    placeholder="Vehicle Type"
                   />
                 </div>
 
@@ -340,7 +352,6 @@ const driverOptions = useMemo(
                     )}
                     onChange={(v) => handleChange("driver_id", v?.value)}
                     isDisabled={isReadOnly}
-                    placeholder="Driver"
                   />
                 </div>
 
@@ -349,7 +360,6 @@ const driverOptions = useMemo(
                   <label className="text-xs font-medium">RC Number *</label>
                   <input
                     className="border p-2 rounded w-full"
-                    placeholder="RC Number"
                     value={formData.rc_number}
                     onChange={(e) =>
                       handleChange("rc_number", e.target.value)
@@ -358,9 +368,11 @@ const driverOptions = useMemo(
                   />
                 </div>
 
-                {/* RC Expiry Date */}
+                {/* RC Expiry */}
                 <div>
-                  <label className="text-xs font-medium">RC Expiry Date *</label>
+                  <label className="text-xs font-medium">
+                    RC Expiry Date *
+                  </label>
                   <input
                     type="date"
                     className="border p-2 rounded w-full"
@@ -376,15 +388,13 @@ const driverOptions = useMemo(
                 <div className="col-span-3">
                   <label className="text-xs font-medium">Description</label>
                   <textarea
-                    className="border p-2 rounded w-full resize-none"
-                    placeholder="Description"
+                    className="border p-2 rounded w-full"
+                    rows={3}
                     value={formData.description || ""}
                     onChange={(e) =>
                       handleChange("description", e.target.value)
                     }
                     disabled={isReadOnly}
-                    rows={3}
-                    style={{ minHeight: '80px' }}
                   />
                 </div>
 

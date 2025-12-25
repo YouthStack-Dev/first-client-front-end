@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import ManageVehicleTypes from "@components/vehicles/VehicleType";
-import ManageVehicles from "@components/vehicles/Vehicles";
+import ManageVehicleTypes from "../components/vehicles/VehicleType";
+import ManageVehicles from "../components/vehicles/Vehicles";
 
 const VehicleManagement = () => {
   const [activeTab, setActiveTab] = useState(() => {

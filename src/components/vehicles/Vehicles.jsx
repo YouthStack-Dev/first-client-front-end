@@ -8,7 +8,6 @@ import ToolBar from "../ui/ToolBar";
 import SearchInput from "../ui/SearchInput";
 import SelectField from "../ui/SelectField";
 import ReusableButton from "../ui/ReusableButton";
-import Modal from "@components/modals/Modal";
 
 import { NewVehicleList } from "./NewVehicleList";
 import VehicleFormModal from "./VehicleFormModal";
@@ -58,7 +57,7 @@ const NewVehicleManagement = () => {
   const totalItems = useSelector(selectVehiclesTotal);
 
   /* ================= VENDORS ================= */
-  const vendors = useVendorOptions();
+    const vendors = useVendorOptions(null, !isVendorUser);
 
   /* ================= LOCAL STATE ================= */
   const [selectedVendor, setSelectedVendor] = useState(null);

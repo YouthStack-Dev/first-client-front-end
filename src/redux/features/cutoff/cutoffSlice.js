@@ -11,7 +11,9 @@ const cutoffSlice = createSlice({
   initialState: {
     data: null, // Single cutoff record
     escortConfig: null, // Escort configuration
+    tenantConfig: null, // Tenant configuration (includes escort + OTP settings)
     formData: {
+      // Cutoff fields
       booking_login_cutoff: "0:00",
       cancel_login_cutoff: "0:00",
       booking_logout_cutoff: "0:00",
@@ -20,14 +22,20 @@ const cutoffSlice = createSlice({
       adhoc_booking_cutoff: "0:00",
       allow_adhoc_booking: false,
       allow_medical_emergency_booking: false,
+
+      // Tenant configuration fields
       escort_required_start_time: "20:00:00",
       escort_required_end_time: "06:00:00",
       escort_required_for_women: false,
+      login_boarding_otp: false,
+      login_deboarding_otp: false,
+      logout_boarding_otp: false,
+      logout_deboarding_otp: false,
     },
     status: "idle", // idle | loading | succeeded | failed | saving | saved
-    escortStatus: "idle", // idle | loading | succeeded | failed | saving | saved
+    tenantStatus: "idle", // idle | loading | succeeded | failed | saving | saved (for tenant config)
     error: null,
-    escortError: null,
+    tenantError: null,
   },
 
   reducers: {
@@ -38,12 +46,12 @@ const cutoffSlice = createSlice({
       }
     },
     resetForm: (state) => {
-      if (state.data) {
-        state.formData = mapApiDataToForm(state.data, state.escortConfig);
+      if (state.data || state.tenantConfig) {
+        state.formData = mapApiDataToForm(state.data, state.tenantConfig);
       }
     },
-    setEscortStatus: (state, action) => {
-      state.escortStatus = action.payload;
+    setTenantStatus: (state, action) => {
+      state.tenantStatus = action.payload;
     },
   },
 
@@ -56,7 +64,8 @@ const cutoffSlice = createSlice({
       })
       .addCase(fetchCutoffsThunk.fulfilled, (state, action) => {
         state.status = "succeeded";
-        const cutoff = action.payload?.cutoffs?.[0] || null;
+        const cutoff =
+          action.payload?.cutoffs?.[0] || action.payload?.data || null;
         state.data = cutoff;
 
         if (cutoff) {
@@ -78,7 +87,8 @@ const cutoffSlice = createSlice({
       })
       .addCase(saveCutoffThunk.fulfilled, (state, action) => {
         state.status = "saved";
-        const cutoff = action.payload?.cutoff || action.payload;
+        const cutoff =
+          action.payload?.cutoff || action.payload?.data || action.payload;
         if (cutoff) {
           state.data = cutoff;
           state.formData = {
@@ -92,48 +102,50 @@ const cutoffSlice = createSlice({
         state.error = action.payload || "Failed to save cutoff data";
       })
 
-      // Fetch Escort Config
+      // Fetch Tenant Config (replaces fetchEscortConfigThunk)
       .addCase(fetchEscortConfigThunk.pending, (state) => {
-        state.escortStatus = "loading";
-        state.escortError = null;
+        state.tenantStatus = "loading";
+        state.tenantError = null;
       })
       .addCase(fetchEscortConfigThunk.fulfilled, (state, action) => {
-        state.escortStatus = "succeeded";
-        const escortConfig = action.payload?.data || action.payload;
-        state.escortConfig = escortConfig;
+        state.tenantStatus = "succeeded";
+        const tenantConfig = action.payload?.data || action.payload;
+        state.tenantConfig = tenantConfig;
 
-        if (escortConfig) {
+        if (tenantConfig) {
           state.formData = {
             ...state.formData,
-            ...mapEscortApiDataToForm(escortConfig),
+            ...mapTenantApiDataToForm(tenantConfig),
           };
         }
       })
       .addCase(fetchEscortConfigThunk.rejected, (state, action) => {
-        state.escortStatus = "failed";
-        state.escortError = action.payload || "Failed to load escort config";
+        state.tenantStatus = "failed";
+        state.tenantError =
+          action.payload || "Failed to load tenant configuration";
       })
 
-      // Save Escort Config
+      // Save Tenant Config (replaces saveEscortConfigThunk)
       .addCase(saveEscortConfigThunk.pending, (state) => {
-        state.escortStatus = "saving";
-        state.escortError = null;
+        state.tenantStatus = "saving";
+        state.tenantError = null;
       })
       .addCase(saveEscortConfigThunk.fulfilled, (state, action) => {
-        state.escortStatus = "saved";
-        const escortConfig = action.payload?.data || action.payload;
-        state.escortConfig = escortConfig;
+        state.tenantStatus = "saved";
+        const tenantConfig = action.payload?.data || action.payload;
+        state.tenantConfig = tenantConfig;
 
-        if (escortConfig) {
+        if (tenantConfig) {
           state.formData = {
             ...state.formData,
-            ...mapEscortApiDataToForm(escortConfig),
+            ...mapTenantApiDataToForm(tenantConfig),
           };
         }
       })
       .addCase(saveEscortConfigThunk.rejected, (state, action) => {
-        state.escortStatus = "failed";
-        state.escortError = action.payload || "Failed to save escort config";
+        state.tenantStatus = "failed";
+        state.tenantError =
+          action.payload || "Failed to save tenant configuration";
       });
   },
 });
@@ -171,35 +183,65 @@ const mapCutoffApiDataToForm = (apiData) => {
   return formData;
 };
 
-const mapEscortApiDataToForm = (apiData) => {
+const mapTenantApiDataToForm = (apiData) => {
   const defaults = {
     escort_required_start_time: "20:00:00",
     escort_required_end_time: "06:00:00",
     escort_required_for_women: false,
+    login_boarding_otp: false,
+    login_deboarding_otp: false,
+    logout_boarding_otp: false,
+    logout_deboarding_otp: false,
   };
 
   // Map different possible API field names
-  const escortConfig = apiData?.config || apiData;
+  const tenantData = apiData?.config || apiData;
 
   const fieldMapping = {
+    // Escort fields
     escort_required_start_time:
-      escortConfig?.start_time || escortConfig?.escort_required_start_time,
+      tenantData?.escort_required_start_time || tenantData?.start_time,
     escort_required_end_time:
-      escortConfig?.end_time || escortConfig?.escort_required_end_time,
+      tenantData?.escort_required_end_time || tenantData?.end_time,
     escort_required_for_women:
-      escortConfig?.required_for_women ||
-      escortConfig?.escort_required_for_women,
+      tenantData?.escort_required_for_women || tenantData?.required_for_women,
+
+    // OTP fields
+    login_boarding_otp: tenantData?.login_boarding_otp,
+    login_deboarding_otp: tenantData?.login_deboarding_otp,
+    logout_boarding_otp: tenantData?.logout_boarding_otp,
+    logout_deboarding_otp: tenantData?.logout_deboarding_otp,
   };
 
   const formData = {};
   Object.keys(defaults).forEach((key) => {
     const apiValue = fieldMapping[key];
-    formData[key] = apiValue !== undefined ? apiValue : defaults[key];
+
+    // Convert string 'true'/'false' to boolean if needed
+    if (typeof apiValue === "string") {
+      if (apiValue.toLowerCase() === "true") {
+        formData[key] = true;
+      } else if (apiValue.toLowerCase() === "false") {
+        formData[key] = false;
+      } else {
+        formData[key] = apiValue !== undefined ? apiValue : defaults[key];
+      }
+    } else {
+      formData[key] = apiValue !== undefined ? apiValue : defaults[key];
+    }
   });
 
   return formData;
 };
 
-export const { updateFormField, resetForm, setEscortStatus } =
+// Helper to combine both mappings (optional, for backward compatibility)
+const mapApiDataToForm = (cutoffData, tenantData) => {
+  return {
+    ...mapCutoffApiDataToForm(cutoffData || {}),
+    ...mapTenantApiDataToForm(tenantData || {}),
+  };
+};
+
+export const { updateFormField, resetForm, setTenantStatus } =
   cutoffSlice.actions;
 export default cutoffSlice.reducer;

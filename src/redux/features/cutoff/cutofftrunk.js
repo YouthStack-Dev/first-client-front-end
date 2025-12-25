@@ -53,9 +53,9 @@ export const saveCutoffThunk = createAsyncThunk(
   }
 );
 
-// Escort Config endpoints
+// Tenant Config endpoints (renamed from Escort Config)
 export const fetchEscortConfigThunk = createAsyncThunk(
-  "cutoff/fetchEscortConfig",
+  "cutoff/fetchTenantConfig",
   async (_, { rejectWithValue }) => {
     try {
       const response = await API_CLIENT.get(`/v1/tenant-config/`);
@@ -64,7 +64,7 @@ export const fetchEscortConfigThunk = createAsyncThunk(
         return response.data?.data || response.data;
       }
 
-      return rejectWithValue("Failed to fetch escort config");
+      return rejectWithValue("Failed to fetch tenant config");
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
@@ -72,10 +72,11 @@ export const fetchEscortConfigThunk = createAsyncThunk(
 );
 
 export const saveEscortConfigThunk = createAsyncThunk(
-  "cutoff/saveEscortConfig",
+  "cutoff/saveTenantConfig",
   async (formData, { rejectWithValue }) => {
     try {
       const payload = {
+        // Escort fields
         escort_required_start_time: formatFullTime(
           formData.escort_required_start_time
         ),
@@ -83,9 +84,15 @@ export const saveEscortConfigThunk = createAsyncThunk(
           formData.escort_required_end_time
         ),
         escort_required_for_women: formData.escort_required_for_women,
+
+        // OTP fields
+        login_boarding_otp: formData.login_boarding_otp || false,
+        login_deboarding_otp: formData.login_deboarding_otp || false,
+        logout_boarding_otp: formData.logout_boarding_otp || false,
+        logout_deboarding_otp: formData.logout_deboarding_otp || false,
       };
 
-      console.log("Saving escort config payload:", payload);
+      console.log("Saving tenant config payload:", payload);
 
       const response = await API_CLIENT.put("/v1/tenant-config/", payload);
 
@@ -93,9 +100,9 @@ export const saveEscortConfigThunk = createAsyncThunk(
         return response.data?.data || response.data;
       }
 
-      return rejectWithValue("Failed to save escort config");
+      return rejectWithValue("Failed to save tenant config");
     } catch (error) {
-      console.error("Error saving escort config:", error);
+      console.error("Error saving tenant config:", error);
       return rejectWithValue(error.response?.data?.message || error.message);
     }
   }

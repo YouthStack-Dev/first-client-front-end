@@ -61,7 +61,7 @@ const ManageVehicleTypes = () => {
   const vehicleTypes = useSelector(vehicleTypeSelectors.selectAll);
   const loading = useSelector(selectVehicleTypesLoading);
 
-  const vendors = useVendorOptions();
+  const vendors = useVendorOptions(null, !isVendorUser);
 
   const getVendorLabelById = useCallback(
     (id) => vendors.find((v) => v.value === id)?.label || "—",

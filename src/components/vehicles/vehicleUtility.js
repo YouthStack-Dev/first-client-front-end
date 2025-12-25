@@ -115,6 +115,7 @@ export const transformVehicleApiToFormData = (apiData) => {
    FRONTEND → BACKEND (CREATE)
 ====================================================== */
 export const buildVehicleFormData = (formData) => {
+   console.log("🧾 Raw formData before building FormData:", formData);
   const fd = new FormData();
 
   const textFields = {

@@ -3,6 +3,7 @@ import {
   fetchEscortsThunk,
   createEscortThunk,
   updateEscortThunk,
+  deleteEscortThunk,
 } from "./escortThunks";
 
 // ------------------------------------------------------
@@ -31,6 +32,13 @@ const escortSlice = createSlice({
     clearSelectedEscort: (state) => {
       state.selectedEscort = null;
     },
+    setSelectedEscort: (state, action) => {
+      state.selectedEscort = action.payload;
+    },
+    clearEscortError: (state) => {
+      // Add this reducer
+      state.error = null;
+    },
   },
 
   extraReducers: (builder) => {
@@ -53,10 +61,12 @@ const escortSlice = createSlice({
       // ============================ CREATE =============================
       .addCase(createEscortThunk.pending, (state) => {
         state.loading = true;
+        state.error = null; // Clear previous errors when starting new operation
       })
       .addCase(createEscortThunk.fulfilled, (state, action) => {
         escortsAdapter.addOne(state, action.payload);
         state.loading = false;
+        state.error = null;
       })
       .addCase(createEscortThunk.rejected, (state, action) => {
         state.loading = false;
@@ -66,12 +76,29 @@ const escortSlice = createSlice({
       // ============================ UPDATE =============================
       .addCase(updateEscortThunk.pending, (state) => {
         state.loading = true;
+        state.error = null; // Clear previous errors when starting new operation
       })
       .addCase(updateEscortThunk.fulfilled, (state, action) => {
         escortsAdapter.upsertOne(state, action.payload);
         state.loading = false;
+        state.error = null;
       })
       .addCase(updateEscortThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // ============================ DELETE =============================
+      .addCase(deleteEscortThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null; // Clear previous errors when starting new operation
+      })
+      .addCase(deleteEscortThunk.fulfilled, (state, action) => {
+        escortsAdapter.removeOne(state, action.payload);
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(deleteEscortThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
@@ -81,7 +108,11 @@ const escortSlice = createSlice({
 // ------------------------------------------------------
 // ACTIONS
 // ------------------------------------------------------
-export const { clearSelectedEscort } = escortSlice.actions;
+export const {
+  clearSelectedEscort,
+  setSelectedEscort,
+  clearEscortError, // Export the new action
+} = escortSlice.actions;
 
 // ------------------------------------------------------
 // REDUCER

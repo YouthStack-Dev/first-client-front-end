@@ -8,6 +8,7 @@ import VendorRouteManagement from "../components/RouteManagement/VendorRouteMana
 import ManageDrivers from "../pages/ManageDrivers";
 import VehicleManagement from "../pages/VehicleManagement";
 import EmployeeForm from "../components/departments/EmployeeForm";
+import EscortManagement from "../pages/EscortManagement";
 import NewDriverManagement from "../pages/NewDriverManagement";
 
 export const VendorRoutes = () => (
@@ -17,6 +18,7 @@ export const VendorRoutes = () => (
     <Route path="vendor-user-management" element={<VendorUserManagement />} />
     <Route path="role-permission" element={<RoleManagement />} />
     <Route path="routing" element={<VendorRouteManagement />} />
+    <Route path="driver-management" element={<NewDriverManagement />} />
     <Route
       path="routing-listing"
       element={<h1>This is the page of route listing</h1>}

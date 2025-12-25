@@ -21,7 +21,7 @@ export const baseSidebarConfig = [
       {
         title: "Manage Companies",
         path: "/superadmin/manage-companies",
-        permission: "admin_tenant.creat",
+        permission: "admin_tenant.create",
         icon: Building2,
       },
     ],

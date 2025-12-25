@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import RoleCard from "./RoleCard";
 import RoleForm from "./RoleForm";
 import SearchBar from "./SearchBar";
 import ToolBar from "../ui/ToolBar";
-import { AssignedUsersModal } from "./AssignedUsersModal";
-import UserAssignmentModal from "./UserAssignmentModal";
+
 import {
   ShieldCheck,
   Plus,
@@ -14,138 +13,187 @@ import {
   Users,
   FileText,
 } from "lucide-react";
-import {
-  dummyRoledata,
-  mockAllowedModules,
-  staticEmployees,
-} from "../../staticData/permissionModules";
 import ReusableButton from "../ui/ReusableButton";
-
 import PoliciesManagement from "./PoliciesManagement";
+import {
+  createRole,
+  fetchRolesThunk,
+  updateRole,
+} from "../../redux/features/Permissions/permissionsThunk";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectRoles,
+  rolesLoading,
+  rolesLoaded,
+  rolesError,
+} from "../../redux/features/Permissions/permissionsSlice";
+import { logDebug } from "../../utils/logger";
+import { API_CLIENT } from "../../Api/API_Client";
 
 const RoleManagement = () => {
-  const [activeTab, setActiveTab] = useState("roles"); // "roles" or "policies"
-  const [roles, setRoles] = useState(dummyRoledata);
+  const [activeTab, setActiveTab] = useState("roles");
   const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
+
+  const dispatch = useDispatch();
+
+  // Select data from Redux store
+  const roles = useSelector(selectRoles);
+  const isLoading = useSelector(rolesLoading);
+  const isLoaded = useSelector(rolesLoaded);
+  const error = useSelector(rolesError);
 
   // Modal states
   const [showRoleFormModal, setShowRoleFormModal] = useState(false);
-  const [showAssignedUsersModal, setShowAssignedUsersModal] = useState(false);
-  const [showUserAssignmentModal, setShowUserAssignmentModal] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
   const [formMode, setFormMode] = useState("create");
-
-  const filteredRoles = roles.filter(
+  const [roleDetailedData, setRoleDetailedData] = useState(null);
+  const [roleDetailsLoading, setRoleDetailsLoading] = useState(false);
+  const [roleDetailsError, setRoleDetailsError] = useState(null);
+  const [modalDataReady, setModalDataReady] = useState(false);
+  const [formError, setFormError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Filter roles for search
+  const filteredRoles = roles?.filter(
     (role) =>
       role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      role.description.toLowerCase().includes(searchQuery.toLowerCase())
+      (role.description &&
+        role.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  // Get assigned users for a role
-  const getAssignedUsers = (role) => {
-    return staticEmployees.filter((employee) =>
-      role.assignedUsers.includes(employee.id)
-    );
+  // Fetch role details from backend
+  const fetchRoleDetails = async (roleId) => {
+    setRoleDetailsLoading(true);
+    setRoleDetailsError(null);
+    setModalDataReady(false);
+
+    try {
+      const response = await API_CLIENT.get(`/v1/iam/roles/${roleId}`);
+
+      if (response.data && response.data.success) {
+        setRoleDetailedData(response.data.data);
+        setModalDataReady(true);
+        return response.data.data;
+      } else {
+        throw new Error(
+          response.data?.message || "Failed to fetch role details"
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching role details:", error);
+      setRoleDetailsError(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch role details"
+      );
+      setModalDataReady(true); // Ready to show modal with error
+      return null;
+    } finally {
+      setRoleDetailsLoading(false);
+    }
   };
 
+  // Handle Add Role - No loading needed
   const handleAddRole = () => {
     setFormMode("create");
     setSelectedRole(null);
+    setRoleDetailedData(null);
+    setRoleDetailsError(null);
+    setRoleDetailsLoading(false);
+    setModalDataReady(true); // Data is ready immediately for create mode
     setShowRoleFormModal(true);
   };
 
-  const handleEditRole = (role) => {
+  // Handle Edit Role - fetch then open modal
+  const handleEditRole = async (role) => {
     setFormMode("edit");
     setSelectedRole(role);
+    setRoleDetailedData(null);
+    setRoleDetailsError(null);
+    setModalDataReady(false);
+
+    // 1) fetch details
+    await fetchRoleDetails(role.role_id);
+    // 2) open modal after data is ready flag is set in fetchRoleDetails
     setShowRoleFormModal(true);
   };
 
-  const handleViewDetails = (role) => {
+  // Handle View Details - fetch then open modal
+  const handleViewDetails = async (role) => {
     setFormMode("view");
     setSelectedRole(role);
+    setRoleDetailedData(null);
+    setRoleDetailsError(null);
+    setModalDataReady(false);
+
+    await fetchRoleDetails(role.role_id);
     setShowRoleFormModal(true);
   };
 
-  // Convert permissions format for the modal form
-  const convertPermissionsForForm = (permissions) => {
-    const formattedPermissions = [];
-
-    Object.keys(permissions).forEach((moduleKey) => {
-      const modulePerms = permissions[moduleKey];
-      const permObj = { moduleKey };
-
-      if (modulePerms.view !== undefined) permObj.canRead = modulePerms.view;
-      if (modulePerms.edit !== undefined) permObj.canWrite = modulePerms.edit;
-      if (modulePerms.delete !== undefined)
-        permObj.canDelete = modulePerms.delete;
-      if (modulePerms.create !== undefined)
-        permObj.canWrite = modulePerms.create || permObj.canWrite;
-
-      formattedPermissions.push(permObj);
-    });
-
-    return formattedPermissions;
+  // Handle viewing assigned users
+  const handleViewAssignedUsers = (role) => {
+    setSelectedRole(role);
   };
 
-  // Convert back to the original permissions format
-  const convertPermissionsFromForm = (permissions) => {
-    const originalFormat = {};
-
-    permissions.forEach((perm) => {
-      originalFormat[perm.moduleKey] = {
-        view: Boolean(perm.canRead),
-        edit: Boolean(perm.canWrite),
-        delete: Boolean(perm.canDelete),
-        create: Boolean(perm.canWrite),
-      };
-    });
-
-    return originalFormat;
+  // Handle opening user assignment modal
+  const handleAssignUsers = (role) => {
+    setSelectedRole(role);
   };
 
-  const handleSaveRole = (roleData) => {
-    const now = new Date().toISOString();
-
-    // Convert permissions back to original format
-    const convertedPermissions = convertPermissionsFromForm(
-      roleData.permissions
-    );
-
-    if (formMode === "create") {
-      const newRole = {
-        id: Math.max(0, ...roles.map((r) => r.id)) + 1,
-        name: roleData.name,
-        description: roleData.description,
-        permissions: convertedPermissions,
-        createdAt: now,
-        updatedAt: now,
-        isSystemLevel: false,
-        isAssignable: roleData.isAssignable,
-        assignedUsers: [],
-      };
-      setRoles([...roles, newRole]);
-    } else {
-      const updatedRole = {
-        ...selectedRole,
-        name: roleData.name,
-        description: roleData.description,
-        permissions: convertedPermissions,
-        updatedAt: now,
-        isAssignable: roleData.isAssignable,
-      };
-      setRoles(roles.map((r) => (r.id === selectedRole.id ? updatedRole : r)));
+  useEffect(() => {
+    // Fetch roles only if they haven't been loaded yet
+    if (!isLoaded && !isLoading) {
+      dispatch(fetchRolesThunk());
+      logDebug(" this is the roles ", roles);
     }
+  }, [dispatch, isLoaded, isLoading, roles]);
 
-    setShowRoleFormModal(false);
-    setSelectedRole(null);
+  const handleSaveRole = async (roleData) => {
+    setIsSubmitting(true);
+    setFormError(null); // Clear previous errors
+
+    try {
+      if (formMode === "create") {
+        const response = await dispatch(createRole(roleData)).unwrap();
+        console.log("Role created successfully:", response);
+        handleCancelForm();
+      } else {
+        if (!selectedRole?.role_id) {
+          throw new Error("Role ID is required for update");
+        }
+
+        const response = await dispatch(
+          updateRole({
+            roleId: selectedRole.role_id,
+            payload: roleData,
+          })
+        ).unwrap();
+
+        console.log("Role updated successfully:", response);
+        handleCancelForm();
+      }
+    } catch (error) {
+      // Extract error message from the rejected value
+      const errorMessage =
+        error?.message || error?.details || "An unexpected error occurred";
+
+      setFormError(errorMessage);
+      console.error("Role operation failed:", error);
+
+      // You might also want to extract specific field errors
+      if (error?.errors) {
+        // Handle field-specific errors if your API returns them
+        console.log("Field errors:", error.errors);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-
   const handleDeleteRole = (role) => {
     if (
       window.confirm(`Are you sure you want to delete the role "${role.name}"?`)
     ) {
-      setRoles(roles.filter((r) => r.id !== role.id));
+      // dispatch(deleteRoleThunk(role.id));
     }
   };
 
@@ -159,73 +207,37 @@ const RoleManagement = () => {
       isSystemLevel: false,
       assignedUsers: [],
     };
-    setRoles([...roles, newRole]);
-  };
-
-  // Handle viewing assigned users
-  const handleViewAssignedUsers = (role) => {
-    setSelectedRole(role);
-    setShowAssignedUsersModal(true);
-  };
-
-  // Handle opening user assignment modal
-  const handleAssignUsers = (role) => {
-    setSelectedRole(role);
-    setShowUserAssignmentModal(true);
-  };
-
-  // Handle assigning users to role
-  const handleAssignUsersToRole = async (roleId, userIds) => {
-    setRoles(
-      roles.map((role) =>
-        role.id === roleId
-          ? {
-              ...role,
-              assignedUsers: [...new Set([...role.assignedUsers, ...userIds])],
-              updatedAt: new Date().toISOString(),
-            }
-          : role
-      )
-    );
-
-    alert(`Successfully assigned ${userIds.length} user(s) to the role`);
-  };
-
-  // Handle removing user from role
-  const handleRemoveUserFromRole = (roleId, userId) => {
-    setRoles(
-      roles.map((role) =>
-        role.id === roleId
-          ? {
-              ...role,
-              assignedUsers: role.assignedUsers.filter((id) => id !== userId),
-              updatedAt: new Date().toISOString(),
-            }
-          : role
-      )
-    );
-
-    alert("User removed from role successfully");
+    // dispatch(createRoleThunk(newRole));
   };
 
   const handleCancelForm = () => {
     setShowRoleFormModal(false);
     setSelectedRole(null);
+    setRoleDetailedData(null);
+    setRoleDetailsError(null);
+    setRoleDetailsLoading(false);
+    setModalDataReady(false);
   };
 
   const handleSync = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      console.log("Roles synced");
+    setSyncLoading(true);
+    dispatch(fetchRolesThunk()).finally(() => {
+      setSyncLoading(false);
       alert("Roles synchronized successfully!");
-    }, 1000);
+    });
   };
 
   const handleExportRoles = () => {
-    // Export functionality
     console.log("Exporting roles...");
     alert("Roles exported successfully!");
+  };
+
+  // Prepare data for RoleForm
+  const getFormData = () => {
+    if (roleDetailedData) {
+      return roleDetailedData;
+    }
+    return selectedRole;
   };
 
   // Tab navigation component
@@ -259,6 +271,39 @@ const RoleManagement = () => {
       </div>
     </div>
   );
+
+  // Show loading state for initial roles loading
+  if (isLoading && !isLoaded) {
+    return (
+      <div className="flex-1 bg-white shadow-md overflow-auto flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto text-indigo-600" />
+          <p className="mt-2 text-gray-600">Loading roles...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex-1 bg-white shadow-md overflow-auto flex items-center justify-center">
+        <div className="text-center p-6">
+          <div className="text-red-600 font-semibold">Error loading roles</div>
+          <p className="text-gray-600 mt-2">{error}</p>
+          <ReusableButton
+            module="role"
+            action="read"
+            icon={RefreshCw}
+            title="Retry loading roles"
+            buttonName="Retry"
+            onClick={() => dispatch(fetchRolesThunk())}
+            className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg"
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 bg-white shadow-md overflow-auto">
@@ -297,10 +342,10 @@ const RoleManagement = () => {
                   module="role"
                   action="read"
                   icon={RefreshCw}
-                  title="Synchronize roles "
+                  title="Synchronize roles"
                   buttonName="Sync"
                   onClick={handleSync}
-                  loading={loading}
+                  loading={syncLoading}
                   loadingText="Syncing..."
                   className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm 
                            hover:bg-blue-600 flex items-center gap-2 transition-colors duration-200"
@@ -327,7 +372,7 @@ const RoleManagement = () => {
                   action="create"
                   icon={Plus}
                   title="Create a new role"
-                  buttonName="Add New Role"
+                  buttonName="Role"
                   onClick={handleAddRole}
                   className="flex-shrink-0 bg-indigo-600 text-white px-4 py-2 rounded-lg 
                            hover:bg-indigo-700 transition-colors duration-200 ease-in-out 
@@ -368,7 +413,7 @@ const RoleManagement = () => {
                 </div>
                 <div className="text-2xl font-bold text-orange-800">
                   {roles.reduce(
-                    (sum, role) => sum + role.assignedUsers.length,
+                    (sum, role) => sum + (role.assignedUsers?.length || 0),
                     0
                   )}
                 </div>
@@ -387,7 +432,7 @@ const RoleManagement = () => {
                 </p>
                 {!searchQuery && (
                   <ReusableButton
-                    module="Roles"
+                    module="role"
                     action="create"
                     icon={Plus}
                     title="Create your first role"
@@ -404,7 +449,7 @@ const RoleManagement = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {filteredRoles.map((role) => (
                   <RoleCard
-                    key={role.id}
+                    key={role.role_id}
                     role={role}
                     onEdit={handleEditRole}
                     onDelete={handleDeleteRole}
@@ -417,44 +462,34 @@ const RoleManagement = () => {
               </div>
             )}
 
-            {/* Role Form Modal */}
-            <RoleForm
-              isOpen={showRoleFormModal}
-              onClose={handleCancelForm}
-              onSubmit={handleSaveRole}
-              allowedModules={mockAllowedModules}
-              initialData={
-                formMode === "edit" || formMode === "view"
-                  ? {
-                      name: selectedRole?.name || "",
-                      description: selectedRole?.description || "",
-                      permissions: convertPermissionsForForm(
-                        selectedRole?.permissions || {}
-                      ),
-                      isAssignable: selectedRole?.isAssignable ?? true,
-                    }
-                  : null
-              }
-              mode={formMode}
-            />
+            {/* Loading overlay when fetching role details */}
+            {roleDetailsLoading && (
+              <div className="fixed inset-0 z-50 bg-white bg-opacity-90 flex items-center justify-center">
+                <div className="text-center p-8 bg-white rounded-lg shadow-xl">
+                  <RefreshCw className="h-12 w-12 animate-spin mx-auto text-indigo-600 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                    Loading Role Details
+                  </h3>
+                  <p className="text-gray-600">
+                    Please wait while we fetch the role information...
+                  </p>
+                </div>
+              </div>
+            )}
 
-            {/* Assigned Users Modal */}
-            <AssignedUsersModal
-              role={selectedRole}
-              isOpen={showAssignedUsersModal}
-              onClose={() => setShowAssignedUsersModal(false)}
-              assignedUsers={selectedRole ? getAssignedUsers(selectedRole) : []}
-              onRemoveUser={handleRemoveUserFromRole}
-            />
-
-            {/* User Assignment Modal */}
-            <UserAssignmentModal
-              role={selectedRole}
-              isOpen={showUserAssignmentModal}
-              onClose={() => setShowUserAssignmentModal(false)}
-              onAssign={handleAssignUsersToRole}
-              employees={staticEmployees}
-            />
+            {/* Role Form Modal - Only show when data is ready */}
+            {showRoleFormModal && modalDataReady && (
+              <RoleForm
+                isOpen={showRoleFormModal}
+                onClose={handleCancelForm}
+                onSubmit={handleSaveRole}
+                mode={formMode}
+                initialData={getFormData()}
+                roleDetailsError={roleDetailsError}
+                formError={formError} // Pass the error to display in form
+                isSubmitting={isSubmitting} // Pass loading state
+              />
+            )}
           </div>
         </>
       )}

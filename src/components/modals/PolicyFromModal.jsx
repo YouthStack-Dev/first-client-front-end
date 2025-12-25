@@ -3,15 +3,10 @@ import { Save, X, Edit, Eye } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { ModuleCard } from "../RoleManagement/ModuleCard";
-import { logDebug } from "../../utils/logger";
-import {
-  dummyPermission,
-  existingPermission,
-} from "../../staticData/permissionModules";
-import {
-  transformPermissionsToModules,
-  transformPermissionsToModulesWithDefaults,
-} from "../../utils/permissionModules";
+import { dummyPermission } from "../../staticData/permissionModules";
+import { useSelector } from "react-redux";
+import { selectPermissions } from "../../redux/features/auth/authSlice";
+import { transformPermissionsForMode } from "../../utils/permissionModules";
 
 export const PolicyForm = ({
   policy,
@@ -20,6 +15,7 @@ export const PolicyForm = ({
   isOpen,
   mode,
   onModeChange,
+  apiError,
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [permissions, setPermissions] = useState([]);
@@ -30,146 +26,58 @@ export const PolicyForm = ({
     isActive: true,
   });
 
-  logDebug(`PolicyForm opened in ${currentMode} mode`);
+  const permission = useSelector(selectPermissions);
 
-  // Different permission sets for different modes
-  const createModePermissions = [
-    {
-      module: "User Management",
-      description: "Manage users and their roles",
-      icon: "👥",
-      actions: [
-        { id: "user_create", name: "Create Users", enabled: false },
-        { id: "user_read", name: "View Users", enabled: false },
-        { id: "user_update", name: "Edit Users", enabled: false },
-        { id: "user_delete", name: "Delete Users", enabled: false },
-      ],
-    },
-    {
-      module: "Content Management",
-      description: "Manage website content",
-      icon: "📝",
-      actions: [
-        { id: "content_create", name: "Create Content", enabled: false },
-        { id: "content_read", name: "View Content", enabled: false },
-        { id: "content_update", name: "Edit Content", enabled: false },
-        { id: "content_delete", name: "Delete Content", enabled: false },
-        { id: "content_publish", name: "Publish Content", enabled: false },
-      ],
-    },
-  ];
-
-  const viewEditPermissions = [
-    {
-      module: "User Management",
-      description: "Manage users and their roles",
-      icon: "👥",
-      actions: [
-        { id: "user_create", name: "Create Users", enabled: true },
-        { id: "user_read", name: "View Users", enabled: true },
-        { id: "user_update", name: "Edit Users", enabled: false },
-        { id: "user_delete", name: "Delete Users", enabled: false },
-      ],
-    },
-    {
-      module: "Content Management",
-      description: "Manage website content",
-      icon: "📝",
-      actions: [
-        { id: "content_create", name: "Create Content", enabled: true },
-        { id: "content_read", name: "View Content", enabled: true },
-        { id: "content_update", name: "Edit Content", enabled: true },
-        { id: "content_delete", name: "Delete Content", enabled: false },
-        { id: "content_publish", name: "Publish Content", enabled: true },
-      ],
-    },
-    {
-      module: "Reports",
-      description: "Access and generate reports",
-      icon: "📊",
-      actions: [
-        { id: "report_view", name: "View Reports", enabled: true },
-        { id: "report_export", name: "Export Reports", enabled: false },
-        { id: "report_analytics", name: "Analytics", enabled: true },
-      ],
-    },
-    {
-      module: "Settings",
-      description: "System configuration",
-      icon: "⚙️",
-      actions: [
-        { id: "settings_general", name: "General Settings", enabled: false },
-        { id: "settings_security", name: "Security Settings", enabled: false },
-        { id: "settings_backup", name: "Backup & Restore", enabled: false },
-      ],
-    },
-    {
-      module: "Billing",
-      description: "Manage payments and invoices",
-      icon: "💰",
-      actions: [
-        { id: "billing_view", name: "View Billing", enabled: true },
-        { id: "billing_edit", name: "Edit Billing", enabled: false },
-        { id: "billing_export", name: "Export Invoices", enabled: true },
-      ],
-    },
-    {
-      module: "Analytics",
-      description: "View system analytics",
-      icon: "📈",
-      actions: [
-        { id: "analytics_view", name: "View Analytics", enabled: true },
-        { id: "analytics_export", name: "Export Data", enabled: false },
-      ],
-    },
-  ];
-
-  const data = transformPermissionsToModules(dummyPermission);
-
-  logDebug("Transformed prmission modules data:", data);
-
-  const enabled = transformPermissionsToModulesWithDefaults(
-    dummyPermission,
-    existingPermission
-  );
-
-  logDebug("Enabled permission modules data:", enabled);
+  // Get all available permissions from dummyPermission
+  const allPermissions = dummyPermission;
   // Reset and load permissions when modal opens or mode changes
   useEffect(() => {
     if (isOpen) {
       setIsLoading(true);
-      setPermissions([]);
-      setCurrentMode(mode);
-      // Initialize form data based on mode and policy
-      if (mode === "create") {
-        setFormData({
-          name: "",
-          description: "",
-          isActive: true,
-        });
-      } else if (policy) {
-        setFormData({
-          name: policy.name || "",
-          description: policy.description || "",
-          isActive: policy.isActive !== undefined ? policy.isActive : true,
-        });
-      }
 
-      const timer = setTimeout(() => {
-        const permissionsToUse =
-          mode === "create" ? createModePermissions : viewEditPermissions;
-        setPermissions(permissionsToUse);
+      // Simulate loading delay
+      setTimeout(() => {
+        // Initialize form data based on mode and policy
+        if (mode === "create") {
+          setFormData({
+            name: "",
+            description: "",
+            isActive: true,
+          });
+        } else if (policy) {
+          setFormData({
+            name: policy.name || "",
+            description: policy.description || "",
+            isActive: policy.is_active !== undefined ? policy.is_active : true,
+          });
+        }
+
+        // Transform permissions based on mode
+        const transformedPermissions = transformPermissionsForMode(
+          mode,
+          policy,
+          allPermissions
+        );
+        setPermissions(transformedPermissions);
+        setCurrentMode(mode);
+
         setIsLoading(false);
-      }, 1500);
-      return () => clearTimeout(timer);
+      }, 100); // Small delay for smooth transition
     }
   }, [isOpen, mode, policy]);
 
   const handleSave = () => {
+    // Collect enabled permission IDs
+    const enabledPermissionIds = permissions
+      .flatMap((module) => module.actions)
+      .filter((action) => action.enabled)
+      .map((action) => action.permission_id);
+
     const saveData = {
       ...formData,
-      permissions: permissions,
+      permission_ids: enabledPermissionIds,
     };
+
     onSave(saveData, currentMode);
   };
 
@@ -196,6 +104,18 @@ export const PolicyForm = ({
 
   const handleModeChange = (newMode) => {
     setCurrentMode(newMode);
+
+    // When switching to edit mode from view, keep the current permissions
+    if (newMode === "edit") {
+      // Permissions are already loaded, no need to reload
+    }
+
+    // When switching to view mode from edit, reload permissions from policy
+    if (newMode === "view") {
+      const transformedPermissions = transformPermissionsForMode("view");
+      setPermissions(transformedPermissions);
+    }
+
     onModeChange?.(newMode);
   };
 
@@ -244,19 +164,50 @@ export const PolicyForm = ({
   // Quick actions for both create and edit modes
   const handleEnableAll = () => {
     if (currentMode !== "edit" && currentMode !== "create") return;
-    permissions.forEach((_, index) => toggleAllModuleActions(index, true));
+
+    const newPermissions = permissions.map((module) => ({
+      ...module,
+      actions: module.actions.map((action) => ({
+        ...action,
+        enabled: true,
+      })),
+    }));
+
+    setPermissions(newPermissions);
   };
 
   const handleDisableAll = () => {
     if (currentMode !== "edit" && currentMode !== "create") return;
-    permissions.forEach((_, index) => toggleAllModuleActions(index, false));
+
+    const newPermissions = permissions.map((module) => ({
+      ...module,
+      actions: module.actions.map((action) => ({
+        ...action,
+        enabled: false,
+      })),
+    }));
+
+    setPermissions(newPermissions);
   };
 
   const handleResetToDefault = () => {
     if (currentMode !== "edit" && currentMode !== "create") return;
-    const defaultPermissions =
-      currentMode === "create" ? createModePermissions : viewEditPermissions;
-    setPermissions([...defaultPermissions]);
+
+    if (currentMode === "create") {
+      // Reset to all disabled for create mode
+      const newPermissions = permissions.map((module) => ({
+        ...module,
+        actions: module.actions.map((action) => ({
+          ...action,
+          enabled: false,
+        })),
+      }));
+      setPermissions(newPermissions);
+    } else if (currentMode === "edit") {
+      // Reset to policy's original permissions
+      const transformedPermissions = transformPermissionsForMode("view");
+      setPermissions(transformedPermissions);
+    }
   };
 
   if (!isOpen) return null;
@@ -265,6 +216,11 @@ export const PolicyForm = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl shadow-xl max-w-6xl w-full max-h-[95vh] flex flex-col">
         {/* Header */}
+        {apiError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <div className="text-red-700 text-sm">{apiError}</div>
+          </div>
+        )}
         <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-6 text-white flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
@@ -284,7 +240,7 @@ export const PolicyForm = ({
               )}
             </div>
             <div className="flex items-center gap-2">
-              {/* Mode Toggle Buttons - Hide in create mode */}
+              {/* Mode Toggle Buttons */}
               {!isLoading && currentMode === "view" && (
                 <button
                   onClick={() => handleModeChange("edit")}
@@ -317,7 +273,7 @@ export const PolicyForm = ({
         {/* Compact Basic Information Section */}
         <div className="p-4 border-b border-gray-200 flex-shrink-0 bg-gray-50">
           <div className="flex items-center gap-4">
-            {/* Name Field - Takes more space */}
+            {/* Name Field */}
             <div className="flex-1">
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Policy Name *
@@ -336,7 +292,7 @@ export const PolicyForm = ({
               )}
             </div>
 
-            {/* Status Toggle - Compact */}
+            {/* Status Toggle */}
             <div className="flex-shrink-0">
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Status
@@ -374,7 +330,7 @@ export const PolicyForm = ({
               )}
             </div>
 
-            {/* Description Field - Compact textarea */}
+            {/* Description Field */}
             <div className="flex-1">
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Description
@@ -397,7 +353,7 @@ export const PolicyForm = ({
           </div>
         </div>
 
-        {/* Permissions Grid - This is now the scrollable area */}
+        {/* Permissions Grid */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -405,7 +361,7 @@ export const PolicyForm = ({
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {data.map((module, moduleIndex) => (
+              {permissions.map((module, moduleIndex) => (
                 <ModuleCard
                   key={moduleIndex}
                   module={module}
@@ -425,7 +381,7 @@ export const PolicyForm = ({
 
         {/* Footer Actions */}
         <div className="bg-gray-50 px-6 py-4 border-t flex flex-col gap-4 flex-shrink-0">
-          {/* Quick Actions - Show in both edit AND create modes */}
+          {/* Quick Actions */}
           {!isLoading &&
             (currentMode === "edit" || currentMode === "create") && (
               <div className="flex items-center justify-between">

@@ -1,47 +1,27 @@
 // vendorSidebarConfig.js
-import {
-  Calendar,
-  Users,
-  UserCheck,
-  MapPin,
-  Route,
-  Clock,
-  Users2,
-  Car,
-  Truck,
-  Store,
-  UserCog,
-  CalendarOff,
-} from "lucide-react";
+import { Users, MapPin, Car } from "lucide-react";
 
 // Vendor-specific sidebar configuration
 export const vendorSidebarConfig = [
-  {
-    title: "User Administrator",
-    items: [
-      {
-        title: " User Role & Permission",
-        icon: Users,
-        path: "/vendor/role-permission",
-        permission: "role.read",
-        icon: Users,
-      },
-      {
-        title: " User Management",
-        icon: Users,
-        path: "/vendor/vendor-user-management",
-        permission: "role.read",
-        icon: Users,
-      },
-    ],
-  },
+  // {
+  //   title: "Dashboard",
+  //   items: [
+  //     {
+  //       title: "Dashboard",
+  //       icon: Users,
+  //       path: "/vendors/dashboard",
+  //       permission: "dashboard.read",
+  //       icon: Users,
+  //     },
+  //   ],
+  // },
   {
     title: "Resources",
     items: [
       {
         title: "Manage Drivers",
         icon: Users,
-        path: "/vendor/drivers",
+        path: "/vendor/driver-management",
         permission: "driver.read",
       },
       {
@@ -50,14 +30,6 @@ export const vendorSidebarConfig = [
         path: "/vendor/vehicles",
         permission: "vehicle.read",
       },
-      // {
-      //   title: 'Vehicle Types',
-      //   icon: Truck,
-      //   subItems: [
-      //     { title: 'Type List', path: '/vendor/vehicle-types', permission: 'vehicle-type.read', icon: Truck },
-      //     { title: 'Add Type', path: '/vendor/vehicle-types/add', permission: 'vehicle-type.create', icon: Truck }
-      //   ]
-      // }
     ],
   },
   {
@@ -68,30 +40,6 @@ export const vendorSidebarConfig = [
         path: "/vendor/routing",
         permission: "route.read",
         icon: MapPin,
-      },
-      {
-        title: "Shift Management",
-        icon: Clock,
-        path: "/vendor/shifts",
-        permission: "shift.read",
-      },
-      {
-        title: "Cutoff Management",
-        icon: Clock,
-        path: "/vendor/cutoff",
-        permission: "cutoff.read",
-      },
-      {
-        title: "Teams",
-        icon: Users2,
-        path: "/vendor/departments",
-        permission: "team.read",
-      },
-      {
-        title: "Vendor",
-        path: "/vendor/vendors",
-        permission: "vendor.read",
-        icon: Store,
       },
     ],
   },

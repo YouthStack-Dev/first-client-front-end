@@ -76,16 +76,10 @@ export const updateDriverThunk = createAsyncThunk(
  */
 export const toggleDriverStatusThunk = createAsyncThunk(
   "driver/toggleDriver",
-  async (driver_id, { rejectWithValue }) => {
+  async ({ driver_id, vendor_id }, { rejectWithValue }) => {
     try {
       const response = await API_CLIENT.patch(
-        `/v1/drivers/${driver_id}/toggle-active`,
-        {}, // empty body
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
+        `/v1/drivers/${driver_id}/toggle-active?vendor_id=${vendor_id}`
       );
       // Return the driver object from response.data.data
       return response.data.data;
@@ -95,8 +89,6 @@ export const toggleDriverStatusThunk = createAsyncThunk(
     }
   }
 );
-
-
 export const fetchDriversByVendorThunk = createAsyncThunk(
   "drivers/fetchDriversByVendor",
   async (vendorId, { rejectWithValue }) => {

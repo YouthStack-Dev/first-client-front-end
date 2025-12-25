@@ -71,15 +71,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
   const [sidebarConfig, setSidebarConfig] = useState([]);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-const authUser = useSelector((state) => state.auth.user);
-
-const companyName =
-  authUser?.tenant?.name ||
-  JSON.parse(sessionStorage.getItem("userPermissions") || "{}")?.user?.tenant?.name ||
-  JSON.parse(sessionStorage.getItem("userPermissions") || "{}")?.tenant?.name ||
-  "—";
-
-
+  const tenant = JSON.parse(localStorage.getItem("tenant"));
 
   // Get auth state from Redux
   const {
@@ -205,10 +197,7 @@ const companyName =
         <div className="p-4 border-b border-sidebar-primary-200/30 flex items-center justify-between bg-sidebar-primary-800/50 backdrop-blur-sm">
           {isOpen && (
             <>
-            <h2 className="text-xl font-bold text-white">
-              {companyName || "—"}
-            </h2>
-
+              <h2 className="text-xl font-bold text-white">{tenant?.name}</h2>
               {!isMobile && (
                 <button
                   onClick={togglePin}

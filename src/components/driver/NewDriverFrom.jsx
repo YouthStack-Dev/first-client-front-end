@@ -28,6 +28,7 @@ import {
 import { useDispatch } from "react-redux";
 import { logDebug } from "../../utils/logger";
 import { useVendorOptions } from "../../hooks/useVendorOptions";
+import { getTomorrowDate } from "../../validations/core/helpers";
 
 const DriverFormModal = ({
   isOpen,
@@ -35,6 +36,7 @@ const DriverFormModal = ({
   mode = "create", // create, edit, view
   driverData = null,
   onSubmitSuccess,
+  vendor,
 }) => {
   const [formData, setFormData] = useState(defaultFormData);
   const [activeTab, setActiveTab] = useState("personal");
@@ -44,7 +46,7 @@ const DriverFormModal = ({
   const [previewContentType, setPreviewContentType] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useDispatch();
-  const vendors = useVendorOptions();
+
   // Initialize form data when mode or driverData changes
   useEffect(() => {
     if (mode === "create") {
@@ -121,34 +123,161 @@ const DriverFormModal = ({
       apiUrlPrefix: "/v1/vehicles", // change for drivers/vendors/etc.
     });
   };
+
   // Function to download document
   const handleDownloadFile = (file, filename) => {
     downloadFile({
       file,
       filename,
       apiClient: API_CLIENT,
-      setLoading: (v) => setLoadingDocs({ ...loadingDocs, [file.path]: v }),
+      setLoading: (v) =>
+        setLoadingDocs((prev) => ({ ...prev, [file.path]: v })),
       setError,
       apiUrlPrefix: "/v1/vehicles",
     });
   };
+
+  // basic info validation before moving to documents tab
+  const canGoToDocuments = () => {
+    const {
+      code,
+      name,
+      gender,
+      email,
+      mobileNumber,
+      password,
+      dateOfBirth,
+      dateOfJoining,
+      permanentAddress,
+      currentAddress,
+    } = formData;
+
+    if (!code?.trim()) return false;
+    if (!name?.trim()) return false;
+    if (!gender) return false;
+    if (!email?.trim()) return false;
+    if (!mobileNumber?.trim()) return false;
+    if (mode === "create" && !password?.trim()) return false;
+    if (!dateOfBirth) return false;
+    if (!dateOfJoining) return false;
+    if (!permanentAddress?.trim()) return false;
+    if (!currentAddress?.trim()) return false;
+    return true;
+  };
+
+  // documents validation before submit
+  const validateDocuments = () => {
+    const missing = [];
+
+    documents.forEach((doc) => {
+      if (doc.numberKey && !formData[doc.numberKey]) {
+        missing.push(`${doc.label} number`);
+      }
+      if (doc.fileKey && !formData[doc.fileKey]) {
+        missing.push(`${doc.label} file`);
+      }
+      if (doc.id === "alt_govt_id" && doc.typeKey && !formData[doc.typeKey]) {
+        missing.push("Alternate Government ID type");
+      }
+      if (doc.expiryKey && !formData[doc.expiryKey]) {
+        missing.push(`${doc.label} expiry date`);
+      }
+    });
+
+    if (missing.length > 0) {
+      setError(
+        `Please fill all required document fields:\n- ${missing.join("\n- ")}`
+      );
+      return false;
+    }
+    return true;
+  };
+  const formatBackendError = (err) => {
+    logDebug("Backend error:", err);
+
+    const detail = err?.detail || err?.data?.detail;
+
+    /* -----------------------------
+     * 1️⃣ FastAPI / Pydantic validation errors
+     * ----------------------------- */
+    if (Array.isArray(detail)) {
+      const header = "Submission failed due to the following errors:";
+      const lines = detail.map((d, idx) => {
+        const path =
+          Array.isArray(d.loc) && d.loc.length > 1
+            ? d.loc.slice(1).join(".")
+            : "unknown_field";
+
+        const msg = d.msg || "Invalid value";
+        const inputVal =
+          typeof d.input !== "undefined" ? ` (received: ${d.input})` : "";
+
+        return `${idx + 1}. ${path}: ${msg}${inputVal}`;
+      });
+
+      return `${header}\n${lines.join("\n")}`;
+    }
+
+    /* -----------------------------
+     * 2️⃣ Duplicate / Business logic errors
+     * ----------------------------- */
+    if (detail?.error_code === "DUPLICATE_RESOURCE") {
+      const baseMessage =
+        detail.message || "Resource already exists with the same values";
+
+      const conflicts = detail?.details?.conflicting_fields;
+
+      if (conflicts && typeof conflicts === "object") {
+        const fields = Object.entries(conflicts)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join(", ");
+
+        return `${baseMessage}\nConflicting fields → ${fields}`;
+      }
+
+      return baseMessage;
+    }
+
+    /* -----------------------------
+     * 3️⃣ Generic backend message
+     * ----------------------------- */
+    if (detail?.message) {
+      return detail.message;
+    }
+
+    if (err?.message) {
+      return err.message;
+    }
+
+    return "An unknown error occurred while submitting the form.";
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setError(null);
+
+    if (!canGoToDocuments()) {
+      setError("Please complete all basic information before submitting.");
+      setActiveTab("personal");
+      return;
+    }
+
+    if (!validateDocuments()) {
+      setActiveTab("documents");
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       if (mode === "create") {
         const payload = buildDriverFormData(formData);
-
         const result = await dispatch(createDriverThunk(payload)).unwrap();
 
         if (onSubmitSuccess) {
           onSubmitSuccess("Driver created successfully!");
         }
         handleClose();
-
-        // You can also use the result data if needed
         console.log("Created driver:", result);
       }
 
@@ -157,7 +286,6 @@ const DriverFormModal = ({
 
         const payload = buildDriverUpdateData(formData, driverData.driver_id);
 
-        // ✅ Correct way - pass a single object with driverId and formData
         const result = await dispatch(
           updateDriverThunk({
             driverId: driverData.driver_id,
@@ -172,24 +300,8 @@ const DriverFormModal = ({
       }
     } catch (err) {
       console.error("Error submitting form:", err);
-
-      if (err.detail && Array.isArray(err.detail)) {
-        // Format validation errors nicely
-        const errorList = err.detail
-          .map((error, index) => {
-            const field = error.loc?.slice(1).join(".") || "Unknown field";
-            return `${index + 1}. ${field}: ${error.msg}`;
-          })
-          .join("\n");
-
-        setError(`Validation failed:\n${errorList}`);
-      } else {
-        setError(
-          `Failed to ${mode === "create" ? "create" : "update"} driver. ${
-            err.message || "Unknown error"
-          }`
-        );
-      }
+      const formatted = formatBackendError(err);
+      setError(formatted);
     } finally {
       setIsSubmitting(false);
     }
@@ -242,7 +354,7 @@ const DriverFormModal = ({
 
             {/* Error Message */}
             {error && (
-              <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+              <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm whitespace-pre-line">
                 {error + ""}
                 <button
                   onClick={() => setError(null)}
@@ -273,7 +385,17 @@ const DriverFormModal = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setActiveTab("documents")}
+                    onClick={() => {
+                      if (!canGoToDocuments()) {
+                        setError(
+                          "Please complete all basic information before going to Documents."
+                        );
+                        setActiveTab("personal");
+                        return;
+                      }
+                      setError(null);
+                      setActiveTab("documents");
+                    }}
                     className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                       activeTab === "documents"
                         ? "border-blue-500 text-blue-600"
@@ -383,6 +505,7 @@ const DriverFormModal = ({
                           required
                           className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
                         >
+                          <option value="">Select</option>
                           <option value="Male">Male</option>
                           <option value="Female">Female</option>
                           <option value="Other">Other</option>
@@ -412,6 +535,7 @@ const DriverFormModal = ({
                         <input
                           type="tel"
                           name="mobileNumber"
+                          max={10}
                           value={formData.mobileNumber}
                           onChange={handleInputChange}
                           disabled={isReadOnly}
@@ -467,7 +591,7 @@ const DriverFormModal = ({
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Vendor
+                          Vendor *
                         </label>
                         {isReadOnly ? (
                           <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded border border-gray-300">
@@ -483,6 +607,7 @@ const DriverFormModal = ({
                             name="vendor_id"
                             value={formData.vendor_id || ""}
                             onChange={handleInputChange}
+                            required
                             className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           >
                             <option value="">Select Vendor</option>
@@ -588,7 +713,6 @@ const DriverFormModal = ({
                                   value={formData[doc.typeKey] || ""}
                                   onChange={handleInputChange}
                                   disabled={isReadOnly}
-                                  required
                                   className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50"
                                 >
                                   <option value="">Select ID Type</option>
@@ -606,7 +730,7 @@ const DriverFormModal = ({
                                 <label className="block text-xs font-medium text-gray-600 mb-1">
                                   {doc.id === "alt_govt_id"
                                     ? "ID Number *"
-                                    : "Number"}
+                                    : "Number *"}
                                 </label>
                                 <input
                                   type="text"
@@ -614,7 +738,6 @@ const DriverFormModal = ({
                                   value={formData[doc.numberKey] || ""}
                                   onChange={handleInputChange}
                                   disabled={isReadOnly}
-                                  required={doc.id === "alt_govt_id"}
                                   className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50"
                                 />
                               </div>
@@ -623,11 +746,12 @@ const DriverFormModal = ({
                             {doc.expiryKey && (
                               <div>
                                 <label className="block text-xs font-medium text-gray-600 mb-1">
-                                  Expiry Date
+                                  Expiry Date *
                                 </label>
                                 <input
                                   type="date"
                                   name={doc.expiryKey}
+                                  min={getTomorrowDate()}
                                   value={formData[doc.expiryKey] || ""}
                                   onChange={handleInputChange}
                                   disabled={isReadOnly}
@@ -664,10 +788,10 @@ const DriverFormModal = ({
                                   disabled={isReadOnly}
                                   className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50"
                                 >
+                                  {/* Only allowed values from backend enum */}
                                   <option value="Pending">Pending</option>
-                                  <option value="Verified">Verified</option>
-                                  <option value="Rejected">Rejected</option>
                                   <option value="Approved">Approved</option>
+                                  <option value="Rejected">Rejected</option>
                                 </select>
                               </div>
                             )}
@@ -682,7 +806,7 @@ const DriverFormModal = ({
                                   <span className="text-xs text-gray-700 truncate">
                                     {file instanceof File
                                       ? file.name
-                                      : file.name || "Document.pdf"}
+                                      : file.name || "Document"}
                                     {isLoading && (
                                       <span className="inline-flex items-center ml-2">
                                         <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
@@ -745,7 +869,6 @@ const DriverFormModal = ({
                                         e.target.files[0]
                                       )
                                     }
-                                    required
                                   />
                                 </label>
                               )
@@ -828,7 +951,7 @@ const DriverFormModal = ({
                 <iframe
                   src={previewDoc}
                   title="Document Preview"
-                  className="w-full h-full min-h-[600px]"
+                  className="w-full h-full min-h=[600px]"
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center h-full">
