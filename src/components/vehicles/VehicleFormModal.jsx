@@ -8,10 +8,15 @@ import {
   Eye,
   Trash2,
   Building,
+  FileText,
 } from "lucide-react";
 import Select from "react-select";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
+
+import { API_CLIENT } from "../../Api/API_Client";
+import { viewFile } from "../../utils/fileViewUtils";
+import { downloadFile } from "../../utils/downloadUtils";
 
 import { vehicleTypeSelectors } from "../../redux/features/managevehicletype/vehicleTypeSlice";
 import {
@@ -27,7 +32,6 @@ import {
 
 import { useVendorOptions } from "../../hooks/useVendorOptions";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
-import { downloadFile } from "../../utils/downloadfile";
 
 import {
   defaultVehicleFormData,
@@ -37,18 +41,14 @@ import {
   buildVehicleUpdateData,
 } from "./vehicleUtility";
 
-/* ======================================================
-   CONSTANTS
-====================================================== */
+/* ====================================================== */
 const TABS = ["basic", "documents"];
+/* ====================================================== */
 
-/* ======================================================
-   COMPONENT
-====================================================== */
 const VehicleFormModal = ({
   isOpen,
   onClose,
-  mode = "create", // create | edit | view
+  mode = "create",
   vehicleData = null,
   onSubmitSuccess,
 }) => {
@@ -64,7 +64,13 @@ const VehicleFormModal = ({
   const [formData, setFormData] = useState(defaultVehicleFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  /* ================= VENDOR ID (SINGLE SOURCE OF TRUTH) ================= */
+  /* ===== Document view / download state ===== */
+  const [previewDoc, setPreviewDoc] = useState(null);
+  const [previewContentType, setPreviewContentType] = useState(null);
+  const [loadingDocs, setLoadingDocs] = useState({});
+  const [error, setError] = useState(null);
+
+  /* ================= VENDOR ================= */
   const vendorIdFromUser =
     user?.vendor_user?.vendor_id || user?.vendor_id || null;
 
@@ -83,7 +89,6 @@ const VehicleFormModal = ({
     } else if ((mode === "edit" || mode === "view") && vehicleData) {
       setFormData(transformVehicleApiToFormData(vehicleData));
     }
-
     setActiveTab("basic");
   }, [mode, vehicleData, isVendorUser]);
 
@@ -126,18 +131,46 @@ const VehicleFormModal = ({
   );
 
   /* ================= HANDLERS ================= */
-  const handleChange = (field, value) => {
+  const handleChange = (field, value) =>
     setFormData((p) => ({ ...p, [field]: value }));
+
+  const handleFileChange = (field, file) =>
+    setFormData((p) => ({ ...p, [field]: file }));
+
+  /* ===== Secure VIEW ===== */
+  const handleViewFile = (file) => {
+    viewFile({
+      file,
+      apiClient: API_CLIENT,
+      apiUrlPrefix: "/v1/vehicles",
+      setPreviewDoc,
+      setPreviewContentType,
+      setError,
+      setLoading: (v) =>
+        file?.path &&
+        setLoadingDocs((p) => ({ ...p, [file.path]: v })),
+    });
   };
 
-  const handleFileChange = (field, file) => {
-    setFormData((p) => ({ ...p, [field]: file }));
+  /* ===== Secure DOWNLOAD ===== */
+  const handleDownloadFile = (file, filename) => {
+    downloadFile({
+      file,
+      filename,
+      apiClient: API_CLIENT,
+      apiUrlPrefix: "/v1/vehicles",
+      setError,
+      setLoading: (v) =>
+        file?.path &&
+        setLoadingDocs((p) => ({ ...p, [file.path]: v })),
+    });
   };
 
   /* ================= DOCUMENT CARD ================= */
   const renderDocumentCard = (doc) => {
     const file = formData[doc.fileKey];
     const Icon = doc.icon;
+    const isLoading = file?.path && loadingDocs[file.path];
 
     return (
       <div key={doc.id} className="border rounded-lg p-4">
@@ -157,31 +190,28 @@ const VehicleFormModal = ({
 
         {file ? (
           <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
-            <span className="text-xs truncate">
+            <span className="text-xs truncate flex items-center gap-2">
+              <FileText className="w-4 h-4 text-gray-400" />
               {file instanceof File ? file.name : file.name}
+              {isLoading && (
+                <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
+              )}
             </span>
+
             <div className="flex gap-1">
-              <button
-                type="button"
-                onClick={() =>
-                  file instanceof File
-                    ? window.open(URL.createObjectURL(file))
-                    : window.open(file.path, "_blank")
-                }
-              >
+              <button type="button" onClick={() => handleViewFile(file)}>
                 <Eye className="w-4 h-4 text-blue-600" />
               </button>
+
               <button
                 type="button"
                 onClick={() =>
-                  downloadFile(
-                    file instanceof File ? file : file.path,
-                    file.name
-                  )
+                  handleDownloadFile(file, file.name || "document")
                 }
               >
                 <Download className="w-4 h-4 text-green-600" />
               </button>
+
               {!isReadOnly && (
                 <button
                   onClick={() =>
@@ -201,6 +231,7 @@ const VehicleFormModal = ({
               <input
                 type="file"
                 hidden
+                accept=".pdf,.jpg,.jpeg,.png"
                 onChange={(e) =>
                   handleFileChange(doc.fileKey, e.target.files[0])
                 }
@@ -219,12 +250,14 @@ const VehicleFormModal = ({
 
     try {
       if (mode === "create") {
-        const payload = buildVehicleFormData({
-          ...formData,
-          ...(isVendorUser ? {} : { vendor_id: formData.vendor_id }),
-        });
-
-        await dispatch(createVehicleThunk(payload)).unwrap();
+        await dispatch(
+          createVehicleThunk(
+            buildVehicleFormData({
+              ...formData,
+              ...(isVendorUser ? {} : { vendor_id: formData.vendor_id }),
+            })
+          )
+        ).unwrap();
         toast.success("Vehicle created successfully");
       } else {
         await dispatch(
@@ -327,7 +360,6 @@ const VehicleFormModal = ({
                   </div>
                 )}
 
-                {/* Vehicle Type */}
                 <div>
                   <label className="text-xs font-medium">Vehicle Type *</label>
                   <Select
@@ -342,7 +374,6 @@ const VehicleFormModal = ({
                   />
                 </div>
 
-                {/* Driver */}
                 <div>
                   <label className="text-xs font-medium">Driver *</label>
                   <Select
@@ -355,7 +386,6 @@ const VehicleFormModal = ({
                   />
                 </div>
 
-                {/* RC Number */}
                 <div>
                   <label className="text-xs font-medium">RC Number *</label>
                   <input
@@ -368,7 +398,6 @@ const VehicleFormModal = ({
                   />
                 </div>
 
-                {/* RC Expiry */}
                 <div>
                   <label className="text-xs font-medium">
                     RC Expiry Date *
@@ -384,7 +413,6 @@ const VehicleFormModal = ({
                   />
                 </div>
 
-                {/* Description */}
                 <div className="col-span-3">
                   <label className="text-xs font-medium">Description</label>
                   <textarea
@@ -398,7 +426,6 @@ const VehicleFormModal = ({
                   />
                 </div>
 
-                {/* Active */}
                 <div className="col-span-3 flex items-center">
                   <label className="flex items-center gap-2 text-sm">
                     <input
@@ -441,6 +468,42 @@ const VehicleFormModal = ({
           </form>
         </div>
       </div>
+
+      {/* ===== PREVIEW MODAL ===== */}
+      {previewDoc && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col">
+            <div className="p-4 border-b flex justify-between">
+              <h3 className="text-lg font-semibold">Document Preview</h3>
+              <button
+                onClick={() => {
+                  if (previewDoc.startsWith("blob:")) {
+                    URL.revokeObjectURL(previewDoc);
+                  }
+                  setPreviewDoc(null);
+                  setPreviewContentType(null);
+                }}
+              >
+                <X />
+              </button>
+            </div>
+
+            <div className="flex-1 p-4 overflow-auto">
+              {previewContentType?.includes("pdf") ? (
+                <iframe src={previewDoc} className="w-full h-[600px]" />
+              ) : previewContentType?.includes("image") ? (
+                <img
+                  src={previewDoc}
+                  className="w-full object-contain"
+                  alt="Preview"
+                />
+              ) : (
+                <iframe src={previewDoc} className="w-full h-[600px]" />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
