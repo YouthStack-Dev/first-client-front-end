@@ -27,7 +27,6 @@ import {
 } from "../../redux/features/manageDriver/driverThunks";
 import { useDispatch } from "react-redux";
 import { logDebug } from "../../utils/logger";
-import { useVendorOptions } from "../../hooks/useVendorOptions";
 import { getTomorrowDate } from "../../validations/core/helpers";
 
 const DriverFormModal = ({
@@ -36,7 +35,8 @@ const DriverFormModal = ({
   mode = "create", // create, edit, view
   driverData = null,
   onSubmitSuccess,
-  vendor,
+  userType,
+  vendors,
 }) => {
   const [formData, setFormData] = useState(defaultFormData);
   const [activeTab, setActiveTab] = useState("personal");
@@ -47,6 +47,7 @@ const DriverFormModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useDispatch();
 
+  logDebug(" this are the vendor from the parrent in driver form ", vendors);
   // Initialize form data when mode or driverData changes
   useEffect(() => {
     if (mode === "create") {
@@ -561,6 +562,7 @@ const DriverFormModal = ({
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">
+                      {/* Date of Birth */}
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
                           Date of Birth *
@@ -575,6 +577,8 @@ const DriverFormModal = ({
                           className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
                         />
                       </div>
+
+                      {/* Date of Joining */}
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
                           Date of Joining *
@@ -589,36 +593,41 @@ const DriverFormModal = ({
                           className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
                         />
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
-                          Vendor *
-                        </label>
-                        {isReadOnly ? (
-                          <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded border border-gray-300">
-                            <Building className="w-4 h-4 text-gray-500" />
-                            <span className="text-sm">
-                              {formData.vendor_id
-                                ? getVendorNameById(formData.vendor_id)
-                                : "No vendor assigned"}
-                            </span>
-                          </div>
-                        ) : (
-                          <select
-                            name="vendor_id"
-                            value={formData.vendor_id || ""}
-                            onChange={handleInputChange}
-                            required
-                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          >
-                            <option value="">Select Vendor</option>
-                            {vendors.map((vendor) => (
-                              <option key={vendor.value} value={vendor.value}>
-                                {vendor.label}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      </div>
+
+                      {/* Vendor – show only if userType is NOT vendor */}
+                      {userType !== "vendor" && (
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            Vendor *
+                          </label>
+
+                          {isReadOnly ? (
+                            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded border border-gray-300">
+                              <Building className="w-4 h-4 text-gray-500" />
+                              <span className="text-sm">
+                                {formData.vendor_id
+                                  ? getVendorNameById(formData.vendor_id)
+                                  : "No vendor assigned"}
+                              </span>
+                            </div>
+                          ) : (
+                            <select
+                              name="vendor_id"
+                              value={formData.vendor_id || ""}
+                              onChange={handleInputChange}
+                              required
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="">Select Vendor</option>
+                              {vendors?.map((vendor) => (
+                                <option key={vendor.value} value={vendor.value}>
+                                  {vendor.label}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Address */}

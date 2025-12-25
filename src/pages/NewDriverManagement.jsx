@@ -65,6 +65,7 @@ const NewDriverManagement = () => {
 
   const vendors = useVendorOptions(null, !isVendorUser);
 
+  logDebug(" thi are the vendors in driver management ", vendors);
   // ----------------------------
   // Search Debouncing with Minimum Character Requirement
   // ----------------------------
@@ -560,8 +561,8 @@ const NewDriverManagement = () => {
         mode={modalMode}
         driverData={selectedDriver}
         onSubmitSuccess={handleSubmitSuccess}
-        vendorId={isVendorUser ? user.vendor_id : selectedVendor?.value}
-        vendor={vendors}
+        userType={user?.type}
+        vendors={vendors}
       />
 
       {/* Audit History Modal */}
