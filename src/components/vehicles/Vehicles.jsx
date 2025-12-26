@@ -91,7 +91,7 @@ const NewVehicleManagement = () => {
 
     // 🔍 Debounced search
     if (debouncedSearchTerm.trim()) {
-      params.search = debouncedSearchTerm.trim();
+      params.rc_number = debouncedSearchTerm.trim();
     }
 
     // 🔄 Status mapping
