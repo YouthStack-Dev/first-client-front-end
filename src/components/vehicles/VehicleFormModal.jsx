@@ -45,6 +45,64 @@ import {
 const TABS = ["basic", "documents"];
 /* ====================================================== */
 
+
+/* ===== DATE VALIDATION ===== */
+const isFutureDate = (value) => {
+  if (!value) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return new Date(value) > today;
+};
+
+/* ===== FORM VALIDATION ===== */
+const validateVehicleForm = ({ formData, isVendorUser, mode }) => {
+  if (!isVendorUser && !formData.vendor_id) {
+    return "Vendor is required";
+  }
+
+  if (!formData.vehicle_type_id) {
+    return "Vehicle type is required";
+  }
+
+  if (!formData.driver_id) {
+    return "Driver is required";
+  }
+
+  if (!formData.rc_number || formData.rc_number.trim().length < 4) {
+    return "RC number is required";
+  }
+
+  if (!formData.rc_expiry_date) {
+    return "RC expiry date is required";
+  }
+
+  if (!isFutureDate(formData.rc_expiry_date)) {
+    return "RC expiry date must be in the future";
+  }
+
+  if (mode === "create") {
+    for (const doc of vehicleDocuments) {
+      const file = formData[doc.fileKey];
+      const expiry = formData[doc.expiryKey];
+
+      if (!file) {
+        return `${doc.label} file is required`;
+      }
+
+      if (!expiry) {
+        return `${doc.label} expiry date is required`;
+      }
+
+      if (!isFutureDate(expiry)) {
+        return `${doc.label} expiry date must be in the future`;
+      }
+    }
+  }
+
+  return null;
+};
+
+
 const VehicleFormModal = ({
   isOpen,
   onClose,
@@ -246,6 +304,18 @@ const VehicleFormModal = ({
   /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+     const validationError = validateVehicleForm({
+      formData,
+      isVendorUser,
+      mode,
+    });
+
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {

@@ -140,13 +140,13 @@ const vehicleSlice = createSlice({
          TOGGLE VEHICLE STATUS
       ====================================================== */
       .addCase(toggleVehicleStatus.pending, (state) => {
-        state.loading = true;
+        // state.loading = true;
         state.error = null;
       })
 
       .addCase(toggleVehicleStatus.fulfilled, (state, action) => {
         state.loading = false;
-        const updatedVehicle = action.payload?.vehicle;
+        const updatedVehicle = action.payload;
 
         if (updatedVehicle?.vehicle_id) {
           vehiclesAdapter.upsertOne(state, updatedVehicle);

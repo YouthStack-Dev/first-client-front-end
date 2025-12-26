@@ -195,6 +195,13 @@ const NewVehicleManagement = () => {
                 onChange={setSelectedVendor}
                 placeholder="Select vendor..."
                 isClearable
+                menuPortalTarget={document.body}
+                styles={{
+                  menuPortal: (base) => ({
+                    ...base,
+                    zIndex: 9999,
+                  }),
+                }}
               />
             )}
 
@@ -223,34 +230,34 @@ const NewVehicleManagement = () => {
 
       {/* LIST */}
       {!shouldShowNoVendorMessage && (
-        <>
-          {loading ? (
-            <div className="mt-6 text-center">Loading vehicles...</div>
-          ) : (
-            <NewVehicleList
-              vehicles={vehicles}
-              onEdit={(v) => {
-                setSelectedVehicle(v);
-                setModalMode("edit");
-                setIsModalOpen(true);
-              }}
-              onView={(v) => {
-                setSelectedVehicle(v);
-                setModalMode("view");
-                setIsModalOpen(true);
-              }}
-              onStatusToggle={handleToggle}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              itemsPerPage={itemsPerPage}
-              onPageChange={setCurrentPage}
-              onItemsPerPageChange={setItemsPerPage}
-              showPagination
-            />
-          )}
-        </>
-      )}
+          <div className="mt-4"> {/* ✅ isolated list section */}
+            {loading ? (
+              <div className="py-6 text-center">Loading vehicles...</div>
+            ) : (
+              <NewVehicleList
+                vehicles={vehicles}
+                onEdit={(v) => {
+                  setSelectedVehicle(v);
+                  setModalMode("edit");
+                  setIsModalOpen(true);
+                }}
+                onView={(v) => {
+                  setSelectedVehicle(v);
+                  setModalMode("view");
+                  setIsModalOpen(true);
+                }}
+                onStatusToggle={handleToggle}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={setItemsPerPage}
+                showPagination
+              />
+            )}
+          </div>
+        )}
 
       {/* MODAL */}
       <VehicleFormModal
@@ -259,7 +266,8 @@ const NewVehicleManagement = () => {
         mode={modalMode}
         vehicleData={selectedVehicle}
         onSubmitSuccess={() => {
-          toast.success("Vehicle saved successfully");
+           setIsModalOpen(false);
+          // toast.success("Vehicle saved successfully");
         }}
       />
     </div>
