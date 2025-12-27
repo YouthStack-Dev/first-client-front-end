@@ -484,6 +484,9 @@ export const formatBackendError = (err) => {
 //  OLD DATA
 
 export const fieldMapping = {
+  // Vendor (hidden field)
+  vendorId: "vendor_id",
+
   // Personal / basic info
   name: "name",
   code: "code",

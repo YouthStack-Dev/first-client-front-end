@@ -1,96 +1,169 @@
-// src/utils/vehicleTransform.js
+import { FileText, Shield, Briefcase } from "lucide-react";
 
-/**
- * Vehicle data transformer for backend ↔ frontend
- * Ensures all required fields are appended properly, even if empty
- */
+/* ======================================================
+   DEFAULT FORM STATE
+====================================================== */
+export const defaultVehicleFormData = {
+  vehicle_id: null,
+  vendor_id: "",
+  vehicle_type_id: "",
+  driver_id: "",
+  rc_number: "",
+  description: "",
+  rc_expiry_date: "",
 
-// -------- FRONTEND → BACKEND --------
-export const transformFormDataToBackend = (formData) => {
-  if (!formData) return null;
+  insurance_expiry_date: "",
+  permit_expiry_date: "",
+  puc_expiry_date: "",
+  fitness_expiry_date: "",
+  tax_receipt_date: "",
 
-  const backendData = new FormData();
+  insurance_file: null,
+  permit_file: null,
+  puc_file: null,
+  fitness_file: null,
+  tax_receipt_file: null,
 
-  // ✅ All required text/date/boolean fields
-  const fieldMap = {
-    vendor_id: "vendor_id",
-    vehicle_type_id: "vehicle_type_id",
-    rc_number: "rc_number",
-    driver_id: "driver_id",
-    description: "description",
-    rc_expiry_date: "rc_expiry_date",
-    puc_expiry_date: "puc_expiry_date",
-    fitness_expiry_date: "fitness_expiry_date",
-    tax_receipt_date: "tax_receipt_date",
-    insurance_expiry_date: "insurance_expiry_date",
-    permit_expiry_date: "permit_expiry_date",
-    is_active: "is_active",
+  is_active: true,
+};
+
+/* ======================================================
+   DOCUMENT CONFIG (LIKE DRIVER)
+====================================================== */
+export const vehicleDocuments = [
+  {
+    id: "insurance",
+    label: "Insurance",
+    fileKey: "insurance_file",
+    expiryKey: "insurance_expiry_date",
+    icon: Shield,
+    color: "blue",
+    urlKey: "insurance_url",
+  },
+  {
+    id: "permit",
+    label: "Permit",
+    fileKey: "permit_file",
+    expiryKey: "permit_expiry_date",
+    icon: FileText,
+    color: "purple",
+    urlKey: "permit_url",
+  },
+  {
+    id: "puc",
+    label: "PUC Certificate",
+    fileKey: "puc_file",
+    expiryKey: "puc_expiry_date",
+    icon: Briefcase,
+    color: "green",
+    urlKey: "puc_url",
+  },
+  {
+    id: "fitness",
+    label: "Fitness Certificate",
+    fileKey: "fitness_file",
+    expiryKey: "fitness_expiry_date",
+    icon: Briefcase,
+    color: "orange",
+    urlKey: "fitness_url",
+  },
+  {
+    id: "tax_receipt",
+    label: "Tax Receipt",
+    fileKey: "tax_receipt_file",
+    expiryKey: "tax_receipt_date",
+    icon: FileText,
+    color: "red",
+    urlKey: "tax_receipt_url",
+  },
+];
+
+/* ======================================================
+   BACKEND → FRONTEND
+====================================================== */
+export const transformVehicleApiToFormData = (apiData) => {
+  if (!apiData) return { ...defaultVehicleFormData };
+
+  const formData = {
+    ...defaultVehicleFormData,
+    vehicle_id: apiData.vehicle_id,
+    vendor_id: apiData.vendor_id,
+    vehicle_type_id: apiData.vehicle_type_id,
+    driver_id: apiData.driver_id,
+    rc_number: apiData.rc_number,
+    description: apiData.description || "",
+    rc_expiry_date: apiData.rc_expiry_date || "",
+    insurance_expiry_date: apiData.insurance_expiry_date || "",
+    permit_expiry_date: apiData.permit_expiry_date || "",
+    puc_expiry_date: apiData.puc_expiry_date || "",
+    fitness_expiry_date: apiData.fitness_expiry_date || "",
+    tax_receipt_date: apiData.tax_receipt_date || "",
+    is_active: apiData.is_active ?? true,
   };
 
-  // Append every field (even if empty string)
-  Object.entries(fieldMap).forEach(([frontendKey, backendKey]) => {
-    const value =
-      formData[frontendKey] !== undefined && formData[frontendKey] !== null
-        ? formData[frontendKey]
-        : "";
-    backendData.append(backendKey, value);
+  vehicleDocuments.forEach((doc) => {
+    const url = apiData[doc.urlKey];
+    formData[doc.fileKey] = url
+      ? { path: url, name: url.split("/").pop() }
+      : null;
   });
 
-  // ✅ File fields (required by backend even if null)
-  const fileFields = [
-    "puc_file",
-    "fitness_file",
-    "tax_receipt_file",
-    "insurance_file",
-    "permit_file",
-  ];
+  return formData;
+};
 
-  fileFields.forEach((field) => {
-    const file = formData[field];
-    if (file instanceof File) {
-      backendData.append(field, file);
-    } else {
-      // append empty value if no file selected
-      backendData.append(field, "");
+/* ======================================================
+   FRONTEND → BACKEND (CREATE)
+====================================================== */
+export const buildVehicleFormData = (formData) => {
+   console.log("🧾 Raw formData before building FormData:", formData);
+  const fd = new FormData();
+
+  const textFields = {
+    vendor_id: formData.vendor_id,
+    vehicle_type_id: formData.vehicle_type_id,
+    driver_id: formData.driver_id,
+    rc_number: formData.rc_number,
+    description: formData.description,
+    rc_expiry_date: formData.rc_expiry_date,
+    insurance_expiry_date: formData.insurance_expiry_date,
+    permit_expiry_date: formData.permit_expiry_date,
+    puc_expiry_date: formData.puc_expiry_date,
+    fitness_expiry_date: formData.fitness_expiry_date,
+    tax_receipt_date: formData.tax_receipt_date,
+    is_active: formData.is_active,
+  };
+
+  Object.entries(textFields).forEach(([k, v]) => {
+    if (v !== null && v !== undefined) {
+      fd.append(k, v);
     }
   });
 
-  return backendData;
+  vehicleDocuments.forEach((doc) => {
+    const file = formData[doc.fileKey];
+    if (file instanceof File) {
+      fd.append(doc.fileKey, file);
+    }
+  });
+
+  return fd;
 };
 
-// -------- BACKEND → FRONTEND --------
-export const transformBackendToFormData = (backendData) => {
-  if (!backendData) return {};
-
-  const transformed = {
-    vehicle_id: backendData.vehicle_id || "",
-    vendor_id: backendData.vendor_id || "",
-    vehicle_type_id: backendData.vehicle_type_id || "",
-    driver_id: backendData.driver_id || "",
-    rc_number: backendData.rc_number || "",
-    description: backendData.description || "",
-    rc_expiry_date: backendData.rc_expiry_date || "",
-    puc_expiry_date: backendData.puc_expiry_date || "",
-    fitness_expiry_date: backendData.fitness_expiry_date || "",
-    tax_receipt_date: backendData.tax_receipt_date || "",
-    insurance_expiry_date: backendData.insurance_expiry_date || "",
-    permit_expiry_date: backendData.permit_expiry_date || "",
-    is_active: backendData.is_active ?? true,
-
-    // ✅ Backend file URLs for preview/download
-    puc_url: backendData.puc_url || "",
-    fitness_url: backendData.fitness_url || "",
-    tax_receipt_url: backendData.tax_receipt_url || "",
-    insurance_url: backendData.insurance_url || "",
-    permit_url: backendData.permit_url || "",
-
-    // ✅ Initialize file upload fields
-    puc_file: null,
-    fitness_file: null,
-    tax_receipt_file: null,
-    insurance_file: null,
-    permit_file: null,
-  };
-
-  return transformed;
-};
+/* ======================================================
+   FRONTEND → BACKEND (UPDATE)
+====================================================== */
+export const buildVehicleUpdateData = (formData) => ({
+  vehicle_id: formData.vehicle_id,
+  vendor_id: formData.vendor_id,
+  vehicle_type_id: formData.vehicle_type_id,
+  driver_id: formData.driver_id,
+  rc_number: formData.rc_number,
+  description: formData.description,
+  rc_expiry_date: formData.rc_expiry_date,
+  insurance_expiry_date: formData.insurance_expiry_date,
+  permit_expiry_date: formData.permit_expiry_date,
+  puc_expiry_date: formData.puc_expiry_date,
+  fitness_expiry_date: formData.fitness_expiry_date,
+  tax_receipt_date: formData.tax_receipt_date,
+  is_active: formData.is_active,
+});

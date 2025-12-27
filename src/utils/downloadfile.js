@@ -11,6 +11,7 @@ const getCookie = (name) => {
   return match ? match[2] : null;
 };
 
+
 /**
  * Universal File Downloader
  *
@@ -36,6 +37,7 @@ export const downloadFile = async (
     return;
   }
 
+  
   try {
     // ✅ Use environment API base URL if available
     const baseURL =

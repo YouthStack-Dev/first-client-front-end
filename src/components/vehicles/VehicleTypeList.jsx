@@ -1,83 +1,123 @@
-import PropTypes from "prop-types";
+import { Eye, Edit } from "lucide-react";
+import ReusableButton from "../ui/ReusableButton";
+import ReusableToggleButton from "../ui/ReusableToggleButton";
+import { ReusablePagination } from "../ui/ReusablePagination";
+
+const MODULE = "vehicle-type";
 
 const VehicleTypeList = ({
-  items = [],
-  headers = [],
-  loading = false,
-  onEdit = () => {},
-  onDelete = () => {},
-  emptyMessage = "No vehicle types found",
-  className = "",
-}) => {
-  if (loading) {
-    return (
-      <div className={`flex justify-center items-center p-8 ${className}`}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  vehicleTypes = [],
+  onView,
+  onEdit,
+  onStatusToggle,
 
-  if (items.length === 0) {
-    return (
-      <div className={`text-center py-8 text-gray-500 ${className}`}>
-        {emptyMessage}
-      </div>
-    );
-  }
+  // pagination props (same as driver)
+  showPagination = false,
+  currentPage = 1,
+  totalPages = 1,
+  totalItems = 0,
+  itemsPerPage = 10,
+  onPageChange,
+  onItemsPerPageChange,
+}) => {
+  const startIndex =
+    showPagination && currentPage
+      ? (currentPage - 1) * itemsPerPage
+      : 0;
 
   return (
-    <div className={`overflow-x-auto bg-white rounded-lg shadow ${className}`}>
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            {headers.map((header) => (
-              <th
-                key={header.key}
-                className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                  header.className || ""
-                }`}
-              >
-                {header.label}
-              </th>
-            ))}
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {items.map((item) => (
-            <tr key={item.id} className="hover:bg-gray-50">
-              {headers.map((header) => (
-                <td
-                  key={`${item.id}-${header.key}`}
-                  className={`px-6 py-4 whitespace-nowrap text-sm ${
-                    header.className || ""
-                  }`}
-                >
-                  {header.render
-                    ? header.render(item)
-                    : item[header.key] || "-"}
-                </td>
-              ))}
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button
-                  onClick={() => onEdit(item)}
-                  className="text-blue-600 hover:text-blue-900 mr-4"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => onDelete(item)}
-                  className="text-red-600 hover:text-red-900"
-                >
-                  Delete
-                </button>
-              </td>
+    <div className="rounded-lg overflow-hidden shadow-sm mt-2 bg-blue-50">
+      {/* TABLE */}
+      <div className="overflow-auto h-[500px]">
+        <table className="min-w-full border-collapse">
+          <thead className="bg-gray-50 border-b sticky top-0">
+            <tr className="text-gray-600">
+              <th className="px-4 py-3 text-left">S No.</th>
+              <th className="px-4 py-3 text-left">Vehicle Type</th>
+              <th className="px-4 py-3 text-left">Description</th>
+              <th className="px-4 py-3 text-center">Seats</th>
+              <th className="px-4 py-3 text-center">Status</th>
+              <th className="px-4 py-3 text-center">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {vehicleTypes.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="p-4 text-center text-gray-500">
+                  No vehicle types found
+                </td>
+              </tr>
+            ) : (
+              vehicleTypes.map((vt, index) => (
+                <tr
+                  key={vt.vehicle_type_id}
+                  className="border-b hover:bg-gray-50 transition"
+                >
+                  <td className="px-4 py-3 text-sm">
+                    {startIndex + index + 1}
+                  </td>
+
+                  <td className="px-4 py-3 text-sm font-medium">
+                    {vt.name}
+                  </td>
+
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {vt.description || "—"}
+                  </td>
+
+                  <td className="px-4 py-3 text-sm text-center">
+                    {vt.seats ?? "—"}
+                  </td>
+
+                  <td className="px-4 py-3 text-center">
+                    <ReusableToggleButton
+                      module={MODULE}
+                      action="update"
+                      isChecked={vt.is_active}
+                      onToggle={() => onStatusToggle(vt)}
+                      size="small"
+                    />
+                  </td>
+
+                  <td className="px-4 py-3">
+                    <div className="flex justify-center gap-2">
+                      <ReusableButton
+                        module={MODULE}
+                        action="read"
+                        icon={Eye}
+                        title="View"
+                        onClick={() => onView(vt)}
+                        className="p-1"
+                      />
+                      <ReusableButton
+                        module={MODULE}
+                        action="update"
+                        icon={Edit}
+                        title="Edit"
+                        onClick={() => onEdit(vt)}
+                        className="p-1"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* PAGINATION – SAME AS DRIVER */}
+      {showPagination && vehicleTypes.length > 0 && (
+        <ReusablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={onPageChange}
+          onItemsPerPageChange={onItemsPerPageChange}
+        />
+      )}
     </div>
   );
 };

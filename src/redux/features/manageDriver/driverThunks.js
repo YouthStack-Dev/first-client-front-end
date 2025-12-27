@@ -1,20 +1,30 @@
-// src/redux/features/manageDrivers/driverThunks.js
+// src/redux/features/manageDriver/driverThunks.js
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { API_CLIENT } from "../../../Api/API_Client";
 
 // Fetch all drivers
 export const fetchDriversThunk = createAsyncThunk(
   "drivers/fetchAll",
-  async (_, { rejectWithValue }) => {
+  async (vendorId = undefined, { getState, rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.get("/v1/drivers/vendor");
+      // If caller did not provide vendorId, try to derive from current user
+      let vid = vendorId;
+      if (!vid) {
+        const state = getState();
+        vid = state?.auth?.user?.vendor_user?.vendor_id;
+      }
+
+      if (!vid) {
+        // Avoid calling the vendor endpoint without a vendor_id which results in 400
+        return rejectWithValue({ message: "vendor_id is required to fetch drivers" });
+      }
+
+      const response = await API_CLIENT.get(`/v1/drivers/vendor?vendor_id=${vid}`);
 
       if (response?.data?.success) {
         return response.data.data.items;
       } else {
-        return rejectWithValue(
-          response.data.message || "Failed to fetch drivers"
-        );
+        return rejectWithValue(response.data.message || "Failed to fetch drivers");
       }
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -24,18 +34,16 @@ export const fetchDriversThunk = createAsyncThunk(
 
 // --- Thunk for creating a driver ---
 export const createDriverThunk = createAsyncThunk(
-  "driver/createDriver",
+  'driver/createDriver',
   async (formData, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.post("/v1/drivers/create", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const response = await API_CLIENT.post('/v1/drivers/create', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data.data.driver; // Return driver object
     } catch (error) {
       console.error(error);
-      return rejectWithValue(
-        error.response?.data || { message: "Something went wrong" }
-      );
+      return rejectWithValue(error.response?.data || { message: 'Something went wrong' });
     }
   }
 );
@@ -43,30 +51,22 @@ export const createDriverThunk = createAsyncThunk(
 /**
  * Update an existing driver
  */
-
 export const updateDriverThunk = createAsyncThunk(
   "driver/updateDriver",
   async ({ driverId, formData }, { rejectWithValue }) => {
     try {
       const response = await API_CLIENT.put(
-        `/v1/drivers/update?driver_id=${driverId}`, // ✅ no trailing slash needed
+        `/v1/drivers/update?driver_id=${driverId}`,
         formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         }
       );
-      // ✅ Assuming backend returns something like { data: { driver: {...} } }
-      return response.data?.data?.driver || response.data;
-    } catch (error) {
-      console.error("❌ Error updating driver:", error);
 
-      return rejectWithValue(
-        error.response?.data || {
-          message: "Something went wrong while updating the driver.",
-        }
-      );
+      return response?.data?.data?.driver || response?.data;
+    } catch (err) {
+      console.error("Error updating driver:", err?.response?.data || err);
+      return rejectWithValue(err?.response?.data || { message: "Something went wrong while updating the driver." });
     }
   }
 );
@@ -84,10 +84,8 @@ export const toggleDriverStatusThunk = createAsyncThunk(
       // Return the driver object from response.data.data
       return response.data.data;
     } catch (error) {
-      console.error("[Thunk] Failed to toggle driver status:", error);
-      return rejectWithValue(
-        error.response?.data || { message: "Something went wrong" }
-      );
+      console.error('[Thunk] Failed to toggle driver status:', error);
+      return rejectWithValue(error.response?.data || { message: 'Something went wrong' });
     }
   }
 );
@@ -101,12 +99,11 @@ export const fetchDriversByVendorThunk = createAsyncThunk(
 
       return {
         vendorId,
-        items: response.data?.data?.items || [],
+        items: response.data?.data?.items || []
       };
+
     } catch (err) {
-      return rejectWithValue(
-        err.response?.data || "Failed to fetch vendor drivers"
-      );
+      return rejectWithValue(err.response?.data || "Failed to fetch vendor drivers");
     }
   }
 );

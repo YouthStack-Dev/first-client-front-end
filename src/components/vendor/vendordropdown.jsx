@@ -35,6 +35,7 @@ const VendorSelector = ({ onChange }) => {
   const selectedVendor = useSelector((state) => state.vendor.selectedVendor);
   const loading = useSelector((state) => state.vendor.loading);
 
+
   // Fetch vendors if not cached
   useEffect(() => {
     if (userType === "employee" && tenantId) {
@@ -72,13 +73,6 @@ const VendorSelector = ({ onChange }) => {
   const handleChange = (e) => {
     const value = e.target.value;
 
-    if (value === "all") {
-      const allVendorOption = { vendor_id: "all", name: "All Vendors" };
-      dispatch(setSelectedVendor(allVendorOption));
-      onChange?.(allVendorOption);
-      return;
-    }
-
     const vendor = vendorsByTenant.find(
       (v) => String(v.vendor_id) === String(value)
     );
@@ -97,11 +91,13 @@ const VendorSelector = ({ onChange }) => {
         <p className="text-gray-500 text-sm">Loading vendors...</p>
       ) : (
         <select
-          value={selectedVendor?.vendor_id || "all"}
+          value={selectedVendor?.vendor_id || ""}
           onChange={handleChange}
           className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full sm:w-auto"
         >
-          <option value="all">All Vendors</option>
+          <option value="" disabled>
+            Select a vendor
+          </option>
           {vendorsByTenant.map((v) => (
             <option key={v.vendor_id} value={v.vendor_id}>
               {v.name}

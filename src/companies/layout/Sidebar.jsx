@@ -8,6 +8,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 import { getFilteredSidebar } from "./sidebarConfig";
 import { logout } from "../../redux/features/auth/authSlice";
 
+
 // Skeleton Loading Components using react-loading-skeleton
 const SkeletonMenuItem = ({ isOpen }) => (
   <div className="px-4 py-2.5 rounded-sidebar">
@@ -86,6 +87,27 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
       setSidebarConfig(filteredConfig);
     }
   }, [permissions]);
+
+
+// useEffect(() => {
+//   // 1) Try from Redux
+//   if (authUser?.tenant?.name) {
+//     setCompanyName(authUser.tenant.name);
+//     return;
+//   }
+
+//   // 2) Fallback: from sessionStorage.userPermissions.user.tenant
+//   const stored = sessionStorage.getItem("userPermissions");
+//   if (stored) {
+//     const parsed = JSON.parse(stored);
+
+//     const nameFromUserTenant = parsed?.user?.tenant?.name;
+//     const idFromUserTenant = parsed?.user?.tenant?.tenant_id || parsed?.user?.tenant_id;
+
+//     setCompanyName(nameFromUserTenant || idFromUserTenant || "");
+//   }
+// }, [authUser]);
+
 
   const handleLogout = () => {
     dispatch(logout());
