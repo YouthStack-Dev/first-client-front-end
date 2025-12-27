@@ -1,8 +1,23 @@
+import React from "react";
 import { Eye, Edit } from "lucide-react";
 import ReusableButton from "../ui/ReusableButton";
 import ReusableToggleButton from "../ui/ReusableToggleButton";
+import { ReusablePagination } from "../ui/ReusablePagination";
 
-export const DriverList = ({ drivers, onEdit, onView, onStatusToggle }) => {
+export const DriverList = ({
+  drivers,
+  onEdit,
+  onView,
+  onStatusToggle,
+  currentPage,
+  totalPages,
+  totalItems,
+  itemsPerPage,
+  onPageChange,
+  onItemsPerPageChange,
+  showPagination = false,
+  paginationClassName = "",
+}) => {
   const DriverTableHeaders = [
     { key: "s_no", label: "S No." },
     { key: "name", label: "Name" },
@@ -13,6 +28,32 @@ export const DriverList = ({ drivers, onEdit, onView, onStatusToggle }) => {
     { key: "status", label: "Status" },
     { key: "actions", label: "Actions" },
   ];
+
+  // Read permissions from sessionStorage (keeps same logic as ReusableButton)
+  const getPermissions = () => {
+    const userPermissions = sessionStorage.getItem("userPermissions");
+    if (userPermissions) {
+      try {
+        const { permissions } = JSON.parse(userPermissions) || [];
+        return permissions || [];
+      } catch (error) {
+        console.error("Error parsing user permissions:", error);
+        return [];
+      }
+    }
+    return [];
+  };
+
+  const permissions = getPermissions();
+
+  const hasActionPermission = (module, action) => {
+    const modulePermission = permissions.find((p) => p.module === module);
+    return !!modulePermission && Array.isArray(modulePermission.action) && modulePermission.action.includes(action);
+  };
+
+  const canRead = hasActionPermission("driver", "read");
+  const canUpdate = hasActionPermission("driver", "update");
+  const showActions = canRead || canUpdate;
 
   const getDriverStatus = (driver) => driver.is_active ?? false;
 
@@ -32,8 +73,14 @@ export const DriverList = ({ drivers, onEdit, onView, onStatusToggle }) => {
     keyPath.split(".").reduce((acc, key) => acc?.[key], obj) ?? "—";
 
   const visibleHeaders = DriverTableHeaders.filter(
-    (h) => h.key !== "documentsUploaded"
+    (h) => h.key !== "documentsUploaded" && (h.key !== "actions" || showActions)
   );
+
+  // Calculate starting index for serial numbers when pagination is enabled
+  const startIndex =
+    showPagination && currentPage
+      ? (currentPage - 1) * (itemsPerPage || 10)
+      : 0;
 
   return (
     <div className="rounded-lg overflow-hidden shadow-sm mt-2 bg-blue-50">
@@ -81,36 +128,47 @@ export const DriverList = ({ drivers, onEdit, onView, onStatusToggle }) => {
                       }`}
                     >
                       {header.key === "s_no" ? (
-                        index + 1
+                        // Calculate serial number based on current page if pagination is enabled
+                        showPagination ? startIndex + index + 1 : index + 1
                       ) : header.key === "status" ? (
-                        <ReusableToggleButton
-                          module="driver"
-                          action="update"
-                          isChecked={getDriverStatus(driver)}
-                          onToggle={() => onStatusToggle(driver)}
-                          labels={{ on: "ACTIVE", off: "INACTIVE" }}
-                          size="small"
-                        />
+                        canUpdate ? (
+                          <ReusableToggleButton
+                            module="driver"
+                            action="update"
+                            isChecked={getDriverStatus(driver)}
+                            onToggle={() => onStatusToggle && onStatusToggle(driver)}
+                            labels={{ on: "ACTIVE", off: "INACTIVE" }}
+                            size="small"
+                          />
+                        ) : (
+                          <span className="text-sm font-medium">
+                            {driver.is_active ? "ACTIVE" : "INACTIVE"}
+                          </span>
+                        )
                       ) : header.key === "date_of_joining" ? (
                         formatDate(driver.date_of_joining)
                       ) : header.key === "actions" ? (
                         <div className="flex justify-center items-center gap-2">
-                          <ReusableButton
-                            module="driver"
-                            action="read"
-                            icon={Eye}
-                            title="View Driver Details"
-                            onClick={() => onView(driver)}
-                            className="p-1 flex-shrink-0"
-                          />
-                          <ReusableButton
-                            module="driver"
-                            action="update"
-                            icon={Edit}
-                            title="Edit Driver"
-                            onClick={() => onEdit(driver)}
-                            className="p-1 flex-shrink-0"
-                          />
+                          {canRead && (
+                            <ReusableButton
+                              module="driver"
+                              action="read"
+                              icon={Eye}
+                              title="View Driver Details"
+                              onClick={() => onView && onView(driver)}
+                              className="p-1 flex-shrink-0"
+                            />
+                          )}
+                          {canUpdate && (
+                            <ReusableButton
+                              module="driver"
+                              action="update"
+                              icon={Edit}
+                              title="Edit Driver"
+                              onClick={() => onEdit && onEdit(driver)}
+                              className="p-1 flex-shrink-0"
+                            />
+                          )}
                         </div>
                       ) : (
                         getValueByKeyPath(driver, header.key)
@@ -123,6 +181,21 @@ export const DriverList = ({ drivers, onEdit, onView, onStatusToggle }) => {
           </tbody>
         </table>
       </div>
+
+        {/* Reusable Pagination Component */}
+        {showPagination && drivers.length > 0 && (
+          <ReusablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={onPageChange}
+            onItemsPerPageChange={onItemsPerPageChange}
+            className={paginationClassName}
+          />
+        )}
     </div>
   );
 };
+
+export default DriverList;

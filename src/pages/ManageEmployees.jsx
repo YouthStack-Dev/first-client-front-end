@@ -20,7 +20,6 @@ import {
 } from "../redux/features/user/userSlice";
 import EmployeeList from "@components/departments/EmployeeList";
 import endpoint from "../Api/Endpoints";
-
 import AuditLogsModal from "../components/modals/AuditLogsModal";
 import ReusableButton from "../components/ui/ReusableButton";
 

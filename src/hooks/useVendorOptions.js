@@ -7,7 +7,7 @@ export const useVendorOptions = (tenantId = null, shouldFetch = false) => {
 
   const {
     data: vendors = [],
-    vendorsByTenant = {},
+      vendorsByTenant = {},
     fetched,
     loading,
   } = useSelector((state) => state.vendor || {});

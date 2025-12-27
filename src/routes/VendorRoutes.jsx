@@ -33,6 +33,7 @@ export const VendorRoutes = () => (
     />
     <Route path="reports" element={<h1>Vendor Reports</h1>} />
     <Route path="drivers" element={<ManageDrivers />} />
+    <Route path="driverform" element={<NewDriverManagement />} />
     <Route path="vehicles" element={<VehicleManagement />} />
   </Route>
 );

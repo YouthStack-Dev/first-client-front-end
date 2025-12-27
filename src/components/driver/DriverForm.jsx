@@ -31,6 +31,7 @@ const defaultFormData = {
   eyeTestExpiryDate: '',
   govtIdNumber: '',
   alternateGovtId: '',
+  vendorId: '', // Hidden field for vendor tracking
 
   // Files
   profileImage: null,
@@ -63,30 +64,81 @@ const DriverForm = ({ initialData = null, mode, onClose, vendors = [] }) => {
   const driversLoading = useSelector(state => state.drivers.loading);
 
   useEffect(() => {
-    if (initialData && (mode === "edit" || mode === "view")) {
-      console.log('--- Initial Data from Backend ---', initialData); // <-- Add this log
-      const transformedData = transformBackendToFormData(initialData);
-      console.log('--- Transformed Data for Form ---', transformedData); // <-- Add this log
-      setFormData(prev => ({
-        ...prev,
-        ...transformedData,
-        vendorId: initialData.vendor?.vendor_id || '',
-      }));
+    if (initialData) {
+      if (mode === "edit" || mode === "view") {
+        // Edit/view mode: transform backend data
+        const transformedData = transformBackendToFormData(initialData);
+        setFormData(prev => ({
+          ...prev,
+          ...transformedData,
+          vendorId: initialData.vendor?.vendor_id || '',
+        }));
+      } else if (mode === "create") {
+        // Create mode: initialData contains vendor info passed from parent
+        setFormData(prev => ({
+          ...prev,
+          vendorId: initialData.vendor?.vendor_id || '',
+        }));
+      }
     }
   }, [initialData, mode]);
 
 
-  // --- Handlers ---
+  // Live field-level validation
   const handleChange = e => {
     if (mode === 'view') return;
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    setErrors(prev => ({ ...prev, [name]: '' }));
+
+    let errorMsg = '';
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    // Personal Details validations
+    if (name === 'name' && !value.trim()) errorMsg = 'Driver name is required';
+    if (name === 'mobileNumber') {
+      if (!value.trim()) errorMsg = 'Mobile number is required';
+      else if (!/^\d{10}$/.test(value)) errorMsg = 'Mobile number must be exactly 10 digits';
+    }
+    if (name === 'email') {
+      if (!value.trim()) errorMsg = 'Email is required';
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) errorMsg = 'Please enter a valid email address';
+    }
+    if (name === 'password' && mode === 'create' && !value.trim()) errorMsg = 'Password is required';
+    if (name === 'code' && !value.trim()) errorMsg = 'Driver code is required';
+    if (name === 'gender' && !value) errorMsg = 'Gender is required';
+    if (name === 'dateOfBirth') {
+      if (!value) errorMsg = 'Date of birth is required';
+      else {
+        const dob = new Date(value);
+        const age = today.getFullYear() - dob.getFullYear();
+        const monthDiff = today.getMonth() - dob.getMonth();
+        const dayDiff = today.getDate() - dob.getDate();
+        const isUnder18 = age < 18 || (age === 18 && (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)));
+        if (isUnder18) errorMsg = 'Driver must be at least 18 years old';
+      }
+    }
+    if (name === 'dateOfJoining' && !value) errorMsg = 'Date of joining is required';
+
+    // Documents validations
+    if ([
+      'licenseExpiryDate', 'badgeExpiryDate', 'bgvExpiryDate', 'policeExpiryDate',
+      'medicalExpiryDate', 'trainingExpiryDate', 'eyeTestExpiryDate'
+    ].includes(name)) {
+      if (!value) errorMsg = 'This date is required';
+      else if (new Date(value) < today) errorMsg = 'Date must be in the future';
+    }
+    if (name === 'licenseNumber' && !value.trim()) errorMsg = 'License number is required';
+    if (name === 'badgeNumber' && !value.trim()) errorMsg = 'Badge number is required';
+    if (name === 'inductionDate' && !value) errorMsg = 'Induction date is required';
+    if (name === 'govtIdNumber' && !value.trim()) errorMsg = 'Alternate Government ID is required';
+    if (name === 'alternateGovtId' && !value.trim()) errorMsg = 'Alternate Government ID type is required';
+
+    setErrors(prev => ({ ...prev, [name]: errorMsg }));
   };
 
   const handleFileChange = (name, file) => {
     if (mode === 'view') return;
-    // console.log(`--- File Changed --- name: ${name}, file:`, file);
     setFormData(prev => ({ ...prev, [name]: file }));
     setErrors(prev => ({ ...prev, [name]: '' }));
   };
@@ -111,8 +163,6 @@ const DriverForm = ({ initialData = null, mode, onClose, vendors = [] }) => {
   };
 
 
-
-  // --- Validations ---
   // --- Validations ---
 const validatePersonalDetails = () => {
   const personalErrors = {};
@@ -389,10 +439,7 @@ const validatePersonalDetails = () => {
             if (tabId === 'personalDetails') return validatePersonalDetails();
             if (tabId === 'documents') return validateDocuments();
             return {};
-          }}
-        />
-
-
+          }}/>
 
         <form onSubmit={handleSubmit}>
           <div className="p-6">{renderTabContent()}</div>
@@ -421,7 +468,6 @@ const validatePersonalDetails = () => {
               )}
             </div>
           </div>
-
         </form>
       </div>
     </div>

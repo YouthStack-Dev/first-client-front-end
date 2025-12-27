@@ -1,158 +1,172 @@
-import { createSlice } from "@reduxjs/toolkit";
 import {
-  fetchVehicleTypes,
+  createSlice,
+  createEntityAdapter,
+} from "@reduxjs/toolkit";
+
+import {
+  fetchVehicleTypesThunk,
   createVehicleType,
   updateVehicleType,
   toggleVehicleTypeStatus,
-  fetchVendorVehicleTypes,
 } from "./vehicleTypeThunks";
 
-const initialState = {
-  byId: {}, // normalized data: id -> vehicleType
-  allIds: [], // list of ids for ordering
+/* ------------------------------------------------------
+   ENTITY ADAPTER
+------------------------------------------------------ */
+const vehicleTypeAdapter = createEntityAdapter({
+  selectId: (item) =>
+    item.vehicle_type_id ?? item.vehicle_type?.vehicle_type_id,
+  sortComparer: (a, b) =>
+    (a.vehicle_type_id ?? a.vehicle_type?.vehicle_type_id) -
+    (b.vehicle_type_id ?? b.vehicle_type?.vehicle_type_id),
+});
+
+
+/* ------------------------------------------------------
+   INITIAL STATE
+------------------------------------------------------ */
+const initialState = vehicleTypeAdapter.getInitialState({
   loading: false,
+  loaded: false,
   error: null,
-  fetched: false,
+  total: 0,
+  lastFetchParams: null,
+});
 
-  vendorById: {}, // vendorId -> items[]
-  vendorLoading: false,
-  vendorError: null,
-};
-
+/* ------------------------------------------------------
+   SLICE
+------------------------------------------------------ */
 const vehicleTypeSlice = createSlice({
   name: "vehicleType",
   initialState,
-  reducers: {
-    resetVehicleTypes: (state) => {
-      state.byId = {};
-      state.allIds = [];
-      state.loading = false;
-      state.error = null;
 
-      // ⭐ Also reset vendor data
-      state.vendorById = {};
-      state.vendorLoading = false;
-      state.vendorError = null;
-      state.fetched = false;
+  reducers: {
+    clearVehicleTypes: (state) => {
+      vehicleTypeAdapter.removeAll(state);
+      state.loading = false;
+      state.loaded = false;
+      state.error = null;
+      state.total = 0;
+      state.lastFetchParams = null;
     },
   },
+
   extraReducers: (builder) => {
     builder
-      // ===== FETCH =====
-      .addCase(fetchVehicleTypes.pending, (state) => {
+
+      /* ================= FETCH ================= */
+      .addCase(fetchVehicleTypesThunk.pending, (state, action) => {
         state.loading = true;
         state.error = null;
+        state.lastFetchParams = action.meta.arg || null;
       })
-      .addCase(fetchVehicleTypes.fulfilled, (state, action) => {
+
+      .addCase(fetchVehicleTypesThunk.fulfilled, (state, action) => {
+        const { items = [] } = action.payload;
+        // console.log("📥 API Response - Items count:", items.length, "Data:", items);  // DEBUG: What API sent
+        vehicleTypeAdapter.setAll(state, items);
+
         state.loading = false;
-        state.fetched = true;
-
-        const byId = {};
-        const allIds = [];
-
-        (action.payload || []).forEach((type, index) => {
-          // Use `vehicle_type_id` if available, else fallback to `id` or generate a unique key
-          const id = type.id || type.vehicle_type_id || `${type.name}-${index}`;
-          byId[id] = { ...type, id };
-          allIds.push(id);
-        });
-
-        state.byId = byId;
-        state.allIds = allIds;
+        state.loaded = true;
+        state.total = items.length;
       })
-      .addCase(fetchVehicleTypes.rejected, (state, action) => {
+
+      .addCase(fetchVehicleTypesThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Failed to fetch vehicle types";
+        state.loaded = false;
+        state.error =
+          action.payload || "Failed to load vehicle types";
+
+        vehicleTypeAdapter.removeAll(state);
+        state.total = 0;
       })
 
-      // ===== CREATE =====
+      /* ================= CREATE ================= */
       .addCase(createVehicleType.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
+
       .addCase(createVehicleType.fulfilled, (state, action) => {
         state.loading = false;
 
-        const newType = action.payload;
-        if (newType) {
-          // Ensure new type has a unique id
-          const id =
-            newType.id ||
-            newType.vehicle_type_id ||
-            `${newType.name}-${Date.now()}`;
-          state.byId[id] = { ...newType, id };
-          if (!state.allIds.includes(id)) {
-            state.allIds.push(id);
-          }
+        if (action.payload?.vehicle_type_id) {
+          vehicleTypeAdapter.addOne(state, action.payload);
+          state.total += 1;
         }
       })
+
       .addCase(createVehicleType.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Failed to create vehicle type";
+        state.error =
+          action.payload || "Failed to create vehicle type";
       })
 
-      // ===== UPDATE =====
+      /* ================= UPDATE ================= */
       .addCase(updateVehicleType.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
+
       .addCase(updateVehicleType.fulfilled, (state, action) => {
         state.loading = false;
 
-        const updatedType = action.payload;
-        if (updatedType) {
-          // Use the ID from the updated type to find and update the existing one
-          const id = updatedType.id || updatedType.vehicle_type_id;
-          if (id && state.byId[id]) {
-            state.byId[id] = { ...state.byId[id], ...updatedType };
-          }
+        if (action.payload?.vehicle_type_id) {
+          vehicleTypeAdapter.upsertOne(state, action.payload);
         }
       })
+
       .addCase(updateVehicleType.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Failed to update vehicle type";
+        state.error =
+          action.payload || "Failed to update vehicle type";
       })
 
-      // ===== TOGGLE STATUS =====
+      /* ================= TOGGLE STATUS ================= */
       .addCase(toggleVehicleTypeStatus.pending, (state) => {
-        state.loading = true;
+        // ❗ DO NOT block UI with full loading spinner
         state.error = null;
       })
-      .addCase(toggleVehicleTypeStatus.fulfilled, (state, action) => {
-        state.loading = false;
 
-        const updatedType = action.payload;
-        if (updatedType) {
-          // Use the ID from the updated type to find and update the existing one
-          const id = updatedType.id || updatedType.vehicle_type_id;
-          if (id && state.byId[id]) {
-            state.byId[id] = { ...state.byId[id], ...updatedType };
-          }
+      .addCase(toggleVehicleTypeStatus.fulfilled, (state, action) => {
+        if (action.payload?.vehicle_type_id) {
+          vehicleTypeAdapter.upsertOne(state, action.payload);
         }
       })
+
       .addCase(toggleVehicleTypeStatus.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || "Failed to toggle vehicle type status";
-      })
-      .addCase(fetchVendorVehicleTypes.pending, (state) => {
-        state.vendorLoading = true;
-        state.vendorError = null;
-      })
-      .addCase(fetchVendorVehicleTypes.fulfilled, (state, action) => {
-        state.vendorLoading = false;
-
-        const { vendorId, items } = action.payload;
-
-        // Store vendor-specific list
-        state.vendorById[vendorId] = items;
-      })
-      .addCase(fetchVendorVehicleTypes.rejected, (state, action) => {
-        state.vendorLoading = false;
-        state.vendorError =
-          action.payload || "Failed to fetch vendor vehicle types";
+        state.error =
+          action.payload || "Failed to toggle vehicle type status";
       });
   },
 });
 
-export const { resetVehicleTypes } = vehicleTypeSlice.actions;
+/* ------------------------------------------------------
+   EXPORTS
+------------------------------------------------------ */
+export const { clearVehicleTypes } = vehicleTypeSlice.actions;
+
 export default vehicleTypeSlice.reducer;
+
+/* ------------------------------------------------------
+   SELECTORS
+------------------------------------------------------ */
+export const vehicleTypeSelectors =
+  vehicleTypeAdapter.getSelectors(
+    (state) => state.vehicleType
+  );
+
+export const selectVehicleTypesLoading = (state) =>
+  state.vehicleType.loading;
+
+export const selectVehicleTypesLoaded = (state) =>
+  state.vehicleType.loaded;
+
+export const selectVehicleTypesError = (state) =>
+  state.vehicleType.error;
+
+export const selectVehicleTypesTotal = (state) =>
+  state.vehicleType.total;
+
+export const selectVehicleTypesLastFetchParams = (state) =>
+  state.vehicleType.lastFetchParams;

@@ -3,6 +3,7 @@
 /**
  * View a local file (from File input)
  */
+
 export const viewLocalFile = (file, setPreviewDoc, setPreviewContentType) => {
   if (!(file instanceof File)) return;
 
@@ -13,6 +14,7 @@ export const viewLocalFile = (file, setPreviewDoc, setPreviewContentType) => {
 
   return url;
 };
+
 
 /**
  * View a remote file using API
