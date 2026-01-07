@@ -106,19 +106,21 @@ const handleSubmit = async (formData) => {
             ...existingTenant,
             company: {
               ...existingTenant.company,
-              ...updatedTenant,
-            },
-          },
-        };
-      });
-    }
-
-    // 🟢 Close modal after success
-    setIsModalOpen(false);
-  } catch (err) {
-    console.error("Failed to save company:", err);
-  }
-};
+                ...updatedTenant.tenant,
+              },
+              permissions:
+                updatedTenant.admin_policy?.permissions ||
+                existingTenant.permissions,
+              },
+            };
+          });
+        }
+        // 🟢 Close modal after success
+      setIsModalOpen(false);
+      } catch (err) {
+      console.error("Failed to save company:", err);
+      }
+    };
 
 
 
