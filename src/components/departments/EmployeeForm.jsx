@@ -16,7 +16,7 @@ import {
 } from "../../redux/features/user/userSlice";
 import { API_CLIENT } from "../../Api/API_Client";
 import { useNavigate } from "react-router-dom";
-import { fetchDepartments } from "../../redux/features/user/userTrunk";
+import { fetchTeam } from "../../redux/features/user/userTrunk";
 import {
   validatePersonalInfo,
   validateAddressInfo,
@@ -109,7 +109,7 @@ const EmployeeForm = ({ mode = "create" }) => {
   useEffect(() => {
     const fetchTeamsData = async () => {
       try {
-        const response = await fetchDepartments();
+        const response = await fetchTeam();
         dispatch(setTeams(response));
       } catch (error) {
         logError("Error fetching teams:", error);

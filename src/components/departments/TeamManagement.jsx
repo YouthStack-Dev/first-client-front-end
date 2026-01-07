@@ -14,7 +14,7 @@ import {
   setTeams,
 } from "../../redux/features/user/userSlice";
 
-import { fetchDepartments } from "../../redux/features/user/userTrunk";
+import { fetchTeam } from "../../redux/features/user/userTrunk";
 import { toast } from "react-toastify";
 import DepartmentList from "./DepartmentList";
 import { logDebug } from "../../utils/logger";
@@ -73,7 +73,7 @@ const TeamManagement = () => {
     const fetchTeams = async () => {
       setIsLoading(true);
       try {
-        const data = await fetchDepartments(currentPage, itemsPerPage);
+        const data = await fetchTeam(currentPage, itemsPerPage);
         dispatch(setTeams(data));
         setTotalItems(data.length);
       } catch (error) {
