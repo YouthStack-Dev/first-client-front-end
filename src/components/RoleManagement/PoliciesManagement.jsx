@@ -220,31 +220,6 @@ const PoliciesManagement = () => {
     return result;
   }, [policies, searchQuery, selectedFilter]);
 
-  // Custom styles for react-select
-  const selectStyles = {
-    control: (base, state) => ({
-      ...base,
-      minHeight: "42px",
-      borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-      boxShadow: state.isFocused ? "0 0 0 1px #3b82f6" : "none",
-      "&:hover": {
-        borderColor: "#3b82f6",
-      },
-    }),
-    option: (base, state) => ({
-      ...base,
-      backgroundColor: state.isSelected
-        ? "#3b82f6"
-        : state.isFocused
-        ? "#eff6ff"
-        : "white",
-      color: state.isSelected ? "white" : "#1f2937",
-      "&:active": {
-        backgroundColor: "#2563eb",
-      },
-    }),
-  };
-
   // Helper function for creating new policy
   const handleCreateNew = () => {
     handleAddClick();

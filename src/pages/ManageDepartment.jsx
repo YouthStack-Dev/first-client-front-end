@@ -64,7 +64,7 @@ const ManageDepartment = () => {
       if (tenantId) {
         setSelectedCompany(tenantId);
         // Fetch departments immediately for non-admin users
-        fetchDepartments(tenantId);
+        fetchTeam(tenantId);
       } else {
         toast.error(
           "No tenant information found. Please contact administrator."
@@ -157,7 +157,7 @@ const ManageDepartment = () => {
 
     // Only make API call if a company is selected (not empty/"All Companies")
     if (companyId && companyId !== "") {
-      await fetchDepartmentsByCompany(companyId);
+      await fetchTeamByCompany(companyId);
     } else {
       // If "All Companies" is selected, clear the departments
       dispatch(setTeams([]));
@@ -172,7 +172,7 @@ const ManageDepartment = () => {
   };
 
   // Fetch departments for specific company (for admin users)
-  const fetchDepartmentsByCompany = async (companyId, page = 1, limit = 10) => {
+  const fetchTeamByCompany = async (companyId, page = 1, limit = 10) => {
     if (!companyId) return;
 
     setIsLoading(true);
@@ -232,7 +232,7 @@ const ManageDepartment = () => {
   };
 
   // Generic fetch departments function (for non-admin users)
-  const fetchDepartments = async (tenantId = null, page = 1, limit = 10) => {
+  const fetchTeam = async (tenantId = null, page = 1, limit = 10) => {
     setIsLoading(true);
     try {
       const params = {
@@ -294,11 +294,7 @@ const ManageDepartment = () => {
   };
 
   // Fetch departments with search (only when search term is used)
-  const fetchDepartmentsWithSearch = async (
-    page = 1,
-    limit = 10,
-    search = ""
-  ) => {
+  const fetchTeamWithSearch = async (page = 1, limit = 10, search = "") => {
     setIsLoading(true);
     try {
       const params = {
@@ -368,11 +364,7 @@ const ManageDepartment = () => {
   // Load teams only when search term changes (not on initial load)
   useEffect(() => {
     if (debouncedSearchTerm && debouncedSearchTerm.length > 0) {
-      fetchDepartmentsWithSearch(
-        currentPage,
-        itemsPerPage,
-        debouncedSearchTerm
-      );
+      fetchTeamWithSearch(currentPage, itemsPerPage, debouncedSearchTerm);
     }
   }, [debouncedSearchTerm, currentPage]);
 
@@ -462,13 +454,13 @@ const ManageDepartment = () => {
     // Refresh the list after successful form submission
     if (user?.type === "admin") {
       if (selectedCompany && selectedCompany !== "") {
-        fetchDepartmentsByCompany(selectedCompany, currentPage, itemsPerPage);
+        fetchTeamByCompany(selectedCompany, currentPage, itemsPerPage);
       }
     } else {
       // For non-admin users, fetch with tenant from localStorage
       const tenantId = getTenantFromLocalStorage();
       if (tenantId) {
-        fetchDepartments(tenantId, currentPage, itemsPerPage);
+        fetchTeam(tenantId, currentPage, itemsPerPage);
       }
     }
   };

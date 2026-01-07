@@ -12,8 +12,10 @@ import vehicleReducer from "./features/manageVehicles/vehicleSlice";
 import routeReducer from "./features/routes/roureSlice";
 import newDriverReducer from "./features/manageDriver/newDriverSlice";
 import escortReducer from "./features/escort/escortSlice";
+import alertconfigReducer from "./features/alertconfig/alertconfigslice";
 const store = configureStore({
   reducer: {
+    alertconfig: alertconfigReducer,
     shift: shiftReducer,
     auth: authReducer,
     user: userReducer,

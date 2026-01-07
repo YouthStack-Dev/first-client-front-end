@@ -77,13 +77,7 @@ export const baseSidebarConfig = [
         permission: "shift.read",
         icon: Clock,
       },
-      {
-        title: "Config Management",
-        icon: Clock,
-        path: "/companies/cutoff",
-        permission: "cutoff.read",
-        icon: Clock,
-      },
+
       {
         title: "Teams",
         icon: Users2,
@@ -102,6 +96,25 @@ export const baseSidebarConfig = [
         path: "/companies/tracking",
         permission: "route.read",
         icon: Store,
+      },
+    ],
+  },
+  {
+    title: "Config Management",
+    items: [
+      {
+        title: "Config Management",
+        icon: Clock,
+        path: "/companies/cutoff",
+        permission: "cutoff.read",
+        icon: Clock,
+      },
+      {
+        title: "Alert Config ",
+        icon: Clock,
+        path: "/companies/alert-config",
+        permission: "alert.read",
+        icon: Clock,
       },
     ],
   },
