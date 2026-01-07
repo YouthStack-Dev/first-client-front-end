@@ -47,6 +47,7 @@ const EntityModal = ({
   // Fetch permissions
   useEffect(() => {
     if (isOpen && !fetched) dispatch(fetchPermissionsThunk());
+    console.log("🚀 Fetching MASTER permissions...");
   }, [isOpen, fetched, dispatch]);
 
   // Populate data when editing
