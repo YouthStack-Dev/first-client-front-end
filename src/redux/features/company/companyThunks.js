@@ -89,6 +89,7 @@ export const updateTenantThunk = createAsyncThunk(
   }
 );
 
+
 export const toggleCompanyStatusThunk = createAsyncThunk(
   "company/toggleStatus",
   async (payload, { rejectWithValue }) => {
