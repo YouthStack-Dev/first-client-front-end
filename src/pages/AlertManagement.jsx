@@ -1,16 +1,18 @@
-// pages/AlertConfigPage.js - Updated
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+// pages/AlertConfigPage.js - Fixed
+import React, { useState, useEffect } from "react";
 import AlertConfigCard from "../components/Schedulemanagement/AlertConfigCard";
 import AlertConfigForm from "../components/Schedulemanagement/AlertConfigForm";
 import ToolBar from "../components/ui/ToolBar";
-import Select from "react-select";
-import { selectStyles } from "../utils/helperutilities";
 import { useDispatch, useSelector } from "react-redux";
-import { getAlertConfigThunk } from "../redux/features/alertconfig/alertconfigTrunk";
+import {
+  createAlertConfigThunk,
+  getAlertConfigThunk,
+  updateAlertConfigThunk,
+} from "../redux/features/alertconfig/alertconfigTrunk";
 import { logDebug } from "../utils/logger";
 
 const DEFAULT_CONFIG = {
-  team_id: 1,
+  team_id: null,
   config_name: "",
   description: "",
   applicable_alert_types: [],
@@ -29,21 +31,6 @@ const DEFAULT_CONFIG = {
   priority: 500,
   scope: "tenant",
   scope_target_type: "team",
-  scope_target_id: null,
-};
-
-// Static alert types array
-const ALERT_TYPES = ["MEDICAL", "SOS"];
-
-// Create filter options from static array
-const getFilterOptions = () => {
-  return [
-    { value: "all", label: "All Alert Types" },
-    ...ALERT_TYPES.map((type) => ({
-      value: type,
-      label: type.charAt(0).toUpperCase() + type.slice(1).toLowerCase(),
-    })),
-  ];
 };
 
 const AlertManagement = () => {
@@ -51,10 +38,7 @@ const AlertManagement = () => {
   const [showForm, setShowForm] = useState(false);
   const [formMode, setFormMode] = useState("view");
   const [selectedConfig, setSelectedConfig] = useState(null);
-  const [selectedFilter, setSelectedFilter] = useState({
-    value: "all",
-    label: "All Alert Types",
-  });
+  const [formError, setFormError] = useState(null); // Add state for form errors
 
   const dispatch = useDispatch();
 
@@ -66,59 +50,69 @@ const AlertManagement = () => {
   const loading = useSelector((state) => state.alertconfig.loading.fetch);
   const error = useSelector((state) => state.alertconfig.error);
 
-  // Filter options
-  const filterOptions = useMemo(() => getFilterOptions(), []);
-
-  // Memoized filtered configs
-  const filteredConfigs = useMemo(() => {
-    if (!selectedFilter || selectedFilter.value === "all") {
-      return configs;
-    }
-    return configs.filter((config) =>
-      config.applicable_alert_types?.includes(selectedFilter.value)
-    );
-  }, [configs, selectedFilter]);
-
-  // Log slice data for debugging
-
-  // Fetch data based on filter
-  const fetchConfigs = useCallback(() => {
-    const params = {};
-
-    if (selectedFilter?.value && selectedFilter.value !== "all") {
-      params.alert_type = selectedFilter.value;
-      dispatch(getAlertConfigThunk({ params }));
-    }
-  }, [selectedFilter?.value, dispatch]);
-
   // Initial fetch when component mounts
   useEffect(() => {
-    fetchConfigs();
-  }, [fetchConfigs]);
+    dispatch(getAlertConfigThunk());
+  }, []);
+
+  // Clear form errors when form opens/closes or mode changes
+  useEffect(() => {
+    setFormError(null);
+  }, [showForm, formMode]);
 
   // Handle Create Configuration
-  const handleCreateConfig = (newConfig) => {
-    // Note: In a real app, you would dispatch an action to create the config
-    // For now, we'll show an alert and refresh the data
-    alert(`Configuration created successfully!`);
-    logDebug(" This is teh subbmited data ", newConfig);
-    // Refresh the configs list
-    fetchConfigs();
+  const handleCreateConfig = async (newConfig) => {
+    try {
+      logDebug("Submitted data", newConfig);
 
-    setShowForm(false);
-    setFormMode("view");
-    setSelectedConfig(null);
+      const result = await dispatch(
+        createAlertConfigThunk({ payload: newConfig })
+      ).unwrap(); // unwrap gives actual response or throws error
+
+      alert("Configuration created successfully!");
+
+      logDebug("Created alert config", result);
+
+      // Refresh list
+      dispatch(getAlertConfigThunk());
+
+      setShowForm(false);
+      setFormMode("view");
+      setSelectedConfig(null);
+      setFormError(null); // Clear any previous errors
+    } catch (error) {
+      console.error("Create alert config failed", error);
+
+      // Set the error to pass to the form
+      setFormError(error);
+
+      // Don't close the form, let the form handle the error display
+      // The form will stay open so user can fix the errors
+    }
   };
 
   // Handle Update Configuration
-  const handleUpdateConfig = (updatedConfig) => {
-    // Note: In a real app, you would dispatch an action to update the config
-    alert(`Configuration updated successfully!`);
+  const handleUpdateConfig = async (updatedConfig) => {
+    try {
+      const result = await dispatch(
+        updateAlertConfigThunk({
+          configId: updatedConfig.config_id,
+          payload: updatedConfig,
+        })
+      ).unwrap();
 
-    // Refresh the configs list
-    fetchConfigs();
+      alert("Configuration updated successfully!");
 
-    setFormMode("view");
+      logDebug("Updated alert config", result);
+
+      setSelectedConfig(result); // keep UI in sync
+      setFormMode("view");
+      setFormError(null);
+      setShowForm(false);
+    } catch (error) {
+      console.error("Update alert config failed", error);
+      setFormError(error);
+    }
   };
 
   // Handle View Configuration
@@ -126,11 +120,13 @@ const AlertManagement = () => {
     setSelectedConfig(config);
     setFormMode("view");
     setShowForm(true);
+    setFormError(null); // Clear errors when viewing
   };
 
   // Handle Edit mode switch
   const handleSwitchToEdit = () => {
     setFormMode("edit");
+    setFormError(null); // Clear errors when switching to edit mode
   };
 
   // Handle Form Close/Cancel
@@ -138,6 +134,7 @@ const AlertManagement = () => {
     setShowForm(false);
     setSelectedConfig(null);
     setFormMode("view");
+    setFormError(null); // Clear errors when closing form
   };
 
   // Get form title based on mode
@@ -154,52 +151,19 @@ const AlertManagement = () => {
     }
   };
 
-  // Handle filter change with null safety
-  const handleFilterChange = (option) => {
-    // If option is null (cleared), reset to "All"
-    const newFilter = !option
-      ? { value: "all", label: "All Alert Types" }
-      : option;
-
-    setSelectedFilter(newFilter);
-
-    // Trigger fetch with new filter
-    const params = {};
-    if (newFilter.value !== "all") {
-      params.alert_type = newFilter.value;
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       <ToolBar
-        rightElements={
-          <Select
-            options={filterOptions}
-            value={selectedFilter}
-            onChange={handleFilterChange}
-            placeholder="Filter by alert type..."
-            isClearable
-            styles={selectStyles}
-            className="text-sm"
-          />
-        }
         onAddClick={() => {
           setFormMode("create");
           setSelectedConfig(null);
           setShowForm(true);
+          setFormError(null);
         }}
         module="alert"
         addButtonLabel="Alert"
         className="p-4 bg-white border rounded shadow-sm mb-4"
       />
-
-      {/* Error State */}
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700">Error: {error}</p>
-        </div>
-      )}
 
       {/* Create/Edit/View Form Modal */}
       {showForm && (
@@ -213,6 +177,8 @@ const AlertManagement = () => {
           isOpen={showForm}
           title={getFormTitle()}
           onSwitchToEdit={handleSwitchToEdit}
+          error={formError}
+          clearError={() => setFormError(null)}
         />
       )}
 
@@ -223,9 +189,9 @@ const AlertManagement = () => {
           <p className="mt-4 text-gray-600">Loading configurations...</p>
         </div>
       ) : /* Configurations Display */
-      filteredConfigs.length > 0 ? (
+      configs.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredConfigs.map((config) => (
+          {configs.map((config) => (
             <AlertConfigCard
               key={config.config_id}
               config={config}
@@ -240,22 +206,13 @@ const AlertManagement = () => {
             No configurations found
           </h3>
           <p className="text-gray-600 mb-4">
-            {selectedFilter && selectedFilter.value !== "all"
-              ? `No configurations found for "${selectedFilter.label}" alert type.`
-              : "Create your first alert configuration to get started"}
+            Create your first alert configuration to get started
           </p>
-          {selectedFilter && selectedFilter.value !== "all" && (
-            <button
-              onClick={() => handleFilterChange(null)}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 mr-3"
-            >
-              Clear Filter
-            </button>
-          )}
           <button
             onClick={() => {
               setFormMode("create");
               setShowForm(true);
+              setFormError(null); // Clear errors when creating new
             }}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
