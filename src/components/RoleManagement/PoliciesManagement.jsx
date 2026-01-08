@@ -18,6 +18,7 @@ import {
   fetchPoliciesThunk,
   updatePolicy,
 } from "../../redux/features/Permissions/permissionsThunk";
+import { selectStyles } from "../../utils/helperutilities";
 
 const PoliciesManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
