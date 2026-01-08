@@ -1,17 +1,9 @@
-// AlertConfigForm.js - Updated with debounce and fixed team dropdown
 import { useState, useEffect, useCallback, useRef } from "react";
-import {
-  Plus,
-  Trash2,
-  Save,
-  Edit2,
-  X,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { Plus, Trash2, Save, Edit2, X } from "lucide-react";
 import Select from "react-select";
 import { logDebug } from "../../utils/logger";
 import { useTeamOptions } from "../../hooks/Teamshook";
+import ErrorDisplay from "../ui/ErrorDisplay";
 
 const ALERT_TYPES = ["SOS", "MEDICAL", "FIRE", "SAFETY", "SECURITY"];
 const CHANNEL_OPTIONS = ["EMAIL", "SMS", "PUSH", "VOICE"];
@@ -48,23 +40,6 @@ const selectStyles = {
   }),
 };
 
-// Debounce function
-const useDebounce = (value, delay) => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-};
-
 export default function AlertConfigForm({
   initialData,
   mode = "create",
@@ -72,6 +47,8 @@ export default function AlertConfigForm({
   onCancel,
   isOpen = true,
   onSwitchToEdit,
+  error,
+  clearError,
 }) {
   const [config, setConfig] = useState({ ...initialData });
   const [activeSection, setActiveSection] = useState("basic");
@@ -85,15 +62,8 @@ export default function AlertConfigForm({
 
   const isReadOnly = currentMode === "view";
 
-  // Debounced search value
-  const debouncedSearchValue = useDebounce(searchValue, 300);
-
   // Use the team options hook
-  const {
-    options: teamOptions,
-    rawData: teamRawData,
-    loading: loadingTeams,
-  } = useTeamOptions({
+  const { options: teamOptions, loading: loadingTeams } = useTeamOptions({
     shouldFetch: shouldFetchTeams && !isReadOnly,
     params: {
       skip: 0,
@@ -122,7 +92,7 @@ export default function AlertConfigForm({
     return team.label || team.name || "";
   }, []);
 
-  // Initialize state
+  // Update your initialization useEffect
   useEffect(() => {
     setConfig(initialData);
     setOriginalConfig(initialData);
@@ -130,10 +100,17 @@ export default function AlertConfigForm({
     setScopeType(initialData.scope || "tenant");
 
     // Reset team selection
-    if (initialData.scope === "team" && initialData.scope_target_id) {
-      // We'll fetch and set the team later when options are available
+    if (initialData.scope === "team" && initialData.team_id) {
+      // Set initial config with team_id immediately
+      setConfig((prev) => ({
+        ...prev,
+        team_id: initialData.team_id,
+        scope_target_type: "team",
+      }));
+
+      // Set selectedTeam to trigger the update
       setSelectedTeam({
-        value: initialData.scope_target_id,
+        value: initialData.team_id,
         label: "Loading...",
       });
       setShouldFetchTeams(true);
@@ -141,34 +118,6 @@ export default function AlertConfigForm({
       setSelectedTeam(null);
     }
   }, [initialData, mode]);
-
-  // Update selected team when team options are loaded
-  // useEffect(() => {
-  //   if (
-  //     initialData.scope === "team" &&
-  //     initialData.scope_target_id &&
-  //     teamOptions.length > 0
-  //   ) {
-  //     const foundTeam = teamOptions.find(
-  //       (team) => team.value === initialData.scope_target_id
-  //     );
-
-  //     if (foundTeam) {
-  //       setSelectedTeam({
-  //         value: foundTeam.value,
-  //         label: getTeamDisplayName(foundTeam),
-  //         originalData: foundTeam,
-  //       });
-  //     } else if (!loadingTeams) {
-  //       // Team not found in current options, try to fetch it specifically
-  //       setSelectedTeam({
-  //         value: initialData.scope_target_id,
-  //         label: "Team not found",
-  //       });
-  //     }
-  //   }
-  // }, [teamOptions, initialData, loadingTeams, getTeamDisplayName]);
-
   // Handle scope type change
   useEffect(() => {
     if (!isReadOnly) {
@@ -176,7 +125,7 @@ export default function AlertConfigForm({
         ...prev,
         scope: scopeType,
         scope_target_type: scopeType === "team" ? "team" : null,
-        scope_target_id: scopeType === "team" ? prev.scope_target_id : null,
+        team_id: scopeType === "team" ? prev.team_id : null,
       }));
 
       if (scopeType !== "team") {
@@ -193,12 +142,12 @@ export default function AlertConfigForm({
   useEffect(() => {
     if (selectedTeam && !isReadOnly) {
       updateConfig({
-        scope_target_id: selectedTeam.value,
+        team_id: selectedTeam.value,
         scope_target_type: "team",
       });
     } else if (!selectedTeam && scopeType === "team" && !isReadOnly) {
       updateConfig({
-        scope_target_id: null,
+        team_id: null,
         scope_target_type: "team",
       });
     }
@@ -228,10 +177,23 @@ export default function AlertConfigForm({
   };
 
   // Team select change handler
+  // Team select change handler
   const handleTeamChange = (option) => {
     setSelectedTeam(option);
-  };
 
+    // Update config immediately when team changes
+    if (option && !isReadOnly) {
+      updateConfig({
+        team_id: option.value,
+        scope_target_type: "team",
+      });
+    } else if (!option && scopeType === "team" && !isReadOnly) {
+      updateConfig({
+        team_id: null,
+        scope_target_type: "team",
+      });
+    }
+  };
   // Format current options for display
 
   const getSelectedTeamName = useCallback(() => {
@@ -319,10 +281,10 @@ export default function AlertConfigForm({
     setScopeType(originalConfig.scope || "tenant");
 
     // Reset selected team
-    if (originalConfig.scope === "team" && originalConfig.scope_target_id) {
+    if (originalConfig.scope === "team" && originalConfig.team_id) {
       // Try to find the team in current options first
       const foundTeam = teamOptions.find(
-        (team) => team.value === originalConfig.scope_target_id
+        (team) => team.value === originalConfig.team_id
       );
 
       if (foundTeam) {
@@ -333,7 +295,7 @@ export default function AlertConfigForm({
         });
       } else {
         setSelectedTeam({
-          value: originalConfig.scope_target_id,
+          value: originalConfig.team_id,
           label: "Loading...",
         });
         setShouldFetchTeams(true);
@@ -372,6 +334,11 @@ export default function AlertConfigForm({
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="relative bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
           {/* Modal Header */}
+          <ErrorDisplay
+            error={error}
+            title="Form Submission Error"
+            onClear={clearError}
+          />
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex justify-between items-center">
             <div>
               <h1 className="text-lg font-semibold text-white">

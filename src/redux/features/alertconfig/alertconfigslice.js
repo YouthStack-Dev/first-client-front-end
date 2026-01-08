@@ -57,15 +57,18 @@ const alertconfigSlice = createSlice({
       .addCase(getAlertConfigThunk.fulfilled, (state, action) => {
         state.loading = false;
 
-        const config = action.payload;
-        if (!config?.config_id) return;
+        const configs = action.payload;
+        if (!Array.isArray(configs)) return;
 
-        const configId = config.config_id;
-        state.byId[configId] = config;
+        state.byId = {};
+        state.allIds = [];
 
-        if (!state.allIds.includes(configId)) {
-          state.allIds.push(configId);
-        }
+        configs.forEach((config) => {
+          if (!config.config_id) return;
+
+          state.byId[config.config_id] = config;
+          state.allIds.push(config.config_id);
+        });
       })
 
       .addCase(getAlertConfigThunk.rejected, (state, action) => {

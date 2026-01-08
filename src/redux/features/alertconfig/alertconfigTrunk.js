@@ -5,15 +5,12 @@ import { logDebug } from "../../../utils/logger";
 
 export const getAlertConfigThunk = createAsyncThunk(
   "alertconfig/get",
-  async ({ params = {} }, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const query = new URLSearchParams(params).toString();
+      const response = await API_CLIENT.get("v1/alert-config");
 
-      const response = await API_CLIENT.get(
-        `v1/alert-config/applicable/current?${query}`
-      );
+      // logDebug("This is the alert data fetched", response.data);
 
-      logDebug(" this is the alert data fetched ", response);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
@@ -27,11 +24,9 @@ export const getAlertConfigThunk = createAsyncThunk(
 
 export const createAlertConfigThunk = createAsyncThunk(
   "alertconfig/create",
-  async ({ payload, headers = {} }, { rejectWithValue }) => {
+  async ({ payload }, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.post("v1/alert-config", payload, {
-        headers,
-      });
+      const response = await API_CLIENT.post("v1/alert-config", payload);
 
       logDebug("alert config created", response.data);
 
