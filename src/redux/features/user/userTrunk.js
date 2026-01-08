@@ -20,7 +20,7 @@ export const createEmployee = createAsyncThunk(
 );
 
 // In userTrunk.js - update the thunk to match your API function signature
-export const fetchDepartments = async (page = 1, limit = 20, search = "") => {
+export const fetchTeam = async (page = 1, limit = 20, search = "") => {
   const params = {
     skip: (page - 1) * limit,
     limit,
@@ -40,3 +40,30 @@ export const fetchDepartments = async (page = 1, limit = 20, search = "") => {
   // Ensure we only map if departments exist
   return data?.data?.items || [];
 };
+
+export const fetchTeamThunk = createAsyncThunk(
+  "team/fetch",
+  async ({ params = {} }, { rejectWithValue }) => {
+    try {
+      // Build query string manually
+      const query = new URLSearchParams(params).toString();
+
+      logDebug("This is the query for fetching departments:", query);
+
+      const { data } = await API_CLIENT.get(
+        `${endpoint.getDepartments}?${query}`
+      );
+
+      logDebug("Fetched departments data In trunk :", data);
+
+      // Return only items array (safe default)
+      return data?.data?.items || [];
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || {
+          message: "Failed to fetch departments",
+        }
+      );
+    }
+  }
+);

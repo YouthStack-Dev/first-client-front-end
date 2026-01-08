@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { API_CLIENT } from "../../Api/API_Client";
 import { logDebug, logError } from "../../utils/logger";
-import { fetchDepartments } from "../../redux/features/user/userTrunk";
+import { fetchTeam } from "../../redux/features/user/userTrunk";
 import { setDepartments } from "../../redux/features/user/userSlice";
 import { useDispatch } from "react-redux";
 import endpoint from "../../Api/Endpoints";
@@ -42,7 +42,7 @@ const DepartmentForm = ({ onClose, onSuccess, initialData = null }) => {
         isEditMode ? "Team updated successfully" : "Team created successfully"
       );
 
-      const departments = await fetchDepartments();
+      const departments = await fetchTeam();
       dispatch(setDepartments(departments));
       onSuccess?.();
       onClose?.();

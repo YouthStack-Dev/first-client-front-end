@@ -22,6 +22,7 @@ import VendorUserManagement from "../pages/VendorUserManagement";
 import TrackingManagement from "../pages/TrackingManagement";
 import NewDriverManagement from "../pages/NewDriverManagement";
 import EscortManagement from "../pages/EscortManagement";
+import AlertConfigManagement from "../pages/AlertManagement";
 // import NewDriverManagement from "../pages/NewDriverManagement";
 
 export const CompanyRoutes = () => (
@@ -48,6 +49,7 @@ export const CompanyRoutes = () => (
     <Route path="scheduling" element={<Schedulemanagement />} />
     <Route path="employees/create" element={<EmployeeForm />} />
     <Route path="cutoff" element={<CutoffManagement />} />
+    <Route path="alert-config" element={<AlertConfigManagement />} />
     <Route path="vehicles-management" element={<VehicleManagement />} />
     <Route path="vendors" element={<VendorManagement />} />
     <Route path="new-vendor-management" element={<NewVendorManagement />} />
