@@ -27,24 +27,23 @@ export const fetchVehicleTypesThunk = createAsyncThunk(
   }
 );
 
-/* =========================================================
-   CREATE VEHICLE TYPE
-   👉 vendor_id is ENFORCED here
-   ========================================================= */
+
 export const createVehicleType = createAsyncThunk(
   "vehicleType/create",
-  async ({ payload, vendor_id }, { rejectWithValue }) => {
-    if (!vendor_id) {
-      return rejectWithValue("vendor_id is required to create vehicle type");
-    }
-
+  async (payload, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.post("/v1/vehicle-types/", {
-        ...payload,
-        vendor_id,
-      });
+      console.log("🔥 THUNK RECEIVED:", payload);
 
-      return response.data?.data?.vehicle_type || response.data?.data;
+      // if (!payload.vendor_id) {
+      //   return rejectWithValue("vendor_id is required");
+      // }
+
+      const response = await API_CLIENT.post(
+        "/v1/vehicle-types/",
+        payload   // ✅ send FULL object
+      );
+
+      return response.data?.data?.vehicle_type;
     } catch (error) {
       return rejectWithValue(
         error.response?.data || "Failed to create vehicle type"
@@ -63,9 +62,9 @@ export const updateVehicleType = createAsyncThunk(
     if (!id) {
       return rejectWithValue("vehicle_type_id is required");
     }
-    if (!vendor_id) {
-      return rejectWithValue("vendor_id is required for update");
-    }
+    // if (!vendor_id) {
+    //   return rejectWithValue("vendor_id is required for update");
+    // }
 
     try {
       const response = await API_CLIENT.put(
