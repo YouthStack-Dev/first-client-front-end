@@ -142,30 +142,48 @@ const ManageVehicleTypes = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      if (modalMode === "edit") {
-        await dispatch(
-          updateVehicleType({
-            id: selectedVehicleType.vehicle_type_id,
-            payload: selectedVehicleType,
-            vendor_id: selectedVehicleType.vendor_id,
-          })
-        ).unwrap();
-        toast.success("Vehicle type updated");
-      } else {
-        await dispatch(createVehicleType(selectedVehicleType)).unwrap();
-        toast.success("Vehicle type created");
-      }
+  try {
+    const payload = {
+      name: selectedVehicleType.name,        // ✅ REQUIRED
+      seats: Number(selectedVehicleType.seats), // ✅ REQUIRED
+      description: selectedVehicleType.description || "",
+      is_active: selectedVehicleType.is_active,
 
-      const params = buildFetchParams();
-      if (params) dispatch(fetchVehicleTypesThunk(params));
-      setIsModalOpen(false);
-    } catch {
-      toast.error("Failed to save vehicle type");
+       ...(!isVendorUser && {
+        vendor_id: selectedVehicleType.vendor_id
+    })  // admin login
+    };
+
+    console.log("FINAL PAYLOAD:", payload); // 🔍 DEBUG once
+
+    if (modalMode === "edit") {
+      await dispatch(
+        updateVehicleType({
+          id: selectedVehicleType.vehicle_type_id,
+          payload,
+          vendor_id: payload.vendor_id,
+        })
+      ).unwrap();
+
+      toast.success("Vehicle type updated");
+    } 
+    else {
+      await dispatch(createVehicleType(payload)).unwrap();
+      toast.success("Vehicle type created");
     }
-  };
+
+    const params = buildFetchParams();
+    if (params) dispatch(fetchVehicleTypesThunk(params));
+
+    setIsModalOpen(false);
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to save vehicle type");
+  }
+};
+
 
   /* ================= UI ================= */
   return (
