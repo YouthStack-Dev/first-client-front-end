@@ -1,43 +1,21 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { Plus } from "lucide-react";
-import { useDispatch, useSelector } from "react-redux";
-import { toast } from "react-toastify";
-
-// UI Components
-import { DriverList } from "@components/driver/DriverList";
-import ToolBar from "@components/ui/ToolBar";
-import Pagination from "@components/ui/Pagination";
-import FilterBadges from "@components/ui/FilterBadges";
-import StatusIndicator from "@components/ui/StatusIndicator";
-import ReusableButton from "@components/ui/ReusableButton";
-import VendorSelector from "../components/vendor/vendordropdown";
-
-// Redux
-import {
-  setSearchTerm,
-  setStatusFilter,
-  setVerificationFilter,
-  resetFilters,
-  setPage,
-  updateDriverStatus,
-  selectPaginatedDrivers,
-  selectLoading,
-  selectError,
-  selectStatusOptions,
-  selectActiveFilters,
-  selectCounts,
-  selectFilteredDrivers,
-  setSelectedDriverVendor,
-} from "../redux/features/manageDriver/driverSlice";
-import {
-  toggleDriverStatusThunk,
-  fetchDriversByVendorThunk,
-} from "../redux/features/manageDriver/driverThunks";
-
-// Modals
-import DriverForm from "@components/driver/DriverForm";
-import Modal from "@components/modals/Modal";
-import ConfirmationModal from "@components/modals/ConfirmationModal";
+import React, { useEffect, useRef, useState } from 'react';
+import { Plus } from 'lucide-react';
+import { useDispatch, useSelector,shallowEqual  } from 'react-redux';
+import { DriverList } from '../components/driver/DriverList';
+import ToolBar from '../components/ui/ToolBar';
+import Pagination from '../components/ui/Pagination';
+import FilterBadges from '../components/ui/FilterBadges';
+import StatusIndicator from '../components/ui/StatusIndicator';
+import { API_CLIENT } from '../Api/API_Client';
+import {  
+  setSearchTerm, setVendorFilter, setStatusFilter, setVerificationFilter, resetFilters,
+  setPage, setDriversLoading, setDriversError, setDriversData, updateDriverStatus, 
+  selectPaginatedDrivers, selectLoading, selectError, selectVendorOptions, selectStatusOptions,
+  selectVerificationOptions, selectActiveFilters, selectCounts, selectFilteredDrivers
+} from '../redux/features/manageDriver/driverSlice';
+import DriverForm from '../components/driver/DriverForm';
+import Modal from '../components/modals/Modal';
+import ConfirmationModal from '../components/modals/ConfirmationModal';
 
 // ============================================================================
 // REDUX SELECTORS & STATE
@@ -57,19 +35,10 @@ function ManageDrivers() {
   const statusOptions = useSelector(selectStatusOptions);
   const activeFilters = useSelector(selectActiveFilters);
   const counts = useSelector(selectCounts);
-  const filteredDriversLength = useSelector((state) =>
-    selectFilteredDrivers(state).length
-  );
 
-  // User & vendor selectors
-  const currentUser = useSelector((state) => state.auth.user);
-  const selectedVendor = useSelector((state) => state.drivers.selectedVendor);
+  const { vendor}= useSelector(state => state.vendor);
 
-  // ============================================================================
-  // LOCAL STATE
-  // ============================================================================
-
-  // Modal management
+  // Modal and form state
   const [showModal, setShowModal] = useState(false);
   const [formMode, setFormMode] = useState("create");
   const [selectedDriver, setSelectedDriver] = useState(null);
@@ -100,8 +69,9 @@ function ManageDrivers() {
    * Initial fetch: Load drivers for current vendor user on mount
    */
   useEffect(() => {
-    if (!hasFetched && isVendorUser && currentUser?.vendor_user?.vendor_id) {
-      dispatch(fetchDriversByVendorThunk(currentUser.vendor_user.vendor_id));
+    // Fetch vendors when component mounts
+    if (vendor?.length ===0) {
+    fetchVendors().then(setVendors);    
     }
   }, [dispatch, hasFetched, isVendorUser, currentUser]);
 
