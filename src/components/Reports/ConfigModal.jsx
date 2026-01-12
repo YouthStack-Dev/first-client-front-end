@@ -55,7 +55,7 @@ const ConfigModal = ({
 
   const fetchTenants = async () => {
     try {
-      const response = await API_CLIENT.get("/v1/tenants/");
+      const response = await API_CLIENT.get("/tenants/");
       setTenants(
         response.data?.data?.items?.map((tenant) => ({
           value: tenant.tenant_id,
@@ -83,7 +83,7 @@ const ConfigModal = ({
 
       // Fetch shifts for the tenant
       const shiftsResponse = await API_CLIENT.get(
-        `/v1/shifts/?tenant_id=${tenantId}`
+        `/shifts/?tenant_id=${tenantId}`
       );
       setShifts([
         { value: "", label: "All Shifts" },
@@ -94,7 +94,7 @@ const ConfigModal = ({
       ]);
 
       // Fetch vendors for the tenant
-      const vendorsResponse = await API_CLIENT.get(`/v1/vendors/`);
+      const vendorsResponse = await API_CLIENT.get(`/vendors/`);
       setVendors([
         { value: "", label: "All Vendors" },
         ...vendorsResponse.data?.data?.items?.map((vendor) => ({

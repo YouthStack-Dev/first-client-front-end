@@ -227,7 +227,7 @@ const RoleForm = ({
             <p className="text-red-600 text-sm">{formError}</p>
           </div>
         )}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white flex-shrink-0">
+        <div className="bg-gradient-to-r from-sidebar-primary to-sidebar-secondary px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div
               className={`p-2 rounded-lg ${
@@ -245,14 +245,14 @@ const RoleForm = ({
               )}
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-semibold text-white">
                 {isViewMode
                   ? "View Role Details"
                   : isEditMode
                   ? "Edit Role"
                   : "Create New Role"}
               </h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-white mt-1">
                 {isViewMode
                   ? "View role information and assigned policies"
                   : isEditMode
@@ -576,7 +576,7 @@ const RoleForm = ({
           </div>
 
           {/* Footer Actions */}
-          <div className="border-t border-gray-200 p-6 bg-gray-50 flex-shrink-0">
+          <div className="sticky bottom-0 bg-app-tertiary px-6 py-4 flex justify-end gap-3 border-t border-app-border">
             <div className="flex justify-between items-center">
               <div className="flex gap-3">
                 <button

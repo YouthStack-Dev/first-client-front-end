@@ -16,7 +16,7 @@ export const fetchVendorsThunk = createAsyncThunk(
         tenant_id = "",
       } = params;
 
-      const response = await API_CLIENT.get("/v1/vendors/", {
+      const response = await API_CLIENT.get("/vendors/", {
         params: { skip, limit, name, code, tenant_id },
       });
       // Extract items array
@@ -41,7 +41,7 @@ export const createVendorThunk = createAsyncThunk(
   async (formData, { rejectWithValue, dispatch }) => {
     try {
       // Call API to create vendor
-      const response = await API_CLIENT.post("/v1/vendors/", formData);
+      const response = await API_CLIENT.post("/vendors/", formData);
       console.log("[Thunk] Created vendor:", response.data);
 
       // Refresh vendor list after creation
@@ -66,10 +66,7 @@ export const updateVendorThunk = createAsyncThunk(
   "vendor/updateVendor",
   async ({ vendorId, formData }, { rejectWithValue, dispatch }) => {
     try {
-      const response = await API_CLIENT.put(
-        `/v1/vendors/${vendorId}`,
-        formData
-      );
+      const response = await API_CLIENT.put(`/vendors/${vendorId}`, formData);
 
       // Refresh vendor list after update
       dispatch(fetchVendorsThunk({ tenant_id: formData.tenant_id }));
@@ -83,14 +80,14 @@ export const updateVendorThunk = createAsyncThunk(
 
 /**
  * Toggle vendor status
- * API: /v1/vendors/:vendor_id/toggle-status?tenant_id=TST001
+ * API: /vendors/:vendor_id/toggle-status?tenant_id=TST001
  */
 export const toggleVendorStatusThunk = createAsyncThunk(
   "vendor/toggleVendorStatus",
   async ({ vendorId, tenant_id }, { rejectWithValue, dispatch }) => {
     try {
       const response = await API_CLIENT.patch(
-        `/v1/vendors/${vendorId}/toggle-status`,
+        `/vendors/${vendorId}/toggle-status`,
         null,
         { params: { tenant_id } }
       );

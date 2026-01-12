@@ -38,13 +38,13 @@ export default function ProfilePage() {
 
   // API endpoints
   const endpoint = {
-    booking: "/v1/bookings/",
+    booking: "/bookings/",
   };
 
   // Fetch user profile - simplified version
   const fetchUserProfile = useCallback(async () => {
     try {
-      const response = await API_CLIENT.get("/v1/auth/me");
+      const response = await API_CLIENT.get("/auth/me");
       if (response.data.success) {
         setUserProfile(response.data.data.user);
       } else {

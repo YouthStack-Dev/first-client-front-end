@@ -68,7 +68,7 @@ const RoleManagement = () => {
     setModalDataReady(false);
 
     try {
-      const response = await API_CLIENT.get(`/v1/iam/roles/${roleId}`);
+      const response = await API_CLIENT.get(`/iam/roles/${roleId}`);
 
       if (response.data && response.data.success) {
         setRoleDetailedData(response.data.data);
@@ -383,43 +383,6 @@ const RoleManagement = () => {
             }
           />
           <div className="p-6">
-            {/* Role Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <div className="text-blue-600 font-semibold">Total Roles</div>
-                <div className="text-2xl font-bold text-blue-800">
-                  {roles.length}
-                </div>
-              </div>
-              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                <div className="text-green-600 font-semibold">
-                  Assignable Roles
-                </div>
-                <div className="text-2xl font-bold text-green-800">
-                  {roles.filter((r) => r.isAssignable).length}
-                </div>
-              </div>
-              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                <div className="text-purple-600 font-semibold">
-                  System Roles
-                </div>
-                <div className="text-2xl font-bold text-purple-800">
-                  {roles.filter((r) => r.isSystemLevel).length}
-                </div>
-              </div>
-              <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                <div className="text-orange-600 font-semibold">
-                  Total Assignments
-                </div>
-                <div className="text-2xl font-bold text-orange-800">
-                  {roles.reduce(
-                    (sum, role) => sum + (role.assignedUsers?.length || 0),
-                    0
-                  )}
-                </div>
-              </div>
-            </div>
-
             {/* Role Cards Grid */}
             {filteredRoles.length === 0 ? (
               <div className="text-center py-12 text-gray-500">

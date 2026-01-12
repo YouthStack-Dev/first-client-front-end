@@ -52,7 +52,7 @@ const ShiftRoutingManagement = () => {
       setLoading(true);
       setError(null);
 
-      const apiEndpoint = `/v1/routes/?&shift_id=${shiftId}&booking_date=${date}`;
+      const apiEndpoint = `/routes/?&shift_id=${shiftId}&booking_date=${date}`;
       const response = await API_CLIENT.get(apiEndpoint);
 
       if (response.data.success) {
@@ -86,7 +86,7 @@ const ShiftRoutingManagement = () => {
 
     try {
       setUnroutedLoading(true);
-      const apiEndpoint = `/v1/routes/unrouted?shift_id=${shiftId}&booking_date=${date}`;
+      const apiEndpoint = `/routes/unrouted?shift_id=${shiftId}&booking_date=${date}`;
       const response = await API_CLIENT.get(apiEndpoint);
 
       if (response.data.success) {
@@ -136,7 +136,7 @@ const ShiftRoutingManagement = () => {
     try {
       setIsMerging(true);
       const response = await API_CLIENT.post(
-        "/v1/routes/merge?tenant_id=SAM001",
+        "/routes/merge?tenant_id=SAM001",
         requestData
       );
 
@@ -196,7 +196,7 @@ const ShiftRoutingManagement = () => {
         logDebug("Assigning vendor to route", { routeId, vendorId });
 
         const response = await API_CLIENT.put(
-          `/v1/routes/assign-vendor?vendor_id=${vendorId}&route_id=${routeId}`,
+          `/routes/assign-vendor?vendor_id=${vendorId}&route_id=${routeId}`,
           {
             notes: assignmentData.notes,
             tenant_id: "SAM001",

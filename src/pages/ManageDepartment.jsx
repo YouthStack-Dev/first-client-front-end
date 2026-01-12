@@ -1,7 +1,8 @@
+// ManageDepartment.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserPlus, UsersRound, History, Trash } from "lucide-react";
-import DepartmentForm from "@components/departments/DepartmentForm";
+import DepartmentForm from "@components/departments/DepartmentForm"; // Updated import
 import DepartmentList from "@components/departments/DepartmentList";
 import { useDispatch, useSelector } from "react-redux";
 import { API_CLIENT } from "../Api/API_Client";
@@ -9,7 +10,6 @@ import { setTeams } from "../redux/features/user/userSlice";
 import { logDebug, logError } from "../utils/logger";
 import ToolBar from "@components/ui/ToolBar";
 import SearchInput from "@components/ui/SearchInput";
-import Modal from "@components/modals/Modal";
 import { toast } from "react-toastify";
 import ReusableButton from "../components/ui/ReusableButton";
 import endpoint from "../Api/Endpoints";
@@ -26,6 +26,7 @@ const ManageDepartment = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [showAuditModal, setShowAuditModal] = useState(false);
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -75,8 +76,9 @@ const ManageDepartment = () => {
     }
   }, [user]); // Runs when user changes
 
-  // Modal states
+  // Department form modal state
   const [isDepartmentModalOpen, setIsDepartmentModalOpen] = useState(false);
+  const [editingTeam, setEditingTeam] = useState(null);
 
   // Audit log state
   const [auditLogs, setAuditLogs] = useState([]);
@@ -90,7 +92,6 @@ const ManageDepartment = () => {
   const teams = teamIds?.map((id) => teamsById[id]) || [];
 
   const [selectedDepartments, setSelectedDepartments] = useState([]);
-  const [editingTeam, setEditingTeam] = useState(null);
 
   // Get companies data from Redux (only for admin users)
   const companies = useSelector(selectCompaniesFromRedux);
@@ -568,28 +569,20 @@ const ManageDepartment = () => {
         />
       ) : null}
 
-      {/* Department Form Modal */}
-      <Modal
+      {/* Department Form Modal - Now handled inside DepartmentForm component */}
+      <DepartmentForm
         isOpen={isDepartmentModalOpen}
         onClose={() => {
           setIsDepartmentModalOpen(false);
           setEditingTeam(null);
         }}
-        title={editingTeam ? "Edit Department" : "Create Department"}
-        size="md"
-      >
-        <DepartmentForm
-          onClose={() => {
-            setIsDepartmentModalOpen(false);
-            setEditingTeam(null);
-          }}
-          onSuccess={handleFormSuccess}
-          initialData={editingTeam}
-          companyOptions={companyOptions}
-          selectedCompany={selectedCompany || getTenantFromLocalStorage()}
-          userType={user?.type}
-        />
-      </Modal>
+        onSuccess={handleFormSuccess}
+        initialData={editingTeam}
+        mode={editingTeam ? "edit" : "create"}
+        companyOptions={companyOptions}
+        selectedCompany={selectedCompany || getTenantFromLocalStorage()}
+        userType={user?.type}
+      />
 
       <AuditLogsModal
         isOpen={showAuditModal}

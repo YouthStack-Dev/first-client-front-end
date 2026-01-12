@@ -13,9 +13,11 @@ import {
 
 const CompanyManagement = () => {
   const dispatch = useDispatch();
-  const { data: companies = [], loading, error } = useSelector(
-    (state) => state.company || {}
-  );
+  const {
+    data: companies = [],
+    loading,
+    error,
+  } = useSelector((state) => state.company || {});
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create"); // 'create' or 'edit'
@@ -51,7 +53,9 @@ const CompanyManagement = () => {
     setLoadingTenant(true);
 
     try {
-      const response = await dispatch(fetchCompanyByIdThunk(company.tenant_id)).unwrap();
+      const response = await dispatch(
+        fetchCompanyByIdThunk(company.tenant_id)
+      ).unwrap();
 
       const entity = {
         id: company.id,
@@ -59,8 +63,8 @@ const CompanyManagement = () => {
           tenant_id: response.tenant.tenant_id,
           name: response.tenant.name,
           address: response.tenant.address,
-           latitude: response.tenant.latitude,     // ✅ Added
-          longitude: response.tenant.longitude, 
+          latitude: response.tenant.latitude, // ✅ Added
+          longitude: response.tenant.longitude,
           is_active: response.tenant.is_active,
         },
         employee_email: response.tenant.employee?.email || "",
@@ -81,63 +85,52 @@ const CompanyManagement = () => {
   };
 
   // Handle form submission from modal
-const handleSubmit = async (formData) => {
-  try {
-    if (modalMode === "create") {
-      await dispatch(createCompanyThunk(formData)).unwrap();
-    } else if (modalMode === "edit" && selectedEntity) {
-      // 🟢 Dispatch the update request
-      const updatedTenant = await dispatch(
-        updateTenantThunk({
-          tenantId: selectedEntity?.company?.tenant_id,
-          data: formData,
-        })
-      ).unwrap();
+  const handleSubmit = async (formData) => {
+    try {
+      if (modalMode === "create") {
+        await dispatch(createCompanyThunk(formData)).unwrap();
+      } else if (modalMode === "edit" && selectedEntity) {
+        // 🟢 Dispatch the update request
+        const updatedTenant = await dispatch(
+          updateTenantThunk({
+            tenantId: selectedEntity?.company?.tenant_id,
+            data: formData,
+          })
+        ).unwrap();
 
-      const tenantId = selectedEntity?.company?.tenant_id;
+        const tenantId = selectedEntity?.company?.tenant_id;
 
-      // 🟢 Safely update tenantCache (avoid undefined errors)
-      setTenantCache((prev) => {
-        const existingTenant = prev[tenantId] || { company: {} };
+        // 🟢 Safely update tenantCache (avoid undefined errors)
+        setTenantCache((prev) => {
+          const existingTenant = prev[tenantId] || { company: {} };
 
-        return {
-          ...prev,
-          [tenantId]: {
-            ...existingTenant,
-            company: {
-              ...existingTenant.company,
+          return {
+            ...prev,
+            [tenantId]: {
+              ...existingTenant,
+              company: {
+                ...existingTenant.company,
                 ...updatedTenant.tenant,
               },
               permissions:
                 updatedTenant.admin_policy?.permissions ||
                 existingTenant.permissions,
-              },
-            };
-          });
-        }
-        // 🟢 Close modal after success
-      setIsModalOpen(false);
-      } catch (err) {
-      console.error("Failed to save company:", err);
+            },
+          };
+        });
       }
-    };
-
-
-
+      // 🟢 Close modal after success
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error("Failed to save company:", err);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen ">
+      <div className=" mx-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">
-              Companies Management
-            </h1>
-            <p className="text-gray-600">
-              Manage all registered transportation companies
-            </p>
-          </div>
+        <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 mb-6">
           <button
             onClick={handleCreate}
             className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -164,7 +157,7 @@ const handleSubmit = async (formData) => {
           entityData={selectedEntity}
           onSubmit={handleSubmit}
           mode={modalMode}
-          loading={loadingTenant} 
+          loading={loadingTenant}
         />
       </div>
     </div>

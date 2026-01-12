@@ -37,7 +37,7 @@ const AuditLogsModal = ({
       const limit = itemsPerPage;
 
       const response = await API_CLIENT.get(
-        `/v1/audit-logs/module/${apimodule}?skip=${skip}&limit=${limit}&tenant_id=${selectedCompany}`
+        `/audit-logs/module/${apimodule}?skip=${skip}&limit=${limit}&tenant_id=${selectedCompany}`
       );
       setAuditLogs(response.data?.data?.audit_logs);
     } catch (error) {
