@@ -4,9 +4,17 @@ import { NotificationAlertCard } from "../components/NotificationAlertCard";
 import ErrorDisplay from "../components/ui/ErrorDisplay";
 import { API_CLIENT } from "../Api/API_Client";
 import { Modal } from "../components/SmallComponents";
-// import Modal from "../components/Modal"; // Your existing Modal component
+import { toast } from "react-toastify";
+import { useDispatch } from "react-redux";
+
+import {
+  escalateAlertConfigThunk,
+  acknowledgeAlertConfigThunk,
+  closeAlertThunk,
+} from "../redux/features/alertconfig/alertconfigTrunk";
 
 const NotificationsPage = () => {
+  const dispatch = useDispatch();
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [alerts, setAlerts] = useState([]);
@@ -17,7 +25,9 @@ const NotificationsPage = () => {
   // Modal states
   const [showAckModal, setShowAckModal] = useState(false);
   const [showEscalateModal, setShowEscalateModal] = useState(false);
+  const [showCloseModal, setShowCloseModal] = useState(false);
   const [currentAlert, setCurrentAlert] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   // Form states
   const [ackForm, setAckForm] = useState({
@@ -49,6 +59,7 @@ const NotificationsPage = () => {
         err.response?.data?.message ||
           "Unable to fetch alerts. Please try again."
       );
+      toast.error("Failed to fetch alerts");
     } finally {
       setLoading(false);
     }
@@ -76,92 +87,189 @@ const NotificationsPage = () => {
     );
 
   const handleAlertAction = (action, alert) => {
-    console.log(`${action} action for alert ${alert.alert_id}`, alert);
-
     setCurrentAlert(alert);
 
     if (action === "acknowledge") {
-      // Pre-fill with current user
+      // Pre-fill with current user (you can get from localStorage or context)
+      const currentUser = localStorage.getItem("username") || "admin";
       setAckForm({
-        acknowledged_by: "admin", // Replace with actual user from context
+        acknowledged_by: currentUser,
         notes: "",
       });
       setShowAckModal(true);
     } else if (action === "escalate") {
-      // Pre-fill with current user
+      const currentUser = localStorage.getItem("username") || "admin";
       setEscalateForm({
-        escalated_by: "admin", // Replace with actual user from context
+        escalated_by: currentUser,
         escalation_level: 1,
         escalated_to: "",
         reason: "",
       });
       setShowEscalateModal(true);
-    } else if (action === "close") {
-      // Handle close action
-      console.log("Close action submitted:", { alert_id: alert.alert_id });
-    } else if (action === "reopen") {
-      // Handle reopen action
-      console.log("Reopen action submitted:", { alert_id: alert.alert_id });
+    } else if (action === "closealert") {
+      setShowCloseModal(true);
     }
   };
 
   const handleAckSubmit = async () => {
+    if (!currentAlert) return;
+
     try {
-      console.log("Acknowledgment submitted:", {
-        alert_id: currentAlert.alert_id,
-        ...ackForm,
-      });
+      setActionLoading(true);
 
-      // API call to acknowledge the alert
-      // await API_CLIENT.post(`/alerts/${currentAlert.alert_id}/acknowledge`, ackForm);
+      // Using thunk for acknowledgment
+      const resultAction = await dispatch(
+        acknowledgeAlertConfigThunk({
+          alertId: currentAlert.alert_id,
+          payload: ackForm,
+        })
+      );
 
-      // Refresh alerts after acknowledgment
-      fetchAlerts();
+      if (acknowledgeAlertConfigThunk.fulfilled.match(resultAction)) {
+        toast.success("Alert acknowledged successfully!");
 
-      // Close modal and reset form
-      setShowAckModal(false);
-      setAckForm({
-        acknowledged_by: "",
-        notes: "",
-      });
+        // Update local state
+        const updatedAlerts = alerts.map((alert) =>
+          alert.alert_id === currentAlert.alert_id
+            ? { ...alert, status: "ACKNOWLEDGED" }
+            : alert
+        );
+        setAlerts(updatedAlerts);
+
+        // Close modal and reset
+        setShowAckModal(false);
+        setAckForm({
+          acknowledged_by: "",
+          notes: "",
+        });
+      } else {
+        throw new Error(
+          resultAction.payload?.message || "Failed to acknowledge"
+        );
+      }
     } catch (err) {
       console.error("Failed to acknowledge alert", err);
-      setError(
-        err.response?.data?.message ||
-          "Unable to acknowledge alert. Please try again."
-      );
+      toast.error(err.message || "Failed to acknowledge alert");
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleEscalateSubmit = async () => {
+    if (!currentAlert) return;
+
     try {
-      console.log("Escalation submitted:", {
-        alert_id: currentAlert.alert_id,
-        ...escalateForm,
-      });
+      setActionLoading(true);
 
-      // API call to escalate the alert
-      // await API_CLIENT.post(`/alerts/${currentAlert.alert_id}/escalate`, escalateForm);
+      // Using thunk for escalation
+      const resultAction = await dispatch(
+        escalateAlertConfigThunk({
+          alertId: currentAlert.alert_id,
+          payload: escalateForm,
+        })
+      );
 
-      // Refresh alerts after escalation
-      fetchAlerts();
+      if (escalateAlertConfigThunk.fulfilled.match(resultAction)) {
+        toast.success("Alert escalated successfully!");
 
-      // Close modal and reset form
-      setShowEscalateModal(false);
-      setEscalateForm({
-        escalated_by: "",
-        escalation_level: 1,
-        escalated_to: "",
-        reason: "",
-      });
+        // Update local state
+        const updatedAlerts = alerts.map((alert) =>
+          alert.alert_id === currentAlert.alert_id
+            ? {
+                ...alert,
+                status: "ESCALATED",
+                escalation_level: escalateForm.escalation_level,
+              }
+            : alert
+        );
+        setAlerts(updatedAlerts);
+
+        // Close modal and reset
+        setShowEscalateModal(false);
+        setEscalateForm({
+          escalated_by: "",
+          escalation_level: 1,
+          escalated_to: "",
+          reason: "",
+        });
+      } else {
+        throw new Error(resultAction.payload?.message || "Failed to escalate");
+      }
     } catch (err) {
       console.error("Failed to escalate alert", err);
-      setError(
-        err.response?.data?.message ||
-          "Unable to escalate alert. Please try again."
-      );
+      toast.error(err.message || "Failed to escalate alert");
+    } finally {
+      setActionLoading(false);
     }
   };
+
+  const handleCloseAlert = async () => {
+    if (!currentAlert) return;
+
+    try {
+      setActionLoading(true);
+
+      // Using thunk for closing alert
+      const resultAction = await dispatch(
+        closeAlertThunk({
+          alertId: currentAlert.alert_id,
+        })
+      );
+
+      if (closeAlertThunk.fulfilled.match(resultAction)) {
+        toast.success("Alert closed successfully!");
+
+        // Update local state - remove closed alert
+        const updatedAlerts = alerts.filter(
+          (alert) => alert.alert_id !== currentAlert.alert_id
+        );
+        setAlerts(updatedAlerts);
+
+        // Close modal
+        setShowCloseModal(false);
+      } else {
+        throw new Error(
+          resultAction.payload?.message || "Failed to close alert"
+        );
+      }
+    } catch (err) {
+      console.error("Failed to close alert", err);
+      toast.error(err.message || "Failed to close alert");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Confirmation Modal for Close Action
+  const CloseConfirmationModal = () => (
+    <Modal
+      isOpen={showCloseModal}
+      onClose={() => setShowCloseModal(false)}
+      onSubmit={handleCloseAlert}
+      title="Close Alert"
+      submitText="Confirm Close"
+      submitColor="bg-red-600 hover:bg-red-700"
+      size="sm"
+      mode="create"
+      isLoading={actionLoading}
+    >
+      <div className="text-center py-4">
+        <Bell className="h-12 w-12 text-red-500 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          Close Alert #{currentAlert?.alert_id}?
+        </h3>
+        <p className="text-gray-600">
+          Are you sure you want to close this alert? This action cannot be
+          undone.
+        </p>
+        <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
+          <strong>Alert Type:</strong> {currentAlert?.alert_type}
+          <br />
+          <strong>Severity:</strong> {currentAlert?.severity}
+        </div>
+      </div>
+    </Modal>
+  );
 
   const stats = {
     total: alerts.length,
@@ -226,6 +334,25 @@ const NotificationsPage = () => {
             </div>
           </div>
 
+          {/* Filter Tabs */}
+          <div className="flex gap-2 mb-4">
+            {["all", "critical", "triggered", "acknowledged", "closed"].map(
+              (f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium capitalize ${
+                    filter === f
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {f} {stats[f] ? `(${stats[f]})` : ""}
+                </button>
+              )
+            )}
+          </div>
+
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
             {Object.entries(stats).map(([key, value]) => (
@@ -265,6 +392,11 @@ const NotificationsPage = () => {
             <h3 className="mt-4 text-xl font-medium text-gray-900">
               No alerts found
             </h3>
+            <p className="text-gray-600 mt-2">
+              {searchTerm
+                ? "Try a different search term"
+                : "All clear for now!"}
+            </p>
           </div>
         )}
 
@@ -278,21 +410,25 @@ const NotificationsPage = () => {
               {new Date(timestamp).toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
+                second: "2-digit",
               })}
             </div>
           </div>
         )}
       </div>
 
-      {/* Acknowledgment Modal using your Modal component */}
+      {/* Acknowledgment Modal */}
       <Modal
         isOpen={showAckModal}
-        onClose={() => setShowAckModal(false)}
+        onClose={() => !actionLoading && setShowAckModal(false)}
         onSubmit={handleAckSubmit}
         title="Acknowledge Alert"
-        submitText="Submit Acknowledgment"
+        submitText={actionLoading ? "Submitting..." : "Submit Acknowledgment"}
         submitColor="bg-green-600 hover:bg-green-700"
         size="md"
+        mode="create"
+        isLoading={actionLoading}
+        disabled={actionLoading}
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-600 mb-4">
@@ -315,6 +451,7 @@ const NotificationsPage = () => {
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
+              disabled={actionLoading}
             />
           </div>
 
@@ -333,20 +470,24 @@ const NotificationsPage = () => {
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Add any additional notes about this acknowledgment..."
+              disabled={actionLoading}
             />
           </div>
         </div>
       </Modal>
 
-      {/* Escalation Modal using your Modal component */}
+      {/* Escalation Modal */}
       <Modal
         isOpen={showEscalateModal}
-        onClose={() => setShowEscalateModal(false)}
+        onClose={() => !actionLoading && setShowEscalateModal(false)}
         onSubmit={handleEscalateSubmit}
         title="Escalate Alert"
-        submitText="Submit Escalation"
+        submitText={actionLoading ? "Submitting..." : "Submit Escalation"}
         submitColor="bg-red-600 hover:bg-red-700"
         size="md"
+        mode="create"
+        isLoading={actionLoading}
+        disabled={actionLoading}
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-600 mb-4">
@@ -369,6 +510,7 @@ const NotificationsPage = () => {
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
+              disabled={actionLoading}
             />
           </div>
 
@@ -385,6 +527,7 @@ const NotificationsPage = () => {
                 })
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={actionLoading}
             >
               <option value={1}>Level 1 (Low)</option>
               <option value={2}>Level 2 (Medium)</option>
@@ -409,6 +552,7 @@ const NotificationsPage = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Team or person responsible"
               required
+              disabled={actionLoading}
             />
           </div>
 
@@ -428,10 +572,14 @@ const NotificationsPage = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Explain why this alert needs escalation..."
               required
+              disabled={actionLoading}
             />
           </div>
         </div>
       </Modal>
+
+      {/* Close Confirmation Modal */}
+      <CloseConfirmationModal />
     </div>
   );
 };
