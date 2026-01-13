@@ -12,14 +12,15 @@ import {
   Building,
   Eye,
   EyeOff,
+  Shield,
 } from "lucide-react";
 
 import { API_CLIENT } from "../../Api/API_Client";
 import { logDebug } from "../../utils/logger";
 import endpoint from "../../Api/Endpoints";
 import { useValidation } from "../../hooks/useValidation";
+import { useRoleOptions } from "../../hooks/useRoles"; // Import the role hook
 import { Modal } from "../SmallComponents";
-// import Modal from "../Common/Modal"; // Import the reusable Modal
 
 const VendorUserForm = ({
   isOpen,
@@ -33,6 +34,7 @@ const VendorUserForm = ({
   const [isEditMode, setIsEditMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState(null);
+  const [selectedRole, setSelectedRole] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
 
   // Use the validation hook
@@ -41,12 +43,18 @@ const VendorUserForm = ({
     mode === "create" ? "create" : "edit"
   );
 
+  // Fetch roles for dropdown
+  const { options: roleOptions, loading: rolesLoading } = useRoleOptions(
+    isOpen && (mode === "create" || mode === "edit" || mode === "view")
+  );
+
   // Form state
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     vendor_id: "",
+    role_id: "", // Add role_id to form data
     is_active: true,
     password: "",
   });
@@ -61,6 +69,7 @@ const VendorUserForm = ({
           email: initialData.email || "",
           phone: initialData.phone || "",
           vendor_id: initialData.vendor_id || "",
+          role_id: initialData.role_id || "", // Add role_id
           is_active:
             initialData.is_active !== undefined ? initialData.is_active : true,
           password: "", // Don't pre-fill password for security
@@ -87,10 +96,12 @@ const VendorUserForm = ({
           email: "",
           phone: "",
           vendor_id: "",
+          role_id: "", // Reset role_id
           is_active: true,
           password: "",
         });
         setSelectedVendor(null);
+        setSelectedRole(null);
       }
 
       // Set edit mode based on modal mode prop
@@ -120,6 +131,18 @@ const VendorUserForm = ({
 
     // Clear vendor error if exists
     clearError("vendor_id");
+  };
+
+  // Handle role selection
+  const handleRoleSelect = (selectedOption) => {
+    setSelectedRole(selectedOption);
+    setFormData((prev) => ({
+      ...prev,
+      role_id: selectedOption?.value || "",
+    }));
+
+    // Clear role error if exists
+    clearError("role_id");
   };
 
   // Toggle password visibility
@@ -155,14 +178,14 @@ const VendorUserForm = ({
       // Prepare payload
       const payload = {
         ...validatedData,
-        // Ensure vendor_id is a number
+        // Ensure vendor_id and role_id are numbers
         vendor_id: parseInt(validatedData.vendor_id) || validatedData.vendor_id,
+        role_id: parseInt(formData.role_id) ? parseInt(formData.role_id) : null,
       };
-
+      logDebug(" this is the vendor user subbmiting payloud", payload);
       let response;
       if (mode === "create") {
         response = await API_CLIENT.post(endpoint.VendorUser, payload);
-        toast.success("Vendor user created successfully!");
       } else if (mode === "edit" && initialData?.id) {
         // For edit, remove password if it's empty string
         if (payload.password === "") {
@@ -252,6 +275,7 @@ const VendorUserForm = ({
   const handleClose = () => {
     setIsEditMode(mode === "create" || mode === "edit");
     setShowPassword(false);
+    setSelectedRole(null);
     onClose();
   };
 
@@ -283,7 +307,7 @@ const VendorUserForm = ({
       isEditMode={isEditMode}
       onToggleEdit={mode === "view" ? toggleEditMode : null}
       showEditToggle={showEditToggle}
-      isLoading={isLoading}
+      isLoading={isLoading || rolesLoading}
       submitText={mode === "create" ? "Create" : "Save Changes"}
     >
       <div className="space-y-5">
@@ -295,11 +319,7 @@ const VendorUserForm = ({
           <div className="relative">
             <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
             <Select
-              options={vendors.map((vendor) => ({
-                value: vendor.vendor_id || vendor.id,
-                label:
-                  vendor.name || vendor.vendor_name || `Vendor ${vendor.id}`,
-              }))}
+              options={vendors}
               value={selectedVendor}
               onChange={handleVendorSelect}
               isDisabled={mode === "view" && !isEditMode}
@@ -324,6 +344,59 @@ const VendorUserForm = ({
             <p className="mt-1 text-sm text-red-600">{errors.vendor_id}</p>
           )}
         </div>
+
+        {/* Role Selection (for create/edit/edit mode) */}
+        {(mode === "create" ||
+          mode === "edit" ||
+          (mode === "view" && isEditMode)) && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Role <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+              <Select
+                options={roleOptions}
+                value={selectedRole}
+                onChange={handleRoleSelect}
+                isLoading={rolesLoading}
+                isDisabled={(mode === "view" && !isEditMode) || rolesLoading}
+                placeholder={
+                  rolesLoading ? "Loading roles..." : "Select a role..."
+                }
+                className="react-select-container"
+                classNamePrefix="react-select"
+                noOptionsMessage={() => "No roles found"}
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    paddingLeft: "2rem",
+                    borderColor: errors.role_id ? "#ef4444" : "#d1d5db",
+                    "&:hover": {
+                      borderColor: errors.role_id ? "#ef4444" : "#9ca3af",
+                    },
+                  }),
+                }}
+              />
+            </div>
+            {errors.role_id && (
+              <p className="mt-1 text-sm text-red-600">{errors.role_id}</p>
+            )}
+          </div>
+        )}
+
+        {/* Display role in view mode (non-edit) */}
+        {mode === "view" && !isEditMode && selectedRole && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Role
+            </label>
+            <div className="flex items-center p-3 bg-gray-50 border border-gray-200 rounded-md">
+              <Shield className="mr-2 text-gray-500 w-4 h-4" />
+              <span className="text-gray-700">{selectedRole.label}</span>
+            </div>
+          </div>
+        )}
 
         {/* Name */}
         <div>

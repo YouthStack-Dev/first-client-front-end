@@ -65,3 +65,69 @@ export const updateAlertConfigThunk = createAsyncThunk(
     }
   }
 );
+
+export const acknowledgeAlertConfigThunk = createAsyncThunk(
+  "alertconfig/acknowledge",
+  async ({ alertId, payload = {} }, { rejectWithValue }) => {
+    try {
+      const response = await API_CLIENT.put(
+        `/alerts/${alertId}/acknowledge`,
+        payload
+      );
+
+      logDebug("alert config acknowledged", response.data);
+
+      // return updated config object
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || {
+          message: "Failed to acknowledge alert config",
+        }
+      );
+    }
+  }
+);
+
+export const escalateAlertConfigThunk = createAsyncThunk(
+  "alertconfig/escalate",
+  async ({ alertId, payload = {} }, { rejectWithValue }) => {
+    try {
+      const response = await API_CLIENT.post(
+        `/alerts/${alertId}/escalate`,
+        payload
+      );
+
+      logDebug("alert config escalated", response.data);
+
+      // return updated config object
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || {
+          message: "Failed to escalate alert config",
+        }
+      );
+    }
+  }
+);
+
+export const closeAlertThunk = createAsyncThunk(
+  "alertconfig/close",
+  async ({ alertId }, { rejectWithValue }) => {
+    try {
+      const response = await API_CLIENT.put(`/alerts/${alertId}/close`);
+
+      logDebug("alert closed", response.data);
+
+      // return updated config object
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || {
+          message: "Failed to close alert",
+        }
+      );
+    }
+  }
+);

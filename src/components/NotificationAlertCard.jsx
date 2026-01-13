@@ -249,56 +249,16 @@ export const NotificationAlertCard = ({ alert, onAction }) => {
             className:
               "bg-red-50 text-red-700 hover:bg-red-100 border border-red-200",
             variant: "secondary",
-          }
-        );
-        break;
-      case "ACKNOWLEDGED":
-        actions.push(
+          },
           {
             label: "Close Alert",
-            icon: CheckCircle,
-            onClick: () => handleAction("close"),
-            className: "bg-green-600 hover:bg-green-700 text-white",
-            variant: "primary",
-          },
-          {
-            label: "Escalate",
             icon: AlertOctagon,
-            onClick: () => handleAction("escalate"),
+            onClick: () => handleAction("closealert"),
             className:
               "bg-red-50 text-red-700 hover:bg-red-100 border border-red-200",
             variant: "secondary",
           }
         );
-        break;
-      case "IN_PROGRESS":
-        actions.push(
-          {
-            label: "Resolve",
-            icon: CheckCircle,
-            onClick: () => handleAction("close"),
-            className: "bg-green-600 hover:bg-green-700 text-white",
-            variant: "primary",
-          },
-          {
-            label: "Escalate",
-            icon: AlertOctagon,
-            onClick: () => handleAction("escalate"),
-            className:
-              "bg-red-50 text-red-700 hover:bg-red-100 border border-red-200",
-            variant: "secondary",
-          }
-        );
-        break;
-      case "CLOSED":
-        actions.push({
-          label: "Reopen",
-          icon: RefreshCw,
-          onClick: () => handleAction("reopen"),
-          className:
-            "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300",
-          variant: "secondary",
-        });
         break;
     }
 
