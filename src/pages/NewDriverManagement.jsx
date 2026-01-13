@@ -8,6 +8,9 @@ import React, {
 import { Download, History } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import Select from "react-select";
+import AuditLogsModal from "../components/modals/AuditLogsModal";
+import { useSearchParams } from "react-router-dom";
+
 // import toast from "react-hot-toast";
 
 import DriverFormModal from "../components/driver/NewDriverFrom";
@@ -54,6 +57,12 @@ const NewDriverManagement = () => {
   const user = useSelector(selectCurrentUser);
   const isVendorUser = user?.type === "vendor";
 
+  const tenantId =
+    user?.employee?.tenant_id ||
+    user?.vendor_user?.tenant_id ||
+    user?.tenant_id;
+
+
   // Get drivers data from Redux using selectors
   const drivers = useSelector(driversSelectors.selectAll);
   const loading = useSelector(selectDriversLoading);
@@ -64,6 +73,8 @@ const NewDriverManagement = () => {
   const skip = (currentPage - 1) * itemsPerPage;
 
   const vendors = useVendorOptions(null, !isVendorUser);
+  const [selectedDriverName, setSelectedDriverName] = useState(null);
+
 
   logDebug(" thi are the vendors in driver management ", vendors);
   // ----------------------------
@@ -428,21 +439,21 @@ const NewDriverManagement = () => {
         rightElements={
           <div className="flex flex-wrap items-center gap-3">
 
-            {!isVendorUser && (
-                <ReusableButton
-                  module="vehicle"
-                  action="read"
-                  buttonName={"History"}
-                  icon={History}
-                  title="Audit History"
-                  disabled={shouldShowNoVendorMessage}
-                  onClick={() => {
-                    setSelectedVehicleTypeName(null);
-                    setShowAuditModal(true);
-                  }}
-                  className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md"
-                />
-             )}
+           {!isVendorUser && (
+            <ReusableButton
+              module="driver"
+              action="read"
+              buttonName={"History"}
+              icon={History}
+              title="Audit History"
+              disabled={shouldShowNoVendorMessage}
+              onClick={() => {
+                setShowAuditModal(true);
+              }}
+              className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md"
+            />
+          )}
+
 
 
             <ReusableButton
@@ -575,24 +586,17 @@ const NewDriverManagement = () => {
       />
 
       {/* Audit History Modal */}
-      {showAuditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[80vh] overflow-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Audit History</h2>
-              <button
-                onClick={() => setShowAuditModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ×
-              </button>
-            </div>
-            <p className="text-gray-600">
-              Audit history functionality to be implemented.
-            </p>
-          </div>
-        </div>
-      )}
+      <AuditLogsModal
+        isOpen={showAuditModal}
+        onClose={() => {
+          setShowAuditModal(false);
+          setSelectedDriverName(null);
+        }}
+        apimodule="driver"
+        moduleName={selectedDriverName || "Driver"}
+        showUserColumn={true}
+        selectedCompany={tenantId}  
+      />
     </div>
   );
 };
