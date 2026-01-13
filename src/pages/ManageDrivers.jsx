@@ -35,9 +35,7 @@ function ManageDrivers() {
   const statusOptions = useSelector(selectStatusOptions);
   const activeFilters = useSelector(selectActiveFilters);
   const counts = useSelector(selectCounts);
-
-  const { vendor}= useSelector(state => state.vendor);
-
+   const { vendor}= useSelector(state => state.vendor.user);
   // Modal and form state
   const [showModal, setShowModal] = useState(false);
   const [formMode, setFormMode] = useState("create");
@@ -70,8 +68,9 @@ function ManageDrivers() {
    */
   useEffect(() => {
     // Fetch vendors when component mounts
-    if (vendor?.length ===0) {
-    fetchVendors().then(setVendors);    
+    if (vendor.length <=0) {
+    fetchVendors().then(setVendors);
+      
     }
   }, [dispatch, hasFetched, isVendorUser, currentUser]);
 
