@@ -8,10 +8,10 @@ import FilterBadges from '../components/ui/FilterBadges';
 import StatusIndicator from '../components/ui/StatusIndicator';
 import { API_CLIENT } from '../Api/API_Client';
 import {  
-  setSearchTerm, setVendorFilter, setStatusFilter, setVerificationFilter, resetFilters,
-  setPage, setDriversLoading, setDriversError, setDriversData, updateDriverStatus, 
-  selectPaginatedDrivers, selectLoading, selectError, selectVendorOptions, selectStatusOptions,
-  selectVerificationOptions, selectActiveFilters, selectCounts, selectFilteredDrivers
+  setSearchTerm, setStatusFilter, resetFilters,
+  setPage, updateDriverStatus, 
+  selectPaginatedDrivers, selectLoading, selectError, selectStatusOptions,
+  selectActiveFilters, selectCounts
 } from '../redux/features/manageDriver/driverSlice';
 import DriverForm from '../components/driver/DriverForm';
 import Modal from '../components/modals/Modal';

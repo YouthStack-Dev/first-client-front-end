@@ -30,12 +30,12 @@ const AuditLogsModal = ({
   const [auditLogs, setAuditLogs] = useState([]);
   const itemsPerPage = 5;
 
-  logDebug(" This is the auditData in AuditLogsModal: ", auditData);
+  // logDebug(" This is the auditData in AuditLogsModal: ", auditData);
   const fetchAuditLogs = async () => {
     try {
       const skip = (currentPage - 1) * itemsPerPage;
       const limit = itemsPerPage;
-
+       
       const response = await API_CLIENT.get(
         `/v1/audit-logs/module/${apimodule}?skip=${skip}&limit=${limit}&tenant_id=${selectedCompany}`
       );

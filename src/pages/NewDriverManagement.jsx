@@ -427,15 +427,24 @@ const NewDriverManagement = () => {
         }
         rightElements={
           <div className="flex flex-wrap items-center gap-3">
-            <ReusableButton
-              module="vendor-user"
-              action="delete"
-              icon={History}
-              title="View Audit History"
-              onClick={() => setShowAuditModal(true)}
-              className="text-white bg-blue-600 px-3 py-2 rounded-md flex items-center gap-2 hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={shouldShowNoVendorMessage}
-            />
+
+            {!isVendorUser && (
+                <ReusableButton
+                  module="vehicle"
+                  action="read"
+                  buttonName={"History"}
+                  icon={History}
+                  title="Audit History"
+                  disabled={shouldShowNoVendorMessage}
+                  onClick={() => {
+                    setSelectedVehicleTypeName(null);
+                    setShowAuditModal(true);
+                  }}
+                  className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md"
+                />
+             )}
+
+
             <ReusableButton
               module="driver"
               action="read"

@@ -40,8 +40,12 @@ const ManageEmployees = () => {
   const { depId } = useParams();
   const dispatch = useDispatch();
 
+//   console.log("Full URL path:", location.pathname);
+// console.log("Query params:", location.search);
+
   const isActive = searchParams.get("active");
   const tenantId = searchParams.get("tenantId");
+
   const targetIsActive = isActive === "true";
 
   // Get department cache and employees from Redux store
