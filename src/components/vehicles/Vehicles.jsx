@@ -54,17 +54,12 @@ const NewVehicleManagement = () => {
   const user = useSelector(selectCurrentUser);
   const isVendorUser = user?.type === "vendor";
   const vendorId = user?.vendor_user?.vendor_id;
+  
+  const tenantId =
+    user?.employee?.tenant_id ||
+    user?.vendor_user?.tenant_id ||
+    user?.tenant_id;
 
-  const [searchParams] = useSearchParams();
-  const urlTenant = searchParams.get("tenantId");
-
-// fallback from redux user
-const reduxTenant =
-  user?.employee?.tenant_id ||
-  user?.vendor_user?.tenant_id ||
-  user?.tenant_id;
-
-const tenantId = urlTenant || reduxTenant;
 
   /* ================= REDUX DATA ================= */
   const vehicles = useSelector(selectVehicles);
