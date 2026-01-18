@@ -13,6 +13,8 @@ import routeReducer from "./features/routes/roureSlice";
 import newDriverReducer from "./features/manageDriver/newDriverSlice";
 import escortReducer from "./features/escort/escortSlice";
 import alertconfigReducer from "./features/alertconfig/alertconfigslice";
+import teamsReducer from "./features/teams/teamsSlice";
+import employeesReducer from "./features/employees/employeesSlice";
 const store = configureStore({
   reducer: {
     alertconfig: alertconfigReducer,
@@ -29,6 +31,8 @@ const store = configureStore({
     route: routeReducer,
     newDriver: newDriverReducer,
     escort: escortReducer,
+    teams: teamsReducer,
+    employees: employeesReducer,
   },
 });
 

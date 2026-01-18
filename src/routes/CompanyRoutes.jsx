@@ -23,7 +23,8 @@ import NewDriverManagement from "../pages/NewDriverManagement";
 import EscortManagement from "../pages/EscortManagement";
 import AlertConfigManagement from "../pages/AlertManagement";
 import NotificationsPage from "../pages/NotificationPage";
-
+import TeamManagement from "../pages/TeamManagement";
+import TeamEmployeesManagement from "../components/TeamEmployees/TeamEmployeesManagemnt.jsx";
 export const CompanyRoutes = () => (
   <Route path="/companies" element={<Layout type="employee" />}>
     <Route path="dashboard" element={<CompanyDashboard />} />
@@ -36,7 +37,15 @@ export const CompanyRoutes = () => (
         </PermissionCheck>
       }
     />
-
+    <Route path="teams" element={<TeamManagement />} />
+    <Route
+      path="teams/:teamId/employees"
+      element={
+        <PermissionCheck module="employee" action="read">
+          <TeamEmployeesManagement />
+        </PermissionCheck>
+      }
+    />
     <Route path="departments" element={<ManageDepartment />} />
     <Route path="vendor-user-management" element={<VendorUserManagement />} />
     <Route path="shift-categories" element={<ManageDepartment />} />
