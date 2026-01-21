@@ -59,7 +59,7 @@ const VendorRouteManagement = () => {
       setLoading(true);
       setError(null);
 
-      const apiEndpoint = `/v1/routes/?&booking_date=${bookingDate}`;
+      const apiEndpoint = `/routes/?&booking_date=${bookingDate}`;
       const response = await API_CLIENT.get(apiEndpoint);
 
       if (response.data.success) {
@@ -138,7 +138,7 @@ const VendorRouteManagement = () => {
       const routeId = Array.from(selectedRoutes)[0];
 
       await API_CLIENT.put(
-        `/v1/routes/assign-vehicle?route_id=${routeId}&vehicle_id=${vehicleId}`
+        `/routes/assign-vehicle?route_id=${routeId}&vehicle_id=${vehicleId}`
       );
       await fetchRoutes();
       setIsAssignDriverModalOpen(false);

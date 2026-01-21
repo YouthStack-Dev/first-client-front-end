@@ -48,7 +48,6 @@ const AlertManagement = () => {
   );
 
   const loading = useSelector((state) => state.alertconfig.loading.fetch);
-  const error = useSelector((state) => state.alertconfig.error);
 
   // Initial fetch when component mounts
   useEffect(() => {

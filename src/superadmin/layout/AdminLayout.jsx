@@ -133,46 +133,9 @@ const AdminLayout = () => {
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto pt-16 pb-6 bg-gray-50">
-          <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Breadcrumb Navigation (optional) */}
-            <div className="mb-6 pt-4">
-              <nav className="flex" aria-label="Breadcrumb">
-                <ol className="inline-flex items-center space-x-1 md:space-x-3">
-                  <li className="inline-flex items-center">
-                    <span className="text-sm text-gray-500 hover:text-gray-700">
-                      Admin Panel
-                    </span>
-                  </li>
-                  <li>
-                    <div className="flex items-center">
-                      <svg
-                        className="w-3 h-3 text-gray-400 mx-1"
-                        aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 6 10"
-                      >
-                        <path
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="m1 9 4-4-4-4"
-                        />
-                      </svg>
-                      <span className="ml-1 text-sm font-medium text-gray-700 md:ml-2">
-                        {title}
-                      </span>
-                    </div>
-                  </li>
-                </ol>
-              </nav>
-            </div>
-
-            {/* Content Area */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
-              <Outlet />
-            </div>
+          {/* Content Area */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+            <Outlet />
           </div>
         </main>
 

@@ -3,9 +3,8 @@ import Layout from "../companies/layout/layout";
 import EmployeeForm from "../components/departments/EmployeeForm";
 import ManageDepartment from "../pages/ManageDepartment";
 import ManageEmployees from "../pages/ManageEmployees";
-import VendorManagement from "../pages/VendorManagement";
 import VehicleManagement from "../pages/VehicleManagement";
-import ManageDrivers from "../pages/ManageDrivers";
+// import ManageDrivers from "../pages/ManageDrivers";
 import CompanyDashboard from "../companies/CompanyDashboard";
 import Schedulemanagement from "../pages/Schedulemanagement";
 import CutoffManagement from "../components/Schedulemanagement/CutoffManagement";
@@ -23,7 +22,7 @@ import TrackingManagement from "../pages/TrackingManagement";
 import NewDriverManagement from "../pages/NewDriverManagement";
 import EscortManagement from "../pages/EscortManagement";
 import AlertConfigManagement from "../pages/AlertManagement";
-// import NewDriverManagement from "../pages/NewDriverManagement";
+import NotificationsPage from "../pages/NotificationPage";
 
 export const CompanyRoutes = () => (
   <Route path="/companies" element={<Layout type="employee" />}>
@@ -44,19 +43,18 @@ export const CompanyRoutes = () => (
     <Route path="shifts" element={<Schedulemanagement />} />
     <Route path="role-management" element={<RoleManagement />} />
     <Route path="role-permission" element={<RoleManagement />} />
-    <Route path="drivers" element={<ManageDrivers />} />
     <Route path="manage-company" element={<ManageDepartment />} />
     <Route path="scheduling" element={<Schedulemanagement />} />
     <Route path="employees/create" element={<EmployeeForm />} />
     <Route path="cutoff" element={<CutoffManagement />} />
     <Route path="alert-config" element={<AlertConfigManagement />} />
     <Route path="vehicles-management" element={<VehicleManagement />} />
-    <Route path="vendors" element={<VendorManagement />} />
     <Route path="new-vendor-management" element={<NewVendorManagement />} />
     <Route path="profile" element={<ProfilePage />} />
     <Route path="reports-management" element={<ReportsManagement />} />
     <Route path="employee/create-employee" element={<EmployeeForm />} />
     <Route path="driverform" element={<NewDriverManagement />} />
+    <Route path="notification" element={<NotificationsPage />} />
     <Route
       path="department/:depId/employees"
       element={

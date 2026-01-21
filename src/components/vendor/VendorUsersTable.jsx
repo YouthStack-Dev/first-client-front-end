@@ -43,7 +43,6 @@ export const VendorUsersTable = ({
   };
 
   const paginatedUsers = getPaginatedData();
-  logDebug(" this is the user ", paginatedUsers);
 
   const handlePageChange = (newPage) => {
     if (newPage < 1 || newPage > totalPages) return;

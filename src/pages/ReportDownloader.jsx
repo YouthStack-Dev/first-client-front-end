@@ -23,7 +23,7 @@ const ReportDownloader = () => {
         booking_status: ["Request", "Scheduled"], // pass multiple values as array
       };
 
-      const response = await API_CLIENT.get("/v1/reports/bookings/export", {
+      const response = await API_CLIENT.get("/reports/bookings/export", {
         params,
         responseType: "blob",
       });
@@ -47,7 +47,7 @@ const ReportDownloader = () => {
   const handleDownload = async () => {
     setLoading(true);
     try {
-      const response = await API_CLIENT.get("/v1/reports/bookings/export", {
+      const response = await API_CLIENT.get("/reports/bookings/export", {
         params: filters,
 
         responseType: "blob",

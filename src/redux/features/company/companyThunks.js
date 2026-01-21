@@ -10,7 +10,7 @@ export const fetchCompaniesThunk = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       // Make the request to fetch tenants
-      const response = await API_CLIENT.get("/v1/tenants/");
+      const response = await API_CLIENT.get("/tenants/");
       // Log the full response for debugging
       // console.log("Full response:", response.data);
       // Extract tenants from response
@@ -37,7 +37,7 @@ export const createCompanyThunk = createAsyncThunk(
       // console.group("[Thunk] Create Company");
       // console.log("Payload sent to API:", payload);
       // console.groupEnd();
-      const response = await API_CLIENT.post("/v1/tenants/", payload);
+      const response = await API_CLIENT.post("/tenants/", payload);
 
       // console.log("[Thunk] API Response:", response.data);
       // Refresh companies list
@@ -58,7 +58,7 @@ export const fetchCompanyByIdThunk = createAsyncThunk(
   "company/fetchCompanyById",
   async (tenantId, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.get(`/v1/tenants/${tenantId}`);
+      const response = await API_CLIENT.get(`/tenants/${tenantId}`);
       // Return the tenant + admin_policy
       return response.data?.data;
     } catch (error) {
@@ -74,7 +74,7 @@ export const updateTenantThunk = createAsyncThunk(
   "tenants/update",
   async ({ tenantId, data }, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.put(`/v1/tenants/${tenantId}`, data);
+      const response = await API_CLIENT.put(`/tenants/${tenantId}`, data);
 
       if (response?.data?.success) {
         return response.data.data;
@@ -89,7 +89,6 @@ export const updateTenantThunk = createAsyncThunk(
   }
 );
 
-
 export const toggleCompanyStatusThunk = createAsyncThunk(
   "company/toggleStatus",
   async (payload, { rejectWithValue }) => {
@@ -97,7 +96,7 @@ export const toggleCompanyStatusThunk = createAsyncThunk(
     const { tenant_id } = payload;
     try {
       const response = await API_CLIENT.patch(
-        `/v1/tenants/${tenant_id}/toggle-status`
+        `/tenants/${tenant_id}/toggle-status`
       );
       return { tenant_id, data: response.data };
     } catch (error) {

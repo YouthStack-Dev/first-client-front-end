@@ -11,7 +11,6 @@ const getCookie = (name) => {
   return match ? match[2] : null;
 };
 
-
 /**
  * Universal File Downloader
  *
@@ -37,7 +36,6 @@ export const downloadFile = async (
     return;
   }
 
-  
   try {
     // ✅ Use environment API base URL if available
     const baseURL =
@@ -47,7 +45,7 @@ export const downloadFile = async (
     // ✅ If filePath is absolute (e.g., http...), use it directly
     let url = filePath.startsWith("http")
       ? filePath
-      : `${baseURL}/v1/${module}/files/${encodeURIComponent(
+      : `${baseURL}/${module}/files/${encodeURIComponent(
           filePath
         )}?download=true`;
 
@@ -141,7 +139,7 @@ export const previewFile = async (
       url = filePath;
     } else {
       const parts = filePath.split("/").map(encodeURIComponent);
-      url = `${baseURL}/v1/${module}/files/${parts.join("/")}${
+      url = `${baseURL}/${module}/files/${parts.join("/")}${
         download ? "?download=false" : ""
       }`;
     }

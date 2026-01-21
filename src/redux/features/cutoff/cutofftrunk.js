@@ -6,7 +6,7 @@ export const fetchCutoffsThunk = createAsyncThunk(
   "cutoff/fetchCutoffs",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.get(`/v1/cutoffs/`);
+      const response = await API_CLIENT.get(`/cutoffs/`);
 
       if (response.status === 200) {
         return response.data?.data || response.data;
@@ -39,7 +39,7 @@ export const saveCutoffThunk = createAsyncThunk(
 
       console.log("Saving cutoff payload:", payload);
 
-      const response = await API_CLIENT.put("/v1/cutoffs/", payload);
+      const response = await API_CLIENT.put("/cutoffs/", payload);
 
       if (response.status === 200) {
         return response.data?.data || response.data;
@@ -58,7 +58,7 @@ export const fetchEscortConfigThunk = createAsyncThunk(
   "cutoff/fetchTenantConfig",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.get(`/v1/tenant-config/`);
+      const response = await API_CLIENT.get(`/tenant-config/`);
 
       if (response.status === 200) {
         return response.data?.data || response.data;
@@ -94,7 +94,7 @@ export const saveEscortConfigThunk = createAsyncThunk(
 
       console.log("Saving tenant config payload:", payload);
 
-      const response = await API_CLIENT.put("/v1/tenant-config/", payload);
+      const response = await API_CLIENT.put("/tenant-config/", payload);
 
       if (response.status === 200) {
         return response.data?.data || response.data;

@@ -1,27 +1,27 @@
 const endpoint = {
   //  Auth endpoints
 
-  login: "/v1/auth/employee/login",
-  superAdminLogin: "/v1/auth/admin/login",
-  vendorLogin: "/v1/auth/vendor/login",
+  login: "/auth/employee/login",
+  superAdminLogin: "/auth/admin/login",
+  vendorLogin: "/auth/vendor/login",
 
   //  Department and Employee endpoints
-  getTenants: "/v1/tenants",
-  getDepartments: "/v1/teams/",
-  getEmployesByDepartment: "/v1/employees/",
-  createEmployee: "/v1/employees/",
-  createTeam: "/v1/teams/",
-  updateEmployee: "/v1/employees/",
-  getWeekOff: "/v1/weekoff-configs/",
-  updateWeekOff: "/v1/weekoff-configs/",
-  toggleEmployeStatus: "/v1/employees/",
-  toggleTeamStatus: "/v1/teams/",
-  VendorUser: "/v1/vendor-users/",
+  getTenants: "/tenants",
+  getDepartments: "/teams/",
+  getEmployesByDepartment: "/employees/",
+  createEmployee: "/employees/",
+  createTeam: "/teams/",
+  updateEmployee: "/employees/",
+  getWeekOff: "/weekoff-configs/",
+  updateWeekOff: "/weekoff-configs/",
+  toggleEmployeStatus: "/employees/",
+  toggleTeamStatus: "/teams/",
+  VendorUser: "/vendor-users/",
 
   //  Boookings
-  booking: "/v1/bookings/",
+  booking: "/bookings/",
 
-  routesuggestion: "/v1/grouping/bookings/routesuggestion",
-  savedRoutes: "/v1/routes/",
+  routesuggestion: "/grouping/bookings/routesuggestion",
+  savedRoutes: "/routes/",
 };
 export default endpoint;

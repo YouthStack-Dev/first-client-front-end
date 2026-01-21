@@ -5,10 +5,8 @@ import ManageEmployees from "../pages/ManageEmployees";
 import VendorUserManagement from "../pages/VendorUserManagement";
 import RoleManagement from "../components/RoleManagement/RoleManagement";
 import VendorRouteManagement from "../components/RouteManagement/VendorRouteManagement";
-import ManageDrivers from "../pages/ManageDrivers";
 import VehicleManagement from "../pages/VehicleManagement";
 import EmployeeForm from "../components/departments/EmployeeForm";
-import EscortManagement from "../pages/EscortManagement";
 import NewDriverManagement from "../pages/NewDriverManagement";
 
 export const VendorRoutes = () => (
@@ -32,7 +30,7 @@ export const VendorRoutes = () => (
       element={<EmployeeForm mode="view" />}
     />
     <Route path="reports" element={<h1>Vendor Reports</h1>} />
-    <Route path="drivers" element={<ManageDrivers />} />
+
     <Route path="driverform" element={<NewDriverManagement />} />
     <Route path="vehicles" element={<VehicleManagement />} />
   </Route>
