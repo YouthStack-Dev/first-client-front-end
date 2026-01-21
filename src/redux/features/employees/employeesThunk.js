@@ -59,3 +59,36 @@ export const toggleEmployeeStatus = createAsyncThunk(
     }
   }
 );
+
+
+export const createEmployeeThunk = createAsyncThunk(
+  "user/createEmployee",
+  async (employeeData, { rejectWithValue }) => {
+    try {
+      const response = await API_CLIENT.post("/employees/", employeeData);
+      if (response.status === 201) {
+        return response.data;
+      } else {
+        return rejectWithValue("Failed to create employee");
+      }
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const updateEmployeeThunk = createAsyncThunk(
+  "employees/updateEmployee",
+  async ({ employeeId, employeeData }, { rejectWithValue }) => {
+    try {
+      const response = await API_CLIENT.put(`${endpoint.updateEmployee}${employeeId}`, employeeData);
+      if (response.status === 200) {
+        return response.data;
+      } else {
+        return rejectWithValue("Failed to update employee");
+      }
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message || "Network error");
+    }
+  }
+);

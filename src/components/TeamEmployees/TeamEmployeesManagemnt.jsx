@@ -7,7 +7,6 @@ import {
   Eye,
   Calendar,
   BookOpen,
-  Edit,
   ChevronDown,
   ChevronUp,
   User,
@@ -16,6 +15,7 @@ import ToolBar from "@components/ui/ToolBar";
 import AuditLogsModal from "@components/modals/AuditLogsModal";
 import ReusableButton from "@components/ui/ReusableButton";
 import ReusableToggleButton from "@components/ui/ReusableToggleButton";
+import TeamEmployeeModal from "./TeamEmployeeModal";
 import {
   selectEmployeesByTeamId,
   selectEmployeesLoading,
@@ -48,6 +48,11 @@ const TeamEmployeesManagement = () => {
     direction: "ascending",
   });
   const [updatingEmployeeId, setUpdatingEmployeeId] = useState(null);
+  
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("create");
+  const [modalEmployeeData, setModalEmployeeData] = useState(null);
 
   const isActive = searchParams.get("active");
   const tenantId = searchParams.get("tenantId");
@@ -150,36 +155,19 @@ const TeamEmployeesManagement = () => {
   };
 
   const handleAddClick = () => {
-    navigate(`/companies/employee/create-employee`, {
-      state: { teamId: teamId, tenantId },
-    });
+    setModalMode("create");
+    setModalEmployeeData(null);
+    setIsModalOpen(true);
   };
 
   const handleView = (employee) => {
-    navigate(
-      `/companies/department/${employee.team_id}/employees/${employee.employee_id}/view`,
-      {
-        state: {
-          employee,
-          fromChild: true,
-          teamId: teamId,
-          tenantId,
-        },
-      }
-    );
+    setModalMode("view");
+    setModalEmployeeData(employee);
+    setIsModalOpen(true);
   };
 
-  const handleEdit = (employee) => {
-    navigate(
-      `/companies/department/${employee.team_id}/employees/${employee.employee_id}/edit`,
-      {
-        state: {
-          employee,
-          teamId: teamId,
-          tenantId,
-        },
-      }
-    );
+  const handleModalSubmit = (formData) => {
+    setIsModalOpen(false);
   };
 
   const handleSchedule = (employee) => {
@@ -591,15 +579,6 @@ const TeamEmployeesManagement = () => {
                           className="text-gray-600 hover:text-purple-600 transition-colors"
                           iconSize={16}
                         />
-                        <ReusableButton
-                          module="employee"
-                          action="update"
-                          icon={Edit}
-                          title="Edit Employee"
-                          onClick={() => handleEdit(employee)}
-                          className="text-gray-600 hover:text-yellow-600 transition-colors"
-                          iconSize={16}
-                        />
                       </div>
                     </td>
                   </tr>
@@ -621,6 +600,13 @@ const TeamEmployeesManagement = () => {
         auditData={auditLogs}
         showUserColumn={true}
         selectedCompany={tenantId}
+      />
+
+      <TeamEmployeeModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        mode={modalMode}
+        employeeData={modalEmployeeData}
       />
     </div>
   );

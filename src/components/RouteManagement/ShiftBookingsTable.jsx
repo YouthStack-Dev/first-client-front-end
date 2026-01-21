@@ -2,15 +2,27 @@ import React, { useState } from "react";
 import {
   Clock,
   Users,
-  Truck,
-  UserCircle,
-  Route,
-  AlertCircle,
+  MapPin,
+  Package,
+  Eye,
+  RefreshCw,
+  MoreVertical,
+  Navigation,
+  Zap,
   Trash2,
+  FileText,
+  Edit,
+  Pause,
+  Layers,
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  Download,
+  Car,
+  Building,
 } from "lucide-react";
 import BookingDetailsModal from "../modals/BookingDetailsModal";
 import { API_CLIENT } from "../../Api/API_Client";
-import { logDebug } from "../../utils/logger";
 
 const ShiftBookingsTable = ({
   data,
@@ -27,8 +39,8 @@ const ShiftBookingsTable = ({
     bookings: [],
   });
   const [deletingShift, setDeletingShift] = useState(null);
+  const [actionMenuOpen, setActionMenuOpen] = useState(null);
 
-  // Extract shifts from API response
   const shiftsData = React.useMemo(() => {
     if (!data) return [];
     if (data.data?.shifts) return data.data.shifts;
@@ -37,7 +49,6 @@ const ShiftBookingsTable = ({
     return [];
   }, [data]);
 
-  // Filter data based on selected shift type
   const filteredData = React.useMemo(() => {
     if (!shiftsData || !Array.isArray(shiftsData)) return [];
     if (selectedShiftType === "All") return shiftsData;
@@ -50,17 +61,24 @@ const ShiftBookingsTable = ({
 
   const formatTime = (time) => {
     if (!time) return "-";
-    if (typeof time !== "string") return "-";
     try {
       const [hours, minutes] = time.split(":");
       const hour = parseInt(hours);
-      if (isNaN(hour)) return time;
       const ampm = hour >= 12 ? "PM" : "AM";
       const displayHour = hour % 12 || 12;
       return `${displayHour}:${minutes || "00"} ${ampm}`;
-    } catch (error) {
+    } catch {
       return time;
     }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
   };
 
   const handleTotalClick = (shift) => {
@@ -79,7 +97,6 @@ const ShiftBookingsTable = ({
     });
   };
 
-  // Helper function to check if regeneration is needed
   const needsRegeneration = (shift) => {
     const totalBookings = shift.stats?.total_bookings || 0;
     const routedBookings = shift.stats?.routed_bookings || 0;
@@ -88,7 +105,6 @@ const ShiftBookingsTable = ({
 
   const handleShiftRoute = (shift) => {
     if (!shift?.id) return;
-    logDebug("Opening routing map for shift:", shift);
     const url = `/companies/shift/${shift.id}/${shift.log_type}/${date}/routing-map`;
     window.open(url, "_blank");
   };
@@ -99,78 +115,62 @@ const ShiftBookingsTable = ({
     }
   };
 
-  // Delete shift routes function - fixed without page refresh
   const handleShiftRoutesDelete = async (shift) => {
-    if (!shift?.shift_id || !date) {
-      console.error("Shift ID and date are required");
-      return;
-    }
+    if (!shift?.shift_id || !date) return;
 
     const isConfirmed = window.confirm(
-      `Are you sure you want to delete all routes for shift ${
+      `Delete all routes for ${
         shift.shift_code || shift.shift_id
-      } on ${date}?`
+      } on ${formatDate(date)}?`
     );
 
     if (!isConfirmed) return;
 
     try {
       setDeletingShift(shift.shift_id);
-
-      const response = await API_CLIENT.delete("/routes/bulk", {
+      await API_CLIENT.delete("/routes/bulk", {
         params: {
           shift_id: shift.shift_id,
           route_date: date,
         },
       });
-
-      console.log("Routes deleted successfully:", response.data);
-
-      // Show success message
       alert(
-        `Routes for shift ${
-          shift.shift_code || shift.shift_id
-        } deleted successfully!`
+        `Routes for ${shift.shift_code || shift.shift_id} deleted successfully!`
       );
-
-      // ✅ REFRESH DATA: Call the refresh function to update the table
-      if (onRefresh) {
-        onRefresh();
-      }
+      onRefresh?.();
     } catch (error) {
-      console.error("Error deleting shift routes:", error);
-
-      let errorMessage = "Failed to delete routes";
-
-      if (error.isAxiosError || error.response) {
-        if (error.response) {
-          errorMessage =
-            error.response.data?.message ||
-            `Server error: ${error.response.status}`;
-        } else if (error.request) {
-          errorMessage =
-            "No response from server. Please check your connection.";
-        } else {
-          errorMessage = error.message;
-        }
-      } else {
-        errorMessage = error.message || "Unknown error occurred";
-      }
-
-      alert(`Failed to delete routes: ${errorMessage}`);
+      alert("Failed to delete routes. Please try again.");
     } finally {
       setDeletingShift(null);
     }
+  };
+
+  const toggleActionMenu = (shiftId) => {
+    setActionMenuOpen(actionMenuOpen === shiftId ? null : shiftId);
+  };
+
+  const getShiftStatus = (shift) => {
+    const total = shift.stats?.total_bookings || 0;
+    const unrouted = shift.stats?.unrouted_bookings || 0;
+    const routed = shift.stats?.routed_bookings || 0;
+
+    if (total === 0)
+      return { color: "gray", text: "No Bookings", icon: AlertCircle };
+    if (unrouted === 0)
+      return { color: "green", text: "Complete", icon: CheckCircle };
+    if (routed > 0 && unrouted > 0)
+      return { color: "amber", text: "Partial", icon: AlertCircle };
+    return { color: "red", text: "Pending", icon: XCircle };
   };
 
   const safeData = Array.isArray(filteredData) ? filteredData : [];
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center p-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-400 border-t-transparent mx-auto"></div>
-          <p className="mt-2 text-gray-500 text-sm">Loading...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-app-primary border-t-transparent mx-auto"></div>
+          <p className="mt-2 text-app-text-secondary">Loading shifts...</p>
         </div>
       </div>
     );
@@ -178,165 +178,396 @@ const ShiftBookingsTable = ({
 
   if (!loading && safeData.length === 0) {
     return (
-      <div className="bg-white border border-gray-300 p-8">
-        <div className="text-center text-gray-500">
-          <Users className="w-12 h-12 mx-auto mb-2 opacity-30" />
-          <p className="text-sm">No shifts found</p>
-        </div>
+      <div className="bg-app-surface border border-app-border rounded-lg p-8 text-center">
+        <Clock className="w-12 h-12 text-app-text-muted mx-auto mb-3" />
+        <h3 className="text-lg font-medium text-app-text-primary mb-2">
+          No shifts found
+        </h3>
+        <p className="text-app-text-secondary mb-4">
+          {selectedShiftType === "All"
+            ? `No shifts for ${formatDate(date)}`
+            : `No ${selectedShiftType.toLowerCase()} shifts for ${formatDate(
+                date
+              )}`}
+        </p>
+        {onRefresh && (
+          <button
+            onClick={onRefresh}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-app-tertiary text-app-text-secondary rounded-lg hover:bg-app-border transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </button>
+        )}
       </div>
     );
   }
 
   return (
     <>
-      <div className="bg-white border border-gray-300">
-        <table className="w-full">
-          <thead className="bg-gray-100 border-b border-gray-300">
-            <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-700">
-                Shift
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-700">
-                Total
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-700">
-                Routed
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-700">
-                Unrouted
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-700">
-                Vendors
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-700">
-                Drivers
-              </th>
+      {/* Simple Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div className="bg-app-tertiary rounded-lg p-4">
+          <p className="text-sm text-app-text-secondary mb-1">Shifts</p>
+          <p className="text-xl font-semibold text-app-text-primary">
+            {safeData.length}
+          </p>
+        </div>
+        <div className="bg-app-tertiary rounded-lg p-4">
+          <p className="text-sm text-app-text-secondary mb-1">Bookings</p>
+          <p className="text-xl font-semibold text-app-text-primary">
+            {safeData.reduce(
+              (sum, shift) => sum + (shift.stats?.total_bookings || 0),
+              0
+            )}
+          </p>
+        </div>
+        <div className="bg-app-tertiary rounded-lg p-4">
+          <p className="text-sm text-app-text-secondary mb-1">Unrouted</p>
+          <p className="text-xl font-semibold text-amber-600">
+            {safeData.reduce(
+              (sum, shift) => sum + (shift.stats?.unrouted_bookings || 0),
+              0
+            )}
+          </p>
+        </div>
+        <div className="bg-app-tertiary rounded-lg p-4">
+          <p className="text-sm text-app-text-secondary mb-1">Drivers</p>
+          <p className="text-xl font-semibold text-app-text-primary">
+            {safeData.reduce(
+              (sum, shift) => sum + (shift.stats?.driver_assigned || 0),
+              0
+            )}
+          </p>
+        </div>
+      </div>
 
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-700">
-                Actions
-              </th>
-            </tr>
-          </thead>
+      {/* Simple Table */}
+      <div className="bg-app-surface rounded-lg border border-app-border ">
+        <div className="px-4 py-3 border-b border-app-border flex justify-between items-center">
+          <div>
+            <h3 className="font-medium text-app-text-primary">
+              Shift Management
+            </h3>
+            <p className="text-sm text-app-text-secondary">
+              {formatDate(date)} • {selectedShiftType} Shifts
+            </p>
+          </div>
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              className="p-2 text-app-text-secondary hover:text-app-text-primary hover:bg-app-tertiary rounded-lg transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          )}
+        </div>
 
-          <tbody className="divide-y divide-gray-200">
-            {safeData.map((shift, index) => (
-              <tr key={shift.shift_id || index} className="hover:bg-gray-50">
-                {/* Shift Details */}
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-900">
-                      {formatTime(shift.shift_time)}
-                    </span>
-                    <span
-                      className={`text-xs px-1.5 py-0.5 rounded ${
-                        shift.log_type === "IN"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-blue-100 text-blue-700"
-                      }`}
-                    >
-                      {shift.log_type || "-"}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {shift.shift_code || "-"}
-                  </p>
-                </td>
-
-                {/* Total */}
-                <td className="px-4 py-3">
-                  <button
-                    onClick={() => handleTotalClick(shift)}
-                    className="text-sm font-medium text-gray-900 hover:text-blue-600 underline"
-                  >
-                    {shift.stats?.total_bookings || 0}
-                  </button>
-                </td>
-
-                {/* Routed */}
-                <td className="px-4 py-3">
-                  <button className="text-sm font-medium text-green-700 hover:text-green-800 underline">
-                    {shift.stats?.routed_bookings || 0}
-                  </button>
-                </td>
-
-                {/* Unrouted */}
-                <td className="px-4 py-3">
-                  <button
-                    className={`text-sm font-medium underline ${
-                      (shift.stats?.unrouted_bookings || 0) > 0
-                        ? "text-amber-600 hover:text-amber-700"
-                        : "text-gray-600 hover:text-gray-700"
-                    }`}
-                  >
-                    {shift.stats?.unrouted_bookings || 0}
-                  </button>
-                </td>
-
-                {/* Vendors */}
-                <td className="px-4 py-3">
-                  <span className="text-sm text-gray-700">
-                    {shift.stats?.vendor_assigned || 0}
-                  </span>
-                </td>
-
-                {/* Drivers */}
-                <td className="px-4 py-3">
-                  <span className="text-sm text-gray-700">
-                    {shift.stats?.driver_assigned || 0}
-                  </span>
-                </td>
-
-                {/* Actions */}
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleShiftRoute(shift)}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-                    >
-                      <Truck className="w-3.5 h-3.5" />
-                      Manage
-                    </button>
-                    <button
-                      onClick={() => handleGenerateClick(shift)}
-                      disabled={generatingRoute === shift.shift_id}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {generatingRoute === shift.shift_id ? (
-                        <>
-                          <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-blue-700"></div>
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Route className="w-3.5 h-3.5" />
-                          {needsRegeneration(shift) ? "Regenerate" : "Generate"}
-                        </>
-                      )}
-                    </button>
-
-                    <button
-                      onClick={() => handleShiftRoutesDelete(shift)}
-                      disabled={deletingShift === shift.shift_id}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {deletingShift === shift.shift_id ? (
-                        <>
-                          <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-red-700"></div>
-                          Deleting...
-                        </>
-                      ) : (
-                        <>
-                          <Trash2 className="w-3.5 h-3.5" />
-                          Delete
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </td>
+        <div className="min-w-[1000px]">
+          <table className="w-full">
+            <thead className="bg-app-tertiary/50">
+              <tr>
+                <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">
+                  Shift Code
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">
+                  Time & Type
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">
+                  Bookings
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">
+                  Routes
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">
+                  Drivers
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">
+                  Vendors
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">
+                  Actions
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody className="divide-y divide-app-border">
+              {safeData.map((shift, index) => {
+                const status = getShiftStatus(shift);
+                const StatusIcon = status.icon;
+                const completionRate = shift.stats?.total_bookings
+                  ? Math.round(
+                      ((shift.stats?.routed_bookings || 0) /
+                        shift.stats.total_bookings) *
+                        100
+                    )
+                  : 0;
+
+                return (
+                  <tr
+                    key={shift.shift_id || index}
+                    className="hover:bg-app-tertiary/30"
+                  >
+                    {/* Shift Code Column */}
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-app-text-primary">
+                        {shift.shift_code || shift.shift_id}
+                      </div>
+                      <div className="text-xs text-app-text-secondary mt-1">
+                        ID: {shift.shift_id}
+                      </div>
+                    </td>
+
+                    {/* Time & Type Column */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-app-text-secondary" />
+                        <span className="font-medium text-app-text-primary">
+                          {formatTime(shift.shift_time)}
+                        </span>
+                      </div>
+                      <div className="mt-1">
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full font-medium ${
+                            shift.log_type === "IN"
+                              ? "bg-green-50 text-green-700 border border-green-200"
+                              : "bg-blue-50 text-blue-700 border border-blue-200"
+                          }`}
+                        >
+                          {shift.log_type}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Bookings Column */}
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => handleTotalClick(shift)}
+                        className="text-left hover:text-app-primary transition-colors w-full"
+                      >
+                        <div className="text-lg font-semibold text-app-text-primary">
+                          {shift.stats?.total_bookings || 0}
+                        </div>
+                        <div className="text-xs text-app-text-secondary">
+                          Total Bookings
+                        </div>
+                        <div className="text-xs text-amber-600 mt-1">
+                          {shift.stats?.unrouted_bookings || 0} unrouted
+                        </div>
+                      </button>
+                    </td>
+
+                    {/* Routes Column */}
+                    <td className="px-4 py-3">
+                      <div className="text-lg font-semibold text-app-text-primary">
+                        {shift.stats?.routed_bookings || 0}
+                      </div>
+                      <div className="text-xs text-app-text-secondary">
+                        Routed
+                      </div>
+                      {shift.stats?.total_bookings > 0 && (
+                        <div className="mt-2">
+                          <div className="text-xs text-app-text-secondary mb-1">
+                            {completionRate}% complete
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-1.5">
+                            <div
+                              className="bg-app-primary h-1.5 rounded-full"
+                              style={{ width: `${completionRate}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Drivers Column */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Car className="w-4 h-4 text-app-text-secondary" />
+                        <div>
+                          <div className="font-medium text-app-text-primary">
+                            {shift.stats?.driver_assigned || 0}
+                          </div>
+                          <div className="text-xs text-app-text-secondary">
+                            Assigned
+                          </div>
+                        </div>
+                      </div>
+                      {shift.stats?.driver_available !== undefined && (
+                        <div className="text-xs text-app-text-secondary mt-1">
+                          {shift.stats.driver_available} available
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Vendors Column */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Building className="w-4 h-4 text-app-text-secondary" />
+                        <div>
+                          <div className="font-medium text-app-text-primary">
+                            {shift.stats?.vendor_assigned || 0}
+                          </div>
+                          <div className="text-xs text-app-text-secondary">
+                            Assigned
+                          </div>
+                        </div>
+                      </div>
+                      {shift.stats?.vendor_available !== undefined && (
+                        <div className="text-xs text-app-text-secondary mt-1">
+                          {shift.stats.vendor_available} available
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Status Column */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <StatusIcon
+                          className={`w-4 h-4 ${
+                            status.color === "green"
+                              ? "text-green-500"
+                              : status.color === "amber"
+                              ? "text-amber-500"
+                              : status.color === "red"
+                              ? "text-red-500"
+                              : "text-gray-400"
+                          }`}
+                        />
+                        <span
+                          className={`text-sm font-medium ${
+                            status.color === "green"
+                              ? "text-green-700"
+                              : status.color === "amber"
+                              ? "text-amber-700"
+                              : status.color === "red"
+                              ? "text-red-700"
+                              : "text-gray-500"
+                          }`}
+                        >
+                          {status.text}
+                        </span>
+                      </div>
+                      <div className="text-xs text-app-text-secondary mt-1">
+                        {shift.stats?.vehicle_assigned || 0} vehicles
+                      </div>
+                    </td>
+
+                    {/* Actions Column */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1">
+                        {/* View Map Button */}
+                        <button
+                          onClick={() => handleShiftRoute(shift)}
+                          className="p-2 text-app-text-secondary hover:text-app-primary hover:bg-app-tertiary rounded-lg transition-colors"
+                          title="View Routes Map"
+                        >
+                          <Navigation className="w-4 h-4" />
+                        </button>
+
+                        {/* Generate/Regenerate Button */}
+                        <button
+                          onClick={() => handleGenerateClick(shift)}
+                          disabled={generatingRoute === shift.shift_id}
+                          className={`p-2 rounded-lg transition-colors ${
+                            needsRegeneration(shift)
+                              ? "text-amber-600 hover:bg-amber-50"
+                              : "text-app-primary hover:bg-app-primary/10"
+                          } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          title={
+                            needsRegeneration(shift) ? "Regenerate" : "Generate"
+                          }
+                        >
+                          {generatingRoute === shift.shift_id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
+                          ) : (
+                            <Zap className="w-4 h-4" />
+                          )}
+                        </button>
+
+                        {/* More Menu */}
+                        <div className="relative">
+                          <button
+                            onClick={() => toggleActionMenu(shift.shift_id)}
+                            className="p-2 text-app-text-secondary hover:text-app-primary hover:bg-app-tertiary rounded-lg transition-colors"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+
+                          {actionMenuOpen === shift.shift_id && (
+                            <div className="absolute right-0 mt-1 w-48 bg-app-surface border border-app-border rounded-lg shadow-lg z-10">
+                              <div className="py-1">
+                                <button
+                                  onClick={() => {
+                                    handleShiftRoute(shift);
+                                    setActionMenuOpen(null);
+                                  }}
+                                  className="w-full text-left px-3 py-2 text-sm text-app-text-secondary hover:bg-app-tertiary flex items-center gap-2"
+                                >
+                                  <Layers className="w-4 h-4" />
+                                  View Map
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleTotalClick(shift);
+                                    setActionMenuOpen(null);
+                                  }}
+                                  className="w-full text-left px-3 py-2 text-sm text-app-text-secondary hover:bg-app-tertiary flex items-center gap-2"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                  View Details
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    // Export report functionality
+                                    setActionMenuOpen(null);
+                                  }}
+                                  className="w-full text-left px-3 py-2 text-sm text-app-text-secondary hover:bg-app-tertiary flex items-center gap-2"
+                                >
+                                  <FileText className="w-4 h-4" />
+                                  Export Report
+                                </button>
+                                <button
+                                  onClick={() => handleShiftRoutesDelete(shift)}
+                                  disabled={deletingShift === shift.shift_id}
+                                  className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 disabled:opacity-50"
+                                >
+                                  {deletingShift === shift.shift_id ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
+                                  ) : (
+                                    <Trash2 className="w-4 h-4" />
+                                  )}
+                                  Delete Routes
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Simple Footer */}
+        <div className="px-4 py-3 border-t border-app-border text-sm text-app-text-secondary flex justify-between items-center">
+          <span>{safeData.length} shifts</span>
+          <button
+            onClick={() => {
+              /* Export functionality */
+            }}
+            className="inline-flex items-center gap-2 text-app-text-secondary hover:text-app-text-primary"
+          >
+            <Download className="w-4 h-4" />
+            Export
+          </button>
+        </div>
       </div>
 
       <BookingDetailsModal

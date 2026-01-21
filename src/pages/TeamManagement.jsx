@@ -389,11 +389,10 @@ const TeamManagement = () => {
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-1">
       <ToolBar
         module="team"
-        title="Team Management"
-        subtitle="Create and manage teams within your organization"
+       
         onAddClick={handleCreate}
         addButtonLabel="Create Team"
         searchBar={

@@ -251,7 +251,7 @@ const VendorUserManagement = () => {
   ).length;
 
   return (
-    <div className="p-4">
+    <div className="p-1">
       <ToolBar
         onAddClick={handleCreateVendorUser}
         addButtonLabel="Vendor User"

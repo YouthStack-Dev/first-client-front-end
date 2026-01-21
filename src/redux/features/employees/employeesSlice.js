@@ -1,6 +1,6 @@
 // employeesSlice.js
 import { createSlice, createEntityAdapter } from "@reduxjs/toolkit";
-import { fetchEmployeesThunk, toggleEmployeeStatus } from "./employeesThunk";
+import { fetchEmployeesThunk, toggleEmployeeStatus, createEmployeeThunk, updateEmployeeThunk } from "./employeesThunk";
 
 const employeesAdapter = createEntityAdapter({
   selectId: (employee) => employee.employee_id,
@@ -74,6 +74,50 @@ const employeesSlice = createSlice({
       .addCase(toggleEmployeeStatus.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to toggle employee status";
+      })
+
+      // Create Employee
+      .addCase(createEmployeeThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createEmployeeThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        const employee = action.payload;
+        if (employee && employee.employee_id) {
+          employeesAdapter.addOne(state, employee);
+          // If there's a team_id, update the mapping
+          if (employee.team_id) {
+            if (!state.employeeIdsByTeam[employee.team_id]) {
+              state.employeeIdsByTeam[employee.team_id] = [];
+            }
+            state.employeeIdsByTeam[employee.team_id].push(employee.employee_id);
+          }
+        }
+      })
+      .addCase(createEmployeeThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to create employee";
+      })
+
+      // Update Employee
+      .addCase(updateEmployeeThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateEmployeeThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        const employee = action.payload;
+        if (employee && employee.employee_id) {
+          employeesAdapter.updateOne(state, {
+            id: employee.employee_id,
+            changes: employee,
+          });
+        }
+      })
+      .addCase(updateEmployeeThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to update employee";
       });
   },
 });
