@@ -9,7 +9,7 @@ export const reportService = {
   getAnalytics: async (params) => {
     try {
       const response = await API_CLIENT.get(
-        `/v1/reports/${params.report_type}/analytics`,
+        `/reports/${params.report_type}/analytics`,
         {
           params: {
             start_date: params.start_date,
@@ -97,9 +97,9 @@ export const reportService = {
 
       // Try multiple endpoint variations
       const endpoints = [
-        `/v1/reports/bookings/export?${queryParams.toString()}`,
-        `/v1/reports/export?${queryParams.toString()}`,
-        `/v1/reports/${params.report_type}/export?${queryParams.toString()}`,
+        `/reports/bookings/export?${queryParams.toString()}`,
+        `/reports/export?${queryParams.toString()}`,
+        `/reports/${params.report_type}/export?${queryParams.toString()}`,
       ];
 
       let response;

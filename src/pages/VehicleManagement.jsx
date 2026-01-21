@@ -17,7 +17,7 @@ const VehicleManagement = () => {
   }, [activeTab]);
 
   return (
-    <div className="w-full bg-gray-50 p-6">
+    <div className="w-full bg-gray-50 p-1">
       {/* Tabs */}
       <div className="relative flex border-b border-gray-200 mb-6">
         {tabs.map((tab) => (
@@ -25,9 +25,10 @@ const VehicleManagement = () => {
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`relative flex-1 py-3 text-sm font-semibold
-              ${activeTab === tab.key
-                ? "text-blue-600"
-                : "text-gray-500 hover:text-blue-600"
+              ${
+                activeTab === tab.key
+                  ? "text-blue-600"
+                  : "text-gray-500 hover:text-blue-600"
               }`}
           >
             {tab.label}
@@ -39,13 +40,10 @@ const VehicleManagement = () => {
       </div>
 
       {/* Content */}
-      <div className="bg-white p-6 rounded-xl shadow-lg">
-        {activeTab === "types" && <ManageVehicleTypes />}
-        {activeTab === "list" && <ManageVehicles />}
-      </div>
+      {activeTab === "types" && <ManageVehicleTypes />}
+      {activeTab === "list" && <ManageVehicles />}
     </div>
   );
 };
-
 
 export default VehicleManagement;

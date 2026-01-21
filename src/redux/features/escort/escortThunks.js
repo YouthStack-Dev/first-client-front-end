@@ -8,7 +8,7 @@ export const fetchEscortsThunk = createAsyncThunk(
   "escort/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.get("/v1/escorts/");
+      const response = await API_CLIENT.get("/escorts/");
       if (response?.status === 200) {
         return response.data;
       }
@@ -28,7 +28,7 @@ export const fetchEscortsThunk = createAsyncThunk(
 //   "escort/create",
 //   async (escortData, { rejectWithValue }) => {
 //     try {
-//       const response = await API_CLIENT.post("/v1/escorts/", escortData);
+//       const response = await API_CLIENT.post("/escorts/", escortData);
 //       if (response?.status === 200) {
 //         return response.data;
 //       }
@@ -48,7 +48,7 @@ export const fetchEscortsThunk = createAsyncThunk(
 //   "escort/update",
 //   async ({ id, data }, { rejectWithValue }) => {
 //     try {
-//       const response = await API_CLIENT.put(`/v1/escorts/${id}`, data);
+//       const response = await API_CLIENT.put(`/escorts/${id}`, data);
 //       if (response?.data?.success) {
 //         return response.data.data;
 //       }
@@ -67,7 +67,7 @@ export const createEscortThunk = createAsyncThunk(
   "escort/create",
   async (escortData, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.post("/v1/escorts/", escortData);
+      const response = await API_CLIENT.post("/escorts/", escortData);
       if (response?.status === 200 || response?.status === 201) {
         return response.data;
       }
@@ -95,7 +95,7 @@ export const updateEscortThunk = createAsyncThunk(
   "escort/update",
   async ({ id, data }, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.put(`/v1/escorts/${id}/`, data);
+      const response = await API_CLIENT.put(`/escorts/${id}/`, data);
       if (response?.status === 200) {
         return response.data;
       }
@@ -120,7 +120,7 @@ export const deleteEscortThunk = createAsyncThunk(
   "escort/deleteEscort",
   async (escortId, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.delete(`/v1/escorts/${escortId}`);
+      const response = await API_CLIENT.delete(`/escorts/${escortId}`);
 
       return {
         id: escortId,
@@ -147,7 +147,7 @@ export const toggleEscortActiveThunk = createAsyncThunk(
         `Toggling escort ${id} active from ${currentState} to ${newState}`
       );
 
-      const response = await API_CLIENT.put(`/v1/escorts/${id}`, {
+      const response = await API_CLIENT.put(`/escorts/${id}`, {
         is_active: newState,
       });
 
@@ -176,7 +176,7 @@ export const toggleEscortAvailableThunk = createAsyncThunk(
         `Toggling escort ${id} available from ${currentState} to ${newState}`
       );
 
-      const response = await API_CLIENT.put(`/v1/escorts/${id}`, {
+      const response = await API_CLIENT.put(`/escorts/${id}`, {
         is_available: newState,
       });
 

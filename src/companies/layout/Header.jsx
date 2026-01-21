@@ -1,11 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Bell, Search, Menu, Settings, User, LogOut, ChevronDown } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from "react";
+import { Bell, Search, Menu, User, LogOut, ChevronDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-const Header = ({ toggleSidebar, title = 'Dashboard' }) => {
+const Header = ({ toggleSidebar, title = "Dashboard" }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
-const navigate = useNavigate();
+  const navigate = useNavigate();
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -14,24 +15,31 @@ const navigate = useNavigate();
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
   const handleProfileClick = () => {
-    setIsProfileOpen(!isProfileOpen);
-  };
-
-  const handleProfileNavigation = () => {
-    navigate('/profile');
+    navigate("/companies/profile");
     setIsProfileOpen(false);
   };
 
-  const handleLogout = () => {
+  const handleNotificationClick = () => {
+    navigate("/companies/notification");
+  };
+
+  const handleProfileNavigation = (e) => {
+    e.stopPropagation(); // Prevent triggering parent click
+    navigate("/companies/profile");
+    setIsProfileOpen(false);
+  };
+
+  const handleLogout = (e) => {
+    e.stopPropagation(); // Prevent triggering parent click
     // Handle logout logic
-    console.log('Logging out...');
+    console.log("Logging out...");
     setIsProfileOpen(false);
   };
 
@@ -53,22 +61,17 @@ const navigate = useNavigate();
           </div>
 
           <div className="flex items-center m-12">
+            {/* Notification Button - Navigates to notification page */}
             <button
               type="button"
               className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              onClick={handleNotificationClick}
             >
               <span className="sr-only">View notifications</span>
               <Bell className="h-6 w-6" />
             </button>
-            <button
-              type="button"
-              className="ml-3 p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <span className="sr-only">Settings</span>
-              <Settings className="h-6 w-6" />
-            </button>
-            
-            {/* Profile Dropdown */}
+
+            {/* Profile Dropdown - Clicking profile icon navigates to companies/profile */}
             <div className="ml-3 relative" ref={profileRef}>
               <button
                 type="button"
@@ -82,15 +85,15 @@ const navigate = useNavigate();
                     alt="Profile"
                     className="h-full w-full object-cover"
                     onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
+                      e.target.style.display = "none";
+                      e.target.nextSibling.style.display = "flex";
                     }}
                   />
                   <div className="h-full w-full flex items-center justify-center bg-blue-500 text-white font-medium">
                     AD
                   </div>
                 </div>
-            
+                <ChevronDown className="h-4 w-4 text-gray-500 ml-1" />
               </button>
 
               {/* Profile Dropdown Menu */}
@@ -101,7 +104,7 @@ const navigate = useNavigate();
                       <p className="font-medium">Admin User</p>
                       <p className="text-gray-500">admin@example.com</p>
                     </div>
-                    
+
                     <button
                       onClick={handleProfileNavigation}
                       className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -109,7 +112,7 @@ const navigate = useNavigate();
                       <User className="mr-3 h-4 w-4 text-gray-400" />
                       Your Profile
                     </button>
-                    
+
                     <button
                       onClick={handleLogout}
                       className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

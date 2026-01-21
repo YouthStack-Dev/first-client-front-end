@@ -206,9 +206,9 @@ const CutoffManagement = () => {
 
     if (currentStatus === "loading") {
       return (
-        <div className="bg-blue-50 border border-blue-200 px-3 py-2 rounded text-xs flex items-center gap-2 mb-4">
-          <div className="animate-spin rounded-full h-3 w-3 border-2 border-blue-600 border-t-transparent"></div>
-          <span className="text-blue-900 font-medium">Loading...</span>
+        <div className="bg-app-tertiary border border-app-secondary px-3 py-2 rounded text-xs flex items-center gap-2 mb-4">
+          <div className="animate-spin rounded-full h-3 w-3 border-2 border-app-primary border-t-transparent"></div>
+          <span className="text-app-text-primary font-medium">Loading...</span>
         </div>
       );
     }
@@ -260,9 +260,9 @@ const CutoffManagement = () => {
     const { hours, minutes } = parseTime(currentValue);
 
     return (
-      <div className="flex items-center gap-2 py-2 border-b border-gray-100 hover:bg-gray-50 px-2 -mx-2">
-        <Icon className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
-        <label className="text-xs font-medium text-gray-700 min-w-[140px]">
+      <div className="flex items-center gap-2 py-2 border-b border-app-border hover:bg-app-tertiary px-2 -mx-2 rounded transition-colors">
+        <Icon className="w-3.5 h-3.5 text-app-text-muted flex-shrink-0" />
+        <label className="text-xs font-medium text-app-text-secondary min-w-[140px]">
           {label}
         </label>
         <div className="flex gap-2 ml-auto">
@@ -271,7 +271,7 @@ const CutoffManagement = () => {
             onChange={(e) =>
               handleTimeChange(fieldName, parseInt(e.target.value), minutes)
             }
-            className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:border-blue-500 focus:outline-none bg-white"
+            className="w-16 px-2 py-1 text-xs border border-app-border rounded focus:border-app-primary focus:outline-none bg-app-surface focus:ring-1 focus:ring-app-primary transition-colors"
           >
             {Array.from({ length: 25 }, (_, i) => (
               <option key={i} value={i}>
@@ -284,7 +284,7 @@ const CutoffManagement = () => {
             onChange={(e) =>
               handleTimeChange(fieldName, hours, parseInt(e.target.value))
             }
-            className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:border-blue-500 focus:outline-none bg-white"
+            className="w-16 px-2 py-1 text-xs border border-app-border rounded focus:border-app-primary focus:outline-none bg-app-surface focus:ring-1 focus:ring-app-primary transition-colors"
           >
             {[0, 15, 30, 45].map((min) => (
               <option key={min} value={min}>
@@ -306,9 +306,9 @@ const CutoffManagement = () => {
     const { hours, minutes } = parseFullTime(currentValue);
 
     return (
-      <div className="flex items-center gap-2 py-2 border-b border-gray-100 hover:bg-gray-50 px-2 -mx-2">
-        <Icon className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
-        <label className="text-xs font-medium text-gray-700 min-w-[140px]">
+      <div className="flex items-center gap-2 py-2 border-b border-app-border hover:bg-app-tertiary px-2 -mx-2 rounded transition-colors">
+        <Icon className="w-3.5 h-3.5 text-app-text-muted flex-shrink-0" />
+        <label className="text-xs font-medium text-app-text-secondary min-w-[140px]">
           {label}
         </label>
         <div className="flex gap-2 ml-auto">
@@ -317,7 +317,7 @@ const CutoffManagement = () => {
             onChange={(e) =>
               handleFullTimeChange(fieldName, parseInt(e.target.value), minutes)
             }
-            className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:border-blue-500 focus:outline-none bg-white"
+            className="w-16 px-2 py-1 text-xs border border-app-border rounded focus:border-app-primary focus:outline-none bg-app-surface focus:ring-1 focus:ring-app-primary transition-colors"
           >
             {Array.from({ length: 24 }, (_, i) => (
               <option key={i} value={i}>
@@ -330,7 +330,7 @@ const CutoffManagement = () => {
             onChange={(e) =>
               handleFullTimeChange(fieldName, hours, parseInt(e.target.value))
             }
-            className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:border-blue-500 focus:outline-none bg-white"
+            className="w-16 px-2 py-1 text-xs border border-app-border rounded focus:border-app-primary focus:outline-none bg-app-surface focus:ring-1 focus:ring-app-primary transition-colors"
           >
             {Array.from({ length: 60 }, (_, i) => (
               <option key={i} value={i}>
@@ -344,21 +344,21 @@ const CutoffManagement = () => {
   };
 
   const CompactToggle = ({ label, enabled, onChange, description }) => (
-    <div className="flex items-center justify-between py-2 border-b border-gray-100 hover:bg-gray-50 px-2 -mx-2">
+    <div className="flex items-center justify-between py-2 border-b border-app-border hover:bg-app-tertiary px-2 -mx-2 rounded transition-colors">
       <div className="flex-1">
-        <p className="text-xs font-medium text-gray-700">{label}</p>
+        <p className="text-xs font-medium text-app-text-secondary">{label}</p>
         {description && (
-          <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+          <p className="text-xs text-app-text-muted mt-0.5">{description}</p>
         )}
       </div>
       <button
         onClick={onChange}
-        className={`relative w-10 h-5 rounded-full transition-colors ${
-          enabled ? "bg-blue-500" : "bg-gray-300"
+        className={`relative w-10 h-5 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2 ${
+          enabled ? "bg-app-primary" : "bg-gray-300"
         }`}
       >
         <span
-          className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+          className={`absolute top-0.5 left-0.5 w-4 h-4 bg-app-surface rounded-full shadow transition-transform duration-300 ${
             enabled ? "translate-x-5" : "translate-x-0"
           }`}
         />
@@ -368,23 +368,25 @@ const CutoffManagement = () => {
 
   if (!data && status !== "loading") {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-app-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent mx-auto mb-2"></div>
-          <p className="text-xs text-gray-600">Loading configuration...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-app-primary border-t-transparent mx-auto mb-2"></div>
+          <p className="text-xs text-app-text-muted">
+            Loading configuration...
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-app-background">
       {/* Compact Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="bg-app-surface border-b border-app-border sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Settings className="w-4 h-4 text-blue-600" />
-            <h1 className="text-sm font-semibold text-gray-900">
+            <Settings className="w-4 h-4 text-app-primary" />
+            <h1 className="text-sm font-semibold text-app-text-primary">
               Configuration Management
             </h1>
           </div>
@@ -400,7 +402,7 @@ const CutoffManagement = () => {
                 onClick={handleSaveCutoff}
                 disabled={!hasCutoffChanges() || isSaving("cutoff")}
                 isLoading={isSaving("cutoff")}
-                className="px-4 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-1.5"
+                className="px-4 py-1.5 bg-app-primary text-white text-xs rounded hover:bg-sidebar-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2"
               />
             )}
             {activeTab === "tenant" && (
@@ -413,7 +415,7 @@ const CutoffManagement = () => {
                 icon={isSaving("tenant") ? null : Save}
                 onClick={handleSaveTenant}
                 disabled={!hasTenantChanges() || isSaving("tenant")}
-                className="px-4 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-1.5"
+                className="px-4 py-1.5 bg-app-primary text-white text-xs rounded hover:bg-sidebar-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2"
               >
                 {isSaving("tenant") && (
                   <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent mr-1.5"></div>
@@ -428,13 +430,13 @@ const CutoffManagement = () => {
         <StatusBanner tab={activeTab} />
 
         {/* Main Tabs */}
-        <div className="flex gap-1 mb-4 bg-white p-1 rounded border border-gray-200">
+        <div className="flex gap-1 mb-4 bg-app-surface p-1 rounded-lg border border-app-border shadow-sm">
           <button
             onClick={() => setActiveTab("cutoff")}
-            className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all ${
+            className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2 ${
               activeTab === "cutoff"
-                ? "bg-blue-600 text-white"
-                : "text-gray-600 hover:bg-gray-100"
+                ? "bg-app-primary text-white shadow-sidebar-item"
+                : "text-app-text-secondary hover:bg-app-tertiary"
             }`}
           >
             <div className="flex items-center justify-center gap-1.5">
@@ -444,10 +446,10 @@ const CutoffManagement = () => {
           </button>
           <button
             onClick={() => setActiveTab("tenant")}
-            className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all ${
+            className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2 ${
               activeTab === "tenant"
-                ? "bg-blue-600 text-white"
-                : "text-gray-600 hover:bg-gray-100"
+                ? "bg-app-primary text-white shadow-sidebar-item"
+                : "text-app-text-secondary hover:bg-app-tertiary"
             }`}
           >
             <div className="flex items-center justify-center gap-1.5">
@@ -461,13 +463,13 @@ const CutoffManagement = () => {
         {activeTab === "cutoff" && (
           <>
             {/* Cutoff Sub-tabs */}
-            <div className="flex gap-1 mb-4 bg-white p-1 rounded border border-gray-200">
+            <div className="flex gap-1 mb-4 bg-app-surface p-1 rounded-lg border border-app-border shadow-sm">
               <button
                 onClick={() => setActiveCutoffTab("standard")}
-                className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all ${
+                className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2 ${
                   activeCutoffTab === "standard"
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-600 hover:bg-gray-100"
+                    ? "bg-app-primary text-white shadow-sidebar-item"
+                    : "text-app-text-secondary hover:bg-app-tertiary"
                 }`}
               >
                 <div className="flex items-center justify-center gap-1.5">
@@ -477,10 +479,10 @@ const CutoffManagement = () => {
               </button>
               <button
                 onClick={() => setActiveCutoffTab("special")}
-                className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all ${
+                className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2 ${
                   activeCutoffTab === "special"
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-600 hover:bg-gray-100"
+                    ? "bg-app-primary text-white shadow-sidebar-item"
+                    : "text-app-text-secondary hover:bg-app-tertiary"
                 }`}
               >
                 <div className="flex items-center justify-center gap-1.5">
@@ -490,10 +492,10 @@ const CutoffManagement = () => {
               </button>
               <button
                 onClick={() => setActiveCutoffTab("overview")}
-                className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all ${
+                className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2 ${
                   activeCutoffTab === "overview"
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-600 hover:bg-gray-100"
+                    ? "bg-app-primary text-white shadow-sidebar-item"
+                    : "text-app-text-secondary hover:bg-app-tertiary"
                 }`}
               >
                 <div className="flex items-center justify-center gap-1.5">
@@ -506,10 +508,10 @@ const CutoffManagement = () => {
             {/* Standard Cutoff Tab */}
             {activeCutoffTab === "standard" && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="bg-white rounded border border-gray-200 p-4">
-                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                    <Clock className="w-4 h-4 text-blue-600" />
-                    <h2 className="text-sm font-semibold text-gray-900">
+                <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
+                    <Clock className="w-4 h-4 text-app-primary" />
+                    <h2 className="text-sm font-semibold text-app-text-primary">
                       Booking Cutoffs
                     </h2>
                   </div>
@@ -529,10 +531,10 @@ const CutoffManagement = () => {
                   </div>
                 </div>
 
-                <div className="bg-white rounded border border-gray-200 p-4">
-                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
+                <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
                     <XCircle className="w-4 h-4 text-red-600" />
-                    <h2 className="text-sm font-semibold text-gray-900">
+                    <h2 className="text-sm font-semibold text-app-text-primary">
                       Cancellation Cutoffs
                     </h2>
                   </div>
@@ -557,10 +559,10 @@ const CutoffManagement = () => {
             {/* Special Cutoff Tab */}
             {activeCutoffTab === "special" && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="bg-white rounded border border-gray-200 p-4">
-                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
+                <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
                     <Shield className="w-4 h-4 text-red-600" />
-                    <h2 className="text-sm font-semibold text-gray-900">
+                    <h2 className="text-sm font-semibold text-app-text-primary">
                       Medical Emergency
                     </h2>
                   </div>
@@ -581,10 +583,10 @@ const CutoffManagement = () => {
                   </div>
                 </div>
 
-                <div className="bg-white rounded border border-gray-200 p-4">
-                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
+                <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
                     <Zap className="w-4 h-4 text-purple-600" />
-                    <h2 className="text-sm font-semibold text-gray-900">
+                    <h2 className="text-sm font-semibold text-app-text-primary">
                       Adhoc Shifts
                     </h2>
                   </div>
@@ -607,89 +609,91 @@ const CutoffManagement = () => {
 
             {/* Overview Tab */}
             {activeCutoffTab === "overview" && (
-              <div className="bg-white rounded border border-gray-200 p-4">
-                <h2 className="text-sm font-semibold text-gray-900 mb-3">
+              <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
+                <h2 className="text-sm font-semibold text-app-text-primary mb-3">
                   Configuration Summary
                 </h2>
 
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                  <div className="p-3 bg-blue-50 rounded border border-blue-200">
-                    <p className="text-xs font-medium text-blue-700 mb-1">
+                  <div className="p-3 bg-app-tertiary rounded-lg border border-app-secondary">
+                    <p className="text-xs font-medium text-app-text-primary mb-1">
                       Login Book
                     </p>
-                    <p className="text-lg font-bold text-gray-900">
+                    <p className="text-lg font-bold text-app-text-primary">
                       {booking_login_cutoff}
                     </p>
                   </div>
-                  <div className="p-3 bg-red-50 rounded border border-red-200">
+                  <div className="p-3 bg-red-50 rounded-lg border border-red-200">
                     <p className="text-xs font-medium text-red-700 mb-1">
                       Login Cancel
                     </p>
-                    <p className="text-lg font-bold text-gray-900">
+                    <p className="text-lg font-bold text-app-text-primary">
                       {cancel_login_cutoff}
                     </p>
                   </div>
-                  <div className="p-3 bg-blue-50 rounded border border-blue-200">
-                    <p className="text-xs font-medium text-blue-700 mb-1">
+                  <div className="p-3 bg-app-tertiary rounded-lg border border-app-secondary">
+                    <p className="text-xs font-medium text-app-text-primary mb-1">
                       Logout Book
                     </p>
-                    <p className="text-lg font-bold text-gray-900">
+                    <p className="text-lg font-bold text-app-text-primary">
                       {booking_logout_cutoff}
                     </p>
                   </div>
-                  <div className="p-3 bg-red-50 rounded border border-red-200">
+                  <div className="p-3 bg-red-50 rounded-lg border border-red-200">
                     <p className="text-xs font-medium text-red-700 mb-1">
                       Logout Cancel
                     </p>
-                    <p className="text-lg font-bold text-gray-900">
+                    <p className="text-lg font-bold text-app-text-primary">
                       {cancel_logout_cutoff}
                     </p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="text-xs font-semibold text-gray-900 mb-2">
+                  <h3 className="text-xs font-semibold text-app-text-primary mb-2">
                     Special Configurations
                   </h3>
 
-                  <div className="flex items-center justify-between p-2 bg-gray-50 rounded text-xs">
+                  <div className="flex items-center justify-between p-2 bg-app-tertiary rounded-lg text-xs transition-all hover:bg-app-secondary">
                     <div className="flex items-center gap-2">
                       <Shield className="w-3.5 h-3.5 text-red-600" />
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-app-text-primary">
                           Medical Emergency
                         </p>
-                        <p className="text-gray-600">
+                        <p className="text-app-text-muted">
                           {medical_emergency_booking_cutoff}
                         </p>
                       </div>
                     </div>
                     <span
-                      className={`px-2 py-0.5 rounded font-medium ${
+                      className={`px-2 py-0.5 rounded font-medium transition-colors ${
                         allow_medical_emergency_booking
                           ? "bg-green-100 text-green-700"
-                          : "bg-gray-200 text-gray-700"
+                          : "bg-gray-200 text-app-text-muted"
                       }`}
                     >
                       {allow_medical_emergency_booking ? "Active" : "Inactive"}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between p-2 bg-gray-50 rounded text-xs">
+                  <div className="flex items-center justify-between p-2 bg-app-tertiary rounded-lg text-xs transition-all hover:bg-app-secondary">
                     <div className="flex items-center gap-2">
                       <Zap className="w-3.5 h-3.5 text-purple-600" />
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-app-text-primary">
                           Adhoc Booking
                         </p>
-                        <p className="text-gray-600">{adhoc_booking_cutoff}</p>
+                        <p className="text-app-text-muted">
+                          {adhoc_booking_cutoff}
+                        </p>
                       </div>
                     </div>
                     <span
-                      className={`px-2 py-0.5 rounded font-medium ${
+                      className={`px-2 py-0.5 rounded font-medium transition-colors ${
                         allow_adhoc_booking
                           ? "bg-green-100 text-green-700"
-                          : "bg-gray-200 text-gray-700"
+                          : "bg-gray-200 text-app-text-muted"
                       }`}
                     >
                       {allow_adhoc_booking ? "Active" : "Inactive"}
@@ -704,10 +708,10 @@ const CutoffManagement = () => {
         {/* Tenant Management Tab */}
         {activeTab === "tenant" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="bg-white rounded border border-gray-200 p-4">
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
+            <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
                 <UserCheck className="w-4 h-4 text-indigo-600" />
-                <h2 className="text-sm font-semibold text-gray-900">
+                <h2 className="text-sm font-semibold text-app-text-primary">
                   Escort Requirements
                 </h2>
               </div>
@@ -733,10 +737,10 @@ const CutoffManagement = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded border border-gray-200 p-4">
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
+            <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
                 <Shield className="w-4 h-4 text-green-600" />
-                <h2 className="text-sm font-semibold text-gray-900">
+                <h2 className="text-sm font-semibold text-app-text-primary">
                   OTP Requirements
                 </h2>
               </div>
@@ -768,32 +772,32 @@ const CutoffManagement = () => {
               </div>
             </div>
 
-            <div className="lg:col-span-2 bg-white rounded border border-gray-200 p-4">
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                <Activity className="w-4 h-4 text-gray-600" />
-                <h2 className="text-sm font-semibold text-gray-900">
+            <div className="lg:col-span-2 bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
+                <Activity className="w-4 h-4 text-app-text-muted" />
+                <h2 className="text-sm font-semibold text-app-text-primary">
                   Configuration Summary
                 </h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <div className="p-2 bg-gray-50 rounded">
-                    <p className="font-medium text-gray-700 mb-1 text-xs">
+                  <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
+                    <p className="font-medium text-app-text-secondary mb-1 text-xs">
                       Escort Active Period
                     </p>
-                    <p className="text-sm font-semibold">
+                    <p className="text-sm font-semibold text-app-text-primary">
                       {escort_required_start_time} - {escort_required_end_time}
                     </p>
                   </div>
-                  <div className="p-2 bg-gray-50 rounded">
-                    <p className="font-medium text-gray-700 mb-1 text-xs">
+                  <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
+                    <p className="font-medium text-app-text-secondary mb-1 text-xs">
                       Escort Status
                     </p>
                     <span
-                      className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                      className={`inline-block px-2 py-0.5 rounded text-xs font-medium transition-colors ${
                         escort_required_for_women
                           ? "bg-green-100 text-green-700"
-                          : "bg-gray-200 text-gray-700"
+                          : "bg-gray-200 text-app-text-muted"
                       }`}
                     >
                       {escort_required_for_women ? "Active" : "Inactive"}
@@ -801,54 +805,62 @@ const CutoffManagement = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <div className="p-2 bg-gray-50 rounded">
-                    <p className="font-medium text-gray-700 mb-1 text-xs">
+                  <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
+                    <p className="font-medium text-app-text-secondary mb-1 text-xs">
                       OTP Status Summary
                     </p>
                     <div className="space-y-1 text-xs">
                       <div className="flex justify-between">
-                        <span>Login Boarding:</span>
+                        <span className="text-app-text-muted">
+                          Login Boarding:
+                        </span>
                         <span
                           className={
                             login_boarding_otp
                               ? "text-green-600 font-medium"
-                              : "text-gray-500"
+                              : "text-app-text-muted"
                           }
                         >
                           {login_boarding_otp ? "Enabled" : "Disabled"}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Login Deboarding:</span>
+                        <span className="text-app-text-muted">
+                          Login Deboarding:
+                        </span>
                         <span
                           className={
                             login_deboarding_otp
                               ? "text-green-600 font-medium"
-                              : "text-gray-500"
+                              : "text-app-text-muted"
                           }
                         >
                           {login_deboarding_otp ? "Enabled" : "Disabled"}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Logout Boarding:</span>
+                        <span className="text-app-text-muted">
+                          Logout Boarding:
+                        </span>
                         <span
                           className={
                             logout_boarding_otp
                               ? "text-green-600 font-medium"
-                              : "text-gray-500"
+                              : "text-app-text-muted"
                           }
                         >
                           {logout_boarding_otp ? "Enabled" : "Disabled"}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Logout Deboarding:</span>
+                        <span className="text-app-text-muted">
+                          Logout Deboarding:
+                        </span>
                         <span
                           className={
                             logout_deboarding_otp
                               ? "text-green-600 font-medium"
-                              : "text-gray-500"
+                              : "text-app-text-muted"
                           }
                         >
                           {logout_deboarding_otp ? "Enabled" : "Disabled"}

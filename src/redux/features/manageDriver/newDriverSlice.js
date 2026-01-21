@@ -12,7 +12,7 @@ export const NewfetchDriversThunk = createAsyncThunk(
   "newDriver/fetch",
   async (params, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.get("/v1/drivers/vendor", {
+      const response = await API_CLIENT.get("/drivers/vendor", {
         params,
       });
 

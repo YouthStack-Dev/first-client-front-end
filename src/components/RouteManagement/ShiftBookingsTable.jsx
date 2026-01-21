@@ -117,7 +117,7 @@ const ShiftBookingsTable = ({
     try {
       setDeletingShift(shift.shift_id);
 
-      const response = await API_CLIENT.delete("/v1/routes/bulk", {
+      const response = await API_CLIENT.delete("/routes/bulk", {
         params: {
           shift_id: shift.shift_id,
           route_date: date,

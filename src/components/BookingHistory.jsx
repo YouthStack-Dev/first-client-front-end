@@ -104,9 +104,7 @@ const BookingHistory = ({
       }
 
       // Make API call to cancel booking
-      const response = await API_CLIENT.patch(
-        `/v1/bookings/cancel/${bookingId}`
-      );
+      const response = await API_CLIENT.patch(`/bookings/cancel/${bookingId}`);
 
       if (response.status === 200 || response.status === 204) {
         // Success handling

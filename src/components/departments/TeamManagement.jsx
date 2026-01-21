@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { UserX, Users, Building2, Plus, Search, Filter } from "lucide-react";
+import { Users } from "lucide-react";
 import Modal from "../modals/Modal";
 import DepartmentForm from "../teams/DepartmentForm";
 import EmployeeList from "../teams/EmployeeList";

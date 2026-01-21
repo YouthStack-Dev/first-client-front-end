@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
 import ToolBar from "../ui/ToolBar";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import Modal from "../modals/Modal";
 import CategoryForm from "./CategoryForm";
 import ConfirmationModal from "../modals/ConfirmationModal";
 import { API_CLIENT } from "../../Api/API_Client";
-import { logDebug } from "../../utils/logger";
 const ShiftCategoryManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);

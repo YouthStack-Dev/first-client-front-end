@@ -101,7 +101,13 @@ const ManageVehicleTypes = () => {
 
     // console.log("📦 Built params for fetch:", params);  // DEBUG: Check search/is_active in params
     return params;
-  }, [isVendorUser, user?.vendor_id, selectedVendor, debouncedSearchTerm, status]);
+  }, [
+    isVendorUser,
+    user?.vendor_id,
+    selectedVendor,
+    debouncedSearchTerm,
+    status,
+  ]);
 
   /* ================= FETCH ================= */
   useEffect(() => {
@@ -238,7 +244,7 @@ const ManageVehicleTypes = () => {
             <SelectField
               value={status}
               onChange={(newStatus) => {
-                console.log(`🔄 Status changed to: "${newStatus}"`);  // DEBUG: Status trigger
+                console.log(`🔄 Status changed to: "${newStatus}"`); // DEBUG: Status trigger
                 setStatus(newStatus);
               }}
               options={[

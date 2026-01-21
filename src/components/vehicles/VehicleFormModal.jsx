@@ -45,7 +45,6 @@ import {
 const TABS = ["basic", "documents"];
 /* ====================================================== */
 
-
 /* ===== DATE VALIDATION ===== */
 const isFutureDate = (value) => {
   if (!value) return false;
@@ -101,7 +100,6 @@ const validateVehicleForm = ({ formData, isVendorUser, mode }) => {
 
   return null;
 };
-
 
 const VehicleFormModal = ({
   isOpen,
@@ -200,13 +198,12 @@ const VehicleFormModal = ({
     viewFile({
       file,
       apiClient: API_CLIENT,
-      apiUrlPrefix: "/v1/vehicles",
+      apiUrlPrefix: "/vehicles",
       setPreviewDoc,
       setPreviewContentType,
       setError,
       setLoading: (v) =>
-        file?.path &&
-        setLoadingDocs((p) => ({ ...p, [file.path]: v })),
+        file?.path && setLoadingDocs((p) => ({ ...p, [file.path]: v })),
     });
   };
 
@@ -216,11 +213,10 @@ const VehicleFormModal = ({
       file,
       filename,
       apiClient: API_CLIENT,
-      apiUrlPrefix: "/v1/vehicles",
+      apiUrlPrefix: "/vehicles",
       setError,
       setLoading: (v) =>
-        file?.path &&
-        setLoadingDocs((p) => ({ ...p, [file.path]: v })),
+        file?.path && setLoadingDocs((p) => ({ ...p, [file.path]: v })),
     });
   };
 
@@ -305,7 +301,7 @@ const VehicleFormModal = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-     const validationError = validateVehicleForm({
+    const validationError = validateVehicleForm({
       formData,
       isVendorUser,
       mode,
@@ -405,9 +401,8 @@ const VehicleFormModal = ({
                         <Building className="w-4 h-4 text-gray-500" />
                         <span className="text-sm">
                           {
-                            vendors.find(
-                              (v) => v.value === formData.vendor_id
-                            )?.label
+                            vendors.find((v) => v.value === formData.vendor_id)
+                              ?.label
                           }
                         </span>
                       </div>
@@ -437,9 +432,7 @@ const VehicleFormModal = ({
                     value={vehicleTypeOptions.find(
                       (o) => o.value === formData.vehicle_type_id
                     )}
-                    onChange={(v) =>
-                      handleChange("vehicle_type_id", v?.value)
-                    }
+                    onChange={(v) => handleChange("vehicle_type_id", v?.value)}
                     isDisabled={isReadOnly}
                   />
                 </div>
@@ -461,9 +454,7 @@ const VehicleFormModal = ({
                   <input
                     className="border p-2 rounded w-full"
                     value={formData.rc_number}
-                    onChange={(e) =>
-                      handleChange("rc_number", e.target.value)
-                    }
+                    onChange={(e) => handleChange("rc_number", e.target.value)}
                     disabled={isReadOnly}
                   />
                 </div>

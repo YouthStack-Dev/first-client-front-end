@@ -61,9 +61,9 @@ export const loginUser = createAsyncThunk(
 export const fetchUserFromToken = createAsyncThunk(
   "auth/fetchUserFromToken",
   async (_, { rejectWithValue }) => {
-    console.log("[fetchUserFromToken] 🔄 Starting request to /v1/auth/me/");
+    console.log("[fetchUserFromToken] 🔄 Starting request to /auth/me/");
     try {
-      const response = await API_CLIENT.get("/v1/auth/me");
+      const response = await API_CLIENT.get("/auth/me");
 
       console.log("[fetchUserFromToken] ✅ Response received:", {
         status: response.status,

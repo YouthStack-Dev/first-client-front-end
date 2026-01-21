@@ -189,7 +189,7 @@ const RouteScheduledBookings = () => {
       dispatch(setError(null));
 
       const response = await API_CLIENT.get(
-        `/v1/bookings/tenant/SAM001/shifts/bookings?booking_date=${date}`
+        `/bookings/tenant/SAM001/shifts/bookings?booking_date=${date}`
       );
 
       if (response.data.success) {
@@ -237,7 +237,7 @@ const RouteScheduledBookings = () => {
       setGeneratingRoute(shiftId);
 
       const response = await API_CLIENT.post(
-        `/v1/routes/?booking_date=${selectedDate}&shift_id=${shiftId}&radius=${config.radius}&group_size=${config.group_size}&strict_grouping=${config.strict_grouping}`
+        `/routes/?booking_date=${selectedDate}&shift_id=${shiftId}&radius=${config.radius}&group_size=${config.group_size}&strict_grouping=${config.strict_grouping}`
       );
 
       if (response.data.success) {

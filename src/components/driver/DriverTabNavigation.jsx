@@ -1,30 +1,36 @@
-import React from 'react';
-import { logDebug } from '../../utils/logger';
-import { toast } from 'react-toastify';
+import React from "react";
 
 const tabs = [
-  { id: 'personalDetails', label: 'PERSONAL DETAILS' },
-  { id: 'documents', label: 'DOCUMENTS' },
+  { id: "personalDetails", label: "PERSONAL DETAILS" },
+  { id: "documents", label: "DOCUMENTS" },
 ];
 
-const DriverTabNavigation = ({ activeTab, errors = {}, onTabChange, validateTab }) => {
+const DriverTabNavigation = ({
+  activeTab,
+  errors = {},
+  onTabChange,
+  validateTab,
+}) => {
+  const handleTabClick = (tabId) => {
+    if (tabId === activeTab) return;
 
-const handleTabClick = (tabId) => {
-  if (tabId === activeTab) return;
-
-  // Only validate PERSONAL DETAILS tab before switching
-  if (activeTab === 'personalDetails' && validateTab) {
-    const currentErrors = validateTab(activeTab);
-    if (Object.keys(currentErrors).length > 0) {
-      console.log("Attempting tab switch from:", activeTab, "Errors:", currentErrors);
-      // toast.error("Please fix errors in this tab before switching");
-      return; // Block tab switch
+    // Only validate PERSONAL DETAILS tab before switching
+    if (activeTab === "personalDetails" && validateTab) {
+      const currentErrors = validateTab(activeTab);
+      if (Object.keys(currentErrors).length > 0) {
+        console.log(
+          "Attempting tab switch from:",
+          activeTab,
+          "Errors:",
+          currentErrors
+        );
+        // toast.error("Please fix errors in this tab before switching");
+        return; // Block tab switch
+      }
     }
-  }
 
-  onTabChange(tabId);
-};
-
+    onTabChange(tabId);
+  };
 
   return (
     <div className="border-b border-gray-200">
@@ -33,17 +39,24 @@ const handleTabClick = (tabId) => {
           const isActive = activeTab === id;
           const hasError = !!errors[id]; // boolean
 
-          const baseStyle = 'py-3 px-6 font-medium text-sm focus:outline-none relative';
-          const activeStyle = 'border-b-2 border-blue-600 text-blue-600 bg-blue-50';
-          const inactiveStyle = 'text-gray-500 hover:text-gray-700 hover:border-gray-300';
-          const errorStyle = hasError && !isActive ? 'text-red-600' : '';
+          const baseStyle =
+            "py-3 px-6 font-medium text-sm focus:outline-none relative";
+          const activeStyle =
+            "border-b-2 border-blue-600 text-blue-600 bg-blue-50";
+          const inactiveStyle =
+            "text-gray-500 hover:text-gray-700 hover:border-gray-300";
+          const errorStyle = hasError && !isActive ? "text-red-600" : "";
 
           return (
             <button
               key={id}
-              className={`${baseStyle} ${isActive ? activeStyle : inactiveStyle} ${errorStyle}`}
+              className={`${baseStyle} ${
+                isActive ? activeStyle : inactiveStyle
+              } ${errorStyle}`}
               onClick={() => handleTabClick(id)}
-              aria-label={`${label}${hasError ? ' - Error in this section' : ''}`}
+              aria-label={`${label}${
+                hasError ? " - Error in this section" : ""
+              }`}
             >
               {label}
               {hasError && (

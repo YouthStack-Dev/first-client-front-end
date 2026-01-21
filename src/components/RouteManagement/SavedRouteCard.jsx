@@ -108,7 +108,7 @@ const SavedRouteCard = ({
 
     logDebug(" this is the booking id to be removed:", booking_id);
     try {
-      await API_CLIENT.put(`/v1/routes/${routeId}`, {
+      await API_CLIENT.put(`/routes/${routeId}`, {
         operation: "remove",
         booking_ids: [booking_id],
       });
@@ -122,7 +122,7 @@ const SavedRouteCard = ({
 
   const confirmDeleteRoute = async () => {
     try {
-      await API_CLIENT.delete(`/v1/routes/${route.route_id}`);
+      await API_CLIENT.delete(`/routes/${route.route_id}`);
       OnOperation();
       setShowDeleteRouteModal(false);
     } catch (error) {
@@ -233,7 +233,7 @@ const SavedRouteCard = ({
       console.log("Update Route Data:", updateData);
 
       // Make the API call
-      await API_CLIENT.put(`/v1/routes/${route.route_id}`, updateData);
+      await API_CLIENT.put(`/routes/${route.route_id}`, updateData);
 
       OnOperation();
       setShowUpdateRouteModal(false);
