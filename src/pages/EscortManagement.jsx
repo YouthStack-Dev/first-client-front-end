@@ -36,8 +36,8 @@ const EscortManagement = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState(getInitialFormData());
   const [formErrors, setFormErrors] = useState({});
+  // const vendors = useVendorOptions(null, true);
   const vendors = useVendorOptions(null, true);
-
   function getInitialFormData() {
     return {
       vendor_id: null,
