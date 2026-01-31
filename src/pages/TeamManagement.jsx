@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Select from "react-select";
-import { Eye, Trash, Users, UserCheck } from "lucide-react";
+import { Eye, Trash, Users, UserCheck, Clock, UserPlus } from "lucide-react";
 import ToolBar from "../components/ui/ToolBar";
 import ReusableButton from "../components/ui/ReusableButton";
 import ReusableToggleButton from "../components/ui/ReusableToggleButton";
@@ -20,6 +20,8 @@ import {
 } from "../redux/features/teams/teamsSelectors";
 import { selectCurrentUser } from "../redux/features/auth/authSlice";
 import TeamModal from "../components/modals/TeamModal";
+import TeamEmployeeModal from "../components/TeamEmployees/TeamEmployeeModal";
+import AuditLogsModal from "../components/modals/AuditLogsModal";
 
 const TeamManagement = () => {
   const dispatch = useDispatch();
@@ -39,9 +41,11 @@ const TeamManagement = () => {
   const [selectedTeamFromSearch, setSelectedTeamFromSearch] = useState(null);
   const [statusFilter, setStatusFilter] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTenantId, setSelectedTenantId] = useState(null);
+  const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const itemsPerPage = 10;
 
   // Get tenant from localStorage for non-admin users
@@ -469,6 +473,31 @@ const TeamManagement = () => {
             </div>
           </div>
         }
+
+ rightElements={
+  <div className="flex items-center gap-2">
+    <ReusableButton
+       module="employee"
+      action="create" // Changed from "read" to "create" since you're creating an employee
+      icon={UserPlus} // You might want to use a UserPlus icon or similar
+      title="Create Employee"
+      className="bg-app-primary p-2"
+      onClick={() => {
+        setIsEmployeeModalOpen(true);
+      }}
+    />
+    <ReusableButton
+      module="team"
+      action="read"
+      icon={Clock}
+      title="History"
+      className="bg-app-primary p-2"
+      onClick={() => {
+        setIsAuditModalOpen(true);
+      }}
+    />
+  </div>
+}
       />
 
       {/* Teams Table */}
@@ -685,6 +714,33 @@ const TeamManagement = () => {
         selectedTenant={
           userType === "admin" ? null : getTenantFromLocalStorage()
         }
+      />
+
+      {/* Team Employee Modal */}
+      <TeamEmployeeModal
+        isOpen={isEmployeeModalOpen}
+        onClose={() => setIsEmployeeModalOpen(false)}
+        mode="create"
+        onSuccess={() => {
+          setIsEmployeeModalOpen(false);
+          // Refresh teams list to update counts
+          const queryParams = {
+            skip: (currentPage - 1) * itemsPerPage,
+            limit: itemsPerPage,
+          };
+          if (currentTenantId) {
+            queryParams.tenant_id = currentTenantId;
+          }
+          dispatch(fetchTeamsThunk(queryParams));
+        }}
+      />
+
+      <AuditLogsModal
+        isOpen={isAuditModalOpen}
+        onClose={() => setIsAuditModalOpen(false)}
+        moduleName="Team"
+        apimodule="teams"
+        selectedCompany={currentTenantId}
       />
     </div>
   );

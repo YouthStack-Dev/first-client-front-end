@@ -12,6 +12,7 @@ const endpoint = {
   createEmployee: "/employees/",
   createTeam: "/teams/",
   updateEmployee: "/employees/",
+  deleteEmployee: "/employees/",
   getWeekOff: "/weekoff-configs/",
   updateWeekOff: "/weekoff-configs/",
   toggleEmployeStatus: "/employees/",

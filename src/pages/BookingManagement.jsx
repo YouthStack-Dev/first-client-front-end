@@ -4,7 +4,7 @@ import { Calendar, Clock, History } from "lucide-react";
 import MultiDateCalendar from "@components/MultiDateCalendar";
 import ShiftSelector from "@components/ShiftSelector";
 import BookingHistory from "@components/BookingHistory";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { logDebug } from "../utils/logger";
 import { API_CLIENT } from "../Api/API_Client";
 import endpoint from "../Api/Endpoints";
@@ -13,6 +13,7 @@ import { selectAllShifts } from "../redux/features/shift/shiftSlice";
 import { fetchShiftTrunk } from "../redux/features/shift/shiftTrunk";
 import { bookingSchema } from "../validations/bookingValidation";
 import { toast } from "react-toastify";
+import { fetchEmployeesThunk } from "../redux/features/employees/employeesThunk";
 
 export default function BookingManagement() {
   const [step, setStep] = useState("welcome");
@@ -28,9 +29,17 @@ export default function BookingManagement() {
   const [errorMessageHistory, setErrorMessageHistory] = useState("");
 
   const location = useLocation();
-  const { employee } = location.state || {};
+  const [searchParams] = useSearchParams();
+  const employeeId = searchParams.get("employeeId");
+  const teamId = searchParams.get("teamId");
+  const [employee, setEmployee] = useState(location.state?.employee || null);
+  
   const dispatch = useDispatch();
   const shifts = useSelector(selectAllShifts);
+  const employeesLoading = useSelector((state) => state.employees.loading);
+  const teamEmployees = useSelector((state) => 
+    teamId ? state.employees.entities : {}
+  );
 
   // Booking History Filters State
   const [bookingFilters, setBookingFilters] = useState({
@@ -74,6 +83,35 @@ export default function BookingManagement() {
       dispatch(fetchShiftTrunk());
     }
   }, [shifts, dispatch]);
+
+  // Effect to handle direct navigation via URL params
+  useEffect(() => {
+    if (!employee && teamId && employeeId) {
+      // Check if employee is already in Redux store
+      const employeeFromStore = Object.values(teamEmployees).find(
+        (emp) => emp.employee_id.toString() === employeeId.toString()
+      );
+
+      if (employeeFromStore) {
+        setEmployee(employeeFromStore);
+      } else if (!employeesLoading) {
+        // Fetch team employees to populate store
+        dispatch(fetchEmployeesThunk({ team_id: teamId }));
+      }
+    }
+  }, [employee, teamId, employeeId, teamEmployees, employeesLoading, dispatch]);
+
+  // Update employee state when it becomes available in Redux
+  useEffect(() => {
+    if (!employee && employeeId && !employeesLoading) {
+      const employeeFromStore = Object.values(teamEmployees).find(
+        (emp) => emp.employee_id.toString() === employeeId.toString()
+      );
+      if (employeeFromStore) {
+        setEmployee(employeeFromStore);
+      }
+    }
+  }, [teamEmployees, employeeId, employee, employeesLoading]);
 
   const fetchWeekOffs = async () => {
     try {
@@ -312,6 +350,32 @@ export default function BookingManagement() {
       </div>
     );
   };
+
+  if (employeesLoading && !employee) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <p className="ml-4 text-gray-600">Loading employee details...</p>
+      </div>
+    );
+  }
+
+  if (!employee && !employeesLoading) {
+    return (
+      <div className="p-8 text-center bg-white rounded-xl shadow-lg">
+        <h2 className="text-2xl font-bold text-red-600 mb-4">Employee Not Found</h2>
+        <p className="text-gray-600 mb-6">
+          We couldn't find the employee details for the ID provided in the URL.
+        </p>
+        <button
+          onClick={() => navigate(-1)}
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-2">

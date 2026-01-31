@@ -14,6 +14,7 @@ const TeamEmployeeModal = ({
   onClose,
   mode = "create", // "create" | "view"
   employeeData = null,
+  onSuccess,
 }) => {
   const dispatch = useDispatch();
   const [formData, setFormData] = useState({
@@ -187,6 +188,7 @@ const TeamEmployeeModal = ({
 
         await dispatch(createEmployeeThunk(sanitizedData)).unwrap();
         toast.success("Employee created successfully!");
+        if (onSuccess) onSuccess();
         onClose();
       } else if (isEditing && employeeData?.employee_id) {
         // Partial update logic: send only changed fields
@@ -231,6 +233,7 @@ const TeamEmployeeModal = ({
         
         toast.success("Employee updated successfully!");
         setIsEditing(false);
+        if (onSuccess) onSuccess();
         onClose();
       }
     } catch (error) {

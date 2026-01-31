@@ -16,6 +16,7 @@ import AuditLogsModal from "@components/modals/AuditLogsModal";
 import ReusableButton from "@components/ui/ReusableButton";
 import ReusableToggleButton from "@components/ui/ReusableToggleButton";
 import TeamEmployeeModal from "./TeamEmployeeModal";
+import WeekOffModal from "../modals/WeekOffModal";
 import {
   selectEmployeesByTeamId,
   selectEmployeesLoading,
@@ -53,6 +54,8 @@ const TeamEmployeesManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");
   const [modalEmployeeData, setModalEmployeeData] = useState(null);
+  const [isWeekOffModalOpen, setIsWeekOffModalOpen] = useState(false);
+  const [selectedEmployeeForWeekOff, setSelectedEmployeeForWeekOff] = useState(null);
 
   const isActive = searchParams.get("active");
   const tenantId = searchParams.get("tenantId");
@@ -170,14 +173,29 @@ const TeamEmployeesManagement = () => {
     setIsModalOpen(false);
   };
 
-  const handleSchedule = (employee) => {
-    console.log("Schedule employee:", employee);
-    navigate(`/schedule?employeeId=${employee.employee_id}&teamId=${teamId}`);
+  const handleWeekOffOpen = (employee) => {
+    setSelectedEmployeeForWeekOff(employee);
+    setIsWeekOffModalOpen(true);
+  };
+
+  const handleWeekOffUpdate = async (updateData) => {
+    setIsWeekOffModalOpen(false);
+    toast.success("Week off updated successfully");
+    // Optionally refresh employees if needed
+    if (teamId) {
+      const queryParams = {
+        team_id: teamId,
+        tenant_id: tenantId,
+        page: 1,
+        limit: 50,
+      };
+      dispatch(fetchEmployeesThunk(queryParams));
+    }
   };
 
   const handleBook = (employee) => {
     console.log("Book employee:", employee);
-    navigate(`/booking?employeeId=${employee.employee_id}&teamId=${teamId}`);
+    navigate(`/companies/booking?employeeId=${employee.employee_id}&teamId=${teamId}`);
   };
 
   // Handle search input change from Select component
@@ -565,8 +583,8 @@ const TeamEmployeesManagement = () => {
                           module="employee"
                           action="update"
                           icon={Calendar}
-                          title="Schedule"
-                          onClick={() => handleSchedule(employee)}
+                          title="Week Off"
+                          onClick={() => handleWeekOffOpen(employee)}
                           className="text-gray-600 hover:text-green-600 transition-colors"
                           iconSize={16}
                         />
@@ -607,6 +625,13 @@ const TeamEmployeesManagement = () => {
         onClose={() => setIsModalOpen(false)}
         mode={modalMode}
         employeeData={modalEmployeeData}
+      />
+
+      <WeekOffModal
+        show={isWeekOffModalOpen}
+        employee={selectedEmployeeForWeekOff}
+        onUpdate={handleWeekOffUpdate}
+        onClose={() => setIsWeekOffModalOpen(false)}
       />
     </div>
   );
