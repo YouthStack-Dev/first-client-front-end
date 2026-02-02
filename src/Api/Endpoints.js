@@ -21,6 +21,7 @@ const endpoint = {
 
   //  Boookings
   booking: "/bookings/",
+  updateBookingShift: "/bookings/",
 
   routesuggestion: "/grouping/bookings/routesuggestion",
   savedRoutes: "/routes/",

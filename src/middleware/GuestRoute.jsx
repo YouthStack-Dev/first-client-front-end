@@ -8,17 +8,17 @@ export const GuestRoute = ({ children }) => {
 
   // 🧠 Determine correct dashboard path based on user type
   const getDashboardPath = () => {
-    if (!user?.type) return "/dashboard"; // fallback path
+    if (!user?.type) return "/companies/dashboard"; // fallback path
 
     switch (user.type.toLowerCase()) {
       case "employee":
         return "/companies/dashboard";
       case "vendor":
         return "/vendor/dashboard";
-      case "superadmin":
+      case "admin":
         return "/superadmin/dashboard";
       default:
-        return "/dashboard";
+        return "/companies/dashboard";
     }
   };
 

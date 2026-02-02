@@ -4,6 +4,7 @@ import CompanyManagement from "../pages/CompanyManagement";
 import ReportsManagement from "../pages/ReportManagement";
 import NewVendorManagement from "../pages/NewVendorManagement";
 import AdminLayout from "../superadmin/layout/AdminLayout";
+import RoleManagement from "../components/RoleManagement/RoleManagement";
 
 export const AdminRoutes = () => (
   // <Route element={<SuperAdminLayout />}>
@@ -12,5 +13,6 @@ export const AdminRoutes = () => (
     <Route path="manage-companies" element={<CompanyManagement />} />
     <Route path="repots-management" element={<ReportsManagement />} />
     <Route path="new-vendor-management" element={<NewVendorManagement />} />
+    <Route path="role-management" element={<RoleManagement />} />
   </Route>
 );

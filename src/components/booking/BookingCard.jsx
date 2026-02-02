@@ -5,6 +5,7 @@ import {
   Navigation,
   XCircle,
   Key,
+  Edit,
 } from "lucide-react";
 
 const BookingCard = ({
@@ -13,6 +14,7 @@ const BookingCard = ({
   getShiftType,
   showLocationInfo,
   onCancelBooking,
+  onUpdateBooking,
   cancellationCutoffWindow = 60, // Default 60 minutes cutoff window
 }) => {
   // Function to check if cancellation is allowed based on cutoff window
@@ -218,7 +220,7 @@ const BookingCard = ({
             booking.status === "Request" && (
               <button
                 disabled
-                className="flex items-center gap-1 px-3 py-1.5 text-xs bg-gray-100 text-gray-400 border border-gray-200 rounded-md cursor-not-allowed"
+                className="flex items-center gap-1 px-3 py-2 text-xs bg-gray-100 text-gray-400 border border-gray-200 rounded-md cursor-not-allowed"
                 title={`Cancellation not allowed within ${cancellationCutoffWindow} minutes of booking time`}
               >
                 <XCircle className="w-3 h-3" />
@@ -226,6 +228,14 @@ const BookingCard = ({
               </button>
             )
           )}
+
+          <button
+            onClick={() => onUpdateBooking(booking)}
+            className="flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
+          >
+            <Edit className="w-3 h-3" />
+            Update
+          </button>
         </div>
 
         <div className="flex flex-col items-end gap-1">

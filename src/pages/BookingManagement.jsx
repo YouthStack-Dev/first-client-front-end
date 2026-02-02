@@ -12,8 +12,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { selectAllShifts } from "../redux/features/shift/shiftSlice";
 import { fetchShiftTrunk } from "../redux/features/shift/shiftTrunk";
 import { bookingSchema } from "../validations/bookingValidation";
-import { toast } from "react-toastify";
 import { fetchEmployeesThunk } from "../redux/features/employees/employeesThunk";
+import UpdateBookingShiftModal from "../components/modals/UpdateBookingShiftModal";
 
 export default function BookingManagement() {
   const [step, setStep] = useState("welcome");
@@ -27,6 +27,8 @@ export default function BookingManagement() {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isErrorHistory, setIsErrorHistory] = useState(false);
   const [errorMessageHistory, setErrorMessageHistory] = useState("");
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [selectedBookingForUpdate, setSelectedBookingForUpdate] = useState(null);
 
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -259,6 +261,11 @@ export default function BookingManagement() {
     setStep("history");
   };
 
+  const handleUpdateBookingClick = (booking) => {
+    setSelectedBookingForUpdate(booking);
+    setIsUpdateModalOpen(true);
+  };
+
   // Navigation handlers
   const handleNextToShift = () => {
     if (selectedDates.length >= 1) {
@@ -311,9 +318,6 @@ export default function BookingManagement() {
       setSelectedShiftId(null);
       setStep("welcome");
 
-      // Show success message
-      toast.success("Booking successful!");
-
       // Refresh booking history if we're going to view it
       if (step === "history") {
         fetchBookingHistory();
@@ -325,7 +329,6 @@ export default function BookingManagement() {
         error.response?.data?.message ||
         "Booking failed. Please try again.";
       setErrors([errorMessage]);
-      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -550,6 +553,20 @@ export default function BookingManagement() {
               emptyMessage="No bookings found for the selected date."
               title="My Booking History"
               showLocationInfo={true}
+              onUpdateBooking={handleUpdateBookingClick}
+            />
+          )}
+
+          {isUpdateModalOpen && selectedBookingForUpdate && (
+            <UpdateBookingShiftModal
+              isOpen={isUpdateModalOpen}
+              onClose={() => {
+                setIsUpdateModalOpen(false);
+                setSelectedBookingForUpdate(null);
+              }}
+              booking={selectedBookingForUpdate}
+              shifts={shifts}
+              onSuccess={() => fetchBookingHistory()}
             />
           )}
         </div>
