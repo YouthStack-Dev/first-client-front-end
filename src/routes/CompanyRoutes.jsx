@@ -45,7 +45,6 @@ export const CompanyRoutes = () => (
     />
     <Route path="vendor-user-management" element={<VendorUserManagement />} />
     <Route path="shifts" element={<Schedulemanagement />} />
-    <Route path="role-management" element={<RoleManagement />} />
     <Route path="role-permission" element={<RoleManagement />} />
     <Route path="scheduling" element={<Schedulemanagement />} />
     <Route path="cutoff" element={<CutoffManagement />} />

@@ -27,7 +27,7 @@ const ProtectedRouteAuth = ({ type, redirectPath, authRedirectPath }) => {
   // 🚨 Role mismatch handling
   if (user?.type && user?.type !== type) {
     if (user?.type === "employee" && type === "employee")
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to="/companies/dashboard" replace />;
     if (user?.type === "admin" && type === "admin")
       return <Navigate to="/superadmin/dashboard" replace />;
     if (user?.type === "vendor" && type === "vendor")

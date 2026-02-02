@@ -27,17 +27,28 @@ export const baseSidebarConfig = [
     ],
   },
 
+    {
+    title: "Role & Permission",
+      items: [
+         {
+        title: "Role & Permission",
+        path: "/superadmin/role-management",
+        permission: "role.read",
+        icon: BarChart3,
+      },
+      ]
+    },
   {
     title: "Vendors",
     items: [
+      // {
+      //   title: "Manage Vendors",
+      //   path: "/superadmin/manage-vendors",
+      //   permission: "vendor.read",
+      //   icon: Truck,
+      // },
       {
         title: "Manage Vendors",
-        path: "/superadmin/manage-vendors",
-        permission: "vendor.read",
-        icon: Truck,
-      },
-      {
-        title: "New Vendor Management",
         path: "/superadmin/new-vendor-management",
         permission: "vendor.read",
         icon: BarChart3,

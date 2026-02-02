@@ -21,6 +21,7 @@ const BookingHistory = ({
   emptyMessage = "You haven't made any bookings yet.",
   title = "Booking History",
   showLocationInfo = true,
+  onUpdateBooking,
 }) => {
   const getStatusBadge = (status) => {
     const statusConfig = {
@@ -287,6 +288,7 @@ const BookingHistory = ({
               getShiftType={getShiftType}
               showLocationInfo={showLocationInfo}
               onCancelBooking={handleCancelBooking}
+              onUpdateBooking={onUpdateBooking}
               cancellationCutoffWindow={60} // 60 minutes cutoff window
             />
           ))
