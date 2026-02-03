@@ -109,7 +109,13 @@ const ManageVehicleTypes = () => {
     if (status === "Active") params.active_only = 1;
     if (status === "Inactive") params.active_only = 0;
     return params;
-  }, [isVendorUser, user?.vendor_id, selectedVendor, debouncedSearchTerm, status]);
+  }, [
+    isVendorUser,
+    user?.vendor_id,
+    selectedVendor,
+    debouncedSearchTerm,
+    status,
+  ]);
 
   /* ================= FETCH ================= */
   useEffect(() => {
@@ -271,7 +277,7 @@ const ManageVehicleTypes = () => {
             <SelectField
               value={status}
               onChange={(newStatus) => {
-                console.log(`🔄 Status changed to: "${newStatus}"`);  // DEBUG: Status trigger
+                console.log(`🔄 Status changed to: "${newStatus}"`); // DEBUG: Status trigger
                 setStatus(newStatus);
               }}
               options={[

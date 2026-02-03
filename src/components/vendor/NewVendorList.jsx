@@ -1,6 +1,7 @@
 import React from "react";
 import { Truck } from "lucide-react";
-import VendorCard from "./VendorCard";
+import NewVendorCard from "./NewVendorCard";
+// import VendorCard from "./VendorCard";
 
 const NewVendorList = ({ vendors = [], onAssignEntity }) => (
   <div>
@@ -15,7 +16,7 @@ const NewVendorList = ({ vendors = [], onAssignEntity }) => (
     ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
         {vendors.map((vendor, index) => (
-          <VendorCard
+          <NewVendorCard
             key={vendor._id || vendor.id || index}
             vendor={vendor}
             onAssignEntity={() => onAssignEntity?.(vendor)}

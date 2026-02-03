@@ -23,20 +23,47 @@ const defaultEmergencyContact = {
   service_type: "POLICE",
 };
 
-// Select styles for react-select
+// Custom select styles for react-select using theme
 const selectStyles = {
-  control: (base) => ({
+  control: (base, state) => ({
     ...base,
     fontSize: "0.875rem",
-    minHeight: "36px",
+    minHeight: "40px",
+    borderColor: state.isFocused ? "#0284c7" : "#e2e8f0",
+    borderRadius: "0.375rem",
+    boxShadow: state.isFocused ? "0 0 0 2px rgba(56, 189, 248, 0.2)" : "none",
+    backgroundColor: "#ffffff",
+    "&:hover": {
+      borderColor: "#0284c7",
+    },
   }),
   menu: (base) => ({
     ...base,
     fontSize: "0.875rem",
+    borderRadius: "0.375rem",
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
   }),
-  option: (base) => ({
+  option: (base, state) => ({
     ...base,
     fontSize: "0.875rem",
+    backgroundColor: state.isSelected
+      ? "#e0f2fe"
+      : state.isFocused
+      ? "#f1f5f9"
+      : "#ffffff",
+    color: state.isSelected ? "#0369a1" : "#0f172a",
+    "&:active": {
+      backgroundColor: "#e0f2fe",
+    },
+  }),
+  placeholder: (base) => ({
+    ...base,
+    color: "#94a3b8",
+  }),
+  singleValue: (base) => ({
+    ...base,
+    color: "#0f172a",
   }),
 };
 
@@ -55,8 +82,8 @@ export default function AlertConfigForm({
   const [scopeType, setScopeType] = useState(initialData.scope || "tenant");
   const [currentMode, setCurrentMode] = useState(mode);
   const [originalConfig, setOriginalConfig] = useState({ ...initialData });
-  const [searchValue, setSearchValue] = useState(""); // For team search
-  const [selectedTeam, setSelectedTeam] = useState(null); // For react-select
+  const [searchValue, setSearchValue] = useState("");
+  const [selectedTeam, setSelectedTeam] = useState(null);
   const [shouldFetchTeams, setShouldFetchTeams] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -75,7 +102,6 @@ export default function AlertConfigForm({
   const getTeamDisplayName = useCallback((team) => {
     if (!team) return "";
 
-    // Handle different data structures
     if (team.originalData) {
       const original = team.originalData;
       return `${original.name || original.label}${
@@ -99,16 +125,13 @@ export default function AlertConfigForm({
     setCurrentMode(mode);
     setScopeType(initialData.scope || "tenant");
 
-    // Reset team selection
     if (initialData.scope === "team" && initialData.team_id) {
-      // Set initial config with team_id immediately
       setConfig((prev) => ({
         ...prev,
         team_id: initialData.team_id,
         scope_target_type: "team",
       }));
 
-      // Set selectedTeam to trigger the update
       setSelectedTeam({
         value: initialData.team_id,
         label: "Loading...",
@@ -118,6 +141,7 @@ export default function AlertConfigForm({
       setSelectedTeam(null);
     }
   }, [initialData, mode]);
+
   // Handle scope type change
   useEffect(() => {
     if (!isReadOnly) {
@@ -132,7 +156,6 @@ export default function AlertConfigForm({
         setSelectedTeam(null);
         setShouldFetchTeams(false);
       } else if (!shouldFetchTeams) {
-        // Only enable fetching if not already enabled
         setShouldFetchTeams(true);
       }
     }
@@ -159,12 +182,10 @@ export default function AlertConfigForm({
     }
   };
 
-  // Handle team search input change
   const handleTeamSearch = (inputValue) => {
     setSearchValue(inputValue);
   };
 
-  // Handle dropdown open/close
   const handleMenuOpen = () => {
     setDropdownOpen(true);
     if (!shouldFetchTeams) {
@@ -176,12 +197,9 @@ export default function AlertConfigForm({
     setDropdownOpen(false);
   };
 
-  // Team select change handler
-  // Team select change handler
   const handleTeamChange = (option) => {
     setSelectedTeam(option);
 
-    // Update config immediately when team changes
     if (option && !isReadOnly) {
       updateConfig({
         team_id: option.value,
@@ -194,7 +212,6 @@ export default function AlertConfigForm({
       });
     }
   };
-  // Format current options for display
 
   const getSelectedTeamName = useCallback(() => {
     if (!selectedTeam) return "";
@@ -280,9 +297,7 @@ export default function AlertConfigForm({
     setCurrentMode("view");
     setScopeType(originalConfig.scope || "tenant");
 
-    // Reset selected team
     if (originalConfig.scope === "team" && originalConfig.team_id) {
-      // Try to find the team in current options first
       const foundTeam = teamOptions.find(
         (team) => team.value === originalConfig.team_id
       );
@@ -332,14 +347,14 @@ export default function AlertConfigForm({
       <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" />
 
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
+        <div className="relative bg-app-surface rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden border border-app-border">
           {/* Modal Header */}
           <ErrorDisplay
             error={error}
             title="Form Submission Error"
             onClear={clearError}
           />
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex justify-between items-center">
+          <div className="bg-gradient-to-r from-app-primary to-app-secondary px-6 py-4 flex justify-between items-center">
             <div>
               <h1 className="text-lg font-semibold text-white">
                 {currentMode === "create"
@@ -349,7 +364,7 @@ export default function AlertConfigForm({
                   : "View Alert Configuration"}
               </h1>
               {config.config_name && (
-                <p className="text-sm text-blue-100 mt-0.5">
+                <p className="text-sm text-app-tertiary mt-0.5">
                   {config.config_name}
                 </p>
               )}
@@ -358,26 +373,24 @@ export default function AlertConfigForm({
               {currentMode === "view" && (
                 <button
                   onClick={handleEditClick}
-                  className="px-4 py-2 bg-white text-blue-600 rounded-md text-sm font-medium hover:bg-blue-50 flex items-center gap-2"
+                  className="px-4 py-2 bg-app-surface text-sidebar-primary rounded-md text-sm font-medium hover:bg-sidebar-tertiary flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
                   <Edit2 size={16} />
                   Edit
                 </button>
               )}
               {currentMode !== "view" && (
-                <>
-                  <button
-                    onClick={handleSave}
-                    className="px-4 py-2 bg-white text-blue-600 rounded-md text-sm font-medium hover:bg-blue-50 flex items-center gap-2"
-                  >
-                    <Save size={16} />
-                    {currentMode === "create" ? "Create" : "Save"}
-                  </button>
-                </>
+                <button
+                  onClick={handleSave}
+                  className="px-4 py-2 bg-app-surface text-sidebar-primary rounded-md text-sm font-medium hover:bg-sidebar-tertiary flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg"
+                >
+                  <Save size={16} />
+                  {currentMode === "create" ? "Create" : "Save"}
+                </button>
               )}
               <button
                 onClick={handleCancel}
-                className="px-4 py-2 bg-blue-500 text-white rounded-md text-sm font-medium hover:bg-blue-600 flex items-center gap-2"
+                className="px-4 py-2 bg-sidebar-primary text-white rounded-md text-sm font-medium hover:bg-sidebar-secondary flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg"
               >
                 <X size={16} />
                 {currentMode === "view" ? "Close" : "Cancel"}
@@ -387,16 +400,16 @@ export default function AlertConfigForm({
 
           {/* Modal Content */}
           <div className="overflow-y-auto max-h-[calc(90vh-140px)]">
-            <div className="border-b border-gray-200 sticky top-0 bg-white z-10">
+            <div className="border-b border-app-border sticky top-0 bg-app-surface z-10">
               <nav className="flex">
                 {["basic", "escalation", "notification"].map((section) => (
                   <button
                     key={section}
                     onClick={() => setActiveSection(section)}
-                    className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    className={`px-6 py-3 text-sm font-medium border-b-2 transition-all duration-300 ${
                       activeSection === section
-                        ? "border-blue-600 text-blue-600"
-                        : "border-transparent text-gray-600 hover:text-gray-800"
+                        ? "border-sidebar-primary text-sidebar-primary"
+                        : "border-transparent text-app-text-secondary hover:text-app-text-primary"
                     }`}
                   >
                     {section === "basic"
@@ -413,8 +426,8 @@ export default function AlertConfigForm({
               {activeSection === "basic" && (
                 <div className="space-y-6">
                   {/* Scope Selection */}
-                  <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <h3 className="text-sm font-semibold text-blue-900">
+                  <div className="space-y-4 p-4 bg-sidebar-tertiary rounded-lg border border-sidebar-secondary">
+                    <h3 className="text-sm font-semibold text-sidebar-primary">
                       Configuration Scope
                     </h3>
                     <div className="flex flex-col md:flex-row gap-4">
@@ -427,9 +440,9 @@ export default function AlertConfigForm({
                             checked={scopeType === "tenant"}
                             onChange={(e) => setScopeType(e.target.value)}
                             disabled={isReadOnly}
-                            className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                            className="w-4 h-4 text-sidebar-primary focus:ring-sidebar-secondary"
                           />
-                          <span className="ml-2 text-sm font-medium text-gray-700">
+                          <span className="ml-2 text-sm font-medium text-app-text-secondary">
                             Tenant Level
                           </span>
                         </label>
@@ -441,9 +454,9 @@ export default function AlertConfigForm({
                             checked={scopeType === "team"}
                             onChange={(e) => setScopeType(e.target.value)}
                             disabled={isReadOnly}
-                            className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                            className="w-4 h-4 text-sidebar-primary focus:ring-sidebar-secondary"
                           />
-                          <span className="ml-2 text-sm font-medium text-gray-700">
+                          <span className="ml-2 text-sm font-medium text-app-text-secondary">
                             Team Level
                           </span>
                         </label>
@@ -451,7 +464,6 @@ export default function AlertConfigForm({
 
                       {scopeType === "team" && (
                         <div className="flex-1">
-                          {/* Team Dropdown */}
                           <Select
                             options={teamOptions}
                             value={selectedTeam}
@@ -471,16 +483,16 @@ export default function AlertConfigForm({
                     </div>
 
                     {scopeType === "team" && selectedTeam && (
-                      <div className="text-xs text-blue-700 bg-blue-100 px-3 py-1 rounded-md inline-block">
+                      <div className="text-xs text-sidebar-primary bg-app-tertiary px-3 py-1 rounded-md inline-block">
                         Selected: {getSelectedTeamName()}
                       </div>
                     )}
                   </div>
 
-                  {/* Rest of the form remains the same */}
+                  {/* Form Fields */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-app-text-secondary mb-1">
                         Configuration Name
                       </label>
                       <input
@@ -490,12 +502,12 @@ export default function AlertConfigForm({
                           updateConfig({ config_name: e.target.value })
                         }
                         disabled={isReadOnly}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-600"
+                        className="w-full px-3 py-2 border border-app-border rounded-md text-sm focus:ring-2 focus:ring-sidebar-secondary focus:border-sidebar-secondary disabled:bg-app-tertiary disabled:text-app-text-muted transition-all duration-300"
                         placeholder="Enter configuration name"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-app-text-secondary mb-1">
                         Priority
                       </label>
                       <input
@@ -507,13 +519,13 @@ export default function AlertConfigForm({
                           })
                         }
                         disabled={isReadOnly}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-600"
+                        className="w-full px-3 py-2 border border-app-border rounded-md text-sm focus:ring-2 focus:ring-sidebar-secondary focus:border-sidebar-secondary disabled:bg-app-tertiary disabled:text-app-text-muted transition-all duration-300"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-app-text-secondary mb-1">
                       Description
                     </label>
                     <textarea
@@ -523,13 +535,13 @@ export default function AlertConfigForm({
                       }
                       disabled={isReadOnly}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-600"
+                      className="w-full px-3 py-2 border border-app-border rounded-md text-sm focus:ring-2 focus:ring-sidebar-secondary focus:border-sidebar-secondary disabled:bg-app-tertiary disabled:text-app-text-muted transition-all duration-300"
                       placeholder="Enter description"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-app-text-secondary mb-2">
                       Applicable Alert Types
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -547,10 +559,10 @@ export default function AlertConfigForm({
                             })
                           }
                           disabled={isReadOnly}
-                          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-300 ${
                             config.applicable_alert_types.includes(type)
-                              ? "bg-blue-100 text-blue-700 border border-blue-300"
-                              : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                              ? "bg-sidebar-tertiary text-sidebar-primary border border-sidebar-secondary"
+                              : "bg-app-tertiary text-app-text-secondary border border-app-border hover:bg-app-secondary hover:text-app-text-primary"
                           } disabled:cursor-not-allowed`}
                         >
                           {type}
@@ -562,13 +574,13 @@ export default function AlertConfigForm({
                   {/* Primary Recipients Section */}
                   <div>
                     <div className="flex justify-between items-center mb-3">
-                      <h3 className="text-sm font-semibold text-gray-900">
+                      <h3 className="text-sm font-semibold text-app-text-primary">
                         Primary Recipients
                       </h3>
                       {!isReadOnly && (
                         <button
                           onClick={() => addRecipient("primary")}
-                          className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 flex items-center gap-1"
+                          className="px-3 py-1.5 bg-sidebar-primary text-white rounded-md text-sm font-medium hover:bg-sidebar-secondary flex items-center gap-1 transition-all duration-300 shadow-md hover:shadow-lg"
                         >
                           <Plus size={16} />
                           Add Recipient
@@ -577,17 +589,17 @@ export default function AlertConfigForm({
                     </div>
                     <div className="space-y-3">
                       {config.primary_recipients.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500 text-sm border border-dashed border-gray-300 rounded-md">
+                        <div className="text-center py-8 text-app-text-muted text-sm border border-dashed border-app-border rounded-md bg-app-tertiary">
                           No primary recipients added yet
                         </div>
                       ) : (
                         config.primary_recipients.map((recipient, index) => (
                           <div
                             key={index}
-                            className="border border-gray-200 rounded-md p-4 bg-gray-50"
+                            className="border border-app-border rounded-md p-4 bg-app-tertiary"
                           >
                             <div className="flex justify-between items-start mb-3">
-                              <span className="text-xs font-medium text-gray-500">
+                              <span className="text-xs font-medium text-app-text-muted">
                                 Recipient {index + 1}
                               </span>
                               {!isReadOnly &&
@@ -596,7 +608,7 @@ export default function AlertConfigForm({
                                     onClick={() =>
                                       removeRecipient("primary", index)
                                     }
-                                    className="text-red-600 hover:text-red-700"
+                                    className="text-red-600 hover:text-red-700 transition-colors"
                                   >
                                     <Trash2 size={16} />
                                   </button>
@@ -613,7 +625,7 @@ export default function AlertConfigForm({
                                 }
                                 disabled={isReadOnly}
                                 placeholder="Name"
-                                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-600"
+                                className="px-3 py-2 border border-app-border rounded-md text-sm focus:ring-2 focus:ring-sidebar-secondary focus:border-sidebar-secondary disabled:bg-app-background disabled:text-app-text-muted transition-all duration-300"
                               />
                               <input
                                 type="text"
@@ -625,7 +637,7 @@ export default function AlertConfigForm({
                                 }
                                 disabled={isReadOnly}
                                 placeholder="Role"
-                                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-600"
+                                className="px-3 py-2 border border-app-border rounded-md text-sm focus:ring-2 focus:ring-sidebar-secondary focus:border-sidebar-secondary disabled:bg-app-background disabled:text-app-text-muted transition-all duration-300"
                               />
                               <input
                                 type="email"
@@ -637,7 +649,7 @@ export default function AlertConfigForm({
                                 }
                                 disabled={isReadOnly}
                                 placeholder="Email"
-                                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-600"
+                                className="px-3 py-2 border border-app-border rounded-md text-sm focus:ring-2 focus:ring-sidebar-secondary focus:border-sidebar-secondary disabled:bg-app-background disabled:text-app-text-muted transition-all duration-300"
                               />
                               <input
                                 type="tel"
@@ -649,11 +661,11 @@ export default function AlertConfigForm({
                                 }
                                 disabled={isReadOnly}
                                 placeholder="Phone"
-                                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-600"
+                                className="px-3 py-2 border border-app-border rounded-md text-sm focus:ring-2 focus:ring-sidebar-secondary focus:border-sidebar-secondary disabled:bg-app-background disabled:text-app-text-muted transition-all duration-300"
                               />
                             </div>
                             <div className="mt-3">
-                              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                              <label className="block text-xs font-medium text-app-text-secondary mb-1.5">
                                 Notification Channels
                               </label>
                               <div className="flex flex-wrap gap-2">
@@ -671,10 +683,10 @@ export default function AlertConfigForm({
                                       })
                                     }
                                     disabled={isReadOnly}
-                                    className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                                    className={`px-2.5 py-1 rounded text-xs font-medium transition-all duration-300 ${
                                       recipient.channels.includes(channel)
-                                        ? "bg-blue-100 text-blue-700 border border-blue-300"
-                                        : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
+                                        ? "bg-sidebar-tertiary text-sidebar-primary border border-sidebar-secondary"
+                                        : "bg-app-surface text-app-text-secondary border border-app-border hover:bg-app-tertiary"
                                     } disabled:cursor-not-allowed`}
                                   >
                                     {channel}
@@ -689,10 +701,11 @@ export default function AlertConfigForm({
                   </div>
                 </div>
               )}
+
               {/* Escalation section */}
               {activeSection === "escalation" && (
                 <div className="space-y-6">
-                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-md border border-gray-200">
+                  <div className="flex items-center gap-3 p-4 bg-app-tertiary rounded-md border border-app-border">
                     <input
                       type="checkbox"
                       id="enable_escalation"
@@ -701,11 +714,11 @@ export default function AlertConfigForm({
                         updateConfig({ enable_escalation: e.target.checked })
                       }
                       disabled={isReadOnly}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                      className="w-4 h-4 text-sidebar-primary rounded focus:ring-2 focus:ring-sidebar-secondary"
                     />
                     <label
                       htmlFor="enable_escalation"
-                      className="text-sm font-medium text-gray-900"
+                      className="text-sm font-medium text-app-text-primary"
                     >
                       Enable Escalation
                     </label>
@@ -714,7 +727,7 @@ export default function AlertConfigForm({
                   {config.enable_escalation && (
                     <>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-app-text-secondary mb-1">
                           Escalation Threshold (seconds)
                         </label>
                         <input
@@ -727,19 +740,19 @@ export default function AlertConfigForm({
                             })
                           }
                           disabled={isReadOnly}
-                          className="w-full md:w-64 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-600"
+                          className="w-full md:w-64 px-3 py-2 border border-app-border rounded-md text-sm focus:ring-2 focus:ring-sidebar-secondary focus:border-sidebar-secondary disabled:bg-app-tertiary disabled:text-app-text-muted transition-all duration-300"
                         />
                       </div>
 
                       <div>
                         <div className="flex justify-between items-center mb-3">
-                          <h3 className="text-sm font-semibold text-gray-900">
+                          <h3 className="text-sm font-semibold text-app-text-primary">
                             Escalation Recipients
                           </h3>
                           {!isReadOnly && (
                             <button
                               onClick={() => addRecipient("escalation")}
-                              className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 flex items-center gap-1"
+                              className="px-3 py-1.5 bg-sidebar-primary text-white rounded-md text-sm font-medium hover:bg-sidebar-secondary flex items-center gap-1 transition-all duration-300 shadow-md hover:shadow-lg"
                             >
                               <Plus size={16} />
                               Add Recipient
@@ -748,7 +761,7 @@ export default function AlertConfigForm({
                         </div>
                         <div className="space-y-3">
                           {config.escalation_recipients.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500 text-sm border border-dashed border-gray-300 rounded-md">
+                            <div className="text-center py-8 text-app-text-muted text-sm border border-dashed border-app-border rounded-md bg-app-tertiary">
                               No escalation recipients added yet
                             </div>
                           ) : (
@@ -756,10 +769,10 @@ export default function AlertConfigForm({
                               (recipient, index) => (
                                 <div
                                   key={index}
-                                  className="border border-gray-200 rounded-md p-4 bg-gray-50"
+                                  className="border border-app-border rounded-md p-4 bg-app-tertiary"
                                 >
                                   <div className="flex justify-between items-start mb-3">
-                                    <span className="text-xs font-medium text-gray-500">
+                                    <span className="text-xs font-medium text-app-text-muted">
                                       Recipient {index + 1}
                                     </span>
                                     {!isReadOnly && (
@@ -767,7 +780,7 @@ export default function AlertConfigForm({
                                         onClick={() =>
                                           removeRecipient("escalation", index)
                                         }
-                                        className="text-red-600 hover:text-red-700"
+                                        className="text-red-600 hover:text-red-700 transition-colors"
                                       >
                                         <Trash2 size={16} />
                                       </button>
@@ -784,7 +797,7 @@ export default function AlertConfigForm({
                                       }
                                       disabled={isReadOnly}
                                       placeholder="Name"
-                                      className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-600"
+                                      className="px-3 py-2 border border-app-border rounded-md text-sm focus:ring-2 focus:ring-sidebar-secondary focus:border-sidebar-secondary disabled:bg-app-background disabled:text-app-text-muted transition-all duration-300"
                                     />
                                     <input
                                       type="text"
@@ -796,7 +809,7 @@ export default function AlertConfigForm({
                                       }
                                       disabled={isReadOnly}
                                       placeholder="Role"
-                                      className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-600"
+                                      className="px-3 py-2 border border-app-border rounded-md text-sm focus:ring-2 focus:ring-sidebar-secondary focus:border-sidebar-secondary disabled:bg-app-background disabled:text-app-text-muted transition-all duration-300"
                                     />
                                     <input
                                       type="email"
@@ -808,7 +821,7 @@ export default function AlertConfigForm({
                                       }
                                       disabled={isReadOnly}
                                       placeholder="Email"
-                                      className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-600"
+                                      className="px-3 py-2 border border-app-border rounded-md text-sm focus:ring-2 focus:ring-sidebar-secondary focus:border-sidebar-secondary disabled:bg-app-background disabled:text-app-text-muted transition-all duration-300"
                                     />
                                     <input
                                       type="tel"
@@ -820,11 +833,11 @@ export default function AlertConfigForm({
                                       }
                                       disabled={isReadOnly}
                                       placeholder="Phone"
-                                      className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-600"
+                                      className="px-3 py-2 border border-app-border rounded-md text-sm focus:ring-2 focus:ring-sidebar-secondary focus:border-sidebar-secondary disabled:bg-app-background disabled:text-app-text-muted transition-all duration-300"
                                     />
                                   </div>
                                   <div className="mt-3">
-                                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                                    <label className="block text-xs font-medium text-app-text-secondary mb-1.5">
                                       Channels
                                     </label>
                                     <div className="flex flex-wrap gap-2">
@@ -846,10 +859,10 @@ export default function AlertConfigForm({
                                             )
                                           }
                                           disabled={isReadOnly}
-                                          className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                                          className={`px-2.5 py-1 rounded text-xs font-medium transition-all duration-300 ${
                                             recipient.channels.includes(channel)
-                                              ? "bg-blue-100 text-blue-700 border border-blue-300"
-                                              : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
+                                              ? "bg-sidebar-tertiary text-sidebar-primary border border-sidebar-secondary"
+                                              : "bg-app-surface text-app-text-secondary border border-app-border hover:bg-app-tertiary"
                                           } disabled:cursor-not-allowed`}
                                         >
                                           {channel}
@@ -872,7 +885,7 @@ export default function AlertConfigForm({
               {activeSection === "notification" && (
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-app-text-secondary mb-2">
                       Notification Channels
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -890,10 +903,10 @@ export default function AlertConfigForm({
                             })
                           }
                           disabled={isReadOnly}
-                          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-300 ${
                             config.notification_channels.includes(channel)
-                              ? "bg-blue-100 text-blue-700 border border-blue-300"
-                              : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                              ? "bg-sidebar-tertiary text-sidebar-primary border border-sidebar-secondary"
+                              : "bg-app-tertiary text-app-text-secondary border border-app-border hover:bg-app-secondary hover:text-app-text-primary"
                           } disabled:cursor-not-allowed`}
                         >
                           {channel}
@@ -903,7 +916,7 @@ export default function AlertConfigForm({
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-md border border-gray-200">
+                    <div className="flex items-center gap-3 p-4 bg-app-tertiary rounded-md border border-app-border">
                       <input
                         type="checkbox"
                         id="notify_status"
@@ -914,17 +927,17 @@ export default function AlertConfigForm({
                           })
                         }
                         disabled={isReadOnly}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                        className="w-4 h-4 text-sidebar-primary rounded focus:ring-2 focus:ring-sidebar-secondary"
                       />
                       <label
                         htmlFor="notify_status"
-                        className="text-sm font-medium text-gray-900"
+                        className="text-sm font-medium text-app-text-primary"
                       >
                         Notify on Status Change
                       </label>
                     </div>
 
-                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-md border border-gray-200">
+                    <div className="flex items-center gap-3 p-4 bg-app-tertiary rounded-md border border-app-border">
                       <input
                         type="checkbox"
                         id="notify_escalation"
@@ -935,17 +948,17 @@ export default function AlertConfigForm({
                           })
                         }
                         disabled={isReadOnly}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                        className="w-4 h-4 text-sidebar-primary rounded focus:ring-2 focus:ring-sidebar-secondary"
                       />
                       <label
                         htmlFor="notify_escalation"
-                        className="text-sm font-medium text-gray-900"
+                        className="text-sm font-medium text-app-text-primary"
                       >
                         Notify on Escalation
                       </label>
                     </div>
 
-                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-md border border-gray-200">
+                    <div className="flex items-center gap-3 p-4 bg-app-tertiary rounded-md border border-app-border">
                       <input
                         type="checkbox"
                         id="require_notes"
@@ -956,17 +969,17 @@ export default function AlertConfigForm({
                           })
                         }
                         disabled={isReadOnly}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                        className="w-4 h-4 text-sidebar-primary rounded focus:ring-2 focus:ring-sidebar-secondary"
                       />
                       <label
                         htmlFor="require_notes"
-                        className="text-sm font-medium text-gray-900"
+                        className="text-sm font-medium text-app-text-primary"
                       >
                         Require Closure Notes
                       </label>
                     </div>
 
-                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-md border border-gray-200">
+                    <div className="flex items-center gap-3 p-4 bg-app-tertiary rounded-md border border-app-border">
                       <input
                         type="checkbox"
                         id="enable_geofence"
@@ -977,11 +990,11 @@ export default function AlertConfigForm({
                           })
                         }
                         disabled={isReadOnly}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                        className="w-4 h-4 text-sidebar-primary rounded focus:ring-2 focus:ring-sidebar-secondary"
                       />
                       <label
                         htmlFor="enable_geofence"
-                        className="text-sm font-medium text-gray-900"
+                        className="text-sm font-medium text-app-text-primary"
                       >
                         Enable Geofencing Alerts
                       </label>
@@ -990,7 +1003,7 @@ export default function AlertConfigForm({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-app-text-secondary mb-1">
                         Auto Close False Alarm (seconds)
                       </label>
                       <input
@@ -1003,13 +1016,13 @@ export default function AlertConfigForm({
                           })
                         }
                         disabled={isReadOnly}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-600"
+                        className="w-full px-3 py-2 border border-app-border rounded-md text-sm focus:ring-2 focus:ring-sidebar-secondary focus:border-sidebar-secondary disabled:bg-app-tertiary disabled:text-app-text-muted transition-all duration-300"
                       />
                     </div>
 
                     {config.enable_geofencing_alerts && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-app-text-secondary mb-1">
                           Geofence Radius (meters)
                         </label>
                         <input
@@ -1022,7 +1035,7 @@ export default function AlertConfigForm({
                             })
                           }
                           disabled={isReadOnly}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-600"
+                          className="w-full px-3 py-2 border border-app-border rounded-md text-sm focus:ring-2 focus:ring-sidebar-secondary focus:border-sidebar-secondary disabled:bg-app-tertiary disabled:text-app-text-muted transition-all duration-300"
                         />
                       </div>
                     )}
@@ -1030,13 +1043,13 @@ export default function AlertConfigForm({
 
                   <div>
                     <div className="flex justify-between items-center mb-3">
-                      <h3 className="text-sm font-semibold text-gray-900">
+                      <h3 className="text-sm font-semibold text-app-text-primary">
                         Emergency Contacts
                       </h3>
                       {!isReadOnly && (
                         <button
                           onClick={addEmergencyContact}
-                          className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 flex items-center gap-1"
+                          className="px-3 py-1.5 bg-sidebar-primary text-white rounded-md text-sm font-medium hover:bg-sidebar-secondary flex items-center gap-1 transition-all duration-300 shadow-md hover:shadow-lg"
                         >
                           <Plus size={16} />
                           Add Contact
@@ -1045,23 +1058,23 @@ export default function AlertConfigForm({
                     </div>
                     <div className="space-y-3">
                       {config.emergency_contacts.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500 text-sm border border-dashed border-gray-300 rounded-md">
+                        <div className="text-center py-8 text-app-text-muted text-sm border border-dashed border-app-border rounded-md bg-app-tertiary">
                           No emergency contacts added yet
                         </div>
                       ) : (
                         config.emergency_contacts.map((contact, index) => (
                           <div
                             key={index}
-                            className="border border-gray-200 rounded-md p-4 bg-gray-50"
+                            className="border border-app-border rounded-md p-4 bg-app-tertiary"
                           >
                             <div className="flex justify-between items-start mb-3">
-                              <span className="text-xs font-medium text-gray-500">
+                              <span className="text-xs font-medium text-app-text-muted">
                                 Contact {index + 1}
                               </span>
                               {!isReadOnly && (
                                 <button
                                   onClick={() => removeEmergencyContact(index)}
-                                  className="text-red-600 hover:text-red-700"
+                                  className="text-red-600 hover:text-red-700 transition-colors"
                                 >
                                   <Trash2 size={16} />
                                 </button>
@@ -1078,7 +1091,7 @@ export default function AlertConfigForm({
                                 }
                                 disabled={isReadOnly}
                                 placeholder="Name"
-                                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-600"
+                                className="px-3 py-2 border border-app-border rounded-md text-sm focus:ring-2 focus:ring-sidebar-secondary focus:border-sidebar-secondary disabled:bg-app-background disabled:text-app-text-muted transition-all duration-300"
                               />
                               <input
                                 type="tel"
@@ -1090,7 +1103,7 @@ export default function AlertConfigForm({
                                 }
                                 disabled={isReadOnly}
                                 placeholder="Phone"
-                                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-600"
+                                className="px-3 py-2 border border-app-border rounded-md text-sm focus:ring-2 focus:ring-sidebar-secondary focus:border-sidebar-secondary disabled:bg-app-background disabled:text-app-text-muted transition-all duration-300"
                               />
                               <select
                                 value={contact.service_type}
@@ -1100,7 +1113,7 @@ export default function AlertConfigForm({
                                   })
                                 }
                                 disabled={isReadOnly}
-                                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-600"
+                                className="px-3 py-2 border border-app-border rounded-md text-sm focus:ring-2 focus:ring-sidebar-secondary focus:border-sidebar-secondary disabled:bg-app-background disabled:text-app-text-muted transition-all duration-300"
                               >
                                 {SERVICE_TYPES.map((type) => (
                                   <option key={type} value={type}>

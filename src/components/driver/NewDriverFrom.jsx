@@ -121,7 +121,7 @@ const DriverFormModal = ({
         }
       },
       setError,
-      apiUrlPrefix: "/v1/vehicles", // change for drivers/vendors/etc.
+      apiUrlPrefix: "/vehicles", // change for drivers/vendors/etc.
     });
   };
 
@@ -134,7 +134,7 @@ const DriverFormModal = ({
       setLoading: (v) =>
         setLoadingDocs((prev) => ({ ...prev, [file.path]: v })),
       setError,
-      apiUrlPrefix: "/v1/vehicles",
+      apiUrlPrefix: "/vehicles",
     });
   };
 

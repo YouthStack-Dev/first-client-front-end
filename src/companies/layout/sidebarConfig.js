@@ -1,5 +1,17 @@
 // sidebarConfig.js
-import { Users, MapPin, Clock, Users2, Car, Store } from "lucide-react";
+import {
+  Users,
+  MapPin,
+  Clock,
+  Users2,
+  Car,
+  Store,
+  Building,
+  Key,
+  Shield,
+  FileText,
+  Settings,
+} from "lucide-react";
 
 // Base sidebar configuration
 export const baseSidebarConfig = [
@@ -10,8 +22,59 @@ export const baseSidebarConfig = [
         title: "Dashboard",
         icon: Users,
         path: "/companies/dashboard",
-        permission: "role.read",
-        icon: Users,
+        permission: "dashboard.read",
+      },
+    ],
+  },
+  {
+    title: "Tenant Management",
+    items: [
+      {
+        title: "Tenant Overview",
+        icon: Building,
+        path: "/companies/tenants",
+        permission: "tenant.read",
+        subItems: [
+          {
+            title: "Add New Tenant",
+            icon: Building,
+            path: "/companies/tenants/create",
+            permission: "tenant.create",
+          },
+          {
+            title: "Tenant Settings",
+            icon: Settings,
+            path: "/companies/tenants/settings",
+            permission: "tenant.update",
+          },
+          {
+            title: "Billing & Subscription",
+            icon: FileText,
+            path: "/companies/tenants/billing",
+            permission: "billing.read",
+          },
+        ],
+      },
+      {
+        title: "Vendor Management",
+        icon: Store,
+        path: "/companies/vendors",
+        permission: "vendor.read",
+        subItems: [
+          {
+            title: " All Vendor ",
+            path: "/companies/new-vendor-management",
+            permission: "vendor.read",
+            icon: Store,
+          },
+          {
+            title: "Vendor Users",
+            icon: Users,
+            path: "/companies/vendor-user-management",
+            permission: "role.read",
+            icon: Users,
+          },
+        ],
       },
     ],
   },
@@ -20,24 +83,21 @@ export const baseSidebarConfig = [
     items: [
       {
         title: "User Role & Permission",
-        icon: Users,
+        icon: Key,
         path: "/companies/role-permission",
         permission: "role.read",
-        icon: Users,
       },
       {
         title: "Vendor Users",
         icon: Users,
         path: "/companies/vendor-user-management",
-        permission: "role.read",
-        icon: Users,
+        permission: "vendor.user.read",
       },
       {
         title: "Escort Management",
-        icon: Users,
+        icon: Users2,
         path: "/companies/escort-management",
         permission: "escort.read",
-        icon: Users,
       },
     ],
   },
@@ -49,20 +109,17 @@ export const baseSidebarConfig = [
         icon: Users,
         path: "/companies/driverform",
         permission: "driver.read",
-        icon: Users,
       },
       {
         title: "Vehicles",
         icon: Car,
         path: "/companies/vehicles-management",
         permission: "vehicle.read",
-        icon: Car,
       },
     ],
   },
-
   {
-    title: "Management",
+    title: "Operations Management",
     items: [
       {
         title: "Route Management",
@@ -75,46 +132,35 @@ export const baseSidebarConfig = [
         icon: Clock,
         path: "/companies/shifts",
         permission: "shift.read",
-        icon: Clock,
       },
-
       {
         title: "Teams",
         icon: Users2,
         path: "/companies/departments",
         permission: "team.read",
-        icon: Users2,
-      },
-      {
-        title: "Vendor Management",
-        path: "/companies/new-vendor-management",
-        permission: "vendor.read",
-        icon: Store,
       },
       {
         title: "Tracking Management",
         path: "/companies/tracking",
-        permission: "route.read",
-        icon: Store,
+        permission: "tracking.read",
+        icon: MapPin,
       },
     ],
   },
   {
-    title: "Config Management",
+    title: "Configuration",
     items: [
       {
-        title: "Config Management",
-        icon: Clock,
+        title: "System Configuration",
+        icon: Settings,
         path: "/companies/cutoff",
         permission: "cutoff.read",
-        icon: Clock,
       },
       {
-        title: "Alert Config ",
-        icon: Clock,
+        title: "Alert Configuration",
+        icon: Shield,
         path: "/companies/alert-config",
         permission: "alert.read",
-        icon: Clock,
       },
     ],
   },
@@ -122,11 +168,30 @@ export const baseSidebarConfig = [
     title: "Reports",
     items: [
       {
-        title: "Reports Managements",
-        icon: Users,
-        path: "/companies/repots-management",
+        title: "Reports Management",
+        icon: FileText,
+        path: "/companies/reports-management",
         permission: "report.read",
-        icon: Users,
+        subItems: [
+          {
+            title: "Tenant Reports",
+            icon: Building,
+            path: "/companies/reports/tenants",
+            permission: "report.tenant.read",
+          },
+          {
+            title: "Vendor Reports",
+            icon: Store,
+            path: "/companies/reports/vendors",
+            permission: "report.vendor.read",
+          },
+          {
+            title: "Operational Reports",
+            icon: MapPin,
+            path: "/companies/reports/operations",
+            permission: "report.operations.read",
+          },
+        ],
       },
     ],
   },
@@ -158,7 +223,7 @@ export const getFilteredSidebar = (userPermissions) => {
         }))
         .filter(
           (item) =>
-            item.subItems.length > 0 ||
+            (item.subItems && item.subItems.length > 0) ||
             (item.path && hasPermission(userPermissions, item.permission))
         ),
     }))

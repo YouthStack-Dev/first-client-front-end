@@ -31,7 +31,7 @@ const VendorAssignModal = ({
       setError(null);
 
       logDebug("Fetching vendors from API...");
-      const response = await API_CLIENT.get("/v1/vendors/"); // Adjust endpoint as needed
+      const response = await API_CLIENT.get("/vendors/"); // Adjust endpoint as needed
 
       logDebug("Vendors API response:", response.data);
 

@@ -7,7 +7,7 @@ const baseURL = import.meta.env.VITE_API_URL;
 
 // Create Axios instance
 export const API_CLIENT = axios.create({
-  baseURL: "https://api.gocab.tech/api",
+  baseURL: "https://api.gocab.tech/api/v1",
 });
 
 // ───────────────────────────────────

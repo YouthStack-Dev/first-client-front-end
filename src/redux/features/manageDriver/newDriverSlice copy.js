@@ -136,7 +136,7 @@
 //   async (params = {}, { rejectWithValue }) => {
 //     try {
 //       // params may contain: page, limit, search, status, vendorId etc.
-//       const response = await API_CLIENT.get("/v1/drivers/vendor", {
+//       const response = await API_CLIENT.get("/drivers/vendor", {
 //         params, // 👈 attach query params here
 //       });
 

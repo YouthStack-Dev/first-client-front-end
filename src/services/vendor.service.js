@@ -21,13 +21,13 @@ const apiHandler = async (apiCall) => {
 -------------------------- */
 
 export const createVendorUser = async (payload) =>
-  apiHandler(() => API_CLIENT.post("/v1/vendor-users", payload));
+  apiHandler(() => API_CLIENT.post("/vendor-users", payload));
 
 export const updateVendorUser = async (id, payload) =>
-  apiHandler(() => API_CLIENT.put(`/v1/vendor-users/${id}`, payload));
+  apiHandler(() => API_CLIENT.put(`/vendor-users/${id}`, payload));
 
 export const getVendorUsers = async () =>
-  apiHandler(() => API_CLIENT.get("/v1/vendor-users"));
+  apiHandler(() => API_CLIENT.get("/vendor-users"));
 
 export const getVendorUserById = async (id) =>
-  apiHandler(() => API_CLIENT.get(`/v1/vendor-users/${id}`));
+  apiHandler(() => API_CLIENT.get(`/vendor-users/${id}`));

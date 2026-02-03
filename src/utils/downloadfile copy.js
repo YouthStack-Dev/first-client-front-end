@@ -43,7 +43,7 @@ export const downloadFile = async (
 
     let url = filePath.startsWith("http")
       ? filePath
-      : `${baseURL}/v1/${module}/files/${encodeURIComponent(
+      : `${baseURL}/${module}/files/${encodeURIComponent(
           filePath
         )}?download=true`;
 
@@ -112,7 +112,7 @@ export const previewFile = async (filePath, module = "vehicles") => {
       url = filePath;
     } else {
       const parts = filePath.split("/").map(encodeURIComponent);
-      url = `${baseURL}/v1/${module}/files/${parts.join("/")}`;
+      url = `${baseURL}/${module}/files/${parts.join("/")}`;
     }
 
     const token = getAuthToken();
@@ -165,7 +165,7 @@ export const viewFileInNewTab = async (
     // Remove ?download=true for viewing
     let url = filePath.startsWith("http")
       ? filePath
-      : `${baseURL}/v1/${module}/files/${encodeURIComponent(filePath)}`;
+      : `${baseURL}/${module}/files/${encodeURIComponent(filePath)}`;
 
     const token = getAuthToken();
 

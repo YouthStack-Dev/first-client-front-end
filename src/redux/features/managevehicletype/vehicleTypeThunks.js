@@ -8,7 +8,7 @@ export const fetchVehicleTypesThunk = createAsyncThunk(
   "vehicleType/fetch",
   async (params, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.get("/v1/vehicle-types/", {
+      const response = await API_CLIENT.get("/vehicle-types/", {
         params,
       });
 
@@ -27,21 +27,18 @@ export const fetchVehicleTypesThunk = createAsyncThunk(
   }
 );
 
-
 export const createVehicleType = createAsyncThunk(
   "vehicleType/create",
-  async (payload, { rejectWithValue }) => {
+  async ({ payload, vendor_id }, { rejectWithValue }) => {
+    if (!vendor_id) {
+      return rejectWithValue("vendor_id is required to create vehicle type");
+    }
+
     try {
-      console.log("🔥 THUNK RECEIVED:", payload);
-
-      // if (!payload.vendor_id) {
-      //   return rejectWithValue("vendor_id is required");
-      // }
-
-      const response = await API_CLIENT.post(
-        "/v1/vehicle-types/",
-        payload   // ✅ send FULL object
-      );
+      const response = await API_CLIENT.post("/vehicle-types/", {
+        ...payload,
+        vendor_id,
+      });
 
       return response.data?.data?.vehicle_type;
     } catch (error) {
@@ -68,7 +65,7 @@ export const updateVehicleType = createAsyncThunk(
 
     try {
       const response = await API_CLIENT.put(
-        `/v1/vehicle-types/${id}`,
+        `/vehicle-types/${id}`,
         {
           ...payload,
           vendor_id,
@@ -103,7 +100,7 @@ export const toggleVehicleTypeStatus = createAsyncThunk(
 
     try {
       const response = await API_CLIENT.patch(
-        `/v1/vehicle-types/${id}/toggle-status`,
+        `/vehicle-types/${id}/toggle-status`,
         {},
         {
           params: { vendor_id },
