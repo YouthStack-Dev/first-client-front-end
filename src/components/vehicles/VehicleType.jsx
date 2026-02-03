@@ -63,7 +63,7 @@ const ManageVehicleTypes = () => {
   const loading = useSelector(selectVehicleTypesLoading);
 
   const vendors = useVendorOptions(null, !isVendorUser);
-  
+
   const tenantId =
     user?.employee?.tenant_id ||
     user?.vendor_user?.tenant_id ||
@@ -72,8 +72,7 @@ const ManageVehicleTypes = () => {
 
   const getVendorLabelById = useCallback(
     (id) => vendors.find((v) => v.value === id)?.label || "—",
-    [vendors]
-  );
+    [vendors]);
 
   /* ================= STATE ================= */
   const [isModalOpen, setIsModalOpen] = useState(false);
