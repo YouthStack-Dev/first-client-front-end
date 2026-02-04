@@ -22,6 +22,7 @@ import EmployeeList from "@components/departments/EmployeeList";
 import endpoint from "../Api/Endpoints";
 import AuditLogsModal from "../components/modals/AuditLogsModal";
 import ReusableButton from "../components/ui/ReusableButton";
+import BulkUploadEmployeesSection from "../components/departments/BulkUploadEmployeesSection";
 
 const ManageEmployees = () => {
   const [loading, setLoading] = useState(true);
@@ -35,6 +36,9 @@ const ManageEmployees = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   // Get department info from location state with safe fallback
   const { depname, memberCount } = location.state || {};
+
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
+
 
   const navigate = useNavigate();
   const { depId } = useParams();
@@ -149,6 +153,12 @@ const ManageEmployees = () => {
       setLoading(false);
     }
   };
+
+  const handleBulkUploadSuccess = () => {
+  setShowBulkUpload(false);
+  fetchEmployeesByDepartment();
+};
+
 
   const handleCheckboxChange = (id) => {
     setSelectedEmployeeIds((prev) =>
@@ -304,9 +314,30 @@ const ManageEmployees = () => {
               onClick={handleHistoryClick}
               className="text-white bg-blue-600 p-2 rounded-md"
             />
+
+            <ReusableButton
+              module="employee"
+              action="create"
+              buttonName="Bulk Upload"
+              icon={Plus}
+              title="Bulk Upload Employees"
+              onClick={() => setShowBulkUpload((prev) => !prev)}
+              className="text-white bg-green-600 p-2 rounded-md"
+            />
+
+
           </div>
         }
       />
+
+      {showBulkUpload && (
+      <BulkUploadEmployeesSection
+        teamId={depId}
+        onSuccess={handleBulkUploadSuccess}
+      />
+    )}
+
+
 
       <EmployeeList
         onStatusChange={handleStatusChange}
