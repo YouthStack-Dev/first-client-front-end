@@ -44,8 +44,8 @@ const ManageEmployees = () => {
   const { depId } = useParams();
   const dispatch = useDispatch();
 
-//   console.log("Full URL path:", location.pathname);
-// console.log("Query params:", location.search);
+  //   console.log("Full URL path:", location.pathname);
+  // console.log("Query params:", location.search);
 
   const isActive = searchParams.get("active");
   const tenantId = searchParams.get("tenantId");
@@ -102,8 +102,7 @@ const ManageEmployees = () => {
     } else {
       setLoading(false);
       logDebug(
-        `Using cached ${
-          targetIsActive ? "active" : "inactive"
+        `Using cached ${targetIsActive ? "active" : "inactive"
         } employees for department ${depId}`
       );
     }
@@ -126,8 +125,7 @@ const ManageEmployees = () => {
       const employees = response.data.data.items;
 
       logDebug(
-        `Fetched ${employees.length} ${
-          targetIsActive ? "active" : "inactive"
+        `Fetched ${employees.length} ${targetIsActive ? "active" : "inactive"
         } employees for department:`,
         depId
       );
@@ -141,8 +139,7 @@ const ManageEmployees = () => {
       );
 
       toast.success(
-        `${
-          targetIsActive ? "Active" : "Inactive"
+        `${targetIsActive ? "Active" : "Inactive"
         } employees loaded successfully`
       );
     } catch (err) {
@@ -155,9 +152,9 @@ const ManageEmployees = () => {
   };
 
   const handleBulkUploadSuccess = () => {
-  setShowBulkUpload(false);
-  fetchEmployeesByDepartment();
-};
+    setShowBulkUpload(false);
+    fetchEmployeesByDepartment();
+  };
 
 
   const handleCheckboxChange = (id) => {
@@ -330,12 +327,12 @@ const ManageEmployees = () => {
         }
       />
 
-      {showBulkUpload && (
       <BulkUploadEmployeesSection
+        isOpen={showBulkUpload}
+        onClose={() => setShowBulkUpload(false)}
         teamId={depId}
         onSuccess={handleBulkUploadSuccess}
       />
-    )}
 
 
 
