@@ -1,41 +1,49 @@
 import { Route } from "react-router-dom";
-import { PublicRoute } from "../middleware/PublicRoute";
+import { GuestRoute } from "../middleware/GuestRoute";
 import { Login } from "../pages/Login";
+import MLTCorporateLandingPage from "../pages/MLTCorporateLandingPage";
 
 export const PublicRoutes = () => (
   <>
     <Route
+      path="/landing"
+      element={
+        <MLTCorporateLandingPage />
+      }
+    />
+    <Route
       path="/"
       element={
-        <PublicRoute>
+        <GuestRoute>
           <Login />
-        </PublicRoute>
+        </GuestRoute>
       }
     />
 
     <Route
       path="/vendor"
       element={
-        <PublicRoute>
+        <GuestRoute>
           <Login />
-        </PublicRoute>
+        </GuestRoute>
       }
     />
     <Route
       path="/superadmin"
       element={
-        <PublicRoute>
+        <GuestRoute>
           <Login />
-        </PublicRoute>
+        </GuestRoute>
       }
     />
     <Route
       path="/docs"
       element={
-        <PublicRoute>
+        <GuestRoute>
           <Login />
-        </PublicRoute>
+        </GuestRoute>
       }
     />
   </>
 );
+

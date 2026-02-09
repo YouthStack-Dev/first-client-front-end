@@ -136,7 +136,7 @@ export const baseSidebarConfig = [
       {
         title: "Teams",
         icon: Users2,
-        path: "/companies/departments",
+        path: "/companies/teams",
         permission: "team.read",
       },
       {

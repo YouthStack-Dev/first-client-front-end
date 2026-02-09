@@ -396,7 +396,7 @@ const NewDriverManagement = () => {
   const isSearchInProgress = searchInput.trim() !== debouncedSearchTerm;
 
   return (
-    <div className="p-4 md:p-6">
+    <div className=" p-1">
       {/* Toolbar */}
       <ToolBar
         onAddClick={handleOpenCreateModal}
@@ -404,7 +404,7 @@ const NewDriverManagement = () => {
         addButtonLabel="Driver"
         addButtonDisabled={shouldShowNoVendorMessage}
         searchBar={
-          <div className="flex flex-col sm:flex-row gap-3 w-full py-2">
+          <div className="flex flex-col sm:flex-row gap-3 w-full ">
             <div className="flex-grow relative">
               <SearchInput
                 placeholder="Search drivers by name, license number, or phone... (min. 4 characters)"

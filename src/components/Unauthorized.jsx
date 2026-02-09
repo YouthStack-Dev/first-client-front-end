@@ -17,13 +17,13 @@ const Unauthorized = () => {
 
     switch (user.type.toLowerCase()) {
       case "employee":
-        return "/dashboard";
+        return "/companies/dashboard";
       case "vendor":
         return "/vendor/dashboard";
       case "admin":
         return "/superadmin/dashboard";
       default:
-        return "/dashboard";
+        return "/companies/dashboard";
     }
   };
 

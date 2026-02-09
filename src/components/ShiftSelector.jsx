@@ -51,6 +51,7 @@ export default function ShiftSelector({
 
       <div className="flex gap-2 mb-6">
         <button
+          type="button"
           onClick={() => setFilterType("ALL")}
           className={`
             flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-all
@@ -64,6 +65,7 @@ export default function ShiftSelector({
           All Shifts
         </button>
         <button
+          type="button"
           onClick={() => setFilterType("IN")}
           className={`
             flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2
@@ -78,6 +80,7 @@ export default function ShiftSelector({
           Check In
         </button>
         <button
+          type="button"
           onClick={() => setFilterType("OUT")}
           className={`
             flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2
@@ -100,6 +103,7 @@ export default function ShiftSelector({
           filteredShifts.map((shift) => (
             <button
               key={shift.shift_id}
+              type="button"
               onClick={() => onShiftSelect(shift.shift_id)}
               className={`
                 w-full p-4 rounded-lg border-2 transition-all text-left
@@ -161,12 +165,14 @@ export default function ShiftSelector({
 
       <div className="flex gap-3 pt-4 border-t">
         <button
+          type="button"
           onClick={onBack}
           className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-all"
         >
           Back
         </button>
         <button
+          type="button"
           onClick={onSubmit}
           disabled={!selectedShiftId || isSubmitting}
           className={`
