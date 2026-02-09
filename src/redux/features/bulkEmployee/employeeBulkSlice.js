@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 // ✅ CORRECT
-import { bulkUploadEmployees } from "./employeethunk";
+import { bulkUploadEmployees } from "./employeeBulkthunk";
 
 
 /* =========================================================

@@ -3,8 +3,8 @@ import { Upload, Download, FileSpreadsheet } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
-import { bulkUploadEmployees } from "../../redux/features/employee/employeethunk";
-import { resetBulkUploadState } from "../../redux/features/employee/employeeSlice";
+import { bulkUploadEmployees } from "../../redux/features/bulkEmployee/employeeBulkthunk";
+import { resetBulkUploadState } from "../../redux/features/bulkEmployee/employeeBulkSlice";
 import BulkUploadErrorModal from "./BulkUploadErrorModal";
 import { API_CLIENT } from "../../Api/API_Client";
 
@@ -13,9 +13,14 @@ import Modal from "../modals/Modal";
 const BulkUploadEmployeesSection = ({ isOpen, onClose, teamId, onSuccess }) => {
   const dispatch = useDispatch();
 
-  const { loading, result, error } = useSelector(
-    (state) => state.employee.bulkUpload
-  );
+ const { loading, result, error } = useSelector(
+  (state) => state.bulkEmployee?.bulkUpload || {
+    loading: false,
+    result: null,
+    error: null,
+  }
+);
+
 
   const [file, setFile] = useState(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
