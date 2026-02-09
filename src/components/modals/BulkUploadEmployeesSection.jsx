@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Upload, Download, FileSpreadsheet } from "lucide-react";
+import { Upload, Download } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
@@ -10,17 +10,15 @@ import { API_CLIENT } from "../../Api/API_Client";
 
 import Modal from "../modals/Modal";
 
-const BulkUploadEmployeesSection = ({ isOpen, onClose, teamId, onSuccess }) => {
+const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
   const dispatch = useDispatch();
 
- const { loading, result, error } = useSelector(
-  (state) => state.bulkEmployee?.bulkUpload || {
-    loading: false,
-    result: null,
-    error: null,
-  }
-);
-
+  /* ===============================
+     REDUX STATE (✅ CORRECT)
+  ================================ */
+  const { loading, result, error } = useSelector(
+    (state) => state.employeeBulk.bulkUpload
+  );
 
   const [file, setFile] = useState(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
@@ -37,7 +35,6 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, teamId, onSuccess }) => {
       return;
     }
 
-    // Clear old errors when new file is selected
     dispatch(resetBulkUploadState());
     setFile(selectedFile);
   };
@@ -49,9 +46,7 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, teamId, onSuccess }) => {
     try {
       const response = await API_CLIENT.get(
         "/employees/bulk-upload/template",
-        {
-          responseType: "blob",
-        }
+        { responseType: "blob" }
       );
 
       const url = window.URL.createObjectURL(response.data);
@@ -63,10 +58,8 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, teamId, onSuccess }) => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("Template download failed:", err);
       toast.error("Failed to download template");
     }
   };
@@ -84,13 +77,10 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, teamId, onSuccess }) => {
   };
 
   /* ===============================
-     HANDLE RESULT
+     SUCCESS HANDLING
   ================================ */
   useEffect(() => {
-    if (!result) return;
-
-    // Only when everything is successful
-    if (result.success === true) {
+    if (result?.success === true) {
       toast.success("Employees uploaded successfully");
       setFile(null);
       dispatch(resetBulkUploadState());
@@ -99,13 +89,10 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, teamId, onSuccess }) => {
   }, [result, dispatch, onSuccess]);
 
   /* ===============================
-     ERROR DATA
+     ERROR EXTRACTION (✅ IMPORTANT)
   ================================ */
   const failedEmployees =
-    result?.details?.failed_employees ||
-    error?.detail?.details?.failed_employees ||
-    error?.details?.failed_employees ||
-    [];
+    error?.detail?.details?.failed_employees || [];
 
   const hasRowErrors = failedEmployees.length > 0;
 
@@ -117,7 +104,7 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, teamId, onSuccess }) => {
       size="md"
     >
       <div className="flex flex-col gap-4">
-        {/* Template Download Link */}
+        {/* Download Template */}
         <div className="flex justify-end">
           <button
             onClick={handleDownloadTemplate}
@@ -129,7 +116,7 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, teamId, onSuccess }) => {
         </div>
 
         {/* Upload Box */}
-        <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-md p-8 cursor-pointer hover:bg-gray-50 transition-colors">
+        <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-md p-8 cursor-pointer hover:bg-gray-50">
           <Upload size={40} className="mb-3 text-gray-400" />
           <p className="font-medium text-gray-700">
             {file ? file.name : "Click to upload Excel file"}
@@ -146,28 +133,22 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, teamId, onSuccess }) => {
           />
         </label>
 
-        {/* API-level Error */}
+        {/* 🔴 API ERROR (NO ROW ERRORS) */}
         {error && !hasRowErrors && (
           <div className="bg-red-50 border border-red-200 rounded p-3">
             <p className="text-sm font-medium text-red-700">Upload failed</p>
             <p className="text-xs text-red-600 mt-1">
-              {error?.message ||
-                (typeof error?.detail === "string"
-                  ? error.detail
-                  : error?.detail?.message) ||
-                "Something went wrong"}
+              {error?.message || "Something went wrong"}
             </p>
           </div>
         )}
 
-        {/* Validation Summary */}
+        {/* 🟡 VALIDATION ERROR SUMMARY (OPTION 2) */}
         {hasRowErrors && (
           <div className="bg-yellow-50 border border-yellow-300 p-3 rounded flex items-center justify-between">
             <p className="text-sm text-yellow-800 font-medium">
-              {result
-                ? `${result.details.valid_rows} of ${result.details.total_rows} employees created.`
-                : "Upload failed with validation errors."}{" "}
-              Fix the errors and re-upload.
+              {error?.message ||
+                "Some rows have validation errors. Please review them."}
             </p>
 
             <button
@@ -190,13 +171,13 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, teamId, onSuccess }) => {
           <button
             onClick={handleUpload}
             disabled={loading}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md disabled:opacity-60 transition-colors flex items-center gap-2"
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md disabled:opacity-60"
           >
             {loading ? "Uploading..." : "Upload Employees"}
           </button>
         </div>
 
-        {/* Error Modal (Nested) */}
+        {/* 🔍 ERROR DETAILS MODAL */}
         <BulkUploadErrorModal
           isOpen={showErrorModal}
           onClose={() => setShowErrorModal(false)}

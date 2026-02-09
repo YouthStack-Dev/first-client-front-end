@@ -19,7 +19,7 @@ const initialState = {
 /* =========================================================
    SLICE
 ========================================================= */
-const employeeSlice = createSlice({
+const employeeBulkSlice = createSlice({
   name: "employee",
   initialState,
   reducers: {
@@ -62,6 +62,6 @@ const employeeSlice = createSlice({
 ========================================================= */
 export const {
   resetBulkUploadState,
-} = employeeSlice.actions;
+} = employeeBulkSlice.actions;
 
-export default employeeSlice.reducer;
+export default employeeBulkSlice.reducer;

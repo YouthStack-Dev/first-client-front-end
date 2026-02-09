@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Select from "react-select";
-import { Eye, Trash, Users, UserCheck, Clock, UserPlus } from "lucide-react";
+import { Eye,Plus, Trash, Users, UserCheck, Clock, UserPlus } from "lucide-react";
 import ToolBar from "../components/ui/ToolBar";
 import ReusableButton from "../components/ui/ReusableButton";
 import ReusableToggleButton from "../components/ui/ReusableToggleButton";
@@ -23,6 +23,8 @@ import TeamModal from "../components/modals/TeamModal";
 import TeamEmployeeModal from "../components/TeamEmployees/TeamEmployeeModal";
 import AuditLogsModal from "../components/modals/AuditLogsModal";
 
+import BulkUploadEmployeesSection from "../components/modals/BulkUploadEmployeesSection";
+
 const TeamManagement = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -35,6 +37,8 @@ const TeamManagement = () => {
   const allTeams = useSelector(selectAllTeams);
   const togglingTeamId = useSelector(selectTogglingTeamId);
   const uniqueTenants = useSelector(selectUniqueTenantsFromTeams);
+
+   const [showBulkUpload, setShowBulkUpload] = useState(false);
 
   // State management
   const [searchTerm, setSearchTerm] = useState("");
@@ -303,6 +307,21 @@ const TeamManagement = () => {
     { value: "inactive", label: "Inactive Teams" },
   ];
 
+     const handleBulkUploadSuccess = () => {
+      setShowBulkUpload(false);
+      toast.success("Employees uploaded successfully");
+
+      // Optional: refresh teams to update employee counts
+      dispatch(
+        fetchTeamsThunk({
+          skip: (currentPage - 1) * itemsPerPage,
+          limit: itemsPerPage,
+          tenant_id: currentTenantId,
+        })
+      );
+    };
+
+
   // Custom styles for react-select
   const selectStyles = {
     control: (base) => ({
@@ -385,6 +404,7 @@ const TeamManagement = () => {
         disabled={isToggling}
         loading={isToggling}
       />
+
     );
   };
 
@@ -486,6 +506,7 @@ const TeamManagement = () => {
         setIsEmployeeModalOpen(true);
       }}
     />
+
     <ReusableButton
       module="team"
       action="read"
@@ -496,9 +517,30 @@ const TeamManagement = () => {
         setIsAuditModalOpen(true);
       }}
     />
+
+      <ReusableButton
+     module="employee"
+     action="create"
+     buttonName="Bulk Upload"
+     icon={Plus}
+     title="Bulk Upload Employees"
+       onClick={() => {
+    setShowBulkUpload(true);
+  }}
+     className="text-white bg-green-600 p-2 rounded-md"
+    />
+
   </div>
 }
       />
+
+<BulkUploadEmployeesSection
+  isOpen={showBulkUpload}
+  onClose={() => setShowBulkUpload(false)}
+  onSuccess={handleBulkUploadSuccess}
+/>
+
+
 
       {/* Teams Table */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-6">

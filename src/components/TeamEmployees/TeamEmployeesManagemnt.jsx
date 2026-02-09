@@ -10,8 +10,7 @@ import {
   ChevronDown,
   ChevronUp,
   User,
-  Plus,
-} from "lucide-react";
+}from "lucide-react";
 import ToolBar from "@components/ui/ToolBar";
 import AuditLogsModal from "@components/modals/AuditLogsModal";
 import ReusableButton from "@components/ui/ReusableButton";
@@ -25,8 +24,6 @@ import {
 import { toggleEmployeeStatus } from "../../redux/features/employees/employeesThunk";
 import { toast } from "react-toastify";
 import { fetchEmployeesThunk } from "../../redux/features/employees/employeesThunk";
-
-import BulkUploadEmployeesSection from "../../components/modals/BulkUploadEmployeesSection";
 
 
 
@@ -62,7 +59,6 @@ const TeamEmployeesManagement = () => {
   const [isWeekOffModalOpen, setIsWeekOffModalOpen] = useState(false);
   const [selectedEmployeeForWeekOff, setSelectedEmployeeForWeekOff] = useState(null);
 
-   const [showBulkUpload, setShowBulkUpload] = useState(false);
 
   const isActive = searchParams.get("active");
   const tenantId = searchParams.get("tenantId");
@@ -282,17 +278,6 @@ const TeamEmployeesManagement = () => {
     ]);
   };
 
-    const handleBulkUploadSuccess = () => {
-    setShowBulkUpload(false);
-    dispatch(
-      fetchEmployeesThunk({
-        team_id: teamId,
-        tenant_id: tenantId,
-        page: 1,
-        limit: 50,
-      })
-    );
-  };
 
   const handleEmployeeSpecificHistory = async (employeeId) => {
     setShowAuditModal(true);
@@ -399,27 +384,11 @@ const TeamEmployeesManagement = () => {
               onClick={handleHistoryClick}
               className="text-white bg-blue-600 p-2 rounded-md"
             />
-            
-            <ReusableButton
-              module="employee"
-              action="create"
-              buttonName="Bulk Upload"
-              icon={Plus}
-              title="Bulk Upload Employees"
-              onClick={() => setShowBulkUpload(true)}
-              className="text-white bg-green-600 p-2 rounded-md"
-            />
-
           </div>
         }
       />
 
-        <BulkUploadEmployeesSection
-        isOpen={showBulkUpload}
-        onClose={() => setShowBulkUpload(false)}
-        teamId={teamId}
-        onSuccess={handleBulkUploadSuccess}
-      />
+    
 
       {/* Employee Table */}
       <div className="bg-white rounded-b-lg shadow-sm border border-t-0">
