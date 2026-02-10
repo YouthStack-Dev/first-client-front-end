@@ -30,19 +30,35 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
   ================================ */
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
+    
+    // Edge case 1: No file selected (user canceled)
     if (!selectedFile) return;
 
-    // Validate file type
+    // Edge case 2: File type validation
     if (!selectedFile.name.match(/\.(xlsx|xls)$/)) {
       toast.error("Only Excel files (.xlsx, .xls) allowed");
       e.target.value = ""; // Reset input
       return;
     }
 
-    // Optional: Validate file size (e.g., 5MB max)
+    // Edge case 3: File size validation (5MB max)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (selectedFile.size > maxSize) {
       toast.error("File size must be less than 5MB");
+      e.target.value = ""; // Reset input
+      return;
+    }
+
+    // Edge case 4: Empty file check
+    if (selectedFile.size === 0) {
+      toast.error("The selected file is empty");
+      e.target.value = ""; // Reset input
+      return;
+    }
+
+    // Edge case 5: File name too long
+    if (selectedFile.name.length > 255) {
+      toast.error("File name is too long");
       e.target.value = ""; // Reset input
       return;
     }
@@ -74,6 +90,11 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
         { responseType: "blob" }
       );
 
+      // Edge case: Empty response
+      if (!response.data) {
+        throw new Error("Empty response from server");
+      }
+
       const url = window.URL.createObjectURL(response.data);
       const link = document.createElement("a");
 
@@ -87,8 +108,16 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
 
       toast.success("Template downloaded successfully");
     } catch (err) {
-      toast.error("Failed to download template");
       console.error("Template download error:", err);
+      
+      // More specific error messages
+      if (err.code === "ERR_NETWORK") {
+        toast.error("Network error. Please check your connection.");
+      } else if (err.response?.status === 404) {
+        toast.error("Template not found on server");
+      } else {
+        toast.error("Failed to download template. Please try again.");
+      }
     } finally {
       setDownloadingTemplate(false);
     }
@@ -107,15 +136,25 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
   };
 
   /* ===============================
-     SUCCESS HANDLING (FIXED)
+     SUCCESS HANDLING (FIXED - No dependency warnings)
   ================================ */
   useEffect(() => {
     if (result?.success === true) {
-      toast.success("Employees uploaded successfully");
-      handleRemoveFile(); // Clear file and reset input
+      toast.success(
+        `Successfully uploaded ${result.count || result.uploaded_count || 0} employee(s)`
+      );
+      
+      // Clear file and reset input
+      setFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      
       dispatch(resetBulkUploadState());
-      onSuccess?.();
-      onClose(); // Close modal on success
+      
+      // Call callbacks if they exist
+      if (onSuccess) onSuccess();
+      if (onClose) onClose();
     }
   }, [result, dispatch, onSuccess, onClose]);
 
@@ -146,8 +185,8 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
         <div className="flex justify-end">
           <button
             onClick={handleDownloadTemplate}
-            disabled={downloadingTemplate}
-            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={downloadingTemplate || loading}
+            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Download size={16} />
             {downloadingTemplate ? "Downloading..." : "Download Template"}
@@ -166,13 +205,13 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
               {file ? file.name : "Click to upload Excel file"}
             </p>
             <span className="text-xs text-gray-500 mt-2">
-              .xlsx / .xls | Max 5MB
+              .xlsx / .xls | Max 5MB | Max 500 rows
             </span>
 
             <input
               ref={fileInputRef}
               type="file"
-              accept=".xlsx,.xls"
+              accept=".xlsx,.xls,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               hidden
               disabled={loading}
               onChange={handleFileChange}
@@ -194,9 +233,9 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
         {/* 🔴 API ERROR (NO ROW ERRORS) */}
         {error && !hasRowErrors && (
           <div className="bg-red-50 border border-red-200 rounded p-3">
-            <p className="text-sm font-medium text-red-700">Upload failed</p>
+            <p className="text-sm font-medium text-red-700">Upload Failed</p>
             <p className="text-xs text-red-600 mt-1">
-              {error?.message || "Something went wrong"}
+              {error?.message || "Something went wrong. Please try again."}
             </p>
           </div>
         )}
@@ -218,19 +257,32 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
           </div>
         )}
 
+        {/* Upload Guidelines */}
+        <div className="bg-blue-50 border border-blue-200 rounded p-3">
+          <h4 className="text-sm font-semibold text-blue-900 mb-2">
+            Upload Guidelines:
+          </h4>
+          <ul className="text-xs text-blue-800 space-y-1 list-disc pl-4">
+            <li>File format: Excel (.xlsx or .xls)</li>
+            <li>Maximum file size: 5MB</li>
+            <li>Maximum rows: 500</li>
+            <li>Download template for correct format</li>
+          </ul>
+        </div>
+
         {/* Action Buttons */}
         <div className="flex justify-end gap-3 mt-2">
           <button
             onClick={handleClose}
             disabled={loading}
-            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleUpload}
             disabled={loading || !file}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md disabled:opacity-60 disabled:cursor-not-allowed"
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? "Uploading..." : "Upload Employees"}
           </button>

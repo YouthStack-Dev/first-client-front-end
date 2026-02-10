@@ -14,9 +14,7 @@ const BulkUploadErrorModal = ({ isOpen, onClose, errors }) => {
 
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
-      document.body.style.overflow = "hidden"; // Prevent background scroll
-      
-      // Focus modal for accessibility
+      document.body.style.overflow = "hidden";
       modalRef.current?.focus();
     }
 
@@ -81,7 +79,7 @@ const BulkUploadErrorModal = ({ isOpen, onClose, errors }) => {
         ref={modalRef}
         className="bg-white w-full max-w-5xl rounded-lg shadow-lg flex flex-col max-h-[90vh]"
         tabIndex={-1}
-        onClick={(e) => e.stopPropagation()} // Prevent backdrop click when clicking inside
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0">
