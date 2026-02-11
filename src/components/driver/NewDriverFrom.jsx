@@ -50,7 +50,8 @@ const DriverFormModal = ({
   const [initialFormData, setInitialFormData] = useState(null);
 
 
-  logDebug(" this are the vendor from the parrent in driver form ", vendors);
+  // logDebug(" this are the vendor from the parrent in driver form ", vendors);
+  
   // Initialize form data when mode or driverData changes
   useEffect(() => {
     if (mode === "create") {
@@ -743,9 +744,9 @@ const DriverFormModal = ({
             <option disabled>No device history available</option>
           )}
         </select>
-        <p className="text-xs text-gray-500 mt-1">
+        {/* <p className="text-xs text-gray-500 mt-1">
           Selecting a device will copy it to Active Android ID.
-        </p>
+        </p> */}
       </div>
     </div>
   </div>

@@ -70,7 +70,7 @@ const NewDriverManagement = () => {
   const [selectedDriverName, setSelectedDriverName] = useState(null);
 
 
-  logDebug(" thi are the vendors in driver management ", vendors);
+  // logDebug(" thi are the vendors in driver management ", vendors);
   // ----------------------------
   // Search Debouncing with Minimum Character Requirement
   // ----------------------------
