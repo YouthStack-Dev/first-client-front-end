@@ -101,6 +101,8 @@ export const toggleDriverStatusThunk = createAsyncThunk(
     }
   }
 );
+
+
 export const fetchDriversByVendorThunk = createAsyncThunk(
   "drivers/fetchDriversByVendor",
   async (vendorId, { rejectWithValue }) => {

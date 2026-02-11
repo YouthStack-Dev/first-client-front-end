@@ -42,6 +42,9 @@ export const defaultFormData = {
   medicalVerification: "Pending",
   trainingVerification: "Pending",
   eyeTestStatus: "Pending",
+
+  activeAndroidId: "",
+  androidIdHistory: [], // read-only
 };
 
 export const documents = [
@@ -162,6 +165,10 @@ export const transformApiToFormData = (driverData) => {
     alternateGovtId: driverData.alt_govt_id_number || "", // ID Number
     alternateGovtIdType: driverData.alt_govt_id_type || "", // ID Type
     vendor_id: driverData.vendor_id || "", // Added vendor ID
+
+    activeAndroidId: driverData.active_android_id || "",
+    androidIdHistory: driverData.android_id_history || [],
+
     profileImage: driverData.photo_url
       ? {
           path: driverData.photo_url,
@@ -260,6 +267,8 @@ export const mapDriverTextFields = (formData) => ({
   medical_verify_status: formData.medicalVerification,
   training_verify_status: formData.trainingVerification,
   eye_verify_status: formData.eyeTestStatus,
+
+  active_android_id: formData.activeAndroidId || undefined,
 });
 
 // File fields
@@ -298,10 +307,33 @@ export const buildDriverFormData = (formData) => {
 };
 
 // Build update JSON for edit
-export const buildDriverUpdateData = (formData, selectedDriverId) => ({
-  driver_id: selectedDriverId,
-  ...mapDriverTextFields(formData),
-});
+// export const buildDriverUpdateData = (formData, selectedDriverId) => ({
+//   driver_id: selectedDriverId,
+//   ...mapDriverTextFields(formData),
+// });
+
+export const buildDriverUpdateData = (
+  formData,
+  initialFormData,
+  driverId
+) => {
+  const payload = {};
+
+  const fields = mapDriverTextFields(formData);
+
+  for (const key in fields) {
+    if (fields[key] !== initialFormData?.[key]) {
+      payload[key] = fields[key];
+    }
+  }
+
+  if (formData.activeAndroidId !== initialFormData.activeAndroidId) {
+    payload.active_android_id = formData.activeAndroidId;
+  }
+
+  return { driver_id: driverId, ...payload };
+};
+
 
 // Get vendor name by ID
 export const getVendorNameById = (vendorId) => {
