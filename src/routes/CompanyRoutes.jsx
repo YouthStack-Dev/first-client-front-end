@@ -22,6 +22,9 @@ import AlertConfigManagement from "../pages/AlertManagement";
 import NotificationsPage from "../pages/NotificationPage";
 import TeamManagement from "../pages/TeamManagement";
 import TeamEmployeesManagement from "../components/TeamEmployees/TeamEmployeesManagemnt.jsx";
+
+import VendorRouteManagement from "../components/RouteManagement/VendorRouteManagement";
+
 export const CompanyRoutes = () => (
   <Route path="/companies" element={<Layout type="employee" />}>
     <Route path="dashboard" element={<CompanyDashboard />} />
@@ -61,6 +64,10 @@ export const CompanyRoutes = () => (
     <Route path="tracking" element={<TrackingManagement />} />
     <Route path="report-downloader" element={<ReportDownloader />} />
     <Route path="routing" element={<RouteScheduledBookings />} />
+
+        {/* ✅ Add this new route for vendor routing */}
+    <Route path="vendor-routing" element={<VendorRouteManagement />} />
+
     <Route path="escort-management" element={<EscortManagement />} />
     <Route
       path="shift/:shiftId/:shiftType/:date/routing-map"
