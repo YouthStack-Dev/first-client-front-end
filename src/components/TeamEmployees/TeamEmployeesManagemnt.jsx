@@ -10,7 +10,7 @@ import {
   ChevronDown,
   ChevronUp,
   User,
-} from "lucide-react";
+}from "lucide-react";
 import ToolBar from "@components/ui/ToolBar";
 import AuditLogsModal from "@components/modals/AuditLogsModal";
 import ReusableButton from "@components/ui/ReusableButton";
@@ -24,6 +24,8 @@ import {
 import { toggleEmployeeStatus } from "../../redux/features/employees/employeesThunk";
 import { toast } from "react-toastify";
 import { fetchEmployeesThunk } from "../../redux/features/employees/employeesThunk";
+
+
 
 const TeamEmployeesManagement = () => {
   const dispatch = useDispatch();
@@ -56,6 +58,7 @@ const TeamEmployeesManagement = () => {
   const [modalEmployeeData, setModalEmployeeData] = useState(null);
   const [isWeekOffModalOpen, setIsWeekOffModalOpen] = useState(false);
   const [selectedEmployeeForWeekOff, setSelectedEmployeeForWeekOff] = useState(null);
+
 
   const isActive = searchParams.get("active");
   const tenantId = searchParams.get("tenantId");
@@ -275,6 +278,7 @@ const TeamEmployeesManagement = () => {
     ]);
   };
 
+
   const handleEmployeeSpecificHistory = async (employeeId) => {
     setShowAuditModal(true);
     const employee = employees.find((emp) => emp.employee_id === employeeId);
@@ -383,6 +387,8 @@ const TeamEmployeesManagement = () => {
           </div>
         }
       />
+
+    
 
       {/* Employee Table */}
       <div className="bg-white rounded-b-lg shadow-sm border border-t-0">

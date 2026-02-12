@@ -1,11 +1,6 @@
-import { createSlice, createSelector } from "@reduxjs/toolkit";
-import {
-  fetchDriversThunk,
-  createDriverThunk,
-  updateDriverThunk,
-  fetchDriversByVendorThunk,
-} from "./driverThunks";
-
+import { createSlice, createSelector} from '@reduxjs/toolkit';
+import { fetchDriversThunk, createDriverThunk , updateDriverThunk, fetchDriversByVendorThunk
+} from './driverThunks'; 
 const initialState = {
   entities: {},
   ids: [],
