@@ -59,7 +59,7 @@ const VendorRouteManagement = () => {
       setLoading(true);
       setError(null);
 
-      const apiEndpoint = `/routes/?&booking_date=${bookingDate}`;
+      const apiEndpoint = `/routes/?booking_date=${bookingDate}`;
       const response = await API_CLIENT.get(apiEndpoint);
 
       if (response.data.success) {
