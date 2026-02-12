@@ -56,16 +56,15 @@ const PoliciesManagement = () => {
   ];
 
   // Prepare searchable options for react-select (for policy selection)
-  const policyOptions = useMemo(
-    () =>
-      policies.map((policy) => ({
-        value: policy.id,
-        label: policy.name,
-        description: policy.description,
-        policy, // Store the full policy object
-      })),
-    [policies]
-  );
+const policyOptions = useMemo(
+  () => (policies || []).map((policy) => ({  // ✅ Add || [] here
+    value: policy.id,
+    label: policy.name,
+    description: policy.description,
+    policy, // Store the full policy object
+  })),
+  [policies]
+);
 
   const handleAddClick = () => {
     setModalMode("create");
@@ -199,13 +198,13 @@ const PoliciesManagement = () => {
   };
 
   // Filter policies based on search query and selected filter
-  const filteredPolicies = useMemo(() => {
-    let result = policies.filter(
-      (policy) =>
-        policy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        policy.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        policy.policy_id.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+const filteredPolicies = useMemo(() => {
+  let result = (policies || []).filter(  // ✅ Add || [] here too
+    (policy) =>
+      policy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      policy.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      policy.policy_id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
     // Apply additional filter if selected
     if (selectedFilter && selectedFilter.value !== "all") {

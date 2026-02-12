@@ -5,7 +5,15 @@ import { logDebug } from "../../utils/logger";
 import { useTeamOptions } from "../../hooks/Teamshook";
 import ErrorDisplay from "../ui/ErrorDisplay";
 
-const ALERT_TYPES = ["SOS", "MEDICAL", "FIRE", "SAFETY", "SECURITY"];
+const ALERT_TYPES = [
+  "SOS",
+  "SAFETY_CONCERN",
+  "ROUTE_DEVIATION",
+  "DELAYED",
+  "ACCIDENT",
+  "MEDICAL",
+  "OTHER"
+];
 const CHANNEL_OPTIONS = ["EMAIL", "SMS", "PUSH", "VOICE"];
 const SERVICE_TYPES = ["POLICE", "MEDICAL", "FIRE", "SECURITY"];
 

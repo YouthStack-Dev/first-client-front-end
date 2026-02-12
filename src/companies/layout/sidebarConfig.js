@@ -11,6 +11,7 @@ import {
   Shield,
   FileText,
   Settings,
+   Truck, 
 } from "lucide-react";
 
 // Base sidebar configuration
@@ -122,11 +123,25 @@ export const baseSidebarConfig = [
     title: "Operations Management",
     items: [
       {
-        title: "Route Management",
-        path: "/companies/routing",
-        permission: "route.read",
-        icon: MapPin,
-      },
+      title: "Route Management",
+      icon: MapPin,
+      path: "/companies/routing", // Keep the path for the parent
+      permission: "route.read",
+      subItems: [ // ✅ Add subItems array
+        {
+          title: "Route Scheduling",
+          icon: MapPin,
+          path: "/companies/routing",
+          permission: "route.read",
+        },
+        {
+          title: "Vendor Routing",
+          icon: Truck,
+          path: "/companies/vendor-routing",
+          permission: "route.read", // Adjust permission as needed
+        },
+      ],
+    },
       {
         title: "Shift Management",
         icon: Clock,
