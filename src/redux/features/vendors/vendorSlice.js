@@ -38,19 +38,23 @@ const vendorSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchVendorsThunk.fulfilled, (state, action) => {
-        state.loading = false;
-        state.fetched = true; // ✅ MARK AS FETCHED
+  state.loading = false;
+  state.fetched = true;
 
-        const vendors = action.payload || [];
-        state.data = vendors;
+  // ✅ Extract items from the payload object
+  const vendors = action.payload.items || [];
+  state.data = vendors;
+  
+  // ✅ Store pagination metadata (optional but useful)
+  state.total = action.payload.total || 0;
 
-        // Build tenant map
-        state.vendorsByTenant = vendors.reduce((acc, v) => {
-          if (!acc[v.tenant_id]) acc[v.tenant_id] = [];
-          acc[v.tenant_id].push(v);
-          return acc;
-        }, {});
-      })
+  // Build tenant map
+  state.vendorsByTenant = vendors.reduce((acc, v) => {
+    if (!acc[v.tenant_id]) acc[v.tenant_id] = [];
+    acc[v.tenant_id].push(v);
+    return acc;
+  }, {});
+})
       .addCase(fetchVendorsThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;

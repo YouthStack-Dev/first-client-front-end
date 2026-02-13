@@ -682,7 +682,6 @@ const DriverFormModal = ({
                       </div>
                     </div>
  {/* Device Binding – Edit mode only */}
-
 {mode === "edit" && (
   <div className="border-t pt-6 mt-6">
     <h3 className="text-sm font-semibold text-gray-800 mb-4">
@@ -732,26 +731,25 @@ const DriverFormModal = ({
                      focus:ring-2 focus:ring-blue-500 focus:border-transparent
                      disabled:bg-gray-50"
         >
-          {/* <option value="">Select from history</option> */}
+          <option value="">Select from history</option>
 
           {formData.androidIdHistory?.length > 0 ? (
-            formData.androidIdHistory.map((id, idx) => (
-              <option key={idx} value={id}>
-                {id}
+            formData.androidIdHistory.map((device, idx) => (
+              <option key={idx} value={device.android_id}>
+                {device.android_id} ({device.device_model})
               </option>
             ))
           ) : (
             <option disabled>No device history available</option>
           )}
         </select>
-        {/* <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-gray-500 mt-1">
           Selecting a device will copy it to Active Android ID.
-        </p> */}
+        </p>
       </div>
     </div>
   </div>
 )}
-
                   </div>
                 )}
 
