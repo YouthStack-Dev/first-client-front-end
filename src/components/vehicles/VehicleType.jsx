@@ -62,7 +62,8 @@ const ManageVehicleTypes = () => {
   const vehicleTypes = useSelector(vehicleTypeSelectors.selectAll);
   const loading = useSelector(selectVehicleTypesLoading);
 
-  const vendors = useVendorOptions(null, !isVendorUser);
+ const { vendorOptions } = useVendorOptions(null, !isVendorUser);
+
 
   const tenantId =
     user?.employee?.tenant_id ||
@@ -71,8 +72,10 @@ const ManageVehicleTypes = () => {
 
 
   const getVendorLabelById = useCallback(
-    (id) => vendors.find((v) => v.value === id)?.label || "—",
-    [vendors]);
+    (id) => vendorOptions.find((v) => v.value === id)?.label || "—",
+    [vendorOptions]
+  );
+
 
   /* ================= STATE ================= */
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -86,6 +89,8 @@ const ManageVehicleTypes = () => {
   const [showAuditModal, setShowAuditModal] = useState(false);
   const [selectedVehicleTypeName, setSelectedVehicleTypeName] = useState(null);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Debounce searchTerm (increased to 500ms for testing)
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
@@ -262,16 +267,22 @@ const ManageVehicleTypes = () => {
               )}
 
             {!isVendorUser && (
-              <Select
-                options={vendors}
-                value={selectedVendor}
-                onChange={setSelectedVendor}
-                isSearchable={true}
-                placeholder="Select vendor..."
-                className="react-select-container"
-                classNamePrefix="react-select"
-                isClearable={true}
-              />
+              <div className="min-w-[200px] z-10 relative">
+                <Select
+                  options={vendorOptions}
+                  value={selectedVendor}
+                  onChange={setSelectedVendor}
+                  isSearchable={true}
+                  placeholder="Select vendor..."
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                  isClearable={true}
+                  menuPortalTarget={document.body}
+                  styles={{
+                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                  }}
+                />
+              </div>
             )}
 
             <SelectField
@@ -291,10 +302,25 @@ const ManageVehicleTypes = () => {
         }
       />
 
+      {shouldShowNoVendorMessage && (
+        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-300 rounded-lg text-center">
+          <p className="text-yellow-800 font-medium">
+            Please select a vendor to view vehicle types
+          </p>
+        </div>
+      )}
+
       {!shouldShowNoVendorMessage && (
         <VehicleTypeList
           vehicleTypes={vehicleTypes}
           loading={loading}
+          currentPage={currentPage}
+          totalPages={Math.ceil(vehicleTypes.length / itemsPerPage)}
+          totalItems={vehicleTypes.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
+          showPagination={true}
           onView={(row) => {
             setSelectedVehicleType(row);
             setModalMode("view");
@@ -339,8 +365,8 @@ const ManageVehicleTypes = () => {
               </div>
             ) : (
               <Select
-                options={vendors}
-                value={vendors.find(
+                options={vendorOptions}
+                value={vendorOptions.find(
                   (v) => v.value === selectedVehicleType?.vendor_id
                 )}
                 onChange={(opt) =>

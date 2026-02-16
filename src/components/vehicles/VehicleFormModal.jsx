@@ -110,7 +110,8 @@ const VehicleFormModal = ({
 }) => {
   const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
-  const vendors = useVendorOptions();
+  const { vendorOptions } = useVendorOptions(null, true);
+
 
   const isVendorUser = user?.type === "vendor";
   const isReadOnly = mode === "view";
@@ -401,8 +402,7 @@ const VehicleFormModal = ({
                         <Building className="w-4 h-4 text-gray-500" />
                         <span className="text-sm">
                           {
-                            vendors.find((v) => v.value === formData.vendor_id)
-                              ?.label
+                            vendorOptions.find((v) => v.value === formData.vendor_id)?.label
                           }
                         </span>
                       </div>
@@ -415,7 +415,7 @@ const VehicleFormModal = ({
                         className="w-full px-3 py-2 text-sm border rounded"
                       >
                         <option value="">Select Vendor</option>
-                        {vendors.map((v) => (
+                        {vendorOptions.map((v) => (
                           <option key={v.value} value={v.value}>
                             {v.label}
                           </option>
