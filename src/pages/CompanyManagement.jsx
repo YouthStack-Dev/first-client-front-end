@@ -1,18 +1,19 @@
 // src/pages/CompanyManagement.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Plus } from "lucide-react";
+import { Plus, Search,RefreshCw } from "lucide-react";
 import EntityModal from "@components/EntityModal";
 import CompanyList from "../companies/CompanyList";
 import {
   fetchCompaniesThunk,
   createCompanyThunk,
   updateTenantThunk,
-  fetchCompanyByIdThunk, // fetch full tenant details including permissions
+  fetchCompanyByIdThunk,
 } from "../redux/features/company/companyThunks";
 
 const CompanyManagement = () => {
   const dispatch = useDispatch();
+
   const {
     data: companies = [],
     loading,
@@ -20,30 +21,45 @@ const CompanyManagement = () => {
   } = useSelector((state) => state.company || {});
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState("create"); // 'create' or 'edit'
+  const [modalMode, setModalMode] = useState("create");
   const [selectedEntity, setSelectedEntity] = useState(null);
   const [loadingTenant, setLoadingTenant] = useState(false);
-  const [tenantCache, setTenantCache] = useState({}); // cache for fetched tenants
+  const [tenantCache, setTenantCache] = useState({});
 
-  // Fetch companies once on component mount
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
   useEffect(() => {
     if (companies.length === 0) {
       dispatch(fetchCompaniesThunk());
     }
   }, [dispatch, companies.length]);
 
-  // Open modal in create mode
+  const filteredCompanies = useMemo(() => {
+    return companies.filter((company) => {
+      const matchesSearch =
+        company.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        company.email?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      let matchesStatus = true;
+      if (statusFilter === "Active")
+        matchesStatus = company.is_active === true;
+      else if (statusFilter === "Inactive")
+        matchesStatus = company.is_active === false;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [companies, searchTerm, statusFilter]);
+
   const handleCreate = () => {
     setModalMode("create");
     setSelectedEntity(null);
     setIsModalOpen(true);
   };
 
-  // Open modal in edit mode with full tenant data including permissions
   const handleEdit = async (company) => {
     setModalMode("edit");
 
-    // If tenant already cached, use it
     if (tenantCache[company.tenant_id]) {
       setSelectedEntity(tenantCache[company.tenant_id]);
       setIsModalOpen(true);
@@ -63,7 +79,7 @@ const CompanyManagement = () => {
           tenant_id: response.tenant.tenant_id,
           name: response.tenant.name,
           address: response.tenant.address,
-          latitude: response.tenant.latitude, // ✅ Added
+          latitude: response.tenant.latitude,
           longitude: response.tenant.longitude,
           is_active: response.tenant.is_active,
         },
@@ -72,8 +88,10 @@ const CompanyManagement = () => {
         permissions: response.admin_policy?.permissions || [],
       };
 
-      // Cache the tenant for future edits
-      setTenantCache((prev) => ({ ...prev, [company.tenant_id]: entity }));
+      setTenantCache((prev) => ({
+        ...prev,
+        [company.tenant_id]: entity,
+      }));
 
       setSelectedEntity(entity);
       setIsModalOpen(true);
@@ -84,84 +102,114 @@ const CompanyManagement = () => {
     }
   };
 
-  // Handle form submission from modal
   const handleSubmit = async (formData) => {
     try {
       if (modalMode === "create") {
         await dispatch(createCompanyThunk(formData)).unwrap();
       } else if (modalMode === "edit" && selectedEntity) {
-        // 🟢 Dispatch the update request
-        const updatedTenant = await dispatch(
+        await dispatch(
           updateTenantThunk({
             tenantId: selectedEntity?.company?.tenant_id,
             data: formData,
           })
         ).unwrap();
-
-        const tenantId = selectedEntity?.company?.tenant_id;
-
-        // 🟢 Safely update tenantCache (avoid undefined errors)
-        setTenantCache((prev) => {
-          const existingTenant = prev[tenantId] || { company: {} };
-
-          return {
-            ...prev,
-            [tenantId]: {
-              ...existingTenant,
-              company: {
-                ...existingTenant.company,
-                ...updatedTenant.tenant,
-              },
-              permissions:
-                updatedTenant.admin_policy?.permissions ||
-                existingTenant.permissions,
-            },
-          };
-        });
       }
-      // 🟢 Close modal after success
+
       setIsModalOpen(false);
     } catch (err) {
       console.error("Failed to save company:", err);
     }
   };
 
-  return (
-    <div className="min-h-screen ">
-      <div className=" mx-auto">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 mb-6">
-          <button
-            onClick={handleCreate}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Company
-          </button>
+return (
+  <div className="min-h-screen bg-gray-50">
+    <div className="px-6 lg:px-10 py-6 space-y-6">
+
+      {/* 🔎 TOP TOOLBAR */}
+      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+          {/* LEFT — Search Only */}
+          <div className="relative w-full md:w-80">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search companies..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* RIGHT — Status + Sync + Add */}
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+
+            {/* Status Dropdown */}
+            <div className="w-full sm:w-40">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Status</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+
+            {/* Sync Button */}
+            <button
+              onClick={() => dispatch(fetchCompaniesThunk())}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm transition"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Sync
+            </button>
+
+            {/* Add Company Button */}
+            <button
+              onClick={handleCreate}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition text-sm"
+            >
+              <Plus className="w-4 h-4" />
+              Add Company
+            </button>
+
+          </div>
         </div>
-
-        {/* Company List */}
-        {loading ? (
-          <p>Loading companies...</p>
-        ) : error ? (
-          <p className="text-red-500">Error: {error}</p>
-        ) : (
-          <CompanyList companies={companies} onEditCompany={handleEdit} />
-        )}
-
-        {/* Entity Modal */}
-        <EntityModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          entityType="company"
-          entityData={selectedEntity}
-          onSubmit={handleSubmit}
-          mode={modalMode}
-          loading={loadingTenant}
-        />
       </div>
+
+      {/* 📋 COMPANY LIST */}
+      <div>
+        {loading ? (
+          <div className="text-center py-12 text-gray-500">
+            Loading companies...
+          </div>
+        ) : error ? (
+          <div className="text-center py-12 text-red-500">
+            Error: {error}
+          </div>
+        ) : (
+          <CompanyList
+            companies={filteredCompanies}
+            onEditCompany={handleEdit}
+          />
+        )}
+      </div>
+
+      {/* 🧾 MODAL */}
+      <EntityModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        entityType="company"
+        entityData={selectedEntity}
+        onSubmit={handleSubmit}
+        mode={modalMode}
+        loading={loadingTenant}
+      />
     </div>
-  );
+  </div>
+);
 };
 
 export default CompanyManagement;

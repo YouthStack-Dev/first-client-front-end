@@ -458,33 +458,33 @@ const ShiftBookingsTable = ({
 
                     {/* Actions Column */}
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-2">
                         {/* View Map Button */}
                         <button
                           onClick={() => handleShiftRoute(shift)}
-                          className="p-2 text-app-text-secondary hover:text-app-primary hover:bg-app-tertiary rounded-lg transition-colors"
+                          className="p-3 bg-app-tertiary text-app-text-secondary hover:text-app-primary hover:bg-app-tertiary/80 rounded-lg transition-colors"
                           title="View Routes Map"
                         >
-                          <Navigation className="w-4 h-4" />
+                          <MapPin className="w-5 h-5" />
                         </button>
 
                         {/* Generate/Regenerate Button */}
                         <button
                           onClick={() => handleGenerateClick(shift)}
                           disabled={generatingRoute === shift.shift_id}
-                          className={`p-2 rounded-lg transition-colors ${
+                          className={`p-3 rounded-lg transition-colors ${
                             needsRegeneration(shift)
-                              ? "text-amber-600 hover:bg-amber-50"
-                              : "text-app-primary hover:bg-app-primary/10"
+                              ? "bg-amber-50 text-amber-600 hover:bg-amber-100"
+                              : "bg-app-primary/10 text-app-primary hover:bg-app-primary/20"
                           } disabled:opacity-50 disabled:cursor-not-allowed`}
                           title={
                             needsRegeneration(shift) ? "Regenerate" : "Generate"
                           }
                         >
                           {generatingRoute === shift.shift_id ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
+                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-current border-t-transparent" />
                           ) : (
-                            <Zap className="w-4 h-4" />
+                            <RefreshCw className="w-5 h-5" />
                           )}
                         </button>
 
@@ -492,9 +492,9 @@ const ShiftBookingsTable = ({
                         <div className="relative">
                           <button
                             onClick={() => toggleActionMenu(shift.shift_id)}
-                            className="p-2 text-app-text-secondary hover:text-app-primary hover:bg-app-tertiary rounded-lg transition-colors"
+                            className="p-3 bg-app-tertiary text-app-text-secondary hover:text-app-primary hover:bg-app-tertiary/80 rounded-lg transition-colors"
                           >
-                            <MoreVertical className="w-4 h-4" />
+                            <MoreVertical className="w-5 h-5" />
                           </button>
 
                           {actionMenuOpen === shift.shift_id && (
