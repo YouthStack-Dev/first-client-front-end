@@ -93,15 +93,11 @@ const NewVendorCard = ({
   onEditVendor,
 }) => {
   const dispatch = useDispatch();
-  const [isActive, setIsActive] = useState(vendor.is_active);
+const isActive = vendor.is_active;
 
-  useEffect(() => {
-    setIsActive(vendor.is_active);
-  }, [vendor.is_active]);
 
   const handleToggle = async () => {
     const newStatus = !isActive;
-    setIsActive(newStatus);
     dispatch(
       toggleVendorStatusThunk({
         vendorId: vendor.vendor_id,
