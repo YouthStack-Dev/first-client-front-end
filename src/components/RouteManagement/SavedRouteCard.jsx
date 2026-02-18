@@ -99,7 +99,6 @@ const SavedRouteCard = ({
       setShowAlertModal(true);
       return;
     }
-
     setShowUpdateRouteModal(true);
   };
 
