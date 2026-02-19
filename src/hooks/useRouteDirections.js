@@ -43,10 +43,12 @@ export const useSelection = () => {
   }, []);
 
   const handleBookingSelect = useCallback((bookingId) => {
+    console.log("handleBookingSelect called with:", bookingId, typeof bookingId);
     setSelectedBookings((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(bookingId)) newSet.delete(bookingId);
       else newSet.add(bookingId);
+      console.log("New selectedBookings:", newSet);
       return newSet;
     });
   }, []);

@@ -219,6 +219,7 @@ const SavedRouteCard = ({
         };
     }
   };
+  
   const confirmUpdateRoute = async () => {
     try {
       const bookingIdsArray = Array.from(selectedBookings);
