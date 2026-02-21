@@ -178,11 +178,11 @@ const AdminSidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-app-text-primary">
-                    Team Portal
+                    {user?.name || "Admin User"}
                   </h2>
-                  <p className="text-xs text-app-text-secondary">
+                  {/* <p className="text-xs text-app-text-secondary">
                     {user?.role || "Team Member"}
-                  </p>
+                  </p> */}
                 </div>
               </div>
               {!isMobile && (

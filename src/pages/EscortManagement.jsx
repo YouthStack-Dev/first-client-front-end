@@ -36,8 +36,9 @@ const EscortManagement = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState(getInitialFormData());
   const [formErrors, setFormErrors] = useState({});
-  // const vendors = useVendorOptions(null, true);
-  const vendors = useVendorOptions(null, true);
+ 
+  const { vendorOptions } = useVendorOptions(null, true);
+
   function getInitialFormData() {
     return {
       vendor_id: null,
@@ -209,7 +210,7 @@ const EscortManagement = () => {
       {/* Table */}
       <EscortTable
         escorts={escorts}
-        vendors={vendors}
+        vendors={vendorOptions}
         onView={handleView}
         onEdit={handleEdit}
         onDelete={handleDelete}
@@ -227,7 +228,7 @@ const EscortManagement = () => {
           ...formErrors,
           server: serverError,
         }}
-        vendors={vendors}
+        vendors={vendorOptions}
         genderOptions={genderOptions}
         onChange={handleFormChange}
         onSubmit={handleSubmit}

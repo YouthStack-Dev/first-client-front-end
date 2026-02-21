@@ -128,7 +128,7 @@ const vendorSlice = createSlice({
         state.toggling = false;
 
         // ✅ The toggle API returns updated vendor directly (no nested .data)
-        const toggledVendor = action.payload || {};
+        const toggledVendor = action.payload?.data || {};
 
         if (toggledVendor.vendor_id) {
           // Flat list update
@@ -140,9 +140,11 @@ const vendorSlice = createSlice({
           // Tenant map update
           const tenantList =
             state.vendorsByTenant[toggledVendor.tenant_id] || [];
+
           const tenantIndex = tenantList.findIndex(
             (v) => v.vendor_id === toggledVendor.vendor_id
           );
+          
           if (tenantIndex !== -1) tenantList[tenantIndex] = toggledVendor;
           else tenantList.push(toggledVendor);
           state.vendorsByTenant[toggledVendor.tenant_id] = tenantList;

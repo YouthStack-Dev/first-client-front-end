@@ -136,9 +136,9 @@ const AdminHeader = ({ toggleSidebar, title = "Team Dashboard" }) => {
                 <h1 className="text-app-text-primary font-bold text-xl">
                   {title}
                 </h1>
-                <p className="text-xs text-app-text-secondary">
+                {/* <p className="text-xs text-app-text-secondary">
                   Team Collaboration Portal
-                </p>
+                </p> */}
               </div>
             </div>
           </div>

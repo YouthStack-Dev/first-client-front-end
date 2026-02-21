@@ -67,7 +67,7 @@ const NewVehicleManagement = () => {
   const totalItems = useSelector(selectVehiclesTotal);
 
   /* ================= VENDORS ================= */
-  const vendors = useVendorOptions(null, !isVendorUser);
+ const { vendorOptions } = useVendorOptions(null, !isVendorUser);
 
   /* ================= LOCAL STATE ================= */
   const [selectedVendor, setSelectedVendor] = useState(null);
@@ -165,7 +165,7 @@ const NewVehicleManagement = () => {
 
   /* ================= UI ================= */
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-1">
       <ToolBar
         onAddClick={handleOpenCreate}
         module="vehicle"
@@ -189,22 +189,7 @@ const NewVehicleManagement = () => {
           </div>
         }
         rightElements={
-          <div className="flex items-center gap-3">
-            {/* <ReusableButton
-              module="vehicle"
-              action="read"
-              buttonName={"History"}
-              icon={History}
-              title="Audit History"
-              disabled={shouldShowNoVendorMessage}
-              onClick={() => {
-                setSelectedVehicleName(null);
-                setShowAuditModal(true);
-              }}
-              className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md"
-            /> */}
-            
-            
+          <div className="flex flex-wrap items-center gap-3">
           {!isVendorUser && (
               <ReusableButton
                 module="vehicle"
@@ -223,16 +208,22 @@ const NewVehicleManagement = () => {
 
 
             {!isVendorUser && (
-              <Select
-                options={vendors}
-                value={selectedVendor}
-                onChange={setSelectedVendor}
-                placeholder="Select vendor..."
-                 isSearchable={true}
+              <div className="min-w-[200px] z-10 relative">
+                <Select
+                  options={vendorOptions}
+                  value={selectedVendor}
+                  onChange={setSelectedVendor}
+                  placeholder="Select vendor..."
+                  isSearchable={true}
                   className="react-select-container"
                   classNamePrefix="react-select"
                   isClearable={true}
-              />
+                  menuPortalTarget={document.body}
+                  styles={{
+                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                  }}
+                />
+              </div>
             )}
 
             <SelectField
@@ -244,6 +235,7 @@ const NewVehicleManagement = () => {
                 { label: "Active", value: "Active" },
                 { label: "Inactive", value: "Inactive" },
               ]}
+              className="min-w-[140px]"
             />
           </div>
         }
@@ -262,7 +254,21 @@ const NewVehicleManagement = () => {
           {loading ? (
             <div className="py-6 text-center">Loading vehicles...</div>
           ) : (
-            <NewVehicleList
+            <>
+              {/* Results Count with Vendor Info */}
+              <div className="mb-3 text-sm text-gray-600">
+                Showing {vehicles?.length} of {totalItems} vehicles
+                {isVendorUser ? (
+                  <span className="ml-2 text-blue-600">
+                    (Vendor: {user?.vendor_name || user?.vendor_id})
+                  </span>
+                ) : selectedVendor ? (
+                  <span className="ml-2 text-blue-600">
+                    (Vendor: {selectedVendor.label})
+                  </span>
+                ) : null}
+              </div>
+              <NewVehicleList
               vehicles={vehicles}
               onEdit={(v) => {
                 setSelectedVehicle(v);
@@ -283,6 +289,7 @@ const NewVehicleManagement = () => {
               onItemsPerPageChange={setItemsPerPage}
               showPagination
             />
+            </>
           )}
         </div>
       )}

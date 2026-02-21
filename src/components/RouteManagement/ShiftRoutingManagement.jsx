@@ -135,10 +135,7 @@ const ShiftRoutingManagement = () => {
 
     try {
       setIsMerging(true);
-      const response = await API_CLIENT.post(
-        "/routes/merge?tenant_id=SAM001",
-        requestData
-      );
+    const response = await API_CLIENT.post("/routes/merge", requestData);
 
       if (response.data?.success && response.data?.data) {
         const mergedRoute = response.data.data;

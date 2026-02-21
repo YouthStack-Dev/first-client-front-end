@@ -17,7 +17,7 @@ const VehicleManagement = () => {
   }, [activeTab]);
 
   return (
-    <div className="w-full bg-gray-50 p-1">
+    <div className="w-full bg-white p-1">
       {/* Tabs */}
       <div className="relative flex border-b border-gray-200 mb-6">
         {tabs.map((tab) => (

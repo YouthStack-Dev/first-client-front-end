@@ -66,7 +66,10 @@ const NewDriverManagement = () => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const skip = (currentPage - 1) * itemsPerPage;
 
-  const vendors = useVendorOptions(null, !isVendorUser);
+  // const vendors = useVendorOptions(null, !isVendorUser);
+
+  const { vendorOptions } = useVendorOptions(null, !isVendorUser);
+
   const [selectedDriverName, setSelectedDriverName] = useState(null);
 
 
@@ -465,7 +468,7 @@ const NewDriverManagement = () => {
             {!isVendorUser && (
               <div className="min-w-[200px]">
                 <Select
-                  options={vendors}
+                  options={vendorOptions}
                   value={selectedVendor}
                   onChange={handleVendorSelect}
                   isSearchable={true}
@@ -576,7 +579,8 @@ const NewDriverManagement = () => {
         driverData={selectedDriver}
         onSubmitSuccess={handleSubmitSuccess}
         userType={user?.type}
-        vendors={vendors}
+        vendors={vendorOptions}
+
       />
 
       {/* Audit History Modal */}

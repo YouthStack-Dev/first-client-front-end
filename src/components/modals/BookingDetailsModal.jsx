@@ -1,4 +1,4 @@
-import { X, MapPin, Phone, Mail } from "lucide-react";
+import { X, MapPin } from "lucide-react";
 
 const BookingDetailsModal = ({ isOpen, onClose, shift, bookings }) => {
   if (!isOpen) return null;
@@ -49,70 +49,77 @@ const BookingDetailsModal = ({ isOpen, onClose, shift, bookings }) => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {bookings && bookings.length > 0 ? (
-                bookings.map((booking, index) => (
-                  <tr key={booking.id || index} className="hover:bg-gray-50">
-                    {/* Serial Number Column */}
-                    <td className="px-4 py-3 text-center">
-                      <div className="text-sm font-medium text-gray-500">
-                        {index + 1}
-                      </div>
-                    </td>
+                bookings.map((booking, index) => {
+                  // ✅ "Scheduled" = Routed, "Request" = Pending
+                  const isRouted = booking.status === "Scheduled";
 
-                    <td className="px-4 py-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="flex-shrink-0">
-                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                            <span className="text-xs font-semibold text-blue-700">
-                              {booking.employee_code?.charAt(0) || "U"}
-                            </span>
+                  return (
+                    <tr key={booking.booking_id || index} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-center">
+                        <div className="text-sm font-medium text-gray-500">
+                          {index + 1}
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex-shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                              <span className="text-xs font-semibold text-blue-700">
+                                {booking.employee_code?.charAt(0) || "U"}
+                              </span>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {booking.employee_code || "N/A"}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              ID: {booking.employee_id || "N/A"}
+                            </div>
                           </div>
                         </div>
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {booking.employee_code || "N/A"}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            ID: {booking.employee_id || "N/A"}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="px-4 py-3">
-                      <div className="flex items-start space-x-2">
-                        <MapPin className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-gray-700">
-                          {booking.pickup_location || "N/A"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-start space-x-2">
-                        <MapPin className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-gray-700">
-                          {booking.drop_location || "N/A"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-center">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                            booking.is_routed
-                              ? "bg-green-100 text-green-800"
-                              : "bg-amber-100 text-amber-800"
-                          }`}
-                        >
-                          {booking.is_routed ? "Routed" : "Pending"}
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      <td className="px-4 py-3">
+                        <div className="flex items-start space-x-2">
+                          <MapPin className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-gray-700">
+                            {booking.pickup_location || "N/A"}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <div className="flex items-start space-x-2">
+                          <MapPin className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-gray-700">
+                            {booking.drop_location || "N/A"}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* ✅ FIXED — was checking is_routed (doesn't exist), now checks status field */}
+                      <td className="px-4 py-3">
+                        <div className="flex justify-center">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                              isRouted
+                                ? "bg-green-100 text-green-800"
+                                : "bg-amber-100 text-amber-800"
+                            }`}
+                          >
+                            {isRouted ? "Routed" : "Pending"}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td
-                    colSpan="6"
+                    colSpan="5"
                     className="px-4 py-8 text-center text-gray-500 text-sm"
                   >
                     No booking details available
@@ -122,8 +129,6 @@ const BookingDetailsModal = ({ isOpen, onClose, shift, bookings }) => {
             </tbody>
           </table>
         </div>
-
-        {/* Modal Footer */}
       </div>
     </div>
   );

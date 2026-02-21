@@ -66,28 +66,51 @@ const companySlice = createSlice({
         state.error = action.payload;
       });
 
-    // Update company
-    builder
-      .addCase(updateTenantThunk.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(updateTenantThunk.fulfilled, (state, action) => {
-        state.loading = false;
+   builder
+  .addCase(updateTenantThunk.pending, (state) => {
+    state.loading = true;
+    state.error = null;
+  })
+  .addCase(updateTenantThunk.fulfilled, (state, action) => {
+    state.loading = false;
+    state.error = null;
 
-        const tenant = action.payload;
-        const tenantId =
-          tenant?.tenant_id || tenant?.id || action.meta?.arg?.tenantId;
-        // 🟢 Ensure state.entities exists
-        if (!state.entities) {
-          state.entities = {};
-        }
-        state.error = null;
-      })
-      .addCase(updateTenantThunk.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || "Failed to update tenant";
-      });
+    const updatedTenant = action.payload;
+
+    // Resolve the tenant ID from payload or original request arg
+    const tenantId =
+      updatedTenant?.tenant_id ||
+      updatedTenant?.id ||
+      action.meta?.arg?.tenantId;
+
+    if (!tenantId) return;
+
+    // ── If you're using a normalized entities object ──
+    if (state.entities) {
+      state.entities[tenantId] = {
+        ...(state.entities[tenantId] || {}),
+        ...updatedTenant,
+      };
+    }
+
+    // ── If you're using a flat array (most common) ──
+    if (Array.isArray(state.tenants)) {
+      const index = state.tenants.findIndex(
+        (t) => t.tenant_id === tenantId || t.id === tenantId
+      );
+      if (index !== -1) {
+        // Merge so no fields are accidentally lost
+        state.tenants[index] = {
+          ...state.tenants[index],
+          ...updatedTenant,
+        };
+      }
+    }
+  })
+  .addCase(updateTenantThunk.rejected, (state, action) => {
+    state.loading = false;
+    state.error = action.payload || "Failed to update tenant";
+  });
 
     // ✅ Toggle company active/inactive status
     builder
