@@ -152,9 +152,10 @@ const RouteScheduledBookings = () => {
   const shiftsData = useSelector(selectShiftsData);
   const currentUser = useSelector(selectCurrentUser);
 
-  // ✅ FIXED: pull tenant_id + type from auth instead of hardcoding SAM001
-  const { type, tenant_id } = currentUser || {};
-  logDebug("user type", type, "tenant_id", tenant_id);
+  // const { type, tenant_id } = currentUser || {};
+  const { type } = currentUser || {};
+  const tenant_id = currentUser?.employee?.tenant_id;
+  // logDebug("user type", type, "tenant_id", tenant_id);
 
   // ✅ NEW: helper to show auto-dismissing toast instead of alert()
   const showToast = useCallback((message, variant = "success") => {
