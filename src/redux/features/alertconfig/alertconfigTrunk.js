@@ -8,9 +8,6 @@ export const getAlertConfigThunk = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await API_CLIENT.get("/alert-config");
-
-      // logDebug("This is the alert data fetched", response.data);
-
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
@@ -74,9 +71,7 @@ export const acknowledgeAlertConfigThunk = createAsyncThunk(
         `/alerts/${alertId}/acknowledge`,
         payload
       );
-
       logDebug("alert config acknowledged", response.data);
-
       // return updated config object
       return response.data.data;
     } catch (error) {
@@ -114,13 +109,22 @@ export const escalateAlertConfigThunk = createAsyncThunk(
 
 export const closeAlertThunk = createAsyncThunk(
   "alertconfig/close",
-  async ({ alertId }, { rejectWithValue }) => {
+  async (
+    { alertId, closedBy, resolutionNotes, closureNotes, isFalseAlarm },
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await API_CLIENT.put(`/alerts/${alertId}/close`);
+      const response = await API_CLIENT.put(
+        `/alerts/${alertId}/close`,
+        {
+          closed_by: closedBy,
+          closure_notes: closureNotes,
+          is_false_alarm: isFalseAlarm,
+          resolution_notes: resolutionNotes,
+        }
+      );
 
       logDebug("alert closed", response.data);
-
-      // return updated config object
       return response.data.data;
     } catch (error) {
       return rejectWithValue(

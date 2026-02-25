@@ -426,7 +426,15 @@ const EntityModal = ({
   mode = "create",
 }) => {
   const dispatch = useDispatch();
-  const { permissions, loading, fetched } = useSelector((state) => state.permissions);
+  
+  // ✅ FIXED: Correct Redux selectors
+  const { permissions, permissionsLoading, permissionsLoaded } = useSelector(
+    (state) => ({
+      permissions: state.permissions.permissions,
+      permissionsLoading: state.permissions.permissionsLoading,
+      permissionsLoaded: state.permissions.permissionsLoaded,
+    })
+  );
 
   const [formData,      setFormData]      = useState(initialFormState);
   const [errors,        setErrors]        = useState({});
@@ -440,9 +448,12 @@ const EntityModal = ({
 
   const entityTenantId = entityData?.company?.tenant_id;
 
+  // ✅ FIXED: Use correct state variable
   useEffect(() => {
-    if (isOpen && !fetched) dispatch(fetchPermissionsThunk());
-  }, [isOpen, fetched, dispatch]);
+    if (isOpen && !permissionsLoaded) {
+      dispatch(fetchPermissionsThunk());
+    }
+  }, [isOpen, permissionsLoaded, dispatch]);
 
   useEffect(() => {
     if (!isOpen || permissions.length === 0) return;
@@ -478,7 +489,7 @@ const EntityModal = ({
       setFormData({ ...initialFormState, permissions: groupedPermissions });
     }
     setIsDirty(false);
-  }, [entityTenantId, permissions, isOpen, mode]);
+  }, [entityTenantId, permissions, isOpen, mode, entityData]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -667,7 +678,6 @@ const EntityModal = ({
           onClick={handleCloseRequest}
         />
 
-        {/* ↑ max-w-5xl → max-w-7xl for more breathing room */}
         <div
           className="
             relative z-10 flex w-full max-w-7xl max-h-[92vh]
@@ -753,7 +763,7 @@ const EntityModal = ({
 
             <div className="flex-1 overflow-y-auto" ref={formRef}>
 
-              {/* ══ STEP 1 — unchanged ══ */}
+              {/* ══ STEP 1 ══ */}
               {step === 1 && (
                 <form onSubmit={(e) => e.preventDefault()} className="px-7 py-6 space-y-8">
                   <div>
@@ -872,11 +882,11 @@ const EntityModal = ({
                 </form>
               )}
 
-              {/* ══ STEP 2 — UPDATED permissions UI ══ */}
+              {/* ══ STEP 2 — Permissions ══ */}
               {step === 2 && (
                 <form onSubmit={handleSubmit} className="px-7 py-6 space-y-5">
-
-                  {loading ? (
+                  {/* ✅ FIXED: Use correct loading state */}
+                  {permissionsLoading ? (
                     <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-4">
                       <div className="w-9 h-9 rounded-full border-2 border-blue-300 border-t-blue-600 animate-spin" />
                       <p className="text-[13px]">Loading permissions…</p>
