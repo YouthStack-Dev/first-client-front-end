@@ -66,7 +66,7 @@ export const CompanyRoutes = () => (
     <Route path="routing" element={<RouteScheduledBookings />} />
 
         {/* ✅ Add this new route for vendor routing */}
-    <Route path="vendor-routing" element={<VendorRouteManagement />} />
+    {/* <Route path="vendor-routing" element={<VendorRouteManagement />} /> */}
 
     <Route path="escort-management" element={<EscortManagement />} />
     <Route

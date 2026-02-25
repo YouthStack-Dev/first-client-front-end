@@ -134,12 +134,12 @@ export const baseSidebarConfig = [
           path: "/companies/routing",
           permission: "route.read",
         },
-        {
-          title: "Vendor Routing",
-          icon: Truck,
-          path: "/companies/vendor-routing",
-          permission: "route.read", // Adjust permission as needed
-        },
+        // {
+        //   title: "Vendor Routing",
+        //   icon: Truck,
+        //   path: "/companies/vendor-routing",
+        //   permission: "route.read", // Adjust permission as needed
+        // },
       ],
     },
       {
