@@ -11,7 +11,8 @@ import {
   Shield,
   FileText,
   Settings,
-   Truck, 
+   Truck,
+   Bell, 
 } from "lucide-react";
 
 // Base sidebar configuration
@@ -175,6 +176,12 @@ export const baseSidebarConfig = [
         title: "Alert Configuration",
         icon: Shield,
         path: "/companies/alert-config",
+        permission: "alert.read",
+      },
+      {
+        title: "Alert Notifications",
+        icon: Bell,
+        path: "/companies/notification",
         permission: "alert.read",
       },
     ],
