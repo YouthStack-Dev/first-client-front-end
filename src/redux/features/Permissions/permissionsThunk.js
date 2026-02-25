@@ -3,7 +3,9 @@ import { fetchPermissionsApi } from "../Permissions/permissionsApi";
 import { API_CLIENT } from "../../../Api/API_Client";
 import { logDebug } from "../../../utils/logger";
 
-// Permissions
+/**
+ * Redux thunk for fetching all permissions
+ */
 export const fetchPermissionsThunk = createAsyncThunk(
   "permissions/fetchPermissions",
   async (_, { rejectWithValue }) => {
@@ -11,7 +13,11 @@ export const fetchPermissionsThunk = createAsyncThunk(
       const response = await fetchPermissionsApi();
       return response.data.items;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
+      return rejectWithValue(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to fetch permissions'
+      );
     }
   }
 );
