@@ -1,6 +1,30 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Merge, Truck, Car, RefreshCcw, Search, X, GitMerge, Building2 } from "lucide-react";
+import { Car, RefreshCcw, Search, X, GitMerge, Building2 } from "lucide-react";
 import ReusableButton from "@ui/ReusableButton";
+
+// ✅ Custom Tooltip Component
+const Tooltip = ({ text, children }) => {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      {children}
+      {show && text && (
+        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-[9999]
+          bg-gray-800 text-white text-xs rounded-lg px-2.5 py-1.5
+          whitespace-nowrap shadow-lg pointer-events-none">
+          {text}
+          {/* Arrow pointing up */}
+          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45" />
+        </div>
+      )}
+    </div>
+  );
+};
 
 const MapToolbar = ({
   selectedRoutes,
@@ -46,142 +70,158 @@ const MapToolbar = ({
   const renderCompanyButtons = () => (
     <>
       {/* Merge */}
-      <ReusableButton
-        module="route"
-        action="update"
-        icon={GitMerge}
-        buttonName={
-          <span className="flex items-center gap-1.5">
-            {isMerging ? "Merging..." : "Merge"}
-            <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold leading-none ${
-              canMerge ? "bg-white/25 text-white" : "bg-gray-200 text-gray-400"
-            }`}>
-              {selectedRoutes.size}
-            </span>
-          </span>
-        }
-        title={selectedRoutes.size < 2 ? "Select at least 2 routes to merge" : "Merge selected routes"}
-        onClick={onMerge}
-        disabled={!canMerge}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-          canMerge
-            ? "bg-violet-600 text-white border-violet-600 shadow-sm shadow-violet-100 hover:bg-violet-700"
-            : "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
-        }`}
-      />
-
-      {/* Assign Vendor */}
-      <ReusableButton
-        module="route"
-        action="update"
-        icon={Building2}
-        buttonName={
-          <span className="flex items-center gap-1.5">
-            Assign Vendor
-            {hasSelection && (
-              <span className="text-xs px-1.5 py-0.5 rounded-full font-bold leading-none bg-white/25 text-white">
+      <Tooltip
+        text={selectedRoutes.size < 2 ? "Select at least 2 routes to merge" : "Merge selected routes"}
+      >
+        <ReusableButton
+          module="route"
+          action="update"
+          icon={GitMerge}
+          buttonName={
+            <span className="flex items-center gap-1.5">
+              {isMerging ? "Merging..." : "Merge"}
+              <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold leading-none ${
+                canMerge ? "bg-white/25 text-white" : "bg-gray-200 text-gray-400"
+              }`}>
                 {selectedRoutes.size}
               </span>
-            )}
-          </span>
-        }
-        title={
+            </span>
+          }
+          onClick={onMerge}
+          disabled={!canMerge}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+            canMerge
+              ? "bg-violet-600 text-white border-violet-600 shadow-sm shadow-violet-100 hover:bg-violet-700"
+              : "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
+          }`}
+        />
+      </Tooltip>
+
+      {/* Assign Vendor */}
+      <Tooltip
+        text={
           !hasSelection
             ? "Select at least 1 route to assign vendor"
             : selectedRoutesHaveVendors
               ? "Reassign vendor to selected routes"
               : "Assign vendor to selected routes"
         }
-        onClick={onAssignVendor}
-        disabled={!hasSelection}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-          hasSelection
-            ? "bg-amber-500 text-white border-amber-500 shadow-sm shadow-amber-100 hover:bg-amber-600"
-            : "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
-        }`}
-      />
+      >
+        <ReusableButton
+          module="route"
+          action="update"
+          icon={Building2}
+          buttonName={
+            <span className="flex items-center gap-1.5">
+              Assign Vendor
+              {hasSelection && (
+                <span className="text-xs px-1.5 py-0.5 rounded-full font-bold leading-none bg-white/25 text-white">
+                  {selectedRoutes.size}
+                </span>
+              )}
+            </span>
+          }
+          onClick={onAssignVendor}
+          disabled={!hasSelection}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+            hasSelection
+              ? "bg-amber-500 text-white border-amber-500 shadow-sm shadow-amber-100 hover:bg-amber-600"
+              : "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
+          }`}
+        />
+      </Tooltip>
 
       {/* Assign Vehicle */}
-      <ReusableButton
-        module="route"
-        action="update"
-        icon={Car}
-        buttonName="Assign Vehicle"
-        title={
+      <Tooltip
+        text={
           !hasSelection
             ? "Select at least 1 route to assign vehicle"
             : !selectedRoutesHaveVendors
               ? "Selected routes must have a vendor assigned first"
               : "Assign vehicle to selected routes"
         }
-        onClick={onAssignVehicle}
-        disabled={!canAssignVehicle}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-          canAssignVehicle
-            ? "bg-emerald-500 text-white border-emerald-500 shadow-sm shadow-emerald-100 hover:bg-emerald-600"
-            : "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
-        }`}
-      />
+      >
+        <ReusableButton
+          module="route"
+          action="update"
+          icon={Car}
+          buttonName="Assign Vehicle"
+          onClick={onAssignVehicle}
+          disabled={!canAssignVehicle}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+            canAssignVehicle
+              ? "bg-emerald-500 text-white border-emerald-500 shadow-sm shadow-emerald-100 hover:bg-emerald-600"
+              : "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
+          }`}
+        />
+      </Tooltip>
 
       {/* Sync */}
-      <ReusableButton
-        module="route"
-        action="read"
-        icon={RefreshCcw}
-        buttonName="Sync"
-        title="Refresh and sync all routes"
-        onClick={onSync}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
-      />
+      <Tooltip text="Refresh and sync all routes">
+        <ReusableButton
+          module="route"
+          action="read"
+          icon={RefreshCcw}
+          buttonName="Sync"
+          onClick={onSync}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
+        />
+      </Tooltip>
     </>
   );
 
   const renderVendorButtons = () => (
     <>
-      <ReusableButton
-        module="route"
-        action="update"
-        icon={Car}
-        buttonName={
-          <span className="flex items-center gap-1.5">
-            Assign Vehicle
-            {hasSelection && (
-              <span className="text-xs px-1.5 py-0.5 rounded-full font-bold leading-none bg-white/25 text-white">
-                {selectedRoutes.size}
-              </span>
-            )}
-          </span>
-        }
-        title={!hasSelection ? "Select at least 1 route to assign vehicle" : "Assign vehicle to selected routes"}
-        onClick={onAssignVehicle}
-        disabled={!hasSelection}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-          hasSelection
-            ? "bg-emerald-500 text-white border-emerald-500 shadow-sm shadow-emerald-100 hover:bg-emerald-600"
-            : "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
-        }`}
-      />
+      {/* Assign Vehicle */}
+      <Tooltip
+        text={!hasSelection ? "Select at least 1 route to assign vehicle" : "Assign vehicle to selected routes"}
+      >
+        <ReusableButton
+          module="route"
+          action="update"
+          icon={Car}
+          buttonName={
+            <span className="flex items-center gap-1.5">
+              Assign Vehicle
+              {hasSelection && (
+                <span className="text-xs px-1.5 py-0.5 rounded-full font-bold leading-none bg-white/25 text-white">
+                  {selectedRoutes.size}
+                </span>
+              )}
+            </span>
+          }
+          onClick={onAssignVehicle}
+          disabled={!hasSelection}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+            hasSelection
+              ? "bg-emerald-500 text-white border-emerald-500 shadow-sm shadow-emerald-100 hover:bg-emerald-600"
+              : "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
+          }`}
+        />
+      </Tooltip>
 
-      <ReusableButton
-        module="route"
-        action="read"
-        icon={RefreshCcw}
-        buttonName="Sync"
-        title="Refresh and sync all routes"
-        onClick={onSync}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
-      />
+      {/* Sync */}
+      <Tooltip text="Refresh and sync all routes">
+        <ReusableButton
+          module="route"
+          action="read"
+          icon={RefreshCcw}
+          buttonName="Sync"
+          onClick={onSync}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
+        />
+      </Tooltip>
     </>
   );
 
   return (
-    <div className="bg-white border-b border-gray-100">
+    <div className="bg-white border-b border-gray-100 overflow-visible">
 
       {/* Main toolbar row */}
-      <div className="px-3 pt-2.5 pb-2 flex items-center gap-2 flex-wrap">
+      <div className="px-3 pt-2.5 pb-2 flex items-center gap-2 flex-wrap overflow-visible">
 
         {/* Action buttons */}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap overflow-visible">
           {panelType === "company" ? renderCompanyButtons() : renderVendorButtons()}
         </div>
 
@@ -215,25 +255,6 @@ const MapToolbar = ({
           </span>
         </div>
       </div>
-
-      {/* {hasSelection && (
-        <div className="mx-3 mb-2 flex items-center justify-between bg-violet-50 border border-violet-200 rounded-lg px-3 py-1.5">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
-            <span className="text-xs text-violet-700 font-semibold">
-              {selectedRoutes.size} route{selectedRoutes.size !== 1 ? "s" : ""} selected
-            </span>
-          </div>
-          <button
-            onClick={() => {
-              // Clear is handled by parent via onRouteSelect — just a visual hint
-            }}
-            className="text-xs text-violet-500 hover:text-violet-700 font-medium flex items-center gap-1 transition-colors"
-          >
-            <X size={11} /> Clear
-          </button>
-        </div>
-      )} */}
     </div>
   );
 };

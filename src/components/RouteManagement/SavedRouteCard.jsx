@@ -17,6 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import ReusableButton from "../ui/ReusableButton";
+import Tooltip from "../ui/Tooltip";      // ✅ shared Tooltip
 import ConfirmationModal from "../modals/ConfirmationModal";
 import { API_CLIENT } from "../../Api/API_Client";
 import BookingCard from "../ui/BookingCard";
@@ -304,7 +305,6 @@ const SavedRouteCard = ({
     OnOperation();
   };
 
-  // ── FIX 1: Added "planned" status with proper indigo badge ──
   const getStatusInfo = (status) => {
     switch (status?.toLowerCase()) {
       case "planned":   return { color: "bg-indigo-50 text-indigo-700 border-indigo-200",  icon: <Clock className="w-3 h-3" /> };
@@ -358,7 +358,6 @@ const SavedRouteCard = ({
                   ID {renderSafeValue(route.route_id)}
                 </span>
 
-                {/* FIX 1: "Planned" now gets a proper indigo badge instead of gray */}
                 <span className={`flex items-center gap-1 text-xs px-1.5 py-0.5 rounded border font-medium ${routeStatusInfo.color}`}>
                   {routeStatusInfo.icon}
                   <span className="capitalize">{renderSafeValue(route.status)}</span>
@@ -387,29 +386,44 @@ const SavedRouteCard = ({
 
                 <div className="flex-1" />
 
-                {/* FIX 2: Wider hit areas, clear visual separation between edit and delete */}
-                <div className="flex items-center gap-1 border border-gray-200 rounded-lg overflow-hidden divide-x divide-gray-200">
+                {/* ✅ Edit + Delete with shared Tooltip, position="top" so it shows above */}
+                <div className="flex items-center gap-1 border border-gray-200 rounded-lg overflow-visible divide-x divide-gray-200">
                   {onRouteUpdate && (
-                    <ReusableButton
-                      module="route" action="update" icon={Edit}
-                      title="Edit route"
-                      onClick={handleUpdateRouteClick}
-                      size={13}
-                      className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                    />
+                    <Tooltip text="Edit route" position="top">
+                      <ReusableButton
+                        module="route"
+                        action="update"
+                        icon={Edit}
+                        onClick={handleUpdateRouteClick}
+                        size={13}
+                        className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors rounded-l-lg"
+                      />
+                    </Tooltip>
                   )}
-                  <ReusableButton
-                    module="route" action="delete" icon={Trash2}
-                    title={isDeleteDisabled ? "Delete restricted" : "Delete route"}
-                    onClick={handleDeleteRouteClick}
-                    size={13}
-                    disabled={isDeleteDisabled}
-                    className={`p-1.5 transition-colors ${
+                  <Tooltip
+                    text={
                       isDeleteDisabled
-                        ? "text-gray-300 cursor-not-allowed bg-gray-50"
-                        : "text-gray-500 hover:text-red-600 hover:bg-red-50"
-                    }`}
-                  />
+                        ? route.status?.toLowerCase() === "completed"
+                          ? "Cannot delete a completed route"
+                          : "Cannot delete — driver already assigned"
+                        : "Delete route"
+                    }
+                    position="top"
+                  >
+                    <ReusableButton
+                      module="route"
+                      action="delete"
+                      icon={Trash2}
+                      onClick={handleDeleteRouteClick}
+                      size={13}
+                      disabled={isDeleteDisabled}
+                      className={`p-1.5 transition-colors rounded-r-lg ${
+                        isDeleteDisabled
+                          ? "text-gray-300 cursor-not-allowed bg-gray-50"
+                          : "text-gray-500 hover:text-red-600 hover:bg-red-50"
+                      }`}
+                    />
+                  </Tooltip>
                 </div>
               </div>
 
@@ -458,7 +472,6 @@ const SavedRouteCard = ({
               {stops.length > 0 && (
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5">
-
                     <div
                       className="chips-row flex items-center gap-1.5 cursor-pointer rounded px-1 py-0.5 hover:bg-purple-50 transition-colors"
                       title="Click to view & edit bookings"
@@ -483,7 +496,6 @@ const SavedRouteCard = ({
 
                     <div className="flex-1" />
 
-                    {/* FIX 3: Neutral gray toggle instead of purple — purple reserved for selection state */}
                     <button
                       onClick={(e) => { e.stopPropagation(); setIsEmployeeExpanded(!isEmployeeExpanded); }}
                       className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-2 py-0.5 rounded transition-colors"

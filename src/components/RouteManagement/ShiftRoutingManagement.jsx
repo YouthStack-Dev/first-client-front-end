@@ -1,7 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { APIProvider, Map } from "@vis.gl/react-google-maps";
 import { API_CLIENT } from "@Api/API_Client";
 import { useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../redux/features/auth/authSlice";
+import { AlertCircle } from "lucide-react";
 import {
   CompanyMarker,
   RouteDirections,
@@ -39,6 +42,10 @@ const ShiftRoutingManagement = () => {
   const [isAssigningVendor, setIsAssigningVendor] = useState(false);
   const [isCreatingRoute, setIsCreatingRoute] = useState(false);
   const [isAssignDriverModalOpen, setIsAssignDriverModalOpen] = useState(false);
+
+  // ✅ Get tenant_id from Redux auth state (decoded from JWT)
+  const currentUser = useSelector(selectCurrentUser);
+  const tenantId = currentUser?.tenant_id;
 
   const logType = shiftType || "OUT";
 
@@ -129,6 +136,23 @@ const ShiftRoutingManagement = () => {
     clearAllSelections,
   } = useSelection();
 
+  // ✅ Derive company location — null if missing, no silent hardcoded fallback
+  const { companyLocation, locationError } = useMemo(() => {
+    if (routeData.length === 0) return { companyLocation: null, locationError: null };
+
+    const lat = routeData[0]?.tenant?.latitude;
+    const lng = routeData[0]?.tenant?.longitude;
+
+    if (!lat || !lng) {
+      return {
+        companyLocation: null,
+        locationError: "Company location is missing. Please update tenant location settings.",
+      };
+    }
+
+    return { companyLocation: { lat, lng }, locationError: null };
+  }, [routeData]);
+
   const handleMerge = useCallback(async () => {
     if (selectedRoutes.size < 2) {
       alert("Please select at least two routes to merge.");
@@ -163,6 +187,7 @@ const ShiftRoutingManagement = () => {
     setIsVendorModalOpen(true);
   }, [selectedRoutes]);
 
+  // ✅ Single button — handles both single and bulk assign based on selection count
   const handleAssignVendor = useCallback(
     async (assignmentData) => {
       if (assignmentData.routeIds.length === 0) {
@@ -171,20 +196,38 @@ const ShiftRoutingManagement = () => {
       }
       try {
         setIsAssigningVendor(true);
-        const routeId = assignmentData.routeIds[0];
         const vendorId = assignmentData.vendor.vendor_id;
-        const response = await API_CLIENT.put(
-          `/routes/assign-vendor?vendor_id=${vendorId}&route_id=${routeId}`,
-          { notes: assignmentData.notes, tenant_id: "SAM001" }
-        );
-        if (response.data?.success) {
+
+        if (assignmentData.routeIds.length === 1) {
+          // ── Single route assign ──
+          const routeId = assignmentData.routeIds[0];
+          const response = await API_CLIENT.put(
+            `/routes/assign-vendor?vendor_id=${vendorId}&route_id=${routeId}`,
+            { notes: assignmentData.notes, tenant_id: tenantId }
+          );
+          if (!response.data?.success) {
+            throw new Error(response.data?.message || "Vendor assignment failed");
+          }
           alert(`Successfully assigned ${assignmentData.vendor.name} to route #${routeId}!`);
-          setIsVendorModalOpen(false);
-          await fetchRouteData();
-          clearAllSelections();
         } else {
-          throw new Error(response.data?.message || "Vendor assignment failed");
+          // ── Bulk route assign ──
+          const response = await API_CLIENT.put(
+            `/routes/assign-vendor/bulk`,
+            {
+              route_ids: assignmentData.routeIds,
+              vendor_id: vendorId,
+              tenant_id: tenantId,
+            }
+          );
+          if (!response.data?.success) {
+            throw new Error(response.data?.message || "Bulk vendor assignment failed");
+          }
+          alert(`Successfully assigned ${assignmentData.vendor.name} to ${assignmentData.routeIds.length} routes!`);
         }
+
+        setIsVendorModalOpen(false);
+        await fetchRouteData();
+        clearAllSelections();
       } catch (error) {
         const message = error.response?.data?.message || "Failed to assign vendor. Please try again.";
         alert(message);
@@ -192,7 +235,7 @@ const ShiftRoutingManagement = () => {
         setIsAssigningVendor(false);
       }
     },
-    [fetchRouteData, clearAllSelections]
+    [fetchRouteData, clearAllSelections, tenantId]
   );
 
   const handleAssignVehicle = useCallback(() => {
@@ -263,18 +306,12 @@ const ShiftRoutingManagement = () => {
     }
   }, [selectedBookings, fetchRouteData, fetchUnroutedBookings, clearAllSelections]);
 
-  const companyLocation =
-    routeData.length > 0
-      ? { lat: routeData[0].tenant.latitude, lng: routeData[0].tenant.longitude }
-      : { lat: 12.933463, lng: 77.540186 };
-
   const handleRefreshData = useCallback(() => {
     fetchRouteData();
     fetchUnroutedBookings();
     clearAllSelections();
   }, [fetchRouteData, fetchUnroutedBookings, clearAllSelections]);
 
-  // ✅ h-full not h-screen — respects Layout's available height after header
   if (loading) {
     return (
       <div className="flex h-full bg-gray-50 items-center justify-center">
@@ -305,15 +342,25 @@ const ShiftRoutingManagement = () => {
   }
 
   return (
-    // ✅ h-full — fills Layout's content area exactly, no extra height = no page scrollbar
     <div className="flex h-full bg-gray-50 overflow-hidden">
 
       {/* LEFT MAP SECTION */}
       <div className="w-[55%] relative">
+
+        {/* ✅ Location error banner — shown over map when tenant lat/lng is missing */}
+        {locationError && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50
+            bg-red-50 border border-red-200 text-red-700 text-xs font-medium
+            px-4 py-2 rounded-lg shadow-md flex items-center gap-2 whitespace-nowrap">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            {locationError}
+          </div>
+        )}
+
         <APIProvider apiKey={API_KEY}>
           <Map
-            defaultCenter={companyLocation}
-            defaultZoom={11}
+            defaultCenter={companyLocation ?? { lat: 20.5937, lng: 78.9629 }} // ✅ India center as neutral init-only fallback
+            defaultZoom={companyLocation ? 11 : 5}                             // ✅ zoom out if no specific location
             mapId="company-route-map"
             gestureHandling="greedy"
             style={{ width: "100%", height: "100%" }}
@@ -321,7 +368,9 @@ const ShiftRoutingManagement = () => {
             streetViewControl={false}
             mapTypeControl={false}
           >
-            <CompanyMarker position={companyLocation} />
+            {/* ✅ Only render marker if location is valid */}
+            {companyLocation && <CompanyMarker position={companyLocation} />}
+
             {Array.from(selectedRoutes).map((routeId, routeIndex) => {
               const route = routeData.find((r) => r.route_id === routeId);
               if (!route) return null;
@@ -348,9 +397,7 @@ const ShiftRoutingManagement = () => {
         </APIProvider>
       </div>
 
-      {/* RIGHT PANEL
-          ✅ min-h-0 — critical for flex children; without this, overflow-y-auto on the
-          inner div won't work because the panel has no upper-bound height constraint */}
+      {/* RIGHT PANEL */}
       <div className="w-[45%] bg-gradient-to-b from-gray-50 to-white border-l border-gray-200 shadow-2xl flex flex-col min-h-0 min-w-96">
 
         {/* FIXED TOOLBAR */}
@@ -433,7 +480,7 @@ const ShiftRoutingManagement = () => {
         </div>
       </div>
 
-      {/* MODALS — outside flex column, never affect layout height */}
+      {/* MODALS */}
       <VendorAssignModal
         isOpen={isVendorModalOpen}
         onClose={() => setIsVendorModalOpen(false)}

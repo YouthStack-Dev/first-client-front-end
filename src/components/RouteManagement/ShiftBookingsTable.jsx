@@ -307,7 +307,7 @@ const ShiftBookingsTable = ({
             <p className="text-sm text-app-text-secondary">
               {formatDate(date)} • {selectedShiftType} Shifts
               {isPastDate && (
-                <span className="ml-2 text-xs text-amber-600 font-medium">· Past date — delete disabled</span>
+                <span className="ml-2 text-xs text-amber-600 font-medium"></span>
               )}
             </p>
           </div>
