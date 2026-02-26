@@ -304,12 +304,14 @@ const SavedRouteCard = ({
     OnOperation();
   };
 
+  // ── FIX 1: Added "planned" status with proper indigo badge ──
   const getStatusInfo = (status) => {
     switch (status?.toLowerCase()) {
-      case "ongoing":   return { color: "bg-blue-100 text-blue-700 border-blue-200",   icon: <PlayCircle className="w-3 h-3" /> };
-      case "completed": return { color: "bg-green-100 text-green-700 border-green-200", icon: <CheckCircle2 className="w-3 h-3" /> };
-      case "cancelled": return { color: "bg-red-100 text-red-700 border-red-200",       icon: <AlertCircle className="w-3 h-3" /> };
-      default:          return { color: "bg-gray-100 text-gray-700 border-gray-200",    icon: <AlertCircle className="w-3 h-3" /> };
+      case "planned":   return { color: "bg-indigo-50 text-indigo-700 border-indigo-200",  icon: <Clock className="w-3 h-3" /> };
+      case "ongoing":   return { color: "bg-blue-100 text-blue-700 border-blue-200",        icon: <PlayCircle className="w-3 h-3" /> };
+      case "completed": return { color: "bg-green-100 text-green-700 border-green-200",     icon: <CheckCircle2 className="w-3 h-3" /> };
+      case "cancelled": return { color: "bg-red-100 text-red-700 border-red-200",           icon: <AlertCircle className="w-3 h-3" /> };
+      default:          return { color: "bg-gray-100 text-gray-600 border-gray-200",        icon: <AlertCircle className="w-3 h-3" /> };
     }
   };
 
@@ -335,7 +337,6 @@ const SavedRouteCard = ({
         .chips-row:hover .chips-label strong { color: #7c3aed !important; }
       `}</style>
 
-      {/* ✅ overflow-x:hidden on outer card prevents horizontal scrollbar */}
       <div
         className={`bg-white border rounded-lg transition-all cursor-pointer overflow-x-hidden ${
           isSelected ? "border-purple-500 shadow-md bg-purple-50" : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
@@ -357,9 +358,10 @@ const SavedRouteCard = ({
                   ID {renderSafeValue(route.route_id)}
                 </span>
 
-                <span className={`flex items-center gap-1 text-xs px-1.5 py-0.5 rounded border ${routeStatusInfo.color}`}>
+                {/* FIX 1: "Planned" now gets a proper indigo badge instead of gray */}
+                <span className={`flex items-center gap-1 text-xs px-1.5 py-0.5 rounded border font-medium ${routeStatusInfo.color}`}>
                   {routeStatusInfo.icon}
-                  {renderSafeValue(route.status)}
+                  <span className="capitalize">{renderSafeValue(route.status)}</span>
                 </span>
 
                 {hasDriver && route.status?.toLowerCase() !== "completed" && (
@@ -385,16 +387,28 @@ const SavedRouteCard = ({
 
                 <div className="flex-1" />
 
-                <div className="flex items-center gap-0.5">
+                {/* FIX 2: Wider hit areas, clear visual separation between edit and delete */}
+                <div className="flex items-center gap-1 border border-gray-200 rounded-lg overflow-hidden divide-x divide-gray-200">
                   {onRouteUpdate && (
-                    <ReusableButton module="route" action="update" icon={Edit} title="Update route"
-                      onClick={handleUpdateRouteClick} size={14}
-                      className="p-1 rounded text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors" />
+                    <ReusableButton
+                      module="route" action="update" icon={Edit}
+                      title="Edit route"
+                      onClick={handleUpdateRouteClick}
+                      size={13}
+                      className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                    />
                   )}
-                  <ReusableButton module="route" action="delete" icon={Trash2}
+                  <ReusableButton
+                    module="route" action="delete" icon={Trash2}
                     title={isDeleteDisabled ? "Delete restricted" : "Delete route"}
-                    onClick={handleDeleteRouteClick} size={14} disabled={isDeleteDisabled}
-                    className={`p-1 rounded transition-colors ${isDeleteDisabled ? "text-gray-300 cursor-not-allowed" : "text-red-500 hover:text-red-700 hover:bg-red-50"}`}
+                    onClick={handleDeleteRouteClick}
+                    size={13}
+                    disabled={isDeleteDisabled}
+                    className={`p-1.5 transition-colors ${
+                      isDeleteDisabled
+                        ? "text-gray-300 cursor-not-allowed bg-gray-50"
+                        : "text-gray-500 hover:text-red-600 hover:bg-red-50"
+                    }`}
                   />
                 </div>
               </div>
@@ -445,7 +459,6 @@ const SavedRouteCard = ({
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5">
 
-                    {/* ✅ Removed -mx-1 (was causing horizontal overflow). Kept hover highlight via padding only. */}
                     <div
                       className="chips-row flex items-center gap-1.5 cursor-pointer rounded px-1 py-0.5 hover:bg-purple-50 transition-colors"
                       title="Click to view & edit bookings"
@@ -470,9 +483,10 @@ const SavedRouteCard = ({
 
                     <div className="flex-1" />
 
+                    {/* FIX 3: Neutral gray toggle instead of purple — purple reserved for selection state */}
                     <button
                       onClick={(e) => { e.stopPropagation(); setIsEmployeeExpanded(!isEmployeeExpanded); }}
-                      className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 hover:bg-purple-50 px-2 py-0.5 rounded transition-colors"
+                      className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-2 py-0.5 rounded transition-colors"
                     >
                       {isEmployeeExpanded ? "Hide details" : "Show details"}
                       {isEmployeeExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}

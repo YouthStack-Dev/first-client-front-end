@@ -25,7 +25,7 @@ import BookingDetailsModal from "../modals/BookingDetailsModal";
 import { API_CLIENT } from "../../Api/API_Client";
 
 // ── Dropdown rendered at fixed screen position to escape overflow clipping ──
-const ActionMenu = ({ shift, anchorRect, onClose, onExport, onDelete, deletingShift }) => {
+const ActionMenu = ({ shift, anchorRect, onClose, onExport, onDelete, deletingShift, isPastDate }) => {
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -59,18 +59,31 @@ const ActionMenu = ({ shift, anchorRect, onClose, onExport, onDelete, deletingSh
           <FileText className="w-4 h-4" />
           Export Report
         </button>
-        <button
-          onClick={() => { onDelete(); onClose(); }}
-          disabled={deletingShift === shift.shift_id}
-          className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 disabled:opacity-50"
-        >
-          {deletingShift === shift.shift_id ? (
-            <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
-          ) : (
-            <Trash2 className="w-4 h-4" />
+
+        {/* Delete — disabled for past dates */}
+        <div className="relative group">
+          <button
+            onClick={() => { if (!isPastDate) { onDelete(); onClose(); } }}
+            disabled={deletingShift === shift.shift_id || isPastDate}
+            className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors
+              ${isPastDate
+                ? "text-gray-300 cursor-not-allowed"
+                : "text-red-600 hover:bg-red-50"
+              } disabled:opacity-50`}
+          >
+            {deletingShift === shift.shift_id ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
+            ) : (
+              <Trash2 className="w-4 h-4" />
+            )}
+            Delete Routes
+          </button>
+          {isPastDate && (
+            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+              Cannot delete routes from past
+            </div>
           )}
-          Delete Routes
-        </button>
+        </div>
       </div>
     </div>
   );
@@ -88,10 +101,19 @@ const ShiftBookingsTable = ({
   const [modalState, setModalState] = useState({
     isOpen: false,
     shiftId: null,
-    // bookings: [],
   });
   const [deletingShift, setDeletingShift] = useState(null);
   const [actionMenu, setActionMenu] = useState({ shiftId: null, anchorRect: null });
+
+  // ── true if the selected date is strictly before today (past) ──
+  const isPastDate = React.useMemo(() => {
+    if (!date) return false;
+    const selected = new Date(date);
+    selected.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return selected < today;
+  }, [date]);
 
   const shiftsData = React.useMemo(() => {
     if (!data) return [];
@@ -137,7 +159,6 @@ const ShiftBookingsTable = ({
     setModalState({
       isOpen: true,
       shiftId: shift.shift_id,
-      // bookings: shift.bookings || [],
     });
   };
 
@@ -145,7 +166,6 @@ const ShiftBookingsTable = ({
     setModalState({
       isOpen: false,
       shiftId: null,
-      // bookings: [],
     });
   };
 
@@ -171,9 +191,7 @@ const ShiftBookingsTable = ({
     if (!shift?.shift_id || !date) return;
 
     const isConfirmed = window.confirm(
-      `Delete all routes for ${
-        shift.shift_code || shift.shift_id
-      } on ${formatDate(date)}?`
+      `Delete all routes for ${shift.shift_code || shift.shift_id} on ${formatDate(date)}?`
     );
 
     if (!isConfirmed) return;
@@ -186,9 +204,7 @@ const ShiftBookingsTable = ({
           route_date: date,
         },
       });
-      alert(
-        `Routes for ${shift.shift_code || shift.shift_id} deleted successfully!`
-      );
+      alert(`Routes for ${shift.shift_code || shift.shift_id} deleted successfully!`);
       onRefresh?.();
     } catch (error) {
       alert("Failed to delete routes. Please try again.");
@@ -211,12 +227,9 @@ const ShiftBookingsTable = ({
     const unrouted = shift.stats?.unrouted_bookings || 0;
     const routed = shift.stats?.routed_bookings || 0;
 
-    if (total === 0)
-      return { color: "gray", text: "No Bookings", icon: AlertCircle };
-    if (unrouted === 0)
-      return { color: "green", text: "Complete", icon: CheckCircle };
-    if (routed > 0 && unrouted > 0)
-      return { color: "amber", text: "Partial", icon: AlertCircle };
+    if (total === 0) return { color: "gray", text: "No Bookings", icon: AlertCircle };
+    if (unrouted === 0) return { color: "green", text: "Complete", icon: CheckCircle };
+    if (routed > 0 && unrouted > 0) return { color: "amber", text: "Partial", icon: AlertCircle };
     return { color: "red", text: "Pending", icon: XCircle };
   };
 
@@ -239,9 +252,7 @@ const ShiftBookingsTable = ({
     return (
       <div className="bg-app-surface border border-app-border rounded-lg p-8 text-center">
         <Clock className="w-12 h-12 text-app-text-muted mx-auto mb-3" />
-        <h3 className="text-lg font-medium text-app-text-primary mb-2">
-          No shifts found
-        </h3>
+        <h3 className="text-lg font-medium text-app-text-primary mb-2">No shifts found</h3>
         <p className="text-app-text-secondary mb-4">
           {selectedShiftType === "All"
             ? `No shifts for ${formatDate(date)}`
@@ -266,35 +277,24 @@ const ShiftBookingsTable = ({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         <div className="bg-app-tertiary rounded-lg p-4">
           <p className="text-sm text-app-text-secondary mb-1">Shifts</p>
-          <p className="text-xl font-semibold text-app-text-primary">
-            {safeData.length}
-          </p>
+          <p className="text-xl font-semibold text-app-text-primary">{safeData.length}</p>
         </div>
         <div className="bg-app-tertiary rounded-lg p-4">
           <p className="text-sm text-app-text-secondary mb-1">Bookings</p>
           <p className="text-xl font-semibold text-app-text-primary">
-            {safeData.reduce(
-              (sum, shift) => sum + (shift.stats?.total_bookings || 0),
-              0
-            )}
+            {safeData.reduce((sum, shift) => sum + (shift.stats?.total_bookings || 0), 0)}
           </p>
         </div>
         <div className="bg-app-tertiary rounded-lg p-4">
           <p className="text-sm text-app-text-secondary mb-1">Unrouted</p>
           <p className="text-xl font-semibold text-amber-600">
-            {safeData.reduce(
-              (sum, shift) => sum + (shift.stats?.unrouted_bookings || 0),
-              0
-            )}
+            {safeData.reduce((sum, shift) => sum + (shift.stats?.unrouted_bookings || 0), 0)}
           </p>
         </div>
         <div className="bg-app-tertiary rounded-lg p-4">
           <p className="text-sm text-app-text-secondary mb-1">Drivers</p>
           <p className="text-xl font-semibold text-app-text-primary">
-            {safeData.reduce(
-              (sum, shift) => sum + (shift.stats?.driver_assigned || 0),
-              0
-            )}
+            {safeData.reduce((sum, shift) => sum + (shift.stats?.driver_assigned || 0), 0)}
           </p>
         </div>
       </div>
@@ -303,11 +303,12 @@ const ShiftBookingsTable = ({
       <div className="bg-app-surface rounded-lg border border-app-border">
         <div className="px-4 py-3 border-b border-app-border flex justify-between items-center">
           <div>
-            <h3 className="font-medium text-app-text-primary">
-              Shift Management
-            </h3>
+            <h3 className="font-medium text-app-text-primary">Shift Management</h3>
             <p className="text-sm text-app-text-secondary">
               {formatDate(date)} • {selectedShiftType} Shifts
+              {isPastDate && (
+                <span className="ml-2 text-xs text-amber-600 font-medium">· Past date — delete disabled</span>
+              )}
             </p>
           </div>
           {onRefresh && (
@@ -320,36 +321,19 @@ const ShiftBookingsTable = ({
           )}
         </div>
 
-        {/* ✅ overflow-x-auto added here — this is the fix */}
         <div className="overflow-x-auto">
           <div className="min-w-[1000px]">
             <table className="w-full">
               <thead className="bg-app-tertiary/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">
-                    Shift Code
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">
-                    Time & Type
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">
-                    Bookings
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">
-                    Routes
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">
-                    Drivers
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">
-                    Vendors
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">
-                    Actions
-                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">Shift Code</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">Time & Type</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">Bookings</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">Routes</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">Drivers</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">Vendors</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-app-text-secondary">Actions</th>
                 </tr>
               </thead>
 
@@ -358,164 +342,97 @@ const ShiftBookingsTable = ({
                   const status = getShiftStatus(shift);
                   const StatusIcon = status.icon;
                   const completionRate = shift.stats?.total_bookings
-                    ? Math.round(
-                        ((shift.stats?.routed_bookings || 0) /
-                          shift.stats.total_bookings) *
-                          100
-                      )
+                    ? Math.round(((shift.stats?.routed_bookings || 0) / shift.stats.total_bookings) * 100)
                     : 0;
 
                   return (
-                    <tr
-                      key={shift.shift_id || index}
-                      className="hover:bg-app-tertiary/30"
-                    >
-                      {/* Shift Code Column */}
+                    <tr key={shift.shift_id || index} className="hover:bg-app-tertiary/30">
                       <td className="px-4 py-3">
-                        <div className="font-medium text-app-text-primary">
-                          {shift.shift_code || shift.shift_id}
-                        </div>
-                        <div className="text-xs text-app-text-secondary mt-1">
-                          ID: {shift.shift_id}
-                        </div>
+                        <div className="font-medium text-app-text-primary">{shift.shift_code || shift.shift_id}</div>
+                        <div className="text-xs text-app-text-secondary mt-1">ID: {shift.shift_id}</div>
                       </td>
 
-                      {/* Time & Type Column */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4 text-app-text-secondary" />
-                          <span className="font-medium text-app-text-primary">
-                            {formatTime(shift.shift_time)}
-                          </span>
+                          <span className="font-medium text-app-text-primary">{formatTime(shift.shift_time)}</span>
                         </div>
                         <div className="mt-1">
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full font-medium ${
-                              shift.log_type === "IN"
-                                ? "bg-green-50 text-green-700 border border-green-200"
-                                : "bg-blue-50 text-blue-700 border border-blue-200"
-                            }`}
-                          >
+                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                            shift.log_type === "IN"
+                              ? "bg-green-50 text-green-700 border border-green-200"
+                              : "bg-blue-50 text-blue-700 border border-blue-200"
+                          }`}>
                             {shift.log_type}
                           </span>
                         </div>
                       </td>
 
-                      {/* Bookings Column */}
                       <td className="px-4 py-3">
-                        <button
-                          onClick={() => handleTotalClick(shift)}
-                          className="text-left hover:text-app-primary transition-colors w-full"
-                        >
-                          <div className="text-lg font-semibold text-app-text-primary">
-                            {shift.stats?.total_bookings || 0}
-                          </div>
-                          <div className="text-xs text-app-text-secondary">
-                            Total Bookings
-                          </div>
-                          <div className="text-xs text-amber-600 mt-1">
-                            {shift.stats?.unrouted_bookings || 0} unrouted
-                          </div>
+                        <button onClick={() => handleTotalClick(shift)} className="text-left hover:text-app-primary transition-colors w-full">
+                          <div className="text-lg font-semibold text-app-text-primary">{shift.stats?.total_bookings || 0}</div>
+                          <div className="text-xs text-app-text-secondary">Total Bookings</div>
+                          <div className="text-xs text-amber-600 mt-1">{shift.stats?.unrouted_bookings || 0} unrouted</div>
                         </button>
                       </td>
 
-                      {/* Routes Column */}
                       <td className="px-4 py-3">
-                        <div className="text-lg font-semibold text-app-text-primary">
-                          {shift.stats?.routed_bookings || 0}
-                        </div>
-                        <div className="text-xs text-app-text-secondary">
-                          Routed
-                        </div>
+                        <div className="text-lg font-semibold text-app-text-primary">{shift.stats?.routed_bookings || 0}</div>
+                        <div className="text-xs text-app-text-secondary">Routed</div>
                         {shift.stats?.total_bookings > 0 && (
                           <div className="mt-2">
-                            <div className="text-xs text-app-text-secondary mb-1">
-                              {completionRate}% complete
-                            </div>
+                            <div className="text-xs text-app-text-secondary mb-1">{completionRate}% complete</div>
                             <div className="w-full bg-gray-200 rounded-full h-1.5">
-                              <div
-                                className="bg-app-primary h-1.5 rounded-full"
-                                style={{ width: `${completionRate}%` }}
-                              />
+                              <div className="bg-app-primary h-1.5 rounded-full" style={{ width: `${completionRate}%` }} />
                             </div>
                           </div>
                         )}
                       </td>
 
-                      {/* Drivers Column */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <Car className="w-4 h-4 text-app-text-secondary" />
                           <div>
-                            <div className="font-medium text-app-text-primary">
-                              {shift.stats?.driver_assigned || 0}
-                            </div>
-                            <div className="text-xs text-app-text-secondary">
-                              Assigned
-                            </div>
+                            <div className="font-medium text-app-text-primary">{shift.stats?.driver_assigned || 0}</div>
+                            <div className="text-xs text-app-text-secondary">Assigned</div>
                           </div>
                         </div>
                         {shift.stats?.driver_available !== undefined && (
-                          <div className="text-xs text-app-text-secondary mt-1">
-                            {shift.stats.driver_available} available
-                          </div>
+                          <div className="text-xs text-app-text-secondary mt-1">{shift.stats.driver_available} available</div>
                         )}
                       </td>
 
-                      {/* Vendors Column */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <Building className="w-4 h-4 text-app-text-secondary" />
                           <div>
-                            <div className="font-medium text-app-text-primary">
-                              {shift.stats?.vendor_assigned || 0}
-                            </div>
-                            <div className="text-xs text-app-text-secondary">
-                              Assigned
-                            </div>
+                            <div className="font-medium text-app-text-primary">{shift.stats?.vendor_assigned || 0}</div>
+                            <div className="text-xs text-app-text-secondary">Assigned</div>
                           </div>
                         </div>
                         {shift.stats?.vendor_available !== undefined && (
-                          <div className="text-xs text-app-text-secondary mt-1">
-                            {shift.stats.vendor_available} available
-                          </div>
+                          <div className="text-xs text-app-text-secondary mt-1">{shift.stats.vendor_available} available</div>
                         )}
                       </td>
 
-                      {/* Status Column */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <StatusIcon
-                            className={`w-4 h-4 ${
-                              status.color === "green"
-                                ? "text-green-500"
-                                : status.color === "amber"
-                                ? "text-amber-500"
-                                : status.color === "red"
-                                ? "text-red-500"
-                                : "text-gray-400"
-                            }`}
-                          />
-                          <span
-                            className={`text-sm font-medium ${
-                              status.color === "green"
-                                ? "text-green-700"
-                                : status.color === "amber"
-                                ? "text-amber-700"
-                                : status.color === "red"
-                                ? "text-red-700"
-                                : "text-gray-500"
-                            }`}
-                          >
+                          <StatusIcon className={`w-4 h-4 ${
+                            status.color === "green" ? "text-green-500" :
+                            status.color === "amber" ? "text-amber-500" :
+                            status.color === "red" ? "text-red-500" : "text-gray-400"
+                          }`} />
+                          <span className={`text-sm font-medium ${
+                            status.color === "green" ? "text-green-700" :
+                            status.color === "amber" ? "text-amber-700" :
+                            status.color === "red" ? "text-red-700" : "text-gray-500"
+                          }`}>
                             {status.text}
                           </span>
                         </div>
-                        <div className="text-xs text-app-text-secondary mt-1">
-                          {shift.stats?.vehicle_assigned || 0} vehicles
-                        </div>
+                        <div className="text-xs text-app-text-secondary mt-1">{shift.stats?.vehicle_assigned || 0} vehicles</div>
                       </td>
 
-                      {/* Actions Column */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
                           <button
@@ -572,20 +489,16 @@ const ShiftBookingsTable = ({
           </div>
         </div>
 
-        {/* Footer */}
         <div className="px-4 py-3 border-t border-app-border text-sm text-app-text-secondary flex justify-between items-center">
           <span>{safeData.length} shifts</span>
-          <button
-            onClick={() => {}}
-            className="inline-flex items-center gap-2 text-app-text-secondary hover:text-app-text-primary"
-          >
+          <button onClick={() => {}} className="inline-flex items-center gap-2 text-app-text-secondary hover:text-app-text-primary">
             <Download className="w-4 h-4" />
             Export
           </button>
         </div>
       </div>
 
-      {/* Dropdown portal — rendered outside table to avoid overflow clipping */}
+      {/* Dropdown portal */}
       {actionMenu.shiftId && activeShift && (
         <ActionMenu
           shift={activeShift}
@@ -594,14 +507,13 @@ const ShiftBookingsTable = ({
           onExport={() => {}}
           onDelete={() => handleShiftRoutesDelete(activeShift)}
           deletingShift={deletingShift}
+          isPastDate={isPastDate}
         />
       )}
 
       <BookingDetailsModal
         isOpen={modalState.isOpen}
         onClose={closeModal}
-        // shift={modalState.shift}
-        // bookings={modalState.bookings}
         shift={activeModalShift}
         bookings={activeModalShift?.bookings || []}
       />

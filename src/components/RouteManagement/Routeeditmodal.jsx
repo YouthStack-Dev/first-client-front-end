@@ -12,8 +12,8 @@ const DraggableBookingRow = ({
   onTimeChange, onDropTimeChange,
   isSelected, isDeleteDisabled,
   onBookingClick, onRemoveFromRoute,
-  originalOrder, // NEW: to show order change indicator
-}) => {
+  originalOrder, 
+  }) => {
   const hasOrderChanged = originalOrder !== undefined && originalOrder !== index;
   
   return (
