@@ -11,9 +11,7 @@ export const getAlertConfigThunk = createAsyncThunk(
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data || {
-          message: "Failed to fetch alert config",
-        }
+        error.response?.data || { message: "Failed to fetch alert config" }
       );
     }
   }
@@ -24,16 +22,11 @@ export const createAlertConfigThunk = createAsyncThunk(
   async ({ payload }, { rejectWithValue }) => {
     try {
       const response = await API_CLIENT.post("alert-config", payload);
-
       logDebug("alert config created", response.data);
-
-      // return created config object
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data || {
-          message: "Failed to create alert config",
-        }
+        error.response?.data || { message: "Failed to create alert config" }
       );
     }
   }
@@ -48,21 +41,18 @@ export const updateAlertConfigThunk = createAsyncThunk(
         payload,
         { headers }
       );
-
       logDebug("alert config updated", response.data);
-
-      // return updated config object
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data || {
-          message: "Failed to update alert config",
-        }
+        error.response?.data || { message: "Failed to update alert config" }
       );
     }
   }
 );
 
+// PUT /api/v1/alerts/{alert_id}/acknowledge
+// Body: { notes, acknowledged_by }
 export const acknowledgeAlertConfigThunk = createAsyncThunk(
   "alertconfig/acknowledge",
   async ({ alertId, payload = {} }, { rejectWithValue }) => {
@@ -71,66 +61,55 @@ export const acknowledgeAlertConfigThunk = createAsyncThunk(
         `/alerts/${alertId}/acknowledge`,
         payload
       );
-      logDebug("alert config acknowledged", response.data);
-      // return updated config object
+      logDebug("alert acknowledged", response.data);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data || {
-          message: "Failed to acknowledge alert config",
-        }
+        error.response?.data || { message: "Failed to acknowledge alert" }
       );
     }
   }
 );
+
 
 export const escalateAlertConfigThunk = createAsyncThunk(
   "alertconfig/escalate",
   async ({ alertId, payload = {} }, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.post(
-        `/alerts/${alertId}/escalate`,
-        payload
-      );
-
-      logDebug("alert config escalated", response.data);
-
-      // return updated config object
+      // Only send fields the API expects
+      const { escalation_level, escalated_to, reason } = payload;
+      const response = await API_CLIENT.post(`/alerts/${alertId}/escalate`, {
+        escalation_level,
+        escalated_to,
+        reason,
+        escalated_by
+      });
+      logDebug("alert escalated", response.data);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data || {
-          message: "Failed to escalate alert config",
-        }
+        error.response?.data || { message: "Failed to escalate alert" }
       );
     }
   }
 );
 
+// PUT /api/v1/alerts/{alert_id}/close
+// Body: { resolution_notes, is_false_alarm }
 export const closeAlertThunk = createAsyncThunk(
   "alertconfig/close",
-  async (
-    { alertId, closedBy, resolutionNotes, closureNotes, isFalseAlarm },
-    { rejectWithValue }
-  ) => {
+  async ({ alertId, resolution_notes, is_false_alarm = false, closed_by }, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.put(
-        `/alerts/${alertId}/close`,
-        {
-          closed_by: closedBy,
-          closure_notes: closureNotes,
-          is_false_alarm: isFalseAlarm,
-          resolution_notes: resolutionNotes,
-        }
-      );
-
+      const response = await API_CLIENT.put(`/alerts/${alertId}/close`, {
+        resolution_notes,
+        is_false_alarm,
+        closed_by,  // ← added
+      });
       logDebug("alert closed", response.data);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data || {
-          message: "Failed to close alert",
-        }
+        error.response?.data || { message: "Failed to close alert" }
       );
     }
   }
