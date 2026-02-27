@@ -2,16 +2,22 @@
 import { useState, useEffect, useCallback } from "react";
 import { subscribeToDriverLocation } from "../utils/firebaseLocationUtils";
 
-export const useDriverLocations = (trackedDriverIds = []) => {
+// trackedDrivers = [{ driverId: 19, vendorId: 9 }, ...]
+export const useDriverLocations = (trackedDrivers = []) => {
   const [driverLocations, setDriverLocations] = useState({});
   const [loadingLocations, setLoadingLocations] = useState({});
   const [locationErrors, setLocationErrors] = useState({});
 
+  // ── Stable string key — prevents re-subscribing on every render ────────────
+  // Sort by driverId so array order changes don't trigger re-subscribe
+  const driversKey = JSON.stringify(
+    [...trackedDrivers].sort((a, b) =>
+      String(a.driverId).localeCompare(String(b.driverId))
+    )
+  );
+
   const handleLocationUpdate = useCallback((driverId, location) => {
-    setDriverLocations((prev) => ({
-      ...prev,
-      [driverId]: location,
-    }));
+    setDriverLocations((prev) => ({ ...prev, [driverId]: location }));
     setLoadingLocations((prev) => ({ ...prev, [driverId]: false }));
     setLocationErrors((prev) => ({ ...prev, [driverId]: null }));
   }, []);
@@ -22,14 +28,18 @@ export const useDriverLocations = (trackedDriverIds = []) => {
   }, []);
 
   useEffect(() => {
+    const drivers = JSON.parse(driversKey);
+    if (!drivers.length) return;
+
     const unsubscribes = [];
 
-    trackedDriverIds.forEach((driverId) => {
-      if (driverId) {
+    drivers.forEach(({ driverId, vendorId }) => {
+      if (driverId && vendorId) {
         setLoadingLocations((prev) => ({ ...prev, [driverId]: true }));
 
         const unsubscribe = subscribeToDriverLocation(
           driverId,
+          vendorId,
           handleLocationUpdate,
           handleLocationError
         );
@@ -38,14 +48,10 @@ export const useDriverLocations = (trackedDriverIds = []) => {
       }
     });
 
-    return () => {
-      unsubscribes.forEach((unsubscribe) => unsubscribe());
-    };
-  }, [trackedDriverIds, handleLocationUpdate, handleLocationError]);
+    return () => unsubscribes.forEach((u) => u());
 
-  return {
-    driverLocations,
-    loadingLocations,
-    locationErrors,
-  };
+  // driversKey is a stable string — only re-runs when drivers actually change
+  }, [driversKey, handleLocationUpdate, handleLocationError]);
+
+  return { driverLocations, loadingLocations, locationErrors };
 };
