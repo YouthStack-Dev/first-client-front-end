@@ -4,9 +4,6 @@ import { X, AlertCircle } from "lucide-react";
 const BulkUploadErrorModal = ({ isOpen, onClose, errors }) => {
   const modalRef = useRef(null);
 
-  /* ===============================
-     ESCAPE KEY & BODY SCROLL LOCK
-  ================================ */
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === "Escape") onClose();
@@ -24,20 +21,12 @@ const BulkUploadErrorModal = ({ isOpen, onClose, errors }) => {
     };
   }, [isOpen, onClose]);
 
-  /* ===============================
-     CLICK OUTSIDE TO CLOSE
-  ================================ */
   const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+    if (e.target === e.currentTarget) onClose();
   };
 
   if (!isOpen) return null;
 
-  /* ===============================
-     EMPTY STATE
-  ================================ */
   if (!errors || errors.length === 0) {
     return (
       <div
@@ -67,6 +56,28 @@ const BulkUploadErrorModal = ({ isOpen, onClose, errors }) => {
     );
   }
 
+  // ── Helper: parse pydantic error string into readable lines ───────────────
+  // API sends: "1 validation error for EmployeeCreate\npassword\n  Value error..."
+  // We strip boilerplate and show only the field name + error message
+  const parseErrorString = (errorStr) => {
+    if (!errorStr) return ["Unknown error"];
+    if (typeof errorStr !== "string") return [String(errorStr)];
+
+    const lines = errorStr
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(
+        (l) =>
+          l &&
+          !l.startsWith("1 validation error") &&
+          !l.startsWith("For further") &&
+          !l.includes("pydantic.dev") &&
+          !l.includes("errors.pydantic")
+      );
+
+    return lines.length > 0 ? lines : [errorStr];
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
@@ -84,7 +95,8 @@ const BulkUploadErrorModal = ({ isOpen, onClose, errors }) => {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0">
           <h3 id="modal-title" className="font-semibold text-lg">
-            Bulk Upload Errors ({errors.length} {errors.length === 1 ? "row" : "rows"})
+            Bulk Upload Errors ({errors.length}{" "}
+            {errors.length === 1 ? "row" : "rows"} failed)
           </h3>
           <button
             onClick={onClose}
@@ -95,13 +107,13 @@ const BulkUploadErrorModal = ({ isOpen, onClose, errors }) => {
           </button>
         </div>
 
-        {/* Body - Scrollable */}
+        {/* Body */}
         <div className="overflow-auto p-4 flex-1">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm border-collapse">
               <thead className="bg-gray-100 sticky top-0 z-10">
                 <tr>
-                  <th className="px-3 py-2 text-left font-semibold border-b-2 border-gray-300">
+                  <th className="px-3 py-2 text-left font-semibold border-b-2 border-gray-300 w-16">
                     Row
                   </th>
                   <th className="px-3 py-2 text-left font-semibold border-b-2 border-gray-300">
@@ -111,53 +123,53 @@ const BulkUploadErrorModal = ({ isOpen, onClose, errors }) => {
                     Email
                   </th>
                   <th className="px-3 py-2 text-left font-semibold border-b-2 border-gray-300">
-                    Errors
+                    Error
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {errors.map((err, idx) => (
-                  <tr
-                    key={idx}
-                    className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-3 py-3 align-top font-medium text-gray-700">
-                      {err.row || idx + 1}
-                    </td>
-                    <td className="px-3 py-3 align-top">
-                      {err.employee_name || "-"}
-                    </td>
-                    <td className="px-3 py-3 align-top">
-                      {err.email || "-"}
-                    </td>
-                    <td className="px-3 py-3 align-top">
-                      {err.errors && err.errors.length > 0 ? (
+                {errors.map((err, idx) => {
+                  const errorLines = parseErrorString(err.error);
+
+                  return (
+                    <tr
+                      key={idx}
+                      className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-3 py-3 align-top font-medium text-gray-700">
+                        {err.row || idx + 1}
+                      </td>
+                      <td className="px-3 py-3 align-top text-gray-800">
+                        {err.name || "-"}
+                      </td>
+                      <td className="px-3 py-3 align-top text-gray-600">
+                        {err.email || "-"}
+                      </td>
+                      <td className="px-3 py-3 align-top">
                         <ul className="list-disc pl-4 space-y-1 text-red-600">
-                          {err.errors.map((msg, i) => (
+                          {errorLines.map((line, i) => (
                             <li key={i} className="leading-relaxed">
-                              {msg}
+                              {line}
                             </li>
                           ))}
                         </ul>
-                      ) : (
-                        <span className="text-gray-400 italic">No errors</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
-          {/* Info Footer inside scrollable area */}
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
             <p>
-              <strong>Tip:</strong> Fix the errors in your Excel file and try uploading again.
+              <strong>Tip:</strong> Fix the errors in your Excel file and try
+              uploading again.
             </p>
           </div>
         </div>
 
-        {/* Footer - Fixed */}
+        {/* Footer */}
         <div className="flex justify-between items-center px-4 py-3 border-t flex-shrink-0 bg-gray-50">
           <p className="text-sm text-gray-600">
             Please correct the errors and re-upload

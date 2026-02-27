@@ -282,9 +282,6 @@ const VendorRouteManagement = () => {
                           </span>
                         </div>
 
-                        {/* ✅ CHANGE: Removed max-h-96 + overflow-y-auto from this inner div.
-                             This was causing scroll-within-scroll which felt broken.
-                             The whole sidebar scrolls now — standard, clean UX. */}
                         <div className="p-3 space-y-2">
                           {routes.length === 0 ? (
                             <p className="text-center py-4 text-sm text-gray-400">

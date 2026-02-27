@@ -23,26 +23,18 @@ const Layout = ({ type }) => {
     setMounted(true);
   }, []);
 
-  // Handle outside click to close sidebar on mobile - FIXED VERSION
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Only handle mobile clicks when sidebar is open
       if (window.innerWidth < 1024 && sidebarOpen) {
-        // Check if click is outside both sidebar and the toggle button
         const isSidebarClick = sidebarRef.current?.contains(event.target);
-        const isToggleButtonClick = event.target.closest(
-          "[data-sidebar-toggle]"
-        );
-
+        const isToggleButtonClick = event.target.closest("[data-sidebar-toggle]");
         if (!isSidebarClick && !isToggleButtonClick) {
           setSidebarOpen(false);
         }
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("touchstart", handleClickOutside);
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("touchstart", handleClickOutside);
@@ -61,7 +53,6 @@ const Layout = ({ type }) => {
 
   const title = getTitleFromPath(location.pathname);
 
-  // Loading and authentication states - MUST be after all hooks
   if (authLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -77,6 +68,7 @@ const Layout = ({ type }) => {
       </div>
     );
   }
+
   if (type !== user.type) {
     return <Unauthorized />;
   }
@@ -102,12 +94,12 @@ const Layout = ({ type }) => {
           sidebarOpen ? "lg:ml-64" : "lg:ml-16"
         }`}
       >
-        {/* Header */}
+        {/* Header — fixed at top */}
         <Header toggleSidebar={toggleSidebar} title={title} />
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto pt-16 pb-6">
-          <div className="w-full mx-auto">
+        {/* ✅ Main content — pt-16 offsets fixed header, flex-col + min-h-0 so children can use h-full */}
+        <main className="flex-1 flex flex-col min-h-0 pt-16 overflow-hidden">
+          <div className="flex-1 min-h-0 w-full mx-auto overflow-y-auto">
             <Outlet />
           </div>
         </main>
@@ -118,7 +110,7 @@ const Layout = ({ type }) => {
         <div
           className="fixed inset-0 z-10 bg-gray-600 opacity-75 lg:hidden"
           onClick={closeSidebar}
-        ></div>
+        />
       )}
     </div>
   );

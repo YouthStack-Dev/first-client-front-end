@@ -3,66 +3,75 @@ import { ref, onValue, off } from "firebase/database";
 import { database } from "./firebase";
 import { logDebug } from "./logger";
 
-/**
- * Subscribe to real-time location updates for a driver
- * @param {string} driverId - The driver's unique ID
- * @param {function} onUpdate - Callback when location updates
- * @param {function} onError - Callback for errors
- * @returns {function} Unsubscribe function
- */
+// ── FIX: Read tenant INSIDE function, not at module load time ─────────────────
+// Old code ran at import time = before login = always got "default_tenant"
+// Now reads fresh localStorage every time a subscription is created
+const getTenantId = () => {
+  const tenant = JSON.parse(localStorage.getItem("tenant") || "null");
+  return tenant?.tenant_id || "default_tenant";
+};
 
-const tenant = JSON.parse(localStorage.getItem("tenant"));
-logDebug("Firebase Tenant:", tenant?.tenant_id);
-const tenant_id = tenant?.tenant_id || "default_tenant";
-const vendor = 1; // You can modify this as needed
-export const subscribeToDriverLocation = (driverId, onUpdate, onError) => {
-  const driverLocationRef = ref(
-    database,
-    `drivers/${tenant_id}/${vendor}/${driverId}`
-  );
-  logDebug(
-    " the firebase path is :",
-    "drivers/" + tenant_id + "/" + vendor + "/" + driverId
-  );
+// vendorId is passed dynamically from route.vendor.id — no hardcoding
+export const subscribeToDriverLocation = (driverId, vendorId, onUpdate, onError) => {
+  const tenant_id = getTenantId(); // ← fresh read every subscription
+
+  if (!vendorId) {
+    logDebug(`❌ No vendorId provided for driver ${driverId} — cannot subscribe`);
+    onError?.(driverId, "Missing vendor ID");
+    return () => {};
+  }
+
+  const path = `drivers/${tenant_id}/${vendorId}/${driverId}`;
+  const driverLocationRef = ref(database, path);
+
+  logDebug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  logDebug("📡 Subscribing to Firebase path:", path);
+  logDebug("📡 driverId:", driverId, "| vendorId:", vendorId, "| tenant:", tenant_id);
+  logDebug("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
   const unsubscribe = onValue(
     driverLocationRef,
     (snapshot) => {
-      logDebug("Firebase snapshot received for driver:", snapshot);
+      logDebug("📥 Snapshot for driver:", driverId, "| exists:", snapshot.exists());
+      logDebug("📥 val:", JSON.stringify(snapshot.val(), null, 2));
+
       if (snapshot.exists()) {
         const locationData = snapshot.val();
         const parsedLocation = parseLocationData(locationData, driverId);
-        logDebug(" This is the parsed location data: ", parsedLocation);
 
-        logDebug(" This is the parsed location data: ", parsedLocation);
         if (parsedLocation) {
+          logDebug("✅ Location updated for driver:", driverId, parsedLocation);
           onUpdate(driverId, parsedLocation);
         } else {
+          logDebug("❌ Invalid coordinates for driver:", driverId);
           onError?.(driverId, "Invalid coordinates");
         }
       } else {
-        logDebug(`No location data for driver ${driverId}`);
+        logDebug(`❌ No data at path: ${path}`);
         onError?.(driverId, "Location not available");
       }
     },
     (error) => {
-      console.error(`Firebase error for driver ${driverId}:`, error);
+      console.error(`🔥 Firebase ERROR for driver ${driverId}:`, error.message);
       onError?.(driverId, "Failed to fetch location");
     }
   );
 
-  return () => off(driverLocationRef, "value", unsubscribe);
+  return () => {
+    logDebug("🔌 Unsubscribing from path:", path);
+    off(driverLocationRef, "value", unsubscribe);
+  };
 };
 
-/**
- * Parse and validate location data from Firebase
- */
 export const parseLocationData = (locationData, driverId) => {
-  const lat = locationData.latitude || locationData.lat;
-  const lng =
-    locationData.longitude ||
-    locationData.lng ||
-    locationData.lon ||
-    locationData.long;
+  const data =
+    locationData.location ||
+    locationData.coords ||
+    locationData.coordinates ||
+    locationData;
+
+  const lat = data.latitude ?? data.lat;
+  const lng = data.longitude ?? data.lng ?? data.lon ?? data.long;
 
   const latNum = parseFloat(lat);
   const lngNum = parseFloat(lng);
@@ -71,21 +80,17 @@ export const parseLocationData = (locationData, driverId) => {
     return {
       lat: latNum,
       lng: lngNum,
-      timestamp: locationData.timestamp || Date.now(),
+      timestamp: data.timestamp || locationData.timestamp || Date.now(),
     };
   }
 
-  console.warn(`Invalid coordinates for ${driverId}:`, { lat, lng });
+  console.warn(`⚠️ Invalid coordinates for driver ${driverId}:`, { lat, lng });
   return null;
 };
 
-/**
- * Subscribe to multiple drivers at once
- */
-export const subscribeToMultipleDrivers = (driverIds, onUpdate, onError) => {
-  const unsubscribes = driverIds.map((driverId) =>
-    subscribeToDriverLocation(driverId, onUpdate, onError)
+export const subscribeToMultipleDrivers = (drivers, onUpdate, onError) => {
+  const unsubscribes = drivers.map(({ driverId, vendorId }) =>
+    subscribeToDriverLocation(driverId, vendorId, onUpdate, onError)
   );
-
-  return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
+  return () => unsubscribes.forEach((u) => u());
 };

@@ -14,9 +14,6 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
   const dispatch = useDispatch();
   const fileInputRef = useRef(null);
 
-  /* ===============================
-     REDUX STATE
-  ================================ */
   const { loading, result, error } = useSelector(
     (state) => state.employeeBulk.bulkUpload
   );
@@ -30,52 +27,43 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
   ================================ */
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-    
-    // Edge case 1: No file selected (user canceled)
     if (!selectedFile) return;
 
-    // Edge case 2: File type validation
     if (!selectedFile.name.match(/\.(xlsx|xls)$/)) {
       toast.error("Only Excel files (.xlsx, .xls) allowed");
-      e.target.value = ""; // Reset input
+      e.target.value = "";
       return;
     }
 
-    // Edge case 3: File size validation (5MB max)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
     if (selectedFile.size > maxSize) {
       toast.error("File size must be less than 5MB");
-      e.target.value = ""; // Reset input
+      e.target.value = "";
       return;
     }
 
-    // Edge case 4: Empty file check
     if (selectedFile.size === 0) {
       toast.error("The selected file is empty");
-      e.target.value = ""; // Reset input
+      e.target.value = "";
       return;
     }
 
-    // Edge case 5: File name too long
     if (selectedFile.name.length > 255) {
       toast.error("File name is too long");
-      e.target.value = ""; // Reset input
+      e.target.value = "";
       return;
     }
 
-    // Reset previous errors and set new file
     dispatch(resetBulkUploadState());
     setFile(selectedFile);
   };
 
   /* ===============================
-     REMOVE SELECTED FILE
+     REMOVE FILE
   ================================ */
   const handleRemoveFile = () => {
     setFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
     dispatch(resetBulkUploadState());
   };
 
@@ -90,17 +78,12 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
         { responseType: "blob" }
       );
 
-      // Edge case: Empty response
-      if (!response.data) {
-        throw new Error("Empty response from server");
-      }
+      if (!response.data) throw new Error("Empty response from server");
 
       const url = window.URL.createObjectURL(response.data);
       const link = document.createElement("a");
-
       link.href = url;
       link.download = "Employee_Bulk_Upload_Template.xlsx";
-
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -109,8 +92,6 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
       toast.success("Template downloaded successfully");
     } catch (err) {
       console.error("Template download error:", err);
-      
-      // More specific error messages
       if (err.code === "ERR_NETWORK") {
         toast.error("Network error. Please check your connection.");
       } else if (err.response?.status === 404) {
@@ -124,42 +105,49 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
   };
 
   /* ===============================
-     UPLOAD FILE
+     UPLOAD
   ================================ */
   const handleUpload = () => {
     if (!file) {
       toast.error("Please select an Excel file");
       return;
     }
-
     dispatch(bulkUploadEmployees(file));
   };
 
   /* ===============================
-     SUCCESS HANDLING (FIXED - No dependency warnings)
+     SUCCESS HANDLING
+     ✅ FIX: Read failed_employees from result.data (correct API path)
+     ✅ FIX: Only close modal if there are NO row errors
+     If there are failed rows — stay open so user can click "View Errors"
   ================================ */
   useEffect(() => {
     if (result?.success === true) {
-      toast.success(
-        `Successfully uploaded ${result.count || result.uploaded_count || 0} employee(s)`
-      );
-      
-      // Clear file and reset input
-      setFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      // ✅ FIX: failed_employees lives at result.data.failed_employees
+      const failedRows = result?.data?.failed_employees || [];
+
+      if (failedRows.length === 0) {
+        // ✅ Clean success — close modal
+        toast.success(
+          `Successfully uploaded ${result?.data?.successful || 0} employee(s)`
+        );
+        setFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        dispatch(resetBulkUploadState());
+        if (onSuccess) onSuccess();
+        if (onClose) onClose();
+      } else {
+        // ✅ Partial success — stay open, let user click "View Errors"
+        toast.warning(
+          `${failedRows.length} row(s) failed. Check errors before re-uploading.`
+        );
+        // Do NOT call onClose() — modal stays open
       }
-      
-      dispatch(resetBulkUploadState());
-      
-      // Call callbacks if they exist
-      if (onSuccess) onSuccess();
-      if (onClose) onClose();
     }
   }, [result, dispatch, onSuccess, onClose]);
 
   /* ===============================
-     CLEANUP ON MODAL CLOSE
+     CLOSE HANDLER
   ================================ */
   const handleClose = () => {
     handleRemoveFile();
@@ -169,8 +157,9 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
 
   /* ===============================
      ERROR EXTRACTION
+     ✅ FIX: Read failed_employees from result.data (correct API path)
   ================================ */
-  const failedEmployees = error?.detail?.details?.failed_employees || [];
+  const failedEmployees = result?.data?.failed_employees || [];
   const hasRowErrors = failedEmployees.length > 0;
 
   return (
@@ -207,7 +196,6 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
             <span className="text-xs text-gray-500 mt-2">
               .xlsx / .xls | Max 5MB | Max 500 rows
             </span>
-
             <input
               ref={fileInputRef}
               type="file"
@@ -218,7 +206,6 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
             />
           </label>
 
-          {/* Remove File Button */}
           {file && !loading && (
             <button
               onClick={handleRemoveFile}
@@ -230,7 +217,7 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
           )}
         </div>
 
-        {/* 🔴 API ERROR (NO ROW ERRORS) */}
+        {/* API ERROR (no row errors) */}
         {error && !hasRowErrors && (
           <div className="bg-red-50 border border-red-200 rounded p-3">
             <p className="text-sm font-medium text-red-700">Upload Failed</p>
@@ -240,17 +227,15 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
           </div>
         )}
 
-        {/* 🟡 VALIDATION ERROR SUMMARY */}
+        {/* PARTIAL SUCCESS SUMMARY — stays visible, user clicks to view errors */}
         {hasRowErrors && (
           <div className="bg-yellow-50 border border-yellow-300 p-3 rounded flex items-center justify-between">
             <p className="text-sm text-yellow-800 font-medium">
-              {error?.message ||
-                `${failedEmployees.length} row(s) have validation errors. Please review them.`}
+              {`${result?.data?.successful || 0} uploaded successfully. ${failedEmployees.length} row(s) have validation errors.`}
             </p>
-
             <button
               onClick={() => setShowErrorModal(true)}
-              className="text-sm text-blue-600 underline font-medium hover:text-blue-800"
+              className="text-sm text-blue-600 underline font-medium hover:text-blue-800 ml-4 flex-shrink-0"
             >
               View Errors
             </button>
@@ -288,7 +273,7 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
           </button>
         </div>
 
-        {/* 🔍 ERROR DETAILS MODAL */}
+        {/* ERROR DETAILS MODAL — only opens when user clicks "View Errors" */}
         <BulkUploadErrorModal
           isOpen={showErrorModal}
           onClose={() => setShowErrorModal(false)}
