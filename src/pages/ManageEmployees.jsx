@@ -22,6 +22,7 @@ import EmployeeList from "@components/departments/EmployeeList";
 import endpoint from "../Api/Endpoints";
 import AuditLogsModal from "../components/modals/AuditLogsModal";
 import ReusableButton from "../components/ui/ReusableButton";
+import BulkUploadEmployeesSection from "../components/departments/BulkUploadEmployeesSection";
 
 const ManageEmployees = () => {
   const [loading, setLoading] = useState(true);
@@ -36,12 +37,19 @@ const ManageEmployees = () => {
   // Get department info from location state with safe fallback
   const { depname, memberCount } = location.state || {};
 
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
+
+
   const navigate = useNavigate();
   const { depId } = useParams();
   const dispatch = useDispatch();
 
+  //   console.log("Full URL path:", location.pathname);
+  // console.log("Query params:", location.search);
+
   const isActive = searchParams.get("active");
   const tenantId = searchParams.get("tenantId");
+
   const targetIsActive = isActive === "true";
 
   // Get department cache and employees from Redux store
@@ -94,8 +102,7 @@ const ManageEmployees = () => {
     } else {
       setLoading(false);
       logDebug(
-        `Using cached ${
-          targetIsActive ? "active" : "inactive"
+        `Using cached ${targetIsActive ? "active" : "inactive"
         } employees for department ${depId}`
       );
     }
@@ -118,8 +125,7 @@ const ManageEmployees = () => {
       const employees = response.data.data.items;
 
       logDebug(
-        `Fetched ${employees.length} ${
-          targetIsActive ? "active" : "inactive"
+        `Fetched ${employees.length} ${targetIsActive ? "active" : "inactive"
         } employees for department:`,
         depId
       );
@@ -133,8 +139,7 @@ const ManageEmployees = () => {
       );
 
       toast.success(
-        `${
-          targetIsActive ? "Active" : "Inactive"
+        `${targetIsActive ? "Active" : "Inactive"
         } employees loaded successfully`
       );
     } catch (err) {
@@ -145,6 +150,12 @@ const ManageEmployees = () => {
       setLoading(false);
     }
   };
+
+  const handleBulkUploadSuccess = () => {
+    setShowBulkUpload(false);
+    fetchEmployeesByDepartment();
+  };
+
 
   const handleCheckboxChange = (id) => {
     setSelectedEmployeeIds((prev) =>
@@ -300,9 +311,30 @@ const ManageEmployees = () => {
               onClick={handleHistoryClick}
               className="text-white bg-blue-600 p-2 rounded-md"
             />
+
+            <ReusableButton
+              module="employee"
+              action="create"
+              buttonName="Bulk Upload"
+              icon={Plus}
+              title="Bulk Upload Employees"
+              onClick={() => setShowBulkUpload((prev) => !prev)}
+              className="text-white bg-green-600 p-2 rounded-md"
+            />
+
+
           </div>
         }
       />
+
+      <BulkUploadEmployeesSection
+        isOpen={showBulkUpload}
+        onClose={() => setShowBulkUpload(false)}
+        teamId={depId}
+        onSuccess={handleBulkUploadSuccess}
+      />
+
+
 
       <EmployeeList
         onStatusChange={handleStatusChange}

@@ -63,6 +63,7 @@ const UnroutedBookingsSection = ({
 // Separate component for individual booking card
 const UnroutedBookingCard = ({ booking, isSelected, onSelect }) => {
   const handleCardClick = () => {
+    console.log("Card clicked, booking_id:", booking.booking_id, typeof booking.booking_id);
     if (onSelect) {
       onSelect(booking.booking_id);
     }

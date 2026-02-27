@@ -3,7 +3,9 @@ import { fetchPermissionsApi } from "../Permissions/permissionsApi";
 import { API_CLIENT } from "../../../Api/API_Client";
 import { logDebug } from "../../../utils/logger";
 
-// Permissions
+/**
+ * Redux thunk for fetching all permissions
+ */
 export const fetchPermissionsThunk = createAsyncThunk(
   "permissions/fetchPermissions",
   async (_, { rejectWithValue }) => {
@@ -11,7 +13,11 @@ export const fetchPermissionsThunk = createAsyncThunk(
       const response = await fetchPermissionsApi();
       return response.data.items;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
+      return rejectWithValue(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to fetch permissions'
+      );
     }
   }
 );
@@ -22,7 +28,7 @@ export const fetchPoliciesThunk = createAsyncThunk(
   async (params, { rejectWithValue }) => {
     try {
       const response = await API_CLIENT.get("/iam/policies/", { params });
-      return response.data.items;
+      return response.data.data.items;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
     }
@@ -46,7 +52,7 @@ export const createPolicy = createAsyncThunk(
   "policy/createPolicy",
   async (payload, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.post("/iam/policies", payload);
+      const response = await API_CLIENT.post("/iam/policies/", payload);
 
       return response.data;
     } catch (error) {
@@ -76,6 +82,7 @@ export const createRole = createAsyncThunk(
     }
   }
 );
+
 export const updatePolicy = createAsyncThunk(
   "policy/updatePolicy",
   async ({ policyId, payload }, { rejectWithValue }) => {

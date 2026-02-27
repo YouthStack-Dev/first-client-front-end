@@ -178,11 +178,11 @@ const AdminSidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-app-text-primary">
-                    Team Portal
+                    {user?.name || "Admin User"}
                   </h2>
-                  <p className="text-xs text-app-text-secondary">
+                  {/* <p className="text-xs text-app-text-secondary">
                     {user?.role || "Team Member"}
-                  </p>
+                  </p> */}
                 </div>
               </div>
               {!isMobile && (
@@ -237,7 +237,7 @@ const AdminSidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
                           onClick={(e) => toggleDropdown(item.title, e)}
                           className={`flex items-center w-full px-4 py-2.5 rounded-sidebar transition-all duration-200 group ${
                             openDropdown[item.title]
-                              ? "bg-sidebar-active text-white shadow-sidebar-item-hover"
+                              ? "bg-gradient-to-r from-blue-500 to-blue-400 text-white shadow-sidebar-item-hover"
                               : "hover:bg-blue-50 hover:shadow-sidebar-item"
                           }`}
                         >
@@ -308,7 +308,7 @@ const AdminSidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
                           onClick={handleMenuItemClick}
                           className={`flex items-center px-4 py-2.5 rounded-sidebar transition-all duration-200 group relative ${
                             location.pathname === item.path
-                              ? "bg-sidebar-active text-white shadow-sidebar-item-hover"
+                              ? "bg-gradient-to-r from-blue-500 to-blue-400 text-white shadow-sidebar-item-hover"
                               : "hover:bg-blue-50 hover:shadow-sidebar-item"
                           }`}
                         >

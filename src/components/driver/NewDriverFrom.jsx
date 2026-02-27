@@ -47,14 +47,20 @@ const DriverFormModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useDispatch();
 
-  logDebug(" this are the vendor from the parrent in driver form ", vendors);
+  const [initialFormData, setInitialFormData] = useState(null);
+
+
+  // logDebug(" this are the vendor from the parrent in driver form ", vendors);
+  
   // Initialize form data when mode or driverData changes
   useEffect(() => {
     if (mode === "create") {
       setFormData(defaultFormData);
     } else if (mode === "edit" || mode === "view") {
       if (driverData) {
-        setFormData(transformApiToFormData(driverData));
+          const transformed = transformApiToFormData(driverData); // ✅ DEFINE IT
+          setFormData(transformed);
+          setInitialFormData(transformed); 
       }
     }
     setActiveTab("personal");
@@ -675,6 +681,75 @@ const DriverFormModal = ({
                         )}
                       </div>
                     </div>
+ {/* Device Binding – Edit mode only */}
+{mode === "edit" && (
+  <div className="border-t pt-6 mt-6">
+    <h3 className="text-sm font-semibold text-gray-800 mb-4">
+      Device Binding
+    </h3>
+
+    <div className="grid grid-cols-2 gap-4">
+      {/* Active Android ID */}
+      <div>
+        <label className="block text-xs font-medium text-gray-700 mb-1">
+          Active Android ID
+        </label>
+        <input
+          type="text"
+          name="activeAndroidId"
+          value={formData.activeAndroidId || ""}
+          onChange={handleInputChange}
+          disabled={isReadOnly}
+          placeholder="Enter active android device ID"
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded
+                     focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                     disabled:bg-gray-50"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          This device will be actively bound to the driver.
+        </p>
+      </div>
+
+      {/* Android ID History (Selectable → fills Active ID) */}
+      <div>
+        <label className="block text-xs font-medium text-gray-700 mb-1">
+          Android ID History
+        </label>
+        <select
+          value=""
+          disabled={isReadOnly}
+          onChange={(e) => {
+            const selectedId = e.target.value;
+            if (!selectedId) return;
+
+            setFormData((prev) => ({
+              ...prev,
+              activeAndroidId: selectedId,
+            }));
+          }}
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded
+                     focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                     disabled:bg-gray-50"
+        >
+          <option value="">Select from history</option>
+
+          {formData.androidIdHistory?.length > 0 ? (
+            formData.androidIdHistory.map((device, idx) => (
+              <option key={idx} value={device.android_id}>
+                {device.android_id} ({device.device_model})
+              </option>
+            ))
+          ) : (
+            <option disabled>No device history available</option>
+          )}
+        </select>
+        <p className="text-xs text-gray-500 mt-1">
+          Selecting a device will copy it to Active Android ID.
+        </p>
+      </div>
+    </div>
+  </div>
+)}
                   </div>
                 )}
 

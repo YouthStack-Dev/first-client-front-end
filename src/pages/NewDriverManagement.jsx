@@ -2,6 +2,9 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Download, History } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import Select from "react-select";
+import AuditLogsModal from "../components/modals/AuditLogsModal";
+import { useSearchParams } from "react-router-dom";
+
 // import toast from "react-hot-toast";
 
 import DriverFormModal from "../components/driver/NewDriverFrom";
@@ -48,6 +51,12 @@ const NewDriverManagement = () => {
   const user = useSelector(selectCurrentUser);
   const isVendorUser = user?.type === "vendor";
 
+  const tenantId =
+    user?.employee?.tenant_id ||
+    user?.vendor_user?.tenant_id ||
+    user?.tenant_id;
+
+
   // Get drivers data from Redux using selectors
   const drivers = useSelector(driversSelectors.selectAll);
   const loading = useSelector(selectDriversLoading);
@@ -57,9 +66,14 @@ const NewDriverManagement = () => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const skip = (currentPage - 1) * itemsPerPage;
 
-  const vendors = useVendorOptions(null, !isVendorUser);
+  // const vendors = useVendorOptions(null, !isVendorUser);
 
-  logDebug(" thi are the vendors in driver management ", vendors);
+  const { vendorOptions } = useVendorOptions(null, !isVendorUser);
+
+  const [selectedDriverName, setSelectedDriverName] = useState(null);
+
+
+  // logDebug(" thi are the vendors in driver management ", vendors);
   // ----------------------------
   // Search Debouncing with Minimum Character Requirement
   // ----------------------------
@@ -385,7 +399,7 @@ const NewDriverManagement = () => {
   const isSearchInProgress = searchInput.trim() !== debouncedSearchTerm;
 
   return (
-    <div className="p-4 md:p-6">
+    <div className=" p-1">
       {/* Toolbar */}
       <ToolBar
         onAddClick={handleOpenCreateModal}
@@ -393,7 +407,7 @@ const NewDriverManagement = () => {
         addButtonLabel="Driver"
         addButtonDisabled={shouldShowNoVendorMessage}
         searchBar={
-          <div className="flex flex-col sm:flex-row gap-3 w-full py-2">
+          <div className="flex flex-col sm:flex-row gap-3 w-full ">
             <div className="flex-grow relative">
               <SearchInput
                 placeholder="Search drivers by name, license number, or phone... (min. 4 characters)"
@@ -421,15 +435,24 @@ const NewDriverManagement = () => {
         }
         rightElements={
           <div className="flex flex-wrap items-center gap-3">
+
+           {!isVendorUser && (
             <ReusableButton
-              module="vendor-user"
-              action="delete"
+              module="driver"
+              action="read"
+              buttonName={"History"}
               icon={History}
-              title="View Audit History"
-              onClick={() => setShowAuditModal(true)}
-              className="text-white bg-blue-600 px-3 py-2 rounded-md flex items-center gap-2 hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Audit History"
               disabled={shouldShowNoVendorMessage}
+              onClick={() => {
+                setShowAuditModal(true);
+              }}
+              className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md"
             />
+          )}
+
+
+
             <ReusableButton
               module="driver"
               action="read"
@@ -445,7 +468,7 @@ const NewDriverManagement = () => {
             {!isVendorUser && (
               <div className="min-w-[200px]">
                 <Select
-                  options={vendors}
+                  options={vendorOptions}
                   value={selectedVendor}
                   onChange={handleVendorSelect}
                   isSearchable={true}
@@ -556,28 +579,22 @@ const NewDriverManagement = () => {
         driverData={selectedDriver}
         onSubmitSuccess={handleSubmitSuccess}
         userType={user?.type}
-        vendors={vendors}
+        vendors={vendorOptions}
+
       />
 
       {/* Audit History Modal */}
-      {showAuditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[80vh] overflow-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Audit History</h2>
-              <button
-                onClick={() => setShowAuditModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ×
-              </button>
-            </div>
-            <p className="text-gray-600">
-              Audit history functionality to be implemented.
-            </p>
-          </div>
-        </div>
-      )}
+      <AuditLogsModal
+        isOpen={showAuditModal}
+        onClose={() => {
+          setShowAuditModal(false);
+          setSelectedDriverName(null);
+        }}
+        apimodule="driver"
+        moduleName={selectedDriverName || "Driver"}
+        showUserColumn={true}
+        selectedCompany={tenantId}  
+      />
     </div>
   );
 };

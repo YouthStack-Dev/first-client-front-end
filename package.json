@@ -11,6 +11,8 @@
     "preview": "vite preview",
     "cy:open": "cypress open",
     "cy:run": "cypress run",
+    "test:open": "cypress open",
+    "test:run": "cypress run",
     "cy:component": "cypress run --component",
     "cy:e2e": "cypress run --e2e",
     "cy:regression": "cypress run --spec \"**/*regression*\"",

@@ -9,17 +9,11 @@ export const fetchCompaniesThunk = createAsyncThunk(
   "company/fetchCompanies",
   async (_, { rejectWithValue }) => {
     try {
-      // Make the request to fetch tenants
       const response = await API_CLIENT.get("/tenants/");
-      // Log the full response for debugging
-      // console.log("Full response:", response.data);
-      // Extract tenants from response
       const tenants = response.data?.data?.items || [];
-      // console.log("Fetched companies (tenants):", tenants);
-      return tenants; // return only the array of tenants
+      return tenants; 
     } catch (error) {
       console.error("[Thunk] Failed to fetch companies:", error);
-      // Return meaningful error message
       const message =
         error.response?.data?.message ||
         error.message ||
@@ -34,13 +28,8 @@ export const createCompanyThunk = createAsyncThunk(
   async (formData, { rejectWithValue, dispatch }) => {
     try {
       const payload = { ...formData };
-      // console.group("[Thunk] Create Company");
-      // console.log("Payload sent to API:", payload);
-      // console.groupEnd();
       const response = await API_CLIENT.post("/tenants/", payload);
 
-      // console.log("[Thunk] API Response:", response.data);
-      // Refresh companies list
       dispatch(fetchCompaniesThunk());
       return response.data; // Let caller handle extraction
     } catch (error) {
@@ -53,6 +42,7 @@ export const createCompanyThunk = createAsyncThunk(
     }
   }
 );
+
 
 export const fetchCompanyByIdThunk = createAsyncThunk(
   "company/fetchCompanyById",

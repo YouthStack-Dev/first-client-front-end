@@ -25,7 +25,7 @@ export const NewVehicleList = ({
     <div className="rounded-lg border bg-white shadow-sm mt-4 flex flex-col">
       
       {/* 🔹 TABLE SCROLL AREA (FIXED HEIGHT LIKE DRIVER PAGE) */}
-      <div className="overflow-auto h-[500px]">
+      <div className="overflow-auto h-[500px] bg-blue-50">
         <table className="min-w-full border-collapse text-sm">
           <thead className="bg-gray-100 sticky top-0 z-10">
             <tr className="text-left text-gray-700">
@@ -142,3 +142,5 @@ export const NewVehicleList = ({
     </div>
   );
 };
+
+export default NewVehicleList;

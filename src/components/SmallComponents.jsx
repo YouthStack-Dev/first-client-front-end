@@ -69,8 +69,8 @@ export const Modal = ({
 
   // Handle form submit with loading state
   const handleSubmit = (e) => {
+    e.preventDefault();
     if (isLoading) {
-      e.preventDefault();
       return;
     }
 

@@ -20,8 +20,8 @@ import { genderOptions } from "../components/escort/constants";
 
 import EscortTable from "../components/escort/EscortTable";
 import EscortFormModal from "../components/modals/EscortFormModal";
-import { Plus } from "lucide-react";
 import { useVendorOptions } from "../hooks/useVendorOptions";
+import ToolBar from "../components/ui/ToolBar";
 
 const EscortManagement = () => {
   const dispatch = useDispatch();
@@ -36,8 +36,9 @@ const EscortManagement = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState(getInitialFormData());
   const [formErrors, setFormErrors] = useState({});
-  // const vendors = useVendorOptions(null, true);
-  const vendors = useVendorOptions(null, true);
+ 
+  const { vendorOptions } = useVendorOptions(null, true);
+
   function getInitialFormData() {
     return {
       vendor_id: null,
@@ -192,25 +193,24 @@ const EscortManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 ">
       {/* Toolbar */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-4 flex justify-between items-center">
-        <div className="text-sm text-gray-600">
-          Total Escorts: <span className="font-semibold">{escorts.length}</span>
-        </div>
-
-        <button
-          onClick={handleCreate}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg"
-        >
-          <Plus size={18} /> Create Escort
-        </button>
-      </div>
+      <ToolBar
+        module="escort"
+        onAddClick={handleCreate}
+        addButtonLabel="Escort"
+        leftElements={
+          <div className="text-sm text-gray-600">
+            Total Escorts: <span className="font-semibold">{escorts.length}</span>
+          </div>
+        }
+        className="bg-white rounded-lg shadow-sm mb-4"
+      />
 
       {/* Table */}
       <EscortTable
         escorts={escorts}
-        vendors={vendors}
+        vendors={vendorOptions}
         onView={handleView}
         onEdit={handleEdit}
         onDelete={handleDelete}
@@ -228,7 +228,7 @@ const EscortManagement = () => {
           ...formErrors,
           server: serverError,
         }}
-        vendors={vendors}
+        vendors={vendorOptions}
         genderOptions={genderOptions}
         onChange={handleFormChange}
         onSubmit={handleSubmit}

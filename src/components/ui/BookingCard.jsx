@@ -43,10 +43,15 @@ const BookingCard = ({
           </div>
         </div>
 
-        {/* Employee Code */}
+        {/* Employee Code + Name */}
         <span className="font-semibold text-sm text-gray-900 flex-shrink-0">
           {renderSafeValue(stop.employee_code)}
         </span>
+        {stop.employee_name && (
+          <span className="text-sm text-gray-500 flex-shrink-0">
+            · {stop.employee_name}
+          </span>
+        )}
 
         {/* Status Badge */}
         {stop.status && (
@@ -54,18 +59,17 @@ const BookingCard = ({
             {stop.status}
           </span>
         )}
-
         <div className="flex-1 min-w-0"></div>
 
         {/* Est. Pickup Time */}
-        {stop.estimated_pick_up_time && (
+        {/* {stop.estimated_pick_up_time && (
           <div className="flex items-center gap-1 flex-shrink-0">
             <Clock className="w-3.5 h-3.5 text-blue-500" />
             <span className="text-xs font-medium text-blue-600">
               {stop.estimated_pick_up_time}
             </span>
           </div>
-        )}
+        )} */}
 
         {/* Est. Distance */}
         {stop.estimated_distance && (
@@ -92,10 +96,10 @@ const BookingCard = ({
               }
               onClick={() => onRemoveFromRoute(stop.booking_id, stop)}
               disabled={isDeleteDisabled}
-              className={`p-1 rounded ${
+              className={`p-1.5 rounded-md transition-all ${
                 isDeleteDisabled
-                  ? "text-gray-400 cursor-not-allowed opacity-50"
-                  : "text-orange-600 hover:text-orange-800 hover:bg-orange-50"
+                  ? "text-gray-300 cursor-not-allowed"
+                  : "text-gray-400 hover:text-red-600 hover:bg-red-50"
               }`}
             />
           </div>

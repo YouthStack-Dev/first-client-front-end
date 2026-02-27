@@ -5,8 +5,8 @@ import ReusableButton from "@ui/ReusableButton";
 import {
   createVendorThunk,
   updateVendorThunk,
-  fetchVendorsThunk,
 } from "../redux/features/vendors/vendorThunk";
+import { useVendorOptions } from "../hooks/useVendorOptions"; // ✅ ADDED
 import { fetchCompaniesThunk } from "../redux/features/company/companyThunks";
 import {
   Plus,
@@ -41,17 +41,18 @@ const NewVendorManagement = () => {
 
   // --- Fixed User Selection with Null Checks ---
   const currentUser = useSelector(selectCurrentUser);
-  const userType = currentUser?.type || "user"; // Default to "user" if null/undefined
+  const userType = currentUser?.type || "user";
 
-  logDebug("Current user in Vendor Management:", currentUser);
+  // logDebug("Current user in Vendor Management:", currentUser);
 
-  // --- Redux Data with Safe Defaults ---
+  // ✅ CHANGED: Using useVendorOptions hook instead of direct Redux
   const {
-    data: vendors = [],
+    vendorList: vendors = [],
+    vendorOptions,
     loading: vendorLoading = false,
-    error: vendorError = null,
-  } = useSelector((state) => state.vendor || {});
+  } = useVendorOptions(null, true); // shouldFetch = true
 
+  // ✅ KEPT: Company fetching remains the same (direct Redux)
   const {
     data: companies = [],
     loading: companyLoading = false,
@@ -74,18 +75,12 @@ const NewVendorManagement = () => {
     })) || []),
   ];
 
+  // ✅ CHANGED: Only fetch companies (vendors auto-fetched by hook)
   useEffect(() => {
-    const fetchData = async () => {
-      if (!vendors || vendors.length === 0) {
-        dispatch(fetchVendorsThunk());
-      }
-      if (!companies || companies.length === 0) {
-        dispatch(fetchCompaniesThunk());
-      }
-    };
-
-    fetchData();
-  }, [dispatch, vendors, companies]);
+    if (!companies || companies.length === 0) {
+      dispatch(fetchCompaniesThunk());
+    }
+  }, [dispatch, companies]);
 
   // --- Enhanced Filtering Logic with Safe Access ---
   const filteredVendors = (vendors || []).filter((vendor) => {
@@ -120,25 +115,31 @@ const NewVendorManagement = () => {
     return matchesSearch && matchesStatus && matchesCompany;
   });
 
+  // ✅ ADDED: Get full company object (not just name)
+  const getCompanyObject = (companyId) => {
+    if (!companyId || !companies) return null;
+    return companies.find(
+      (comp) =>
+        comp?.id === companyId ||
+        comp?._id === companyId ||
+        comp?.tenant_id === companyId
+    );
+  };
+
   // Get company name for display with safe access
   const getCompanyName = (companyId) => {
-    if (!companyId || !companies) return "Unknown Company";
-    const company = companies.find(
-      (comp) => comp?.id === companyId || comp?._id === companyId
-    );
-    return company
-      ? company.name || company.companyName || "Unknown Company"
-      : "Unknown Company";
+    const company = getCompanyObject(companyId);
+    return company?.name || company?.companyName || "Unknown Company";
   };
 
   // --- Handler Functions ---
+  // ✅ CHANGED: Only sync companies (vendors auto-synced by hook)
   const handleSync = () => {
     setLoading(true);
-    dispatch(fetchVendorsThunk());
     dispatch(fetchCompaniesThunk());
     setTimeout(() => {
       setLoading(false);
-      console.log("Vendors synced");
+      console.log("Data synced");
     }, 1000);
   };
 
@@ -363,7 +364,8 @@ const NewVendorManagement = () => {
           {filteredVendors.map((vendor, index) => (
             <NewVendorCard
               key={vendor?._id || vendor?.id || `vendor-${index}`}
-              vendor={vendor}
+              vendor={vendor} // ✅ Full vendor object
+              company={getCompanyObject(vendor.tenant_id)} // ✅ ADDED: Full company object
               onEditVendor={() => handleEditVendor(vendor)}
               onViewVendor={() => handleViewVendor(vendor)}
               onDeleteVendor={() => handleDeleteVendor(vendor)}
@@ -401,11 +403,7 @@ const NewVendorManagement = () => {
           vendorData={selectedVendor}
           loading={vendorLoading}
           userType={userType}
-          tenants={(companies || []).map((company) => ({
-            id: company?.id || company?._id,
-            name: company?.name || company?.companyName,
-            tenantId: company?.tenant_id || company?.id,
-          }))}
+          tenants={companies || []} // ✅ CHANGED: Pass full company objects
         />
 
         {/* Assign Vendor Modal using VendorModalForm */}
@@ -416,11 +414,7 @@ const NewVendorManagement = () => {
           mode={vendorModalMode}
           loading={vendorLoading}
           userType={userType}
-          tenants={(companies || []).map((company) => ({
-            id: company?.id || company?._id,
-            name: company?.name || company?.companyName,
-            tenantId: company?.tenant_id || company?.id,
-          }))}
+          tenants={companies || []} // ✅ CHANGED: Pass full company objects
         />
       </div>
     </div>

@@ -38,19 +38,23 @@ const vendorSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchVendorsThunk.fulfilled, (state, action) => {
-        state.loading = false;
-        state.fetched = true; // ✅ MARK AS FETCHED
+  state.loading = false;
+  state.fetched = true;
 
-        const vendors = action.payload || [];
-        state.data = vendors;
+  // ✅ Extract items from the payload object
+  const vendors = action.payload.items || [];
+  state.data = vendors;
+  
+  // ✅ Store pagination metadata (optional but useful)
+  state.total = action.payload.total || 0;
 
-        // Build tenant map
-        state.vendorsByTenant = vendors.reduce((acc, v) => {
-          if (!acc[v.tenant_id]) acc[v.tenant_id] = [];
-          acc[v.tenant_id].push(v);
-          return acc;
-        }, {});
-      })
+  // Build tenant map
+  state.vendorsByTenant = vendors.reduce((acc, v) => {
+    if (!acc[v.tenant_id]) acc[v.tenant_id] = [];
+    acc[v.tenant_id].push(v);
+    return acc;
+  }, {});
+})
       .addCase(fetchVendorsThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -124,7 +128,7 @@ const vendorSlice = createSlice({
         state.toggling = false;
 
         // ✅ The toggle API returns updated vendor directly (no nested .data)
-        const toggledVendor = action.payload || {};
+        const toggledVendor = action.payload?.data || {};
 
         if (toggledVendor.vendor_id) {
           // Flat list update
@@ -136,9 +140,11 @@ const vendorSlice = createSlice({
           // Tenant map update
           const tenantList =
             state.vendorsByTenant[toggledVendor.tenant_id] || [];
+
           const tenantIndex = tenantList.findIndex(
             (v) => v.vendor_id === toggledVendor.vendor_id
           );
+          
           if (tenantIndex !== -1) tenantList[tenantIndex] = toggledVendor;
           else tenantList.push(toggledVendor);
           state.vendorsByTenant[toggledVendor.tenant_id] = tenantList;

@@ -15,7 +15,7 @@ export const DirectionsLayer = ({
 
   useEffect(() => {
     if (!map || !window.google || !origin || !destination) return;
-
+      console.log("Maps loaded, checking key...", window.google.maps.version);
     if (!directionsRef.current) {
       directionsRef.current = new window.google.maps.DirectionsRenderer({
         map,

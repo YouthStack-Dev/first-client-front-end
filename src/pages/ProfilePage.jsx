@@ -3,13 +3,13 @@ import ProfileCard from "@components/ProfileCard";
 import MultiDateCalendar from "@components/MultiDateCalendar";
 import ShiftSelector from "@components/ShiftSelector";
 import BookingHistory from "@components/BookingHistory";
+import UpdateBookingShiftModal from "@components/modals/UpdateBookingShiftModal";
 import { Calendar, Clock, History } from "lucide-react";
 import { API_CLIENT } from "../Api/API_Client";
 import { useDispatch, useSelector } from "react-redux";
 import { selectAllShifts } from "../redux/features/shift/shiftSlice";
 import { logDebug } from "../utils/logger";
 import { fetchShiftTrunk } from "../redux/features/shift/shiftTrunk";
-import { toast } from "react-toastify";
 import { bookingSchema } from "../validations/bookingValidation";
 
 export default function ProfilePage() {
@@ -35,6 +35,8 @@ export default function ProfilePage() {
   const [bookingHistoryData, setBookingHistoryData] = useState([]);
   const [isErrorHistory, setIsErrorHistory] = useState(false);
   const [errorMessageHistory, setErrorMessageHistory] = useState("");
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [selectedBookingToUpdate, setSelectedBookingToUpdate] = useState(null);
 
   // API endpoints
   const endpoint = {
@@ -184,9 +186,6 @@ export default function ProfilePage() {
       setSelectedShiftId(null);
       setStep("welcome");
 
-      // Show success message
-      toast.success("Booking successful!");
-
       // Refresh booking history if we're going to view it
       if (step === "history") {
         fetchBookingHistory();
@@ -198,7 +197,6 @@ export default function ProfilePage() {
         error.response?.data?.message ||
         "Booking failed. Please try again.";
       setErrors([errorMessage]);
-      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -260,6 +258,15 @@ export default function ProfilePage() {
       shiftType: "",
     }));
     fetchBookingHistory(today);
+  };
+
+  const handleUpdateBookingClick = (booking) => {
+    setSelectedBookingToUpdate(booking);
+    setIsUpdateModalOpen(true);
+  };
+
+  const handleUpdateSuccess = () => {
+    fetchBookingHistory(bookingFilters.date);
   };
 
   // Clear errors when step changes
@@ -440,12 +447,22 @@ export default function ProfilePage() {
                   emptyMessage="No bookings found for the selected date."
                   title="My Booking History"
                   showLocationInfo={true}
+                  onUpdateBooking={handleUpdateBookingClick}
                 />
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Update Booking Shift Modal */}
+      <UpdateBookingShiftModal
+        isOpen={isUpdateModalOpen}
+        onClose={() => setIsUpdateModalOpen(false)}
+        onSuccess={handleUpdateSuccess}
+        booking={selectedBookingToUpdate}
+        shifts={shifts}
+      />
     </div>
   );
 }

@@ -60,9 +60,9 @@ const TrackingManagement = () => {
           return acc;
         }, []);
 
-        logDebug(
-          `Extracted ${allRoutes.length} routes from ${response.data.data.shifts.length} shifts`
-        );
+        // logDebug(
+        //   `Extracted ${allRoutes.length} routes from ${response.data.data.shifts.length} shifts`
+        // );
         setRoutes(allRoutes);
       } else {
         // Handle empty response or different structure

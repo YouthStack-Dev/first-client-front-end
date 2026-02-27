@@ -246,7 +246,7 @@ export const VendorUsersTable = ({
                       <div className="text-sm font-medium text-gray-900">
                         {user.name}
                       </div>
-                      <div className="text-xs text-gray-500">ID: {user.id}</div>
+                      <div className="text-xs text-gray-500">ID: {user.vendor_user_id}</div>
                     </div>
                   </div>
                 </td>
@@ -263,9 +263,9 @@ export const VendorUsersTable = ({
                       <div className="text-sm font-medium text-gray-900">
                         {user.vendor_name || `Vendor ${user.vendor_id}`}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      {/* <div className="text-xs text-gray-500">
                         {user.company_name || `Company ${user.company_id}`}
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 </td>

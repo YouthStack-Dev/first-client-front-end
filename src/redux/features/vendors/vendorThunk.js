@@ -8,26 +8,36 @@ export const fetchVendorsThunk = createAsyncThunk(
   "vendor/fetchVendors",
   async (params = {}, { rejectWithValue }) => {
     try {
-      const {
-        skip = 0,
-        limit = 100,
-        name = "",
-        code = "",
-        tenant_id = "",
-      } = params;
+      const { skip = 0, limit = 100, name = "", code = "", tenant_id = "" } = params;
 
-      const response = await API_CLIENT.get("/vendors/", {
-        params: { skip, limit, name, code, tenant_id },
-      });
-      // Extract items array
-      const vendors = response.data?.data?.items || [];
-      return vendors;
+      // Build query params, filtering empty values
+      const queryParams = Object.fromEntries(
+        Object.entries({ skip, limit, name, code, tenant_id })
+          .filter(([_, v]) => v !== "" && v != null)
+      );
+
+      const response = await API_CLIENT.get("/vendors/", { params: queryParams });
+
+      // Validate response structure
+      if (!response.data?.data) {
+        throw new Error("Invalid response format");
+      }
+
+      // Return both items and metadata
+      return {
+        items: response.data.data.items || [],
+        total: response.data.data.total || 0,
+        skip,
+        limit,
+      };
     } catch (error) {
       console.error("[Thunk] Failed to fetch vendors:", error);
-      const message =
-        error.response?.data?.message ||
-        error.message ||
+      
+      const message = 
+        error.response?.data?.message || 
+        error.message || 
         "Failed to fetch vendors";
+        
       return rejectWithValue(message);
     }
   }

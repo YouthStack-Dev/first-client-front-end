@@ -89,7 +89,7 @@ const ClusterMapViewer = () => {
       setLoading(true);
       setError(null);
 
-      const apiEndpoint = `/routes/?&shift_id=${shiftId}&booking_date=${date}`;
+      const apiEndpoint = `/routes/?shift_id=${shiftId}&booking_date=${date}`;
       const response = await API_CLIENT.get(apiEndpoint);
 
       if (response.data?.success && response.data?.data?.shifts) {

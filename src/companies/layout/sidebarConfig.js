@@ -11,6 +11,8 @@ import {
   Shield,
   FileText,
   Settings,
+   Truck,
+   Bell, 
 } from "lucide-react";
 
 // Base sidebar configuration
@@ -27,36 +29,36 @@ export const baseSidebarConfig = [
     ],
   },
   {
-    title: "Tenant Management",
+    title: "Vendor Management",
     items: [
+      // {
+      //   title: "Tenant Overview",
+      //   icon: Building,
+      //   path: "/companies/tenants",
+      //   permission: "tenant.read",
+      //   subItems: [
+      //     {
+      //       title: "Add New Tenant",
+      //       icon: Building,
+      //       path: "/companies/tenants/create",
+      //       permission: "tenant.create",
+      //     },
+      //     {
+      //       title: "Tenant Settings",
+      //       icon: Settings,
+      //       path: "/companies/tenants/settings",
+      //       permission: "tenant.update",
+      //     },
+      //     {
+      //       title: "Billing & Subscription",
+      //       icon: FileText,
+      //       path: "/companies/tenants/billing",
+      //       permission: "billing.read",
+      //     },
+      //   ],
+      // },
       {
-        title: "Tenant Overview",
-        icon: Building,
-        path: "/companies/tenants",
-        permission: "tenant.read",
-        subItems: [
-          {
-            title: "Add New Tenant",
-            icon: Building,
-            path: "/companies/tenants/create",
-            permission: "tenant.create",
-          },
-          {
-            title: "Tenant Settings",
-            icon: Settings,
-            path: "/companies/tenants/settings",
-            permission: "tenant.update",
-          },
-          {
-            title: "Billing & Subscription",
-            icon: FileText,
-            path: "/companies/tenants/billing",
-            permission: "billing.read",
-          },
-        ],
-      },
-      {
-        title: "Vendor Management",
+        title: "Manage Vendors",
         icon: Store,
         path: "/companies/vendors",
         permission: "vendor.read",
@@ -121,12 +123,26 @@ export const baseSidebarConfig = [
   {
     title: "Operations Management",
     items: [
-      {
-        title: "Route Management",
-        path: "/companies/routing",
-        permission: "route.read",
-        icon: MapPin,
-      },
+    {
+      title: "Route Management",
+      icon: MapPin,
+      path: "/companies/routing", // Keep the path for the parent
+      permission: "route.read",
+      // subItems: [ // ✅ Add subItems array
+      //   {
+      //     title: "Route Scheduling",
+      //     icon: MapPin,
+      //     path: "/companies/routing",
+      //     permission: "route.read",
+      //   },
+      //   // {
+      //   //   title: "Vendor Routing",
+      //   //   icon: Truck,
+      //   //   path: "/companies/vendor-routing",
+      //   //   permission: "route.read", // Adjust permission as needed
+      //   // },
+      // ],
+    },
       {
         title: "Shift Management",
         icon: Clock,
@@ -136,7 +152,7 @@ export const baseSidebarConfig = [
       {
         title: "Teams",
         icon: Users2,
-        path: "/companies/departments",
+        path: "/companies/teams",
         permission: "team.read",
       },
       {
@@ -160,6 +176,12 @@ export const baseSidebarConfig = [
         title: "Alert Configuration",
         icon: Shield,
         path: "/companies/alert-config",
+        permission: "alert.read",
+      },
+      {
+        title: "Alert Notifications",
+        icon: Bell,
+        path: "/companies/notification",
         permission: "alert.read",
       },
     ],

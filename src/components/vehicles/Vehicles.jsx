@@ -3,6 +3,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { History } from "lucide-react";
 import { toast } from "react-toastify";
 import Select from "react-select";
+import {
+  useSearchParams,
+} from "react-router-dom";
 
 import ToolBar from "../ui/ToolBar";
 import SearchInput from "../ui/SearchInput";
@@ -25,6 +28,7 @@ import {
 } from "../../redux/features/manageVehicles/vehicleSelectors";
 
 import { useVendorOptions } from "../../hooks/useVendorOptions";
+import AuditLogsModal from "../modals/AuditLogsModal"; // ✅ ADDED
 
 /* ======================================================
    🔁 DEBOUNCE HOOK (SAME AS VEHICLE TYPES)
@@ -50,6 +54,12 @@ const NewVehicleManagement = () => {
   const user = useSelector(selectCurrentUser);
   const isVendorUser = user?.type === "vendor";
   const vendorId = user?.vendor_user?.vendor_id;
+  
+  const tenantId =
+    user?.employee?.tenant_id ||
+    user?.vendor_user?.tenant_id ||
+    user?.tenant_id;
+
 
   /* ================= REDUX DATA ================= */
   const vehicles = useSelector(selectVehicles);
@@ -57,7 +67,7 @@ const NewVehicleManagement = () => {
   const totalItems = useSelector(selectVehiclesTotal);
 
   /* ================= VENDORS ================= */
-    const vendors = useVendorOptions(null, !isVendorUser);
+ const { vendorOptions } = useVendorOptions(null, !isVendorUser);
 
   /* ================= LOCAL STATE ================= */
   const [selectedVendor, setSelectedVendor] = useState(null);
@@ -73,6 +83,10 @@ const NewVehicleManagement = () => {
   const [modalMode, setModalMode] = useState("create");
   const [selectedVehicle, setSelectedVehicle] = useState(null);
 
+  // ✅ ADDED - Audit Modal State
+  const [showAuditModal, setShowAuditModal] = useState(false);
+  const [selectedVehicleName, setSelectedVehicleName] = useState(null);
+ 
   /* ================= FETCH PARAM BUILDER ================= */
   const buildFetchParams = useCallback(() => {
     const params = {
@@ -80,21 +94,18 @@ const NewVehicleManagement = () => {
       limit: itemsPerPage,
     };
 
-    // 🔥 Vendor logic (same as Vehicle Types)
     if (isVendorUser) {
       params.vendor_id = vendorId;
     } else if (selectedVendor?.value) {
       params.vendor_id = selectedVendor.value;
     } else {
-      return null; // ❌ do not fetch without vendor
+      return null;
     }
 
-    // 🔍 Debounced search
     if (debouncedSearchTerm.trim()) {
       params.rc_number = debouncedSearchTerm.trim();
     }
 
-    // 🔄 Status mapping
     if (status === "Active") params.is_active = true;
     if (status === "Inactive") params.is_active = false;
 
@@ -154,7 +165,7 @@ const NewVehicleManagement = () => {
 
   /* ================= UI ================= */
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-1">
       <ToolBar
         onAddClick={handleOpenCreate}
         module="vehicle"
@@ -178,31 +189,41 @@ const NewVehicleManagement = () => {
           </div>
         }
         rightElements={
-          <div className="flex items-center gap-3">
-            <ReusableButton
-              module="audit_log"
-              action="read"
-              icon={History}
-              title="Audit History"
-              disabled={shouldShowNoVendorMessage}
-              className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md"
-            />
+          <div className="flex flex-wrap items-center gap-3">
+          {!isVendorUser && (
+              <ReusableButton
+                module="vehicle"
+                action="read"
+                buttonName={"History"}
+                icon={History}
+                title="Audit History"
+                disabled={shouldShowNoVendorMessage}
+                onClick={() => {
+                  setSelectedVehicleName(null);
+                  setShowAuditModal(true);
+                }}
+                className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md"
+              />
+            )}
+
 
             {!isVendorUser && (
-              <Select
-                options={vendors}
-                value={selectedVendor}
-                onChange={setSelectedVendor}
-                placeholder="Select vendor..."
-                isClearable
-                menuPortalTarget={document.body}
-                styles={{
-                  menuPortal: (base) => ({
-                    ...base,
-                    zIndex: 9999,
-                  }),
-                }}
-              />
+              <div className="min-w-[200px] z-10 relative">
+                <Select
+                  options={vendorOptions}
+                  value={selectedVendor}
+                  onChange={setSelectedVendor}
+                  placeholder="Select vendor..."
+                  isSearchable={true}
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                  isClearable={true}
+                  menuPortalTarget={document.body}
+                  styles={{
+                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                  }}
+                />
+              </div>
             )}
 
             <SelectField
@@ -214,12 +235,12 @@ const NewVehicleManagement = () => {
                 { label: "Active", value: "Active" },
                 { label: "Inactive", value: "Inactive" },
               ]}
+              className="min-w-[140px]"
             />
           </div>
         }
       />
 
-      {/* EMPTY STATE */}
       {shouldShowNoVendorMessage && (
         <div className="mt-6 p-4 bg-yellow-50 border border-yellow-300 rounded-lg text-center">
           <p className="text-yellow-800 font-medium">
@@ -228,47 +249,72 @@ const NewVehicleManagement = () => {
         </div>
       )}
 
-      {/* LIST */}
       {!shouldShowNoVendorMessage && (
-          <div className="mt-4"> {/* ✅ isolated list section */}
-            {loading ? (
-              <div className="py-6 text-center">Loading vehicles...</div>
-            ) : (
+        <div className="mt-4">
+          {loading ? (
+            <div className="py-6 text-center">Loading vehicles...</div>
+          ) : (
+            <>
+              {/* Results Count with Vendor Info */}
+              <div className="mb-3 text-sm text-gray-600">
+                Showing {vehicles?.length} of {totalItems} vehicles
+                {isVendorUser ? (
+                  <span className="ml-2 text-blue-600">
+                    (Vendor: {user?.vendor_name || user?.vendor_id})
+                  </span>
+                ) : selectedVendor ? (
+                  <span className="ml-2 text-blue-600">
+                    (Vendor: {selectedVendor.label})
+                  </span>
+                ) : null}
+              </div>
               <NewVehicleList
-                vehicles={vehicles}
-                onEdit={(v) => {
-                  setSelectedVehicle(v);
-                  setModalMode("edit");
-                  setIsModalOpen(true);
-                }}
-                onView={(v) => {
-                  setSelectedVehicle(v);
-                  setModalMode("view");
-                  setIsModalOpen(true);
-                }}
-                onStatusToggle={handleToggle}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={totalItems}
-                itemsPerPage={itemsPerPage}
-                onPageChange={setCurrentPage}
-                onItemsPerPageChange={setItemsPerPage}
-                showPagination
-              />
-            )}
-          </div>
-        )}
+              vehicles={vehicles}
+              onEdit={(v) => {
+                setSelectedVehicle(v);
+                setModalMode("edit");
+                setIsModalOpen(true);
+              }}
+              onView={(v) => {
+                setSelectedVehicle(v);
+                setModalMode("view");
+                setIsModalOpen(true);
+              }}
+              onStatusToggle={handleToggle}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={setItemsPerPage}
+              showPagination
+            />
+            </>
+          )}
+        </div>
+      )}
 
-      {/* MODAL */}
       <VehicleFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         mode={modalMode}
         vehicleData={selectedVehicle}
         onSubmitSuccess={() => {
-           setIsModalOpen(false);
-          // toast.success("Vehicle saved successfully");
+          setIsModalOpen(false);
         }}
+      />
+
+      {/* ✅ AUDIT LOG MODAL (ONLY NEW ADDITION) */}
+      <AuditLogsModal
+        isOpen={showAuditModal}
+        onClose={() => {
+          setShowAuditModal(false);
+          setSelectedVehicleName(null);
+        }}
+        apimodule="vehicle"
+        moduleName={selectedVehicleName || "Vehicle"}
+        showUserColumn={true}
+        selectedCompany={tenantId}
       />
     </div>
   );
