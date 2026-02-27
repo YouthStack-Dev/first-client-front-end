@@ -523,9 +523,9 @@ const TeamEmployeesManagement = () => {
                           <div className="text-sm font-medium text-gray-900">
                             {employee.name || "N/A"}
                           </div>
-                          <div className="text-sm text-gray-500">
-                            {employee.position || employee.role_name || "N/A"}
-                          </div>
+                          {/* <div className="text-sm text-gray-500">
+                            {employee.position || employee.role_id || "N/A"}
+                          </div> */}
                         </div>
                       </div>
                     </td>
