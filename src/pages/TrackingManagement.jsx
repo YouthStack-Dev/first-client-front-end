@@ -37,7 +37,7 @@ const TrackingManagement = () => {
     setError(null);
 
     try {
-      let url = "/routes/?status=Ongoing";
+      let url = "/routes/?status_filter=Ongoing";
 
       // Add company filter if user is admin and company is selected
       if (userType === "admin" && companyId) {
