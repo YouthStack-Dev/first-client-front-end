@@ -33,7 +33,8 @@ const ShiftForm = ({ initialData = {}, onCancel, onSubmit }) => {
     )
       newErrors.waiting_time_minutes = "Waiting time is required";
     if (!formData.pickup_type) newErrors.pickup_type = "Pickup type is required";
-    if (!formData.gender) newErrors.gender = "Gender is required";
+    if (!formData.gender && formData.pickup_type === "Pickup")
+      newErrors.gender = "Gender is required";
 
     setErrors(newErrors);
 
@@ -46,7 +47,7 @@ const ShiftForm = ({ initialData = {}, onCancel, onSubmit }) => {
 
   const handleSubmit = () => {
     if (validateForm()) {
-      onSubmit?.(formData); // ✅ use onSubmit
+      onSubmit?.(formData);
     }
   };
 
@@ -120,15 +121,19 @@ const ShiftForm = ({ initialData = {}, onCancel, onSubmit }) => {
           </label>
           <select
             value={formData.pickup_type}
-            onChange={(e) => updateField("pickup_type", e.target.value)}
+            onChange={(e) => {
+              updateField("pickup_type", e.target.value);
+              if (e.target.value === "Nodal") {
+                updateField("gender", "");
+              }
+            }}
             className="w-full border border-gray-300 rounded-md p-2.5 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
           >
             <option value="" disabled hidden>
               Select Pickup Type
             </option>
             <option value="Pickup">Pickup</option>
-             <option value="Nodal">Nodal</option>
-
+            <option value="Nodal">Nodal</option>
           </select>
           {errors.pickup_type && (
             <p className="text-red-500 text-xs mt-1">{errors.pickup_type}</p>
@@ -136,27 +141,29 @@ const ShiftForm = ({ initialData = {}, onCancel, onSubmit }) => {
         </div>
       </div>
 
-      {/* Third Row: Gender and Waiting Time */}
+      {/* Third Row: Gender (only for Pickup) and Waiting Time */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Gender <span className="text-red-500">*</span>
-          </label>
-          <select
-            value={formData.gender}
-            onChange={(e) => updateField("gender", e.target.value)}
-            className="w-full border border-gray-300 rounded-md p-2.5 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          >
-            <option value="" disabled hidden>
-              Select Gender
-            </option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-          </select>
-          {errors.gender && (
-            <p className="text-red-500 text-xs mt-1">{errors.gender}</p>
-          )}
-        </div>
+        {formData.pickup_type === "Pickup" && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Gender <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={formData.gender}
+              onChange={(e) => updateField("gender", e.target.value)}
+              className="w-full border border-gray-300 rounded-md p-2.5 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            >
+              <option value="" disabled hidden>
+                Select Gender
+              </option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+            {errors.gender && (
+              <p className="text-red-500 text-xs mt-1">{errors.gender}</p>
+            )}
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">

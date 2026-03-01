@@ -126,7 +126,7 @@ export const baseSidebarConfig = [
     {
       title: "Route Management",
       icon: MapPin,
-      path: "/companies/routing", // Keep the path for the parent
+      path: "/companies/routing", 
       permission: "route.read",
     },
       {

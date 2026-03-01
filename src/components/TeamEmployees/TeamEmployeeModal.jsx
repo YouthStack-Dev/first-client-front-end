@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { X, Eye, EyeOff } from "lucide-react";
 import Select from "react-select";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
@@ -41,6 +41,7 @@ const TeamEmployeeModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [loadingDepartments, setLoadingDepartments] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Fetch departments when modal opens
   useEffect(() => {
@@ -107,6 +108,7 @@ const TeamEmployeeModal = ({
       }
       setIsEditing(false);
       setErrors(null);
+      setShowPassword(false);
     }
   }, [isOpen, employeeData]);
 
@@ -424,17 +426,27 @@ const TeamEmployeeModal = ({
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Password <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  disabled={isReadOnly}
-                  className={`w-full border rounded px-3 py-2 ${
-                    isReadOnly ? "bg-gray-100 cursor-not-allowed" : ""
-                  }`}
-                  placeholder="Enter password"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    disabled={isReadOnly}
+                    className={`w-full border rounded px-3 py-2 pr-10 ${
+                      isReadOnly ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
+                    placeholder="Enter password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    tabIndex={-1}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -498,7 +510,6 @@ const TeamEmployeeModal = ({
                 <option value="Other">Other</option>
               </select>
             </div>
-
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
