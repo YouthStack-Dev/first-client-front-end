@@ -109,6 +109,11 @@ const AssignEscortModal = ({ isOpen, onClose, routeId, triggerReason, tenantId, 
   const [error,     setError]     = useState(null);
   const [success,   setSuccess]   = useState(false);
   const searchRef                 = useRef(null);
+  const getErrMsg = (err, fallback) =>
+    err?.response?.data?.message ||
+    err?.response?.data?.detail?.message ||
+    err?.response?.data?.detail ||
+    fallback;
 
   // Fetch escorts list whenever modal opens
   useEffect(() => {
@@ -120,7 +125,11 @@ const AssignEscortModal = ({ isOpen, onClose, routeId, triggerReason, tenantId, 
     setSuccess(false);
     setLoading(true);
 
-    API_CLIENT.get("/escorts/")
+    const params = new URLSearchParams();
+    if (tenantId) params.append("tenant_id", tenantId);
+    const qs = params.toString();
+
+    API_CLIENT.get(`/escorts/available/${qs ? `?${qs}` : ""}`)
       .then((res) => {
         // API response shape: { data: [...], status: 200 }
         const list = Array.isArray(res.data) ? res.data : res.data?.data ?? [];
@@ -133,8 +142,9 @@ const AssignEscortModal = ({ isOpen, onClose, routeId, triggerReason, tenantId, 
       })
       .finally(() => setLoading(false));
 
-    setTimeout(() => searchRef.current?.focus(), 120);
-  }, [isOpen]);
+    const t = setTimeout(() => searchRef.current?.focus(), 120);
+    return () => clearTimeout(t);
+  }, [isOpen, tenantId]);
 
   // PUT /routes/{routeId}/assign-escort?escort_id=X[&tenant_id=Y]
   const handleAssign = async () => {
@@ -153,11 +163,7 @@ const AssignEscortModal = ({ isOpen, onClose, routeId, triggerReason, tenantId, 
       onSuccess?.(selected);
     } catch (err) {
       logError("[AssignEscortModal] assign failed:", err);
-      setError(
-        err?.response?.data?.message ||
-        err?.response?.data?.detail  ||
-        "Failed to assign escort. Please try again."
-      );
+      setError(getErrMsg(err, "Failed to assign escort. Please try again."));
     } finally {
       setAssigning(false);
     }

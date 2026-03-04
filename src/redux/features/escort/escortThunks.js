@@ -1,67 +1,66 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { API_CLIENT } from "../../../Api/API_Client";
 
-// ------------------------------------------------------
-// FETCH ESCORTS
-// ------------------------------------------------------
+const getPayload = (response) => {
+  const body = response?.data;
+  if (Array.isArray(body)) return body;
+  if (Array.isArray(body?.data)) return body.data;
+  return body?.data ?? body;
+};
+
+const getErrorPayload = (error, fallbackMessage) => {
+  const detail = error?.response?.data?.detail;
+  if (typeof detail === "string") return { message: detail };
+  if (detail?.message) {
+    return {
+      message: detail.message,
+      errorCode: detail.error_code,
+      status: error?.response?.status,
+    };
+  }
+  return {
+    message: error?.response?.data?.message || error?.message || fallbackMessage,
+    status: error?.response?.status,
+  };
+};
+
 export const fetchEscortsThunk = createAsyncThunk(
   "escort/fetchAll",
-  async (_, { rejectWithValue }) => {
+  async (params = {}, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.get("/escorts/");
-      if (response?.status === 200) {
-        return response.data;
-      }
-      return rejectWithValue(
-        response.data.message || "Failed to fetch escorts"
-      );
+      const response = await API_CLIENT.get("/escorts/", { params });
+      return getPayload(response) ?? [];
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message);
+      return rejectWithValue(getErrorPayload(error, "Failed to fetch escorts"));
     }
   }
 );
 
-// ------------------------------------------------------
-// CREATE ESCORT
-// ------------------------------------------------------
-// export const createEscortThunk = createAsyncThunk(
-//   "escort/create",
-//   async (escortData, { rejectWithValue }) => {
-//     try {
-//       const response = await API_CLIENT.post("/escorts/", escortData);
-//       if (response?.status === 200) {
-//         return response.data;
-//       }
-//       return rejectWithValue(
-//         response.data.message || "Failed to create escort"
-//       );
-//     } catch (error) {
-//       return rejectWithValue(error.response?.data?.message || error.message);
-//     }
-//   }
-// );
+export const fetchAvailableEscortsThunk = createAsyncThunk(
+  "escort/fetchAvailable",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await API_CLIENT.get("/escorts/available/");
+      return getPayload(response) ?? [];
+    } catch (error) {
+      return rejectWithValue(
+        getErrorPayload(error, "Failed to fetch available escorts")
+      );
+    }
+  }
+);
 
-// // ------------------------------------------------------
-// // UPDATE ESCORT
-// // ------------------------------------------------------
-// export const updateEscortThunk = createAsyncThunk(
-//   "escort/update",
-//   async ({ id, data }, { rejectWithValue }) => {
-//     try {
-//       const response = await API_CLIENT.put(`/escorts/${id}`, data);
-//       if (response?.data?.success) {
-//         return response.data.data;
-//       }
-//       return rejectWithValue(
-//         response.data.message || "Failed to update escort"
-//       );
-//     } catch (error) {
-//       return rejectWithValue(error.response?.data?.message || error.message);
-//     }
-//   }
-// );
-
-// escortThunks.js - Update createEscortThunk
+export const fetchEscortByIdThunk = createAsyncThunk(
+  "escort/fetchById",
+  async (escortId, { rejectWithValue }) => {
+    try {
+      const response = await API_CLIENT.get(`/escorts/${escortId}`);
+      return getPayload(response);
+    } catch (error) {
+      return rejectWithValue(getErrorPayload(error, "Failed to fetch escort"));
+    }
+  }
+);
 
 export const createEscortThunk = createAsyncThunk(
   "escort/create",
@@ -69,128 +68,89 @@ export const createEscortThunk = createAsyncThunk(
     try {
       const response = await API_CLIENT.post("/escorts/", escortData);
       if (response?.status === 200 || response?.status === 201) {
-        return response.data;
+        return getPayload(response);
       }
-      return rejectWithValue(
-        response.data?.detail ||
-          response.data?.message ||
-          "Failed to create escort"
-      );
+      return rejectWithValue({ message: "Failed to create escort" });
     } catch (error) {
-      // Handle the specific error structure from your backend
-      if (error.response?.data?.detail) {
-        return rejectWithValue(error.response.data.detail);
-      }
-      return rejectWithValue(
-        error.response?.data?.message ||
-          error.message ||
-          "An unexpected error occurred"
-      );
+      return rejectWithValue(getErrorPayload(error, "Failed to create escort"));
     }
   }
 );
 
-// Add similar error handling to updateEscortThunk
 export const updateEscortThunk = createAsyncThunk(
   "escort/update",
   async ({ id, data }, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.put(`/escorts/${id}/`, data);
+      const response = await API_CLIENT.put(`/escorts/${id}`, data);
       if (response?.status === 200) {
-        return response.data;
+        return getPayload(response);
       }
-      return rejectWithValue(
-        response.data?.detail ||
-          response.data?.message ||
-          "Failed to update escort"
-      );
+      return rejectWithValue({ message: "Failed to update escort" });
     } catch (error) {
-      if (error.response?.data?.detail) {
-        return rejectWithValue(error.response.data.detail);
-      }
-      return rejectWithValue(
-        error.response?.data?.message ||
-          error.message ||
-          "An unexpected error occurred"
-      );
+      return rejectWithValue(getErrorPayload(error, "Failed to update escort"));
     }
   }
 );
+
 export const deleteEscortThunk = createAsyncThunk(
   "escort/deleteEscort",
   async (escortId, { rejectWithValue }) => {
     try {
-      const response = await API_CLIENT.delete(`/escorts/${escortId}`);
-
+      await API_CLIENT.delete(`/escorts/${escortId}`);
       return {
         id: escortId,
-        message: response?.data?.message || "Escort deleted successfully",
+        message: "Escort deleted successfully",
       };
     } catch (error) {
-      return rejectWithValue({
-        status: err.response?.status,
-        message:
-          err.response?.data?.detail?.message || "Failed to delete escort",
-        errorCode: err.response?.data?.detail?.error_code,
-      });
+      return rejectWithValue(getErrorPayload(error, "Failed to delete escort"));
     }
   }
 );
 
-// NEW: Toggle active status thunk
+export const setEscortPasswordThunk = createAsyncThunk(
+  "escort/setPassword",
+  async ({ escortId, newPassword }, { rejectWithValue }) => {
+    try {
+      const response = await API_CLIENT.post(`/escorts/${escortId}/set-password`, {
+        new_password: newPassword,
+      });
+      return getPayload(response);
+    } catch (error) {
+      return rejectWithValue(
+        getErrorPayload(error, "Failed to reset escort password")
+      );
+    }
+  }
+);
+
 export const toggleEscortActiveThunk = createAsyncThunk(
   "escort/toggleActive",
   async ({ id, currentState }, { rejectWithValue }) => {
     try {
-      const newState = !currentState;
-      console.log(
-        `Toggling escort ${id} active from ${currentState} to ${newState}`
-      );
-
       const response = await API_CLIENT.put(`/escorts/${id}`, {
-        is_active: newState,
+        is_active: !currentState,
       });
-
-      return {
-        id,
-        is_active: newState,
-        escort: response.data,
-      };
+      return getPayload(response);
     } catch (error) {
-      console.error(
-        "Toggle active error:",
-        error.response?.data || error.message
+      return rejectWithValue(
+        getErrorPayload(error, "Failed to toggle active status")
       );
-      return rejectWithValue(error.response?.data || error.message);
     }
   }
 );
 
-// NEW: Toggle availability status thunk
 export const toggleEscortAvailableThunk = createAsyncThunk(
   "escort/toggleAvailable",
   async ({ id, currentState }, { rejectWithValue }) => {
     try {
-      const newState = !currentState;
-      console.log(
-        `Toggling escort ${id} available from ${currentState} to ${newState}`
-      );
-
       const response = await API_CLIENT.put(`/escorts/${id}`, {
-        is_available: newState,
+        is_available: !currentState,
       });
-
-      return {
-        id,
-        is_available: newState,
-        escort: response.data,
-      };
+      return getPayload(response);
     } catch (error) {
-      console.error(
-        "Toggle available error:",
-        error.response?.data || error.message
+      return rejectWithValue(
+        getErrorPayload(error, "Failed to toggle availability status")
       );
-      return rejectWithValue(error.response?.data || error.message);
     }
   }
 );

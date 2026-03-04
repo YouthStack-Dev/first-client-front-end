@@ -73,7 +73,12 @@ export const NewVehicleList = ({
                   </td>
 
                   <td className="px-4 py-2">
-                    {vehicle.driver_id || "Unassigned"}
+                    {vehicle.driver_name || "Unassigned"}
+                    {vehicle.driver_id && (
+                      <span className="text-gray-400 text-xs ml-1">
+                        ({vehicle.driver_id})
+                      </span>
+                    )}
                   </td>
 
                   <td className="px-4 py-2">

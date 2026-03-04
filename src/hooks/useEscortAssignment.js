@@ -19,10 +19,12 @@ export const useEscortAssignment = (tenantId = null) => {
     setLoadingEscorts(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ is_available: true });
+      const params = new URLSearchParams();
       if (tenantId) params.append("tenant_id", tenantId);
-
-      const response = await API_CLIENT.get(`/escorts?${params.toString()}`);
+      const qs = params.toString();
+      const response = await API_CLIENT.get(
+        `/escorts/available/${qs ? `?${qs}` : ""}`
+      );
       // Normalise: support both { data: [...] } and plain array responses
       const list = Array.isArray(response.data)
         ? response.data
@@ -63,7 +65,7 @@ export const useEscortAssignment = (tenantId = null) => {
     } finally {
       setAssigning(false);
     }
-  }, [routeId, tenantId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tenantId]);
 
   const clearError = () => setError(null);
 
