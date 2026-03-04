@@ -6,6 +6,7 @@ import { useParams } from "react-router-dom";
 import MapToolbar from "./MapToolbar";
 import UnroutedBookingsSection from "./UnroutedBookingsSection";
 import VendorAssignModal from "./VendorAssignModal";
+import AssignEscortModal from "./AssignEscortModal";
 import DirectionsRenderer from "./DirectionsRenderer";
 import RouteMarkers from "./RouteMarkers";
 import { logDebug } from "@utils/logger";
@@ -19,6 +20,8 @@ const ClusterMapViewer = () => {
 
   const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
   const [isAssigningVendor, setIsAssigningVendor] = useState(false);
+  const [isEscortModalOpen, setIsEscortModalOpen] = useState(false);
+  const [escortRouteId, setEscortRouteId] = useState(null);
 
   // Selection states
   const [selectedBookings, setSelectedBookings] = useState(new Set());
@@ -339,6 +342,19 @@ const ClusterMapViewer = () => {
     }
   }, [selectedRoutes, routeData, shiftId]);
 
+  const handleAssignEscort = useCallback(() => {
+    if (selectedRoutes.size === 0) {
+      alert("Please select at least one route to assign an escort.");
+      return;
+    }
+    if (selectedRoutes.size > 1) {
+      alert("Please select only one route to assign an escort.");
+      return;
+    }
+    setEscortRouteId(Array.from(selectedRoutes)[0]);
+    setIsEscortModalOpen(true);
+  }, [selectedRoutes]);
+
   const handleBookingSelect = useCallback((bookingId) => {
     setSelectedBookings((prev) => {
       const newSet = new Set(prev);
@@ -433,6 +449,7 @@ const ClusterMapViewer = () => {
               shortPath={shortPath}
               onMerge={handleMerge}
               onAssignVendor={() => setIsVendorModalOpen(true)}
+              onAssignEscort={handleAssignEscort}
               onToggleRoutes={() => setShowRoutes(!showRoutes)}
               onToggleShortPath={() => setShortPath(!shortPath)}
               isMerging={isMerging}
@@ -503,6 +520,7 @@ const ClusterMapViewer = () => {
                     onDeleteRoute={handleDeleteRoute}
                     selectedBookings={selectedBookings}
                     onBookingSelect={handleBookingSelect} // ✅ This was missing
+                    showEscortButton={false}
                   />
                 ))}
               </div>
@@ -510,6 +528,18 @@ const ClusterMapViewer = () => {
           </div>
         </div>
       </div>
+      <AssignEscortModal
+        isOpen={isEscortModalOpen}
+        onClose={() => setIsEscortModalOpen(false)}
+        routeId={escortRouteId}
+        triggerReason="Manual assignment"
+        onSuccess={async () => {
+          setIsEscortModalOpen(false);
+          setEscortRouteId(null);
+          await fetchRouteData();
+          setSelectedRoutes(new Set());
+        }}
+      />
     </div>
   );
 };

@@ -23,14 +23,14 @@ export const NewVehicleList = ({
 
   return (
     <div className="rounded-lg border bg-white shadow-sm mt-4 flex flex-col">
-      
-      {/* 🔹 TABLE SCROLL AREA (FIXED HEIGHT LIKE DRIVER PAGE) */}
+
+      {/* TABLE SCROLL AREA */}
       <div className="overflow-auto h-[500px] bg-blue-50">
         <table className="min-w-full border-collapse text-sm">
           <thead className="bg-gray-100 sticky top-0 z-10">
             <tr className="text-left text-gray-700">
               <th className="px-4 py-2">S. No.</th>
-              <th className="px-4 py-2">Vehicle Type ID</th>
+              <th className="px-4 py-2">Vehicle Type</th>
               <th className="px-4 py-2">RC Number</th>
               <th className="px-4 py-2">Driver</th>
               <th className="px-4 py-2">RC Expiry</th>
@@ -60,7 +60,12 @@ export const NewVehicleList = ({
                   </td>
 
                   <td className="px-4 py-2">
-                    {vehicle.vehicle_type_id || "—"}
+                    {vehicle.vehicle_type_name ?? "—"}
+                    {vehicle.vehicle_type_id && (
+                      <span className="text-gray-400 text-xs ml-1">
+                        ({vehicle.vehicle_type_id})
+                      </span>
+                    )}
                   </td>
 
                   <td className="px-4 py-2">
@@ -126,7 +131,7 @@ export const NewVehicleList = ({
         </table>
       </div>
 
-      {/* 🔹 PAGINATION (ALWAYS FIXED AT BOTTOM) */}
+      {/* PAGINATION */}
       {showPagination && vehicles.length > 0 && (
         <div className="border-t bg-white">
           <ReusablePagination
