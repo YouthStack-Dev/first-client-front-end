@@ -13,7 +13,6 @@ import {
   clearError,
 } from "../../redux/features/notifications/announcementsSlice";
 
-// ─── Delivery status badge ────────────────────────────────────────────────────
 const STATUS_STYLES = {
   pending:   "bg-yellow-100 text-yellow-700",
   delivered: "bg-blue-100   text-blue-700",
@@ -31,7 +30,6 @@ function DeliveryBadge({ status }) {
   );
 }
 
-// ─── Table column definitions ─────────────────────────────────────────────────
 const HEADERS = [
   { key: "recipient_user_id", label: "User ID"    },
   { key: "recipient_type",    label: "Type"       },
@@ -42,7 +40,6 @@ const HEADERS = [
   { key: "read_at",           label: "Read At"    },
 ];
 
-// ─── Component ────────────────────────────────────────────────────────────────
 const AnnouncementRecipients = ({ announcement, onClose }) => {
   const dispatch = useDispatch();
 
@@ -50,7 +47,7 @@ const AnnouncementRecipients = ({ announcement, onClose }) => {
   const loadingRecipients = useSelector(selectLoadingRecipients);
   const recipientsError   = useSelector(selectRecipientsError);
 
-  // ── Fetch on mount ──────────────────────────────────────────────────────────
+
   useEffect(() => {
     if (!announcement?.announcement_id) return;
     dispatch(
@@ -61,7 +58,7 @@ const AnnouncementRecipients = ({ announcement, onClose }) => {
     );
   }, [announcement, dispatch]);
 
-  // ── Cleanup on unmount ─────────────────────────────────────────────────────
+
   useEffect(() => {
     return () => {
       dispatch(clearRecipients());
@@ -69,7 +66,7 @@ const AnnouncementRecipients = ({ announcement, onClose }) => {
     };
   }, [dispatch]);
 
-  // ── Format timestamps ──────────────────────────────────────────────────────
+
   const formattedData = recipients.map((r) => ({
     ...r,
     delivery_status: <DeliveryBadge status={r.delivery_status} />,
@@ -79,7 +76,7 @@ const AnnouncementRecipients = ({ announcement, onClose }) => {
     read_at:         r.read_at       ? new Date(r.read_at).toLocaleString()        : "-",
   }));
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+
   return (
     <Modal
       isOpen={true}

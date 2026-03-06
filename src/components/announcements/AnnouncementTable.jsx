@@ -86,21 +86,16 @@ const AnnouncementTable = ({
 
   const [publishingId, setPublishingId] = useState(null);
   const [deletingId,   setDeletingId]   = useState(null);
-  const [editingId,    setEditingId]    = useState(null);   // tracks which row is fetching
+  const [editingId,    setEditingId]    = useState(null);  
 
-  // ── Edit — fetch fresh data first, then open form ──────────────────────────
-  // Prevents the form from opening with stale table row data.
   const handleEdit = useCallback(async (row) => {
     setEditingId(row.announcement_id);
     const result = await dispatch(fetchAnnouncementById(row.announcement_id));
     setEditingId(null);
 
     if (!result.error) {
-      // result.payload.data is the fresh announcement from the API
       onEdit(result.payload?.data ?? row);
     }
-    // On failure, fall back to the table row so the form still opens
-    // (better than doing nothing — user can still edit with slightly stale data)
     else {
       onEdit(row);
     }
@@ -134,11 +129,9 @@ const AnnouncementTable = ({
     [data]
   );
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+ 
   return (
     <div className="bg-white border rounded-xl p-4">
-
-      {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">Announcements</h2>
         <button
@@ -180,7 +173,6 @@ const AnnouncementTable = ({
           return (
             <div className="flex items-center gap-3">
 
-              {/* Edit — drafts only, fetches fresh data first */}
               {isDraft && (
                 <button
                   onClick={() => handleEdit(row)}
@@ -191,7 +183,6 @@ const AnnouncementTable = ({
                 </button>
               )}
 
-              {/* Publish — drafts only */}
               {isDraft && (
                 <button
                   onClick={() => handlePublish(row)}
@@ -202,7 +193,6 @@ const AnnouncementTable = ({
                 </button>
               )}
 
-              {/* Recipients */}
               <button
                 onClick={() => onRecipients(row)}
                 disabled={anyInFlight}

@@ -17,6 +17,7 @@ import teamsReducer from "./features/teams/teamsSlice";
 import employeesReducer from "./features/employees/employeesSlice";
 import employeeBulkReducer from "./features/bulkEmployee/employeeBulkSlice";
 import announcementReducer from "./features/notifications/announcementsSlice";
+import reviewReducer from "./features/reviews/Reviewslice";
 
 const store = configureStore({
   reducer: {
@@ -38,6 +39,7 @@ const store = configureStore({
     employees: employeesReducer,
     employeeBulk: employeeBulkReducer,
     announcements: announcementReducer,
+    reviews: reviewReducer,
   },
 });
 

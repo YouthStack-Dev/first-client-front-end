@@ -1,17 +1,3 @@
-/**
- * announcementSlice.js
- *
- * Fixes vs original:
- * 1. updateAnnouncement.rejected was missing → updating flag stuck forever on failure
- * 2. fetchAnnouncementById had no pending/rejected → no loading/error state for detail view
- * 3. publishAnnouncement had no pending/rejected → no loading state during publish
- * 4. deleteAnnouncement had no pending/rejected → no loading state / silent failures
- * 5. fetchAnnouncementRecipients had no pending/rejected → no loading state for recipients
- * 6. error only tracked for fetchAll → all other failures were invisible to the UI
- * 7. Added per-operation error keys so the UI knows exactly which action failed
- * 8. Added clearError action so UI can dismiss error banners
- */
-
 import { createSlice } from "@reduxjs/toolkit";
 import {
   fetchAnnouncements,
