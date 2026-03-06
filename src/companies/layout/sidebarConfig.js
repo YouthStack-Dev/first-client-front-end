@@ -170,6 +170,11 @@ export const baseSidebarConfig = [
         path: "/companies/notification",
         permission: "alert.read",
       },
+      {
+        title: "Announcements",
+        path: "/companies/announcements",
+        icon: Bell
+      },
     ],
   },
   {

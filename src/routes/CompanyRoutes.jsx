@@ -23,7 +23,7 @@ import NotificationsPage from "../pages/NotificationPage";
 import TeamManagement from "../pages/TeamManagement";
 import TeamEmployeesManagement from "../components/TeamEmployees/TeamEmployeesManagemnt.jsx";
 
-import VendorRouteManagement from "../components/RouteManagement/VendorRouteManagement";
+import ManageAnnouncements from "../pages/ManageAnnouncements";
 
 export const CompanyRoutes = () => (
   <Route path="/companies" element={<Layout type="employee" />}>
@@ -58,6 +58,7 @@ export const CompanyRoutes = () => (
     <Route path="reports-management" element={<ReportsManagement />} />
     <Route path="driverform" element={<NewDriverManagement />} />
     <Route path="notification" element={<NotificationsPage />} />
+    <Route path="announcements" element={<ManageAnnouncements />} />
 
 
 

@@ -1,0 +1,253 @@
+import React, { useMemo, useState, useCallback } from "react";
+import { useDispatch, useSelector }               from "react-redux";
+
+import DynamicTable from "../DynamicTable";
+
+import {
+  publishAnnouncement,
+  deleteAnnouncement,
+  fetchAnnouncementById,
+} from "../../redux/features/notifications/announcementThunks";
+import {
+  selectIsPublishing,
+  selectIsDeleting,
+  selectLoadingDetail,
+  selectPublishError,
+  selectDeleteError,
+  clearError,
+} from "../../redux/features/notifications/announcementsSlice";
+
+// ─── Badge components ─────────────────────────────────────────────────────────
+const STATUS_STYLES = {
+  draft:     "bg-yellow-100 text-yellow-700",
+  published: "bg-green-100  text-green-700",
+  cancelled: "bg-gray-100   text-gray-500",
+};
+
+function StatusBadge({ status }) {
+  const cls = STATUS_STYLES[status] ?? "bg-gray-100 text-gray-400";
+  return (
+    <span className={`px-2 py-0.5 rounded text-xs font-medium capitalize ${cls}`}>
+      {status ?? "-"}
+    </span>
+  );
+}
+
+function ChannelBadges({ channels }) {
+  if (!channels?.length) return <span className="text-gray-400 text-xs">-</span>;
+  return (
+    <div className="flex flex-wrap gap-1">
+      {channels.map((ch) => (
+        <span key={ch} className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded">
+          {ch}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// ─── Table column config ──────────────────────────────────────────────────────
+const HEADERS = [
+  { key: "title",            label: "Title"      },
+  { key: "target_type",      label: "Target"     },
+  { key: "status",           label: "Status"     },
+  { key: "channels",         label: "Channels"   },
+  { key: "total_recipients", label: "Recipients" },
+];
+
+function Spinner() {
+  return (
+    <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+    </svg>
+  );
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+const AnnouncementTable = ({
+  data = [],
+  loading,
+  page,
+  pageSize,
+  onPageChange,
+  onCreate,
+  onEdit,           // called with FRESH announcement object from GET /announcements/{id}
+  onRecipients,
+  onDeleteSuccess,
+}) => {
+  const dispatch = useDispatch();
+
+  const isPublishing        = useSelector(selectIsPublishing);
+  const isDeleting          = useSelector(selectIsDeleting);
+  const isLoadingDetail     = useSelector(selectLoadingDetail);
+  const publishError        = useSelector(selectPublishError);
+  const deleteError         = useSelector(selectDeleteError);
+
+  const [publishingId, setPublishingId] = useState(null);
+  const [deletingId,   setDeletingId]   = useState(null);
+  const [editingId,    setEditingId]    = useState(null);   // tracks which row is fetching
+
+  // ── Edit — fetch fresh data first, then open form ──────────────────────────
+  // Prevents the form from opening with stale table row data.
+  const handleEdit = useCallback(async (row) => {
+    setEditingId(row.announcement_id);
+    const result = await dispatch(fetchAnnouncementById(row.announcement_id));
+    setEditingId(null);
+
+    if (!result.error) {
+      // result.payload.data is the fresh announcement from the API
+      onEdit(result.payload?.data ?? row);
+    }
+    // On failure, fall back to the table row so the form still opens
+    // (better than doing nothing — user can still edit with slightly stale data)
+    else {
+      onEdit(row);
+    }
+  }, [dispatch, onEdit]);
+
+  // ── Publish ────────────────────────────────────────────────────────────────
+  const handlePublish = useCallback(async (row) => {
+    setPublishingId(row.announcement_id);
+    await dispatch(publishAnnouncement(row.announcement_id));
+    setPublishingId(null);
+  }, [dispatch]);
+
+  // ── Delete ─────────────────────────────────────────────────────────────────
+  const handleDelete = useCallback(async (row) => {
+    if (!window.confirm(`Delete "${row.title}"? This cannot be undone.`)) return;
+    setDeletingId(row.announcement_id);
+    const result = await dispatch(deleteAnnouncement(row.announcement_id));
+    setDeletingId(null);
+    if (!result.error) onDeleteSuccess?.();
+  }, [dispatch, onDeleteSuccess]);
+
+  // ── Formatted data ─────────────────────────────────────────────────────────
+  const formattedData = useMemo(
+    () =>
+      data.map((item) => ({
+        ...item,
+        _status:  item.status,
+        status:   <StatusBadge   status={item.status}     />,
+        channels: <ChannelBadges channels={item.channels} />,
+      })),
+    [data]
+  );
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+  return (
+    <div className="bg-white border rounded-xl p-4">
+
+      {/* Header */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">Announcements</h2>
+        <button
+          onClick={onCreate}
+          className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          + Create Announcement
+        </button>
+      </div>
+
+      {/* Publish error */}
+      {publishError && (
+        <div role="alert" className="mb-3 flex items-center justify-between rounded-lg border border-orange-200 bg-orange-50 px-4 py-2 text-sm text-orange-700">
+          <span>⚠ Publish failed: {publishError.message}</span>
+          <button onClick={() => dispatch(clearError("publishError"))} className="ml-2 font-bold text-orange-400 hover:text-orange-600">×</button>
+        </div>
+      )}
+
+      {/* Delete error */}
+      {deleteError && (
+        <div role="alert" className="mb-3 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+          <span>⚠ Delete failed: {deleteError.message}</span>
+          <button onClick={() => dispatch(clearError("deleteError"))} className="ml-2 font-bold text-red-400 hover:text-red-600">×</button>
+        </div>
+      )}
+
+      <DynamicTable
+        headers={HEADERS}
+        data={formattedData}
+        loading={loading}
+        emptyMessage="No announcements yet. Create one to get started."
+        renderActions={(row) => {
+          const isDraft       = row._status === "draft";
+          const rowEditing    = isLoadingDetail && editingId   === row.announcement_id;
+          const rowPublishing = isPublishing    && publishingId === row.announcement_id;
+          const rowDeleting   = isDeleting      && deletingId   === row.announcement_id;
+          const anyInFlight   = rowEditing || rowPublishing || rowDeleting;
+
+          return (
+            <div className="flex items-center gap-3">
+
+              {/* Edit — drafts only, fetches fresh data first */}
+              {isDraft && (
+                <button
+                  onClick={() => handleEdit(row)}
+                  disabled={anyInFlight}
+                  className="text-blue-600 text-sm hover:underline disabled:opacity-40 flex items-center gap-1"
+                >
+                  {rowEditing ? <><Spinner /> Loading…</> : "Edit"}
+                </button>
+              )}
+
+              {/* Publish — drafts only */}
+              {isDraft && (
+                <button
+                  onClick={() => handlePublish(row)}
+                  disabled={anyInFlight}
+                  className="text-green-600 text-sm hover:underline disabled:opacity-40 flex items-center gap-1"
+                >
+                  {rowPublishing ? <><Spinner /> Publishing…</> : "Publish"}
+                </button>
+              )}
+
+              {/* Recipients */}
+              <button
+                onClick={() => onRecipients(row)}
+                disabled={anyInFlight}
+                className="text-purple-600 text-sm hover:underline disabled:opacity-40"
+              >
+                Recipients
+              </button>
+
+              {/* Delete */}
+              <button
+                onClick={() => handleDelete(row)}
+                disabled={anyInFlight}
+                className="text-red-500 text-sm hover:underline disabled:opacity-40 flex items-center gap-1"
+              >
+                {rowDeleting ? <><Spinner /> Deleting…</> : "Delete"}
+              </button>
+
+            </div>
+          );
+        }}
+      />
+
+      {/* Pagination */}
+      {onPageChange && (
+        <div className="mt-4 flex items-center justify-end gap-3">
+          <button
+            onClick={() => onPageChange((p) => Math.max(1, p - 1))}
+            disabled={page <= 1 || loading}
+            className="px-3 py-1 text-sm border rounded disabled:opacity-40"
+          >
+            ← Prev
+          </button>
+          <span className="text-sm text-gray-500">Page {page}</span>
+          <button
+            onClick={() => onPageChange((p) => p + 1)}
+            disabled={loading || data.length < pageSize}
+            className="px-3 py-1 text-sm border rounded disabled:opacity-40"
+          >
+            Next →
+          </button>
+        </div>
+      )}
+
+    </div>
+  );
+};
+
+export default AnnouncementTable;
