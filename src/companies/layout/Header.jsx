@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Bell, Megaphone, Menu, User, LogOut, ChevronDown } from "lucide-react";
+import { Megaphone, Star, Menu, User, LogOut, ChevronDown } from "lucide-react";
 import { useNavigate }                                       from "react-router-dom";
 import { useDispatch, useSelector }                          from "react-redux";
 import { logout, selectCurrentUser }                         from "../../redux/features/auth/authSlice";
@@ -26,11 +26,11 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleAvatarClick        = useCallback(() => setIsProfileOpen(prev => !prev), []);
-  const handleProfileNavigation  = useCallback(() => { navigate("/companies/profile");      setIsProfileOpen(false); }, [navigate]);
-  const handleNotificationClick  = useCallback(() =>   navigate("/companies/notification"),  [navigate]);
-  const handleAnnouncementClick  = useCallback(() =>   navigate("/companies/announcements"), [navigate]);
-  const handleLogout             = useCallback(() => { dispatch(logout()); setIsProfileOpen(false); }, [dispatch]);
+  const handleAvatarClick       = useCallback(() => setIsProfileOpen(prev => !prev), []);
+  const handleProfileNavigation = useCallback(() => { navigate("/companies/profile");      setIsProfileOpen(false); }, [navigate]);
+  const handleAnnouncementClick = useCallback(() =>   navigate("/companies/announcements"), [navigate]);
+  const handleReviewsClick      = useCallback(() =>   navigate("/companies/reviews"),       [navigate]);
+  const handleLogout            = useCallback(() => { dispatch(logout()); setIsProfileOpen(false); }, [dispatch]);
 
   return (
     <header className={`
@@ -54,7 +54,7 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
             <span className="text-blue-600 font-bold text-xl">{title}</span>
           </div>
 
-          {/* Right — announcements + notifications + avatar */}
+          {/* Right — announcements + reviews + avatar */}
           <div className="flex items-center gap-1">
 
             {/* Announcements button */}
@@ -65,7 +65,6 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
                 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50
                 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
             >
-              {/* Icon with subtle bg */}
               <div className="relative p-1.5 rounded-lg bg-gray-100 group-hover:bg-indigo-100 transition-colors">
                 <Megaphone className="h-4 w-4" />
               </div>
@@ -77,21 +76,21 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
             {/* Divider */}
             <div className="w-px h-6 bg-gray-200 mx-1" />
 
-            {/* Notifications button */}
+            {/* Reviews button */}
             <button
               type="button"
-              onClick={handleNotificationClick}
+              onClick={handleReviewsClick}
               className="group relative flex items-center gap-2 px-3 py-2 rounded-xl
-                text-gray-500 hover:text-blue-600 hover:bg-blue-50
-                transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                text-gray-500 hover:text-amber-600 hover:bg-amber-50
+                transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-300"
             >
-              <div className="relative p-1.5 rounded-lg bg-gray-100 group-hover:bg-blue-100 transition-colors">
-                <Bell className="h-4 w-4" />
-                {/* Notification dot */}
-                <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
+              <div className="relative p-1.5 rounded-lg bg-gray-100 group-hover:bg-amber-100 transition-colors">
+                <Star className="h-4 w-4" />
+                {/* New reviews dot */}
+                <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-white" />
               </div>
               <span className="text-xs font-semibold tracking-wide hidden sm:block">
-                Notifications
+                Reviews
               </span>
             </button>
 
