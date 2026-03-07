@@ -1,24 +1,24 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector }                 from "react-redux";
 
-import { fetchAnnouncements }        from "../redux/features/notifications/announcementThunks";
+import { fetchAnnouncements }  from "../redux/features/notifications/announcementThunks";
 import {
   selectAnnouncements,
   selectLoadingList,
   selectListError,
   clearError,
-} from "../redux/features/notifications/announcementsSlice";
+}                              from "../redux/features/notifications/announcementsSlice";
 
-import AnnouncementTable      from "../components/announcements/AnnouncementTable";
+import AnnouncementList       from "../components/announcements/AnnouncementList";
 import AnnouncementForm       from "../components/announcements/AnnouncementForm";
 import AnnouncementRecipients from "../components/announcements/AnnouncementRecipients";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 8;
 
 const PANEL = {
   NONE:       "NONE",
-  FORM:       "FORM",       // create or edit
-  RECIPIENTS: "RECIPIENTS", // delivery report
+  FORM:       "FORM",
+  RECIPIENTS: "RECIPIENTS",
 };
 
 const ManageAnnouncements = () => {
@@ -32,20 +32,14 @@ const ManageAnnouncements = () => {
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const [page,                 setPage]                 = useState(1);
 
-
   const loadAnnouncements = useCallback(() => {
     dispatch(fetchAnnouncements({ page, page_size: PAGE_SIZE }));
   }, [dispatch, page]);
 
   useEffect(() => {
     loadAnnouncements();
-  }, [loadAnnouncements]);
-
-  useEffect(() => {
-    return () => {
-      dispatch(clearError("listError"));
-    };
-  }, [dispatch]);
+    return () => { dispatch(clearError("listError")); };
+  }, [loadAnnouncements, dispatch]);
 
   const openCreateForm = useCallback(() => {
     setSelectedAnnouncement(null);
@@ -69,8 +63,12 @@ const ManageAnnouncements = () => {
 
   const handleMutationSuccess = useCallback(() => {
     closePanel();
-    loadAnnouncements();
-  }, [closePanel, loadAnnouncements]);
+    if (page !== 1) {
+      setPage(1);
+    } else {
+      loadAnnouncements();
+    }
+  }, [closePanel, loadAnnouncements, page]);
 
   return (
     <div className="p-6">
@@ -78,7 +76,7 @@ const ManageAnnouncements = () => {
       {listError && (
         <div
           role="alert"
-          className="mb-4 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          className="mb-4 flex items-center justify-between rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
         >
           <span>⚠ {listError.message}</span>
           <button
@@ -91,7 +89,7 @@ const ManageAnnouncements = () => {
         </div>
       )}
 
-      <AnnouncementTable
+      <AnnouncementList
         data={announcements}
         loading={loading}
         page={page}
@@ -100,14 +98,14 @@ const ManageAnnouncements = () => {
         onCreate={openCreateForm}
         onEdit={openEditForm}
         onRecipients={openRecipients}
-        onDeleteSuccess={loadAnnouncements}
+        onMutationSuccess={loadAnnouncements}
       />
 
       {activePanel === PANEL.FORM && (
         <AnnouncementForm
-          announcement={selectedAnnouncement}   
+          announcement={selectedAnnouncement}
           onClose={closePanel}
-          onSuccess={handleMutationSuccess}    
+          onSuccess={handleMutationSuccess}
         />
       )}
 

@@ -15,7 +15,8 @@ const DynamicTable = React.memo(
     onEdit,
     onDelete,
     onHistory,
-    showActions = true,   // ← set false to hide the Actions column entirely
+    showActions    = true,  // set false to hide the Actions column entirely
+    showPagination = true,  // set false when the parent owns pagination (e.g. AnnouncementTable)
     emptyMessage = "No records found",
     loading = false,
   }) => {
@@ -49,7 +50,6 @@ const DynamicTable = React.memo(
                     {header.label}
                   </th>
                 ))}
-                {/* Only render Actions header when showActions is true */}
                 {showActions && (
                   <th className="px-4 py-3 w-36 text-center">Actions</th>
                 )}
@@ -94,7 +94,6 @@ const DynamicTable = React.memo(
                         {header.render ? header.render(item) : item[header.key] ?? "-"}
                       </td>
                     ))}
-                    {/* Only render Actions cell when showActions is true */}
                     {showActions && (
                       <td className="px-4 py-2 w-36">
                         <div className="flex justify-center items-center gap-3">
@@ -132,31 +131,33 @@ const DynamicTable = React.memo(
           </table>
         </div>
 
-        {/* Pagination */}
-        <div className="flex justify-center items-center gap-4 mt-4 p-2">
-          <button
-            onClick={onPrev}
-            disabled={currentPage === 1}
-            className={`flex items-center gap-2 px-4 py-2 rounded transition ${
-              currentPage === 1
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            <ChevronLeft size={18} /> Prev
-          </button>
-          <button
-            onClick={onNext}
-            disabled={currentPage === totalPages}
-            className={`flex items-center gap-2 px-4 py-2 rounded transition ${
-              currentPage === totalPages
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-            }`}
-          >
-            Next <ChevronRight size={18} />
-          </button>
-        </div>
+        {/* Pagination — hidden when parent manages its own */}
+        {showPagination && (
+          <div className="flex justify-center items-center gap-4 mt-4 p-2">
+            <button
+              onClick={onPrev}
+              disabled={currentPage === 1}
+              className={`flex items-center gap-2 px-4 py-2 rounded transition ${
+                currentPage === 1
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
+            >
+              <ChevronLeft size={18} /> Prev
+            </button>
+            <button
+              onClick={onNext}
+              disabled={currentPage === totalPages}
+              className={`flex items-center gap-2 px-4 py-2 rounded transition ${
+                currentPage === totalPages
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
+            >
+              Next <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
       </div>
     );
   }

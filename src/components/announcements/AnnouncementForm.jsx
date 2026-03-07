@@ -1,14 +1,21 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import {ChevronRight, Loader2, AlertCircle, X,CheckCircle2, Users, Truck, Hash, Upload, Trash2,} from "lucide-react";
+import { useDispatch, useSelector }                                   from "react-redux";
+import {
+  ChevronRight, Loader2, AlertCircle, X,
+  CheckCircle2, Users, Truck, Hash, Upload, Trash2,
+} from "lucide-react";
 
-import { createAnnouncement,updateAnnouncement,} from "../../redux/features/notifications/announcementThunks";
+import {
+  createAnnouncement,
+  updateAnnouncement,
+}                        from "../../redux/features/notifications/announcementThunks";
 import {
   selectIsCreating, selectIsUpdating,
   selectCreateError, selectUpdateError, clearError,
-} from "../../redux/features/notifications/announcementsSlice";
+}                        from "../../redux/features/notifications/announcementsSlice";
 
-import { NewfetchDriversThunk, driversSelectors }from "../../redux/features/manageDriver/newDriverSlice";
+import { NewfetchDriversThunk, driversSelectors }
+                         from "../../redux/features/manageDriver/newDriverSlice";
 import { useVendorOptions }    from "../../hooks/useVendorOptions";
 import { fetchEmployeesThunk } from "../../redux/features/employees/employeesThunk";
 import { selectAllEmployees }  from "../../redux/features/employees/employeesSlice";
@@ -68,6 +75,9 @@ const INITIAL = {
   media_url:"", media_file:null, channels:["push","in_app"],
 };
 
+// ─── Helpers (outside component — no closure over state) ───────────────────────
+
+// Fix 4: was `!b` which is truthy for 0; use explicit null check instead
 const fmtBytes = (b) =>
   b == null ? "" : b < 1048576
     ? `${(b / 1024).toFixed(1)} KB`
@@ -89,21 +99,27 @@ function validate(f) {
   return e;
 }
 
+// Fix 3: was defined inside component and recreated on every render
 const inputCls = (err) =>
   `w-full rounded-lg border px-3 py-2 text-sm bg-white placeholder:text-gray-300
    focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition-all
    ${err ? "border-red-300 bg-red-50" : "border-gray-200"}`;
 
+// ─── Tiny field error ──────────────────────────────────────────────────────────
 const FErr = ({ msg }) => msg ? (
   <p className="mt-1 flex items-center gap-1 text-[11px] text-red-500">
     <AlertCircle size={10} />{msg}
   </p>
 ) : null;
 
+// ─── Component ─────────────────────────────────────────────────────────────────
 const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
   const dispatch     = useDispatch();
   const isEdit       = !!announcement;
   const fileInputRef = useRef(null);
+
+  // Fix 1: ref flag — when populate effect sets target_type, the target_type
+  // change effect must NOT run its reset or it wipes the target_ids we just set.
   const skipTargetReset = useRef(false);
 
   const isCreating  = useSelector(selectIsCreating);
@@ -132,6 +148,9 @@ const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
   // ── Populate edit ────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!announcement) return;
+
+    // Raise the flag before setFormData so the change effect skips its reset
+    // on the render cycle triggered by this populate.
     skipTargetReset.current = true;
 
     setFormData({
