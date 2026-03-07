@@ -4,6 +4,8 @@ import {
   createEscortThunk,
   updateEscortThunk,
   deleteEscortThunk,
+  toggleEscortActiveThunk,
+  toggleEscortAvailableThunk,
 } from "./escortThunks";
 
 // ------------------------------------------------------
@@ -55,7 +57,7 @@ const escortSlice = createSlice({
       })
       .addCase(fetchEscortsThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message || action.payload || "Failed to fetch escorts";
       })
 
       // ============================ CREATE =============================
@@ -70,7 +72,7 @@ const escortSlice = createSlice({
       })
       .addCase(createEscortThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message || action.payload || "Failed to create escort";
       })
 
       // ============================ UPDATE =============================
@@ -85,7 +87,7 @@ const escortSlice = createSlice({
       })
       .addCase(updateEscortThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message || action.payload || "Failed to update escort";
       })
 
       // ============================ DELETE =============================
@@ -94,13 +96,41 @@ const escortSlice = createSlice({
         state.error = null; // Clear previous errors when starting new operation
       })
       .addCase(deleteEscortThunk.fulfilled, (state, action) => {
-        escortsAdapter.removeOne(state, action.payload);
+        escortsAdapter.removeOne(state, action.payload?.id);
         state.loading = false;
         state.error = null;
       })
       .addCase(deleteEscortThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message || action.payload || "Failed to delete escort";
+      })
+
+      // ======================== TOGGLE STATUS ==========================
+      .addCase(toggleEscortActiveThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(toggleEscortActiveThunk.fulfilled, (state, action) => {
+        escortsAdapter.upsertOne(state, action.payload);
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(toggleEscortActiveThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || action.payload || "Failed to update active status";
+      })
+      .addCase(toggleEscortAvailableThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(toggleEscortAvailableThunk.fulfilled, (state, action) => {
+        escortsAdapter.upsertOne(state, action.payload);
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(toggleEscortAvailableThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || action.payload || "Failed to update availability status";
       });
   },
 });

@@ -20,8 +20,10 @@ import {
   Download,
   Car,
   Building,
+  Bell,           // ✅ NEW
 } from "lucide-react";
 import BookingDetailsModal from "../modals/BookingDetailsModal";
+import NotificationLogsModal from "../modals/NotificationLogsModal"; // ✅ NEW
 import { API_CLIENT } from "../../Api/API_Client";
 
 // ── Dropdown rendered at fixed screen position to escape overflow clipping ──
@@ -97,15 +99,19 @@ const ShiftBookingsTable = ({
   onGenerateRoute,
   generatingRoute,
   onRefresh,
+  tenantId,        // ✅ NEW — pass down for admin users
 }) => {
-  const [modalState, setModalState] = useState({
-    isOpen: false,
-    shiftId: null,
-  });
+  const [modalState, setModalState] = useState({ isOpen: false, shiftId: null });
   const [deletingShift, setDeletingShift] = useState(null);
   const [actionMenu, setActionMenu] = useState({ shiftId: null, anchorRect: null });
 
-  // ── true if the selected date is strictly before today (past) ──
+  // ✅ NEW — notification logs modal state
+  const [logsModal, setLogsModal] = useState({
+    isOpen:    false,
+    shiftId:   null,
+    shiftCode: null,
+  });
+
   const isPastDate = React.useMemo(() => {
     if (!date) return false;
     const selected = new Date(date);
@@ -141,72 +147,48 @@ const ShiftBookingsTable = ({
       const ampm = hour >= 12 ? "PM" : "AM";
       const displayHour = hour % 12 || 12;
       return `${displayHour}:${minutes || "00"} ${ampm}`;
-    } catch {
-      return time;
-    }
+    } catch { return time; }
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return "";
     return new Date(dateString).toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
+      weekday: "short", month: "short", day: "numeric",
     });
   };
 
-  const handleTotalClick = (shift) => {
-    setModalState({
-      isOpen: true,
-      shiftId: shift.shift_id,
-    });
-  };
-
-  const closeModal = () => {
-    setModalState({
-      isOpen: false,
-      shiftId: null,
-    });
-  };
+  const handleTotalClick  = (shift) => setModalState({ isOpen: true, shiftId: shift.shift_id });
+  const closeModal        = ()      => setModalState({ isOpen: false, shiftId: null });
 
   const needsRegeneration = (shift) => {
-    const totalBookings = shift.stats?.total_bookings || 0;
+    const totalBookings  = shift.stats?.total_bookings  || 0;
     const routedBookings = shift.stats?.routed_bookings || 0;
     return totalBookings !== routedBookings;
   };
 
   const handleShiftRoute = (shift) => {
     if (!shift?.id) return;
-    const url = `/companies/shift/${shift.id}/${shift.log_type}/${date}/routing-map`;
-    window.open(url, "_blank");
+    window.open(`/companies/shift/${shift.id}/${shift.log_type}/${date}/routing-map`, "_blank");
   };
 
   const handleGenerateClick = (shift) => {
-    if (onGenerateRoute && shift.shift_id) {
-      onGenerateRoute(shift.shift_id);
-    }
+    if (onGenerateRoute && shift.shift_id) onGenerateRoute(shift.shift_id);
   };
 
   const handleShiftRoutesDelete = async (shift) => {
     if (!shift?.shift_id || !date) return;
-
     const isConfirmed = window.confirm(
       `Delete all routes for ${shift.shift_code || shift.shift_id} on ${formatDate(date)}?`
     );
-
     if (!isConfirmed) return;
-
     try {
       setDeletingShift(shift.shift_id);
       await API_CLIENT.delete("/routes/bulk", {
-        params: {
-          shift_id: shift.shift_id,
-          route_date: date,
-        },
+        params: { shift_id: shift.shift_id, route_date: date },
       });
       alert(`Routes for ${shift.shift_code || shift.shift_id} deleted successfully!`);
       onRefresh?.();
-    } catch (error) {
+    } catch {
       alert("Failed to delete routes. Please try again.");
     } finally {
       setDeletingShift(null);
@@ -223,25 +205,24 @@ const ShiftBookingsTable = ({
   };
 
   const getShiftStatus = (shift) => {
-    const total = shift.stats?.total_bookings || 0;
+    const total    = shift.stats?.total_bookings    || 0;
     const unrouted = shift.stats?.unrouted_bookings || 0;
-    const routed = shift.stats?.routed_bookings || 0;
-
-    if (total === 0) return { color: "gray", text: "No Bookings", icon: AlertCircle };
-    if (unrouted === 0) return { color: "green", text: "Complete", icon: CheckCircle };
-    if (routed > 0 && unrouted > 0) return { color: "amber", text: "Partial", icon: AlertCircle };
-    return { color: "red", text: "Pending", icon: XCircle };
+    const routed   = shift.stats?.routed_bookings   || 0;
+    if (total    === 0)                    return { color: "gray",  text: "No Bookings", icon: AlertCircle };
+    if (unrouted === 0)                    return { color: "green", text: "Complete",    icon: CheckCircle };
+    if (routed > 0 && unrouted > 0)        return { color: "amber", text: "Partial",     icon: AlertCircle };
+    return                                        { color: "red",   text: "Pending",     icon: XCircle    };
   };
 
-  const safeData = Array.isArray(filteredData) ? filteredData : [];
-  const activeShift = safeData.find((s) => s.shift_id === actionMenu.shiftId);
+  const safeData         = Array.isArray(filteredData) ? filteredData : [];
+  const activeShift      = safeData.find((s) => s.shift_id === actionMenu.shiftId);
   const activeModalShift = safeData.find((s) => s.shift_id === modalState.shiftId);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-app-primary border-t-transparent mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-app-primary border-t-transparent mx-auto" />
           <p className="mt-2 text-app-text-secondary">Loading shifts...</p>
         </div>
       </div>
@@ -263,8 +244,7 @@ const ShiftBookingsTable = ({
             onClick={onRefresh}
             className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-app-tertiary text-app-text-secondary rounded-lg hover:bg-app-border transition-colors"
           >
-            <RefreshCw className="w-4 h-4" />
-            Refresh
+            <RefreshCw className="w-4 h-4" /> Refresh
           </button>
         )}
       </div>
@@ -282,19 +262,19 @@ const ShiftBookingsTable = ({
         <div className="bg-app-tertiary rounded-lg p-4">
           <p className="text-sm text-app-text-secondary mb-1">Bookings</p>
           <p className="text-xl font-semibold text-app-text-primary">
-            {safeData.reduce((sum, shift) => sum + (shift.stats?.total_bookings || 0), 0)}
+            {safeData.reduce((sum, s) => sum + (s.stats?.total_bookings || 0), 0)}
           </p>
         </div>
         <div className="bg-app-tertiary rounded-lg p-4">
           <p className="text-sm text-app-text-secondary mb-1">Unrouted</p>
           <p className="text-xl font-semibold text-amber-600">
-            {safeData.reduce((sum, shift) => sum + (shift.stats?.unrouted_bookings || 0), 0)}
+            {safeData.reduce((sum, s) => sum + (s.stats?.unrouted_bookings || 0), 0)}
           </p>
         </div>
         <div className="bg-app-tertiary rounded-lg p-4">
           <p className="text-sm text-app-text-secondary mb-1">Drivers</p>
           <p className="text-xl font-semibold text-app-text-primary">
-            {safeData.reduce((sum, shift) => sum + (shift.stats?.driver_assigned || 0), 0)}
+            {safeData.reduce((sum, s) => sum + (s.stats?.driver_assigned || 0), 0)}
           </p>
         </div>
       </div>
@@ -306,9 +286,7 @@ const ShiftBookingsTable = ({
             <h3 className="font-medium text-app-text-primary">Shift Management</h3>
             <p className="text-sm text-app-text-secondary">
               {formatDate(date)} • {selectedShiftType} Shifts
-              {isPastDate && (
-                <span className="ml-2 text-xs text-amber-600 font-medium"></span>
-              )}
+              {isPastDate && <span className="ml-2 text-xs text-amber-600 font-medium" />}
             </p>
           </div>
           {onRefresh && (
@@ -339,7 +317,7 @@ const ShiftBookingsTable = ({
 
               <tbody className="divide-y divide-app-border">
                 {safeData.map((shift, index) => {
-                  const status = getShiftStatus(shift);
+                  const status     = getShiftStatus(shift);
                   const StatusIcon = status.icon;
                   const completionRate = shift.stats?.total_bookings
                     ? Math.round(((shift.stats?.routed_bookings || 0) / shift.stats.total_bookings) * 100)
@@ -347,6 +325,7 @@ const ShiftBookingsTable = ({
 
                   return (
                     <tr key={shift.shift_id || index} className="hover:bg-app-tertiary/30">
+
                       <td className="px-4 py-3">
                         <div className="font-medium text-app-text-primary">{shift.shift_code || shift.shift_id}</div>
                         <div className="text-xs text-app-text-secondary mt-1">ID: {shift.shift_id}</div>
@@ -420,12 +399,12 @@ const ShiftBookingsTable = ({
                           <StatusIcon className={`w-4 h-4 ${
                             status.color === "green" ? "text-green-500" :
                             status.color === "amber" ? "text-amber-500" :
-                            status.color === "red" ? "text-red-500" : "text-gray-400"
+                            status.color === "red"   ? "text-red-500"   : "text-gray-400"
                           }`} />
                           <span className={`text-sm font-medium ${
                             status.color === "green" ? "text-green-700" :
                             status.color === "amber" ? "text-amber-700" :
-                            status.color === "red" ? "text-red-700" : "text-gray-500"
+                            status.color === "red"   ? "text-red-700"   : "text-gray-500"
                           }`}>
                             {status.text}
                           </span>
@@ -433,8 +412,11 @@ const ShiftBookingsTable = ({
                         <div className="text-xs text-app-text-secondary mt-1">{shift.stats?.vehicle_assigned || 0} vehicles</div>
                       </td>
 
+                      {/* ── Actions ── */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
+
+                          {/* View Routes Map */}
                           <button
                             onClick={() => handleShiftRoute(shift)}
                             className="p-2 text-app-text-secondary hover:text-app-primary hover:bg-app-tertiary rounded-lg transition-colors"
@@ -443,6 +425,7 @@ const ShiftBookingsTable = ({
                             <MapPin className="w-4 h-4" />
                           </button>
 
+                          {/* View Details */}
                           <button
                             onClick={() => handleTotalClick(shift)}
                             className="p-2 text-app-text-secondary hover:text-app-primary hover:bg-app-tertiary rounded-lg transition-colors"
@@ -451,6 +434,20 @@ const ShiftBookingsTable = ({
                             <Eye className="w-4 h-4" />
                           </button>
 
+                          {/* ✅ NEW — Notification Logs */}
+                          <button
+                            onClick={() => setLogsModal({
+                              isOpen:    true,
+                              shiftId:   shift.shift_id,
+                              shiftCode: shift.shift_code,
+                            })}
+                            className="p-2 text-app-text-secondary hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                            title="View Notification Logs"
+                          >
+                            <Bell className="w-4 h-4" />
+                          </button>
+
+                          {/* Generate / Regenerate */}
                           <button
                             onClick={() => handleGenerateClick(shift)}
                             disabled={generatingRoute === shift.shift_id}
@@ -468,6 +465,7 @@ const ShiftBookingsTable = ({
                             )}
                           </button>
 
+                          {/* More options */}
                           <button
                             onClick={(e) => toggleActionMenu(e, shift.shift_id)}
                             className={`p-2 rounded-lg transition-colors ${
@@ -492,8 +490,7 @@ const ShiftBookingsTable = ({
         <div className="px-4 py-3 border-t border-app-border text-sm text-app-text-secondary flex justify-between items-center">
           <span>{safeData.length} shifts</span>
           <button onClick={() => {}} className="inline-flex items-center gap-2 text-app-text-secondary hover:text-app-text-primary">
-            <Download className="w-4 h-4" />
-            Export
+            <Download className="w-4 h-4" /> Export
           </button>
         </div>
       </div>
@@ -511,11 +508,22 @@ const ShiftBookingsTable = ({
         />
       )}
 
+      {/* Booking Details Modal */}
       <BookingDetailsModal
         isOpen={modalState.isOpen}
         onClose={closeModal}
         shift={activeModalShift}
         bookings={activeModalShift?.bookings || []}
+      />
+
+      {/* ✅ NEW — Notification Logs Modal */}
+      <NotificationLogsModal
+        isOpen={logsModal.isOpen}
+        onClose={() => setLogsModal({ isOpen: false, shiftId: null, shiftCode: null })}
+        shiftId={logsModal.shiftId}
+        shiftCode={logsModal.shiftCode}
+        bookingDate={date}
+        tenantId={tenantId ?? null}
       />
     </>
   );

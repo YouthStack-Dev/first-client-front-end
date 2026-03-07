@@ -257,7 +257,7 @@ const NotificationsPage = () => {
   const handleAlertAction = (action, alert) => {
     setCurrentAlert(alert);
     if (action === "acknowledge") {
-      setAckForm({ acknowledged_by: currentUserId, notes: "" });
+      setAckForm({ acknowledged_by: String(currentUserId), notes: "" });
       setShowAckModal(true);
     } else if (action === "escalate") {
       setEscalateForm({ escalated_by: currentUserId, escalation_level: 1, escalated_to: "", reason: "" });

@@ -12,6 +12,9 @@ import {
   ShieldCheck,
   Clock,
   Users as UsersIcon,
+  Eye,
+  EyeOff,
+  CheckCircle,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -28,9 +31,11 @@ export const Login = () => {
   const [credentials, setCredentials] = useState({
     username: "",
     password: "",
-    tenant_id: "", // New field for company/vendor ID
+    tenant_id: "",
   });
   const [validationError, setValidationError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
   const location = useLocation();
 
   const {
@@ -42,31 +47,24 @@ export const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Helper function to extract error message
   const getErrorMessage = (error) => {
     if (!error) return "";
 
-    // Handle string errors
     if (typeof error === "string") return error;
 
-    // Handle error object with detail property
     if (error.detail) {
-      // Check if detail is an object with message property
       if (typeof error.detail === "object" && error.detail.message) {
         return error.detail.message;
       }
-      // Handle case where detail might be a string
       if (typeof error.detail === "string") {
         return error.detail;
       }
     }
 
-    // Handle error object with message property
     if (error.message) {
       return error.message;
     }
 
-    // Fallback for unknown error format
     return "An unexpected error occurred. Please try again.";
   };
 
@@ -79,23 +77,19 @@ export const Login = () => {
       return "/vendor/dashboard";
     }
 
-    return "/companies/profile"; // Default for company login
+    return "/companies/profile";
   };
 
-  // Check if ID field is required based on login type
   const requiresIdField = () => {
     const path = location.pathname.toLowerCase();
 
-    // Show ID field for all except superadmin if superadmin doesn't need it
-    // Modify this based on your backend requirements
     if (path.includes("/superadmin")) {
-      return false; // Superadmin doesn't need tenant_id (adjust based on your API)
+      return false;
     }
 
-    return true; // Show for all other paths
+    return true;
   };
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
       const fromPath = location.state?.from || getDashboardPath();
@@ -115,31 +109,27 @@ export const Login = () => {
 
     const path = location.pathname.toLowerCase();
 
-    // Validation logic
     if (requiresIdField() && !credentials.tenant_id) {
       const titleInfo = getLoginTitle();
       setValidationError(`Please fill in your ${titleInfo.idLabel}.`);
       return;
     }
 
-    // Email validation
     const usernameRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!usernameRegex.test(credentials.username)) {
       setValidationError("Please enter a valid email address.");
       return;
     }
 
-    // Password validation
     if (!credentials.password) {
       setValidationError("Please enter your password.");
       return;
     }
 
     try {
-      // Prepare data for superadmin (without tenant_id if not required)
       const loginData = { ...credentials };
       if (path.includes("/superadmin") && !requiresIdField()) {
-        delete loginData.tenant_id; // Remove tenant_id for superadmin
+        delete loginData.tenant_id;
       }
 
       const result = await dispatch(
@@ -153,17 +143,18 @@ export const Login = () => {
 
       dispatch(setAuthCredentials(result));
 
-      // Optional: Set additional cookies if needed
       Cookies.set("user_username", result.user.username || "dummy", {
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
       });
 
-      // Navigate to appropriate dashboard
-      navigate(getDashboardPath(), { replace: true });
+      // Show success state for 1 second before redirecting
+      setLoginSuccess(true);
+      setTimeout(() => {
+        navigate(getDashboardPath(), { replace: true });
+      }, 1000);
     } catch (err) {
       console.error("Login error:", err);
-      // Error is already handled in the Redux state
     }
   };
 
@@ -177,7 +168,7 @@ export const Login = () => {
         icon: <Shield className="w-8 h-8 text-red-600" />,
         idLabel: "",
         idPlaceholder: "",
-        showIdField: false, // Explicit flag
+        showIdField: false,
         companyName: "Admin Portal",
         tagline: "Secure System Administration",
       };
@@ -204,7 +195,6 @@ export const Login = () => {
         tagline: "Employee Self-Service Platform",
       };
     } else {
-      // Default company login
       return {
         title: "Company Login",
         subtitle: "Access your company dashboard",
@@ -226,7 +216,7 @@ export const Login = () => {
     } else if (path.includes("/vendor")) {
       return endpoint.vendorLogin;
     }
-    return endpoint.login; // Default endpoint for company and employee
+    return endpoint.login;
   };
 
   const {
@@ -240,6 +230,14 @@ export const Login = () => {
     tagline,
   } = getLoginTitle();
   const displayError = validationError || getErrorMessage(error);
+
+  const getButtonState = () => {
+    if (loginSuccess) return "success";
+    if (isLoading) return "loading";
+    return "idle";
+  };
+
+  const buttonState = getButtonState();
 
   return (
     <div className="min-h-screen bg-app-background flex">
@@ -423,29 +421,45 @@ export const Login = () => {
                   size={20}
                 />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   value={credentials.password}
                   onChange={handleChange}
-                  className="w-full pl-12 pr-4 py-3 border border-app-border rounded-xl focus:ring-2 focus:ring-app-primary focus:border-transparent transition-all duration-200 bg-app-surface"
+                  className="w-full pl-12 pr-12 py-3 border border-app-border rounded-xl focus:ring-2 focus:ring-app-primary focus:border-transparent transition-all duration-200 bg-app-surface"
                   placeholder="••••••••"
                   autoComplete="current-password"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-app-text-muted hover:text-app-text-primary transition-colors focus:outline-none"
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
 
-            {/* Submit Button */}
+            {/* Submit Button — 3 states: idle / loading / success */}
             <button
               type="submit"
-              disabled={isLoading}
-              className={`w-full py-3.5 rounded-xl font-semibold text-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2 ${
-                isLoading
-                  ? "bg-app-secondary cursor-not-allowed"
-                  : "bg-app-primary hover:bg-sidebar-primary shadow-sidebar-item hover:shadow-sidebar-item-hover"
-              } text-white`}
+              disabled={isLoading || loginSuccess}
+              className={`w-full py-3.5 rounded-xl font-semibold text-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 text-white ${
+                buttonState === "success"
+                  ? "bg-green-500 focus:ring-green-500 cursor-default scale-[1.01]"
+                  : buttonState === "loading"
+                  ? "bg-app-secondary cursor-not-allowed focus:ring-app-primary"
+                  : "bg-app-primary hover:bg-sidebar-primary shadow-sidebar-item hover:shadow-sidebar-item-hover focus:ring-app-primary"
+              }`}
             >
-              {isLoading ? (
+              {buttonState === "success" ? (
+                <span className="flex items-center justify-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  Login Successful! Redirecting...
+                </span>
+              ) : buttonState === "loading" ? (
                 <span className="flex items-center justify-center">
                   <svg
                     className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
@@ -473,19 +487,6 @@ export const Login = () => {
                 "Login"
               )}
             </button>
-
-            {/* Additional Links */}
-            <div className="text-center pt-4 border-t border-app-border">
-              <p className="text-app-text-muted text-sm">
-                Need help?{" "}
-                <a
-                  href="#"
-                  className="text-app-primary hover:text-sidebar-primary font-medium transition-colors"
-                >
-                  Contact Support
-                </a>
-              </p>
-            </div>
           </form>
         </div>
       </div>
