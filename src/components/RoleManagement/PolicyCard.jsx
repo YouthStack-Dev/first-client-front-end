@@ -1,11 +1,12 @@
 import React from "react";
-import { Edit, Trash2, FileText } from "lucide-react";
+import { Edit, Trash2, FileText, Shield, Users } from "lucide-react";
 
 export const PolicyTable = ({
   policies,
   onEdit,
   onDelete,
   isLoading = false,
+  isSuperAdmin = false,
 }) => {
   if (isLoading) {
     return (
@@ -25,9 +26,7 @@ export const PolicyTable = ({
         <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
         <div className="text-center py-12 text-gray-500">
           <FileText className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">
-            No policies
-          </h3>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No policies</h3>
           <p className="mt-1 text-sm text-gray-500">
             Get started by creating a new policy.
           </p>
@@ -52,6 +51,12 @@ export const PolicyTable = ({
               <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 Description
               </th>
+              {/* Only show Type column for SuperAdmin */}
+              {isSuperAdmin && (
+                <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Type
+                </th>
+              )}
               <th className="py-4 px-6 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider text-right">
                 Actions
               </th>
@@ -60,11 +65,12 @@ export const PolicyTable = ({
           <tbody className="bg-white divide-y divide-gray-100">
             {policies.map((policy, index) => (
               <PolicyTableRow
-                key={index}
+                key={policy.policy_id ?? index}
                 index={index}
                 policy={policy}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                isSuperAdmin={isSuperAdmin}
               />
             ))}
           </tbody>
@@ -74,29 +80,59 @@ export const PolicyTable = ({
   );
 };
 
-export const PolicyTableRow = ({ index, policy, onEdit, onDelete }) => {
+export const PolicyTableRow = ({ index, policy, onEdit, onDelete, isSuperAdmin = false }) => {
+  const isSystem = policy.is_system_policy === true;
+
   return (
     <tr className="hover:bg-gray-50 transition-colors duration-150">
       <td className="py-4 px-6 whitespace-nowrap">
         <div className="flex items-center">
-          <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg flex items-center justify-center">
-            <FileText className="text-blue-600" size={16} />
+          <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center
+            ${isSystem
+              ? "bg-gradient-to-br from-purple-50 to-purple-100"
+              : "bg-gradient-to-br from-blue-50 to-purple-50"
+            }`}
+          >
+            {isSystem
+              ? <Shield className="text-purple-600" size={16} />
+              : <FileText className="text-blue-600" size={16} />
+            }
           </div>
           <span className="ml-3 inline-flex items-center text-xs font-medium text-gray-700 bg-gray-100 px-2.5 py-1 rounded-full">
             {index + 1}
           </span>
         </div>
       </td>
+
       <td className="py-4 px-6">
         <div className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors duration-200">
           {policy.name}
         </div>
       </td>
+
       <td className="py-4 px-6">
         <div className="text-sm text-gray-600 max-w-md truncate">
-          {policy.description}
+          {policy.description || "—"}
         </div>
       </td>
+
+      {/* Type badge — SuperAdmin only */}
+      {isSuperAdmin && (
+        <td className="py-4 px-6 whitespace-nowrap">
+          {isSystem ? (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+              <Shield size={11} />
+              System
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+              <Users size={11} />
+              Tenant
+            </span>
+          )}
+        </td>
+      )}
+
       <td className="py-4 px-6 whitespace-nowrap text-right">
         <div className="flex items-center justify-end gap-2">
           <button

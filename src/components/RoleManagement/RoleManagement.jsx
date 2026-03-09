@@ -50,7 +50,7 @@ const RoleManagement = () => {
   const currentUser = useSelector(selectCurrentUser);
   const isSuperAdmin = currentUser?.type === "admin";
 
-  // ── Redux: roles (system roles for SuperAdmin, all roles for tenant admin) ──
+  // ── Redux: roles ──
   const roles = useSelector(selectRoles);
   const isLoading = useSelector(rolesLoading);
   const isLoaded = useSelector(rolesLoaded);
@@ -80,7 +80,7 @@ const RoleManagement = () => {
   // ── Fetch roles on load ──
   useEffect(() => {
     if (!isLoaded && !isLoading) {
-      dispatch(fetchRolesThunk()); // no params = system roles for SuperAdmin
+      dispatch(fetchRolesThunk());
     }
   }, [dispatch, isLoaded, isLoading]);
 
@@ -120,7 +120,7 @@ const RoleManagement = () => {
     if (option) {
       fetchTenantRoles(option.value);
     } else {
-      setTenantRoles([]); // cleared → will fall back to system roles
+      setTenantRoles([]);
     }
   };
 
@@ -135,10 +135,7 @@ const RoleManagement = () => {
     [companies]
   );
 
-  // ── Active roles:
-  //    SuperAdmin + tenant selected → tenant roles
-  //    SuperAdmin + no tenant       → system roles (Redux)
-  //    Tenant admin                 → all roles (Redux)
+  // ── Active roles ──
   const activeRoles = useMemo(() => {
     if (isSuperAdmin && selectedTenant) return tenantRoles;
     return roles || [];
@@ -162,7 +159,6 @@ const RoleManagement = () => {
     [activeRoles, searchQuery]
   );
 
-  // Fetch role details from backend
   const fetchRoleDetails = async (roleId) => {
     setRoleDetailsLoading(true);
     setRoleDetailsError(null);
@@ -233,7 +229,6 @@ const RoleManagement = () => {
       if (formMode === "create") {
         await dispatch(createRole(roleData)).unwrap();
         handleCancelForm();
-        // Refresh the right list
         if (isSuperAdmin && selectedTenant) {
           fetchTenantRoles(selectedTenant.value);
         } else {
@@ -279,7 +274,6 @@ const RoleManagement = () => {
       isSystemLevel: false,
       assignedUsers: [],
     };
-    // dispatch(createRoleThunk(newRole));
   };
 
   const handleCancelForm = () => {
@@ -303,14 +297,8 @@ const RoleManagement = () => {
     });
   };
 
-  const handleExportRoles = () => {
-    console.log("Exporting roles...");
-    alert("Roles exported successfully!");
-  };
-
   const getFormData = () => roleDetailedData || selectedRole;
 
-  // Tab navigation component
   const TabNavigation = () => (
     <div className="border-b border-gray-200 bg-white">
       <div className="px-6 pt-4">
@@ -344,7 +332,7 @@ const RoleManagement = () => {
 
   if (isLoading && !isLoaded) {
     return (
-      <div className="flex-1 bg-white shadow-md overflow-auto flex items-center justify-center">
+      <div className="flex-1 bg-white shadow-md overflow-x-hidden overflow-y-auto flex items-center justify-center">
         <div className="text-center">
           <RefreshCw className="h-8 w-8 animate-spin mx-auto text-indigo-600" />
           <p className="mt-2 text-gray-600">Loading roles...</p>
@@ -355,7 +343,7 @@ const RoleManagement = () => {
 
   if (error) {
     return (
-      <div className="flex-1 bg-white shadow-md overflow-auto flex items-center justify-center">
+      <div className="flex-1 bg-white shadow-md overflow-x-hidden overflow-y-auto flex items-center justify-center">
         <div className="text-center p-6">
           <div className="text-red-600 font-semibold">Error loading roles</div>
           <p className="text-gray-600 mt-2">{error}</p>
@@ -374,54 +362,11 @@ const RoleManagement = () => {
   }
 
   return (
-    <div className="flex-1 bg-white shadow-md overflow-auto">
+    <div className="flex-1 bg-white shadow-md overflow-x-hidden overflow-y-auto">
       <TabNavigation />
 
       {activeTab === "roles" && (
         <>
-          {/* ── SuperAdmin only: tenant selector bar ── */}
-          {isSuperAdmin && (
-            <div className="px-6 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-3 flex-wrap">
-              <div className="flex items-center gap-2">
-                <Shield size={15} className="text-purple-500" />
-                <span className="text-sm font-medium text-gray-600">
-                  Viewing:
-                </span>
-              </div>
-              <div className="w-72">
-                <Select
-                  options={tenantOptions}
-                  value={selectedTenant}
-                  onChange={handleTenantSelect}
-                  placeholder="System roles (select tenant to switch...)"
-                  isClearable
-                  isSearchable
-                  isLoading={!companiesFetched}
-                  styles={selectStyles}
-                  className="text-sm"
-                  formatOptionLabel={({ label, tenant }) => (
-                    <div className="py-0.5">
-                      <div className="font-medium">{label}</div>
-                      <div className="text-xs text-gray-400">{tenant?.tenant_id}</div>
-                    </div>
-                  )}
-                />
-              </div>
-              {/* Badge showing what's currently displayed */}
-              {selectedTenant ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
-                  <Users size={12} />
-                  {selectedTenant.label} roles
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
-                  <Shield size={12} />
-                  System roles
-                </span>
-              )}
-            </div>
-          )}
-
           <ToolBar
             leftElements={
               <div className="flex items-center gap-4 flex-wrap">
@@ -460,15 +405,45 @@ const RoleManagement = () => {
             }
             rightElements={
               <div className="flex items-center gap-3">
-                <ReusableButton
-                  module="role"
-                  action="export"
-                  icon={Download}
-                  title="Export roles to CSV"
-                  onClick={handleExportRoles}
-                  className="text-gray-600 hover:text-gray-800 p-2 rounded-lg hover:bg-gray-100 border border-gray-300"
-                  size={18}
-                />
+
+                {/* ── SuperAdmin only: tenant dropdown in toolbar ── */}
+                {isSuperAdmin && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-56">
+                      <Select
+                        options={tenantOptions}
+                        value={selectedTenant}
+                        onChange={handleTenantSelect}
+                        placeholder="System roles..."
+                        isClearable
+                        isSearchable
+                        isLoading={!companiesFetched}
+                        styles={selectStyles}
+                        className="text-sm"
+                        formatOptionLabel={({ label, tenant }) => (
+                          <div className="py-0.5">
+                            <div className="font-medium text-sm">{label}</div>
+                            <div className="text-xs text-gray-400">{tenant?.tenant_id}</div>
+                          </div>
+                        )}
+                      />
+                    </div>
+                    {/* Badge: system or tenant */}
+                    {selectedTenant ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 whitespace-nowrap">
+                        <Users size={11} />
+                        {selectedTenant.label}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 whitespace-nowrap">
+                        <Shield size={11} />
+                        System
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* + Role button */}
                 <ReusableButton
                   module="role"
                   action="create"
@@ -486,7 +461,6 @@ const RoleManagement = () => {
           />
 
           <div className="p-6">
-
             {/* Tenant roles loading state */}
             {isSuperAdmin && selectedTenant && tenantRolesLoading && (
               <div className="text-center py-12 text-gray-400">
