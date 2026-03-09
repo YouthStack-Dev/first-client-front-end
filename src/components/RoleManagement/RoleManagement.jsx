@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import RoleCard from "./RoleCard";
 import RoleForm from "./RoleForm";
 import SearchBar from "./SearchBar";
 import ToolBar from "../ui/ToolBar";
+import Select from "react-select";
 
 import {
   ShieldCheck,
@@ -12,6 +13,7 @@ import {
   Download,
   Users,
   FileText,
+  Shield,
 } from "lucide-react";
 import ReusableButton from "../ui/ReusableButton";
 import PoliciesManagement from "./PoliciesManagement";
@@ -20,6 +22,7 @@ import {
   fetchRolesThunk,
   updateRole,
 } from "../../redux/features/Permissions/permissionsThunk";
+import { fetchCompaniesThunk } from "../../redux/features/company/companyThunks";
 import { useDispatch, useSelector } from "react-redux";
 import {
   selectRoles,
@@ -27,8 +30,14 @@ import {
   rolesLoaded,
   rolesError,
 } from "../../redux/features/Permissions/permissionsSlice";
+import {
+  selectCompaniesFromRedux,
+  selectCompaniesFetched,
+} from "../../redux/features/company/companySlice";
 import { logDebug } from "../../utils/logger";
 import { API_CLIENT } from "../../Api/API_Client";
+import { selectCurrentUser } from "../../redux/features/auth/authSlice";
+import { selectStyles } from "../../utils/helperutilities";
 
 const RoleManagement = () => {
   const [activeTab, setActiveTab] = useState("roles");
@@ -37,11 +46,25 @@ const RoleManagement = () => {
 
   const dispatch = useDispatch();
 
-  // Select data from Redux store
+  // ── Current user & SuperAdmin check ──
+  const currentUser = useSelector(selectCurrentUser);
+  const isSuperAdmin = currentUser?.type === "admin";
+
+  // ── Redux: roles (system roles for SuperAdmin, all roles for tenant admin) ──
   const roles = useSelector(selectRoles);
   const isLoading = useSelector(rolesLoading);
   const isLoaded = useSelector(rolesLoaded);
   const error = useSelector(rolesError);
+
+  // ── Redux: companies (SuperAdmin tenant dropdown) ──
+  const companies = useSelector(selectCompaniesFromRedux);
+  const companiesFetched = useSelector(selectCompaniesFetched);
+
+  // ── SuperAdmin: selected tenant & its roles ──
+  const [selectedTenant, setSelectedTenant] = useState(null);
+  const [tenantRoles, setTenantRoles] = useState([]);
+  const [tenantRolesLoading, setTenantRolesLoading] = useState(false);
+  const [tenantRolesError, setTenantRolesError] = useState(null);
 
   // Modal states
   const [showRoleFormModal, setShowRoleFormModal] = useState(false);
@@ -53,12 +76,90 @@ const RoleManagement = () => {
   const [modalDataReady, setModalDataReady] = useState(false);
   const [formError, setFormError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // Filter roles for search
-  const filteredRoles = roles?.filter(
-    (role) =>
-      role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (role.description &&
-        role.description.toLowerCase().includes(searchQuery.toLowerCase()))
+
+  // ── Fetch roles on load ──
+  useEffect(() => {
+    if (!isLoaded && !isLoading) {
+      dispatch(fetchRolesThunk()); // no params = system roles for SuperAdmin
+    }
+  }, [dispatch, isLoaded, isLoading]);
+
+  // ── Fetch companies when SuperAdmin is on roles tab ──
+  useEffect(() => {
+    if (isSuperAdmin && activeTab === "roles" && !companiesFetched) {
+      dispatch(fetchCompaniesThunk());
+    }
+  }, [isSuperAdmin, activeTab, companiesFetched, dispatch]);
+
+  // ── Fetch roles for selected tenant ──
+  const fetchTenantRoles = async (tenantId) => {
+    try {
+      setTenantRolesLoading(true);
+      setTenantRolesError(null);
+      setTenantRoles([]);
+      const response = await API_CLIENT.get("/iam/roles/", {
+        params: { tenant_id: tenantId },
+      });
+      setTenantRoles(response.data?.data?.items || []);
+    } catch (err) {
+      setTenantRolesError(
+        err.response?.data?.detail?.message ||
+          err.message ||
+          "Failed to fetch tenant roles"
+      );
+    } finally {
+      setTenantRolesLoading(false);
+    }
+  };
+
+  // ── Handle tenant selection ──
+  const handleTenantSelect = (option) => {
+    setSelectedTenant(option);
+    setSearchQuery("");
+    setTenantRolesError(null);
+    if (option) {
+      fetchTenantRoles(option.value);
+    } else {
+      setTenantRoles([]); // cleared → will fall back to system roles
+    }
+  };
+
+  // ── Tenant options for react-select ──
+  const tenantOptions = useMemo(
+    () =>
+      (companies || []).map((c) => ({
+        value: c.tenant_id,
+        label: c.name,
+        tenant: c,
+      })),
+    [companies]
+  );
+
+  // ── Active roles:
+  //    SuperAdmin + tenant selected → tenant roles
+  //    SuperAdmin + no tenant       → system roles (Redux)
+  //    Tenant admin                 → all roles (Redux)
+  const activeRoles = useMemo(() => {
+    if (isSuperAdmin && selectedTenant) return tenantRoles;
+    return roles || [];
+  }, [isSuperAdmin, selectedTenant, tenantRoles, roles]);
+
+  // ── Can edit/delete a role ──
+  const canEditRole = (role) => {
+    if (isSuperAdmin) return true;
+    return !role.is_system_role;
+  };
+
+  // ── Filter roles for search ──
+  const filteredRoles = useMemo(
+    () =>
+      (activeRoles || []).filter(
+        (role) =>
+          role.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (role.description &&
+            role.description.toLowerCase().includes(searchQuery.toLowerCase()))
+      ),
+    [activeRoles, searchQuery]
   );
 
   // Fetch role details from backend
@@ -69,15 +170,12 @@ const RoleManagement = () => {
 
     try {
       const response = await API_CLIENT.get(`/iam/roles/${roleId}`);
-
       if (response.data && response.data.success) {
         setRoleDetailedData(response.data.data);
         setModalDataReady(true);
         return response.data.data;
       } else {
-        throw new Error(
-          response.data?.message || "Failed to fetch role details"
-        );
+        throw new Error(response.data?.message || "Failed to fetch role details");
       }
     } catch (error) {
       console.error("Error fetching role details:", error);
@@ -86,113 +184,87 @@ const RoleManagement = () => {
           error.message ||
           "Failed to fetch role details"
       );
-      setModalDataReady(true); // Ready to show modal with error
+      setModalDataReady(true);
       return null;
     } finally {
       setRoleDetailsLoading(false);
     }
   };
 
-  // Handle Add Role - No loading needed
   const handleAddRole = () => {
     setFormMode("create");
     setSelectedRole(null);
     setRoleDetailedData(null);
     setRoleDetailsError(null);
     setRoleDetailsLoading(false);
-    setModalDataReady(true); // Data is ready immediately for create mode
+    setModalDataReady(true);
     setShowRoleFormModal(true);
   };
 
-  // Handle Edit Role - fetch then open modal
   const handleEditRole = async (role) => {
+    if (!canEditRole(role)) return;
     setFormMode("edit");
     setSelectedRole(role);
     setRoleDetailedData(null);
     setRoleDetailsError(null);
     setModalDataReady(false);
-
-    // 1) fetch details
     await fetchRoleDetails(role.role_id);
-    // 2) open modal after data is ready flag is set in fetchRoleDetails
     setShowRoleFormModal(true);
   };
 
-  // Handle View Details - fetch then open modal
   const handleViewDetails = async (role) => {
     setFormMode("view");
     setSelectedRole(role);
     setRoleDetailedData(null);
     setRoleDetailsError(null);
     setModalDataReady(false);
-
     await fetchRoleDetails(role.role_id);
     setShowRoleFormModal(true);
   };
 
-  // Handle viewing assigned users
-  const handleViewAssignedUsers = (role) => {
-    setSelectedRole(role);
-  };
-
-  // Handle opening user assignment modal
-  const handleAssignUsers = (role) => {
-    setSelectedRole(role);
-  };
-
-  useEffect(() => {
-    // Fetch roles only if they haven't been loaded yet
-    if (!isLoaded && !isLoading) {
-      dispatch(fetchRolesThunk());
-      logDebug(" this is the roles ", roles);
-    }
-  }, [dispatch, isLoaded, isLoading, roles]);
+  const handleViewAssignedUsers = (role) => setSelectedRole(role);
+  const handleAssignUsers = (role) => setSelectedRole(role);
 
   const handleSaveRole = async (roleData) => {
     setIsSubmitting(true);
-    setFormError(null); // Clear previous errors
+    setFormError(null);
 
     try {
       if (formMode === "create") {
-        const response = await dispatch(createRole(roleData)).unwrap();
-        console.log("Role created successfully:", response);
+        await dispatch(createRole(roleData)).unwrap();
         handleCancelForm();
-      } else {
-        if (!selectedRole?.role_id) {
-          throw new Error("Role ID is required for update");
+        // Refresh the right list
+        if (isSuperAdmin && selectedTenant) {
+          fetchTenantRoles(selectedTenant.value);
+        } else {
+          dispatch(fetchRolesThunk());
         }
-
-        const response = await dispatch(
-          updateRole({
-            roleId: selectedRole.role_id,
-            payload: roleData,
-          })
+      } else {
+        if (!selectedRole?.role_id) throw new Error("Role ID is required for update");
+        await dispatch(
+          updateRole({ roleId: selectedRole.role_id, payload: roleData })
         ).unwrap();
-
-        console.log("Role updated successfully:", response);
         handleCancelForm();
+        if (isSuperAdmin && selectedTenant) {
+          fetchTenantRoles(selectedTenant.value);
+        } else {
+          dispatch(fetchRolesThunk());
+        }
       }
     } catch (error) {
-      // Extract error message from the rejected value
       const errorMessage =
         error?.message || error?.details || "An unexpected error occurred";
-
       setFormError(errorMessage);
       console.error("Role operation failed:", error);
-
-      // You might also want to extract specific field errors
-      if (error?.errors) {
-        // Handle field-specific errors if your API returns them
-        console.log("Field errors:", error.errors);
-      }
+      if (error?.errors) console.log("Field errors:", error.errors);
     } finally {
       setIsSubmitting(false);
     }
   };
+
   const handleDeleteRole = (role) => {
-    if (
-      window.confirm(`Are you sure you want to delete the role "${role.name}"?`)
-    ) {
+    if (!canEditRole(role)) return;
+    if (window.confirm(`Are you sure you want to delete the role "${role.name}"?`)) {
       // dispatch(deleteRoleThunk(role.id));
     }
   };
@@ -221,7 +293,11 @@ const RoleManagement = () => {
 
   const handleSync = () => {
     setSyncLoading(true);
-    dispatch(fetchRolesThunk()).finally(() => {
+    const syncPromise =
+      isSuperAdmin && selectedTenant
+        ? fetchTenantRoles(selectedTenant.value)
+        : dispatch(fetchRolesThunk());
+    Promise.resolve(syncPromise).finally(() => {
       setSyncLoading(false);
       alert("Roles synchronized successfully!");
     });
@@ -232,13 +308,7 @@ const RoleManagement = () => {
     alert("Roles exported successfully!");
   };
 
-  // Prepare data for RoleForm
-  const getFormData = () => {
-    if (roleDetailedData) {
-      return roleDetailedData;
-    }
-    return selectedRole;
-  };
+  const getFormData = () => roleDetailedData || selectedRole;
 
   // Tab navigation component
   const TabNavigation = () => (
@@ -272,7 +342,6 @@ const RoleManagement = () => {
     </div>
   );
 
-  // Show loading state for initial roles loading
   if (isLoading && !isLoaded) {
     return (
       <div className="flex-1 bg-white shadow-md overflow-auto flex items-center justify-center">
@@ -284,7 +353,6 @@ const RoleManagement = () => {
     );
   }
 
-  // Show error state
   if (error) {
     return (
       <div className="flex-1 bg-white shadow-md overflow-auto flex items-center justify-center">
@@ -307,16 +375,56 @@ const RoleManagement = () => {
 
   return (
     <div className="flex-1 bg-white shadow-md overflow-auto">
-      {/* Top Tab Navigation */}
       <TabNavigation />
 
-      {/* Role Management Content */}
       {activeTab === "roles" && (
         <>
+          {/* ── SuperAdmin only: tenant selector bar ── */}
+          {isSuperAdmin && (
+            <div className="px-6 py-3 bg-gray-50 border-b border-gray-200 flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Shield size={15} className="text-purple-500" />
+                <span className="text-sm font-medium text-gray-600">
+                  Viewing:
+                </span>
+              </div>
+              <div className="w-72">
+                <Select
+                  options={tenantOptions}
+                  value={selectedTenant}
+                  onChange={handleTenantSelect}
+                  placeholder="System roles (select tenant to switch...)"
+                  isClearable
+                  isSearchable
+                  isLoading={!companiesFetched}
+                  styles={selectStyles}
+                  className="text-sm"
+                  formatOptionLabel={({ label, tenant }) => (
+                    <div className="py-0.5">
+                      <div className="font-medium">{label}</div>
+                      <div className="text-xs text-gray-400">{tenant?.tenant_id}</div>
+                    </div>
+                  )}
+                />
+              </div>
+              {/* Badge showing what's currently displayed */}
+              {selectedTenant ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+                  <Users size={12} />
+                  {selectedTenant.label} roles
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                  <Shield size={12} />
+                  System roles
+                </span>
+              )}
+            </div>
+          )}
+
           <ToolBar
             leftElements={
               <div className="flex items-center gap-4 flex-wrap">
-                {/* Search Bar with ReusableButton */}
                 <div className="relative flex items-center">
                   <SearchBar
                     searchQuery={searchQuery}
@@ -328,16 +436,13 @@ const RoleManagement = () => {
                     action="search"
                     icon={Search}
                     title="Search roles"
-                    onClick={() =>
-                      console.log("Search triggered:", searchQuery)
-                    }
+                    onClick={() => console.log("Search triggered:", searchQuery)}
                     className="ml-2 text-gray-600 hover:text-gray-800 p-2 rounded-full hover:bg-gray-100"
                     size={18}
                     showTooltip={false}
                   />
                 </div>
 
-                {/* Sync Button */}
                 <ReusableButton
                   module="role"
                   action="read"
@@ -355,7 +460,6 @@ const RoleManagement = () => {
             }
             rightElements={
               <div className="flex items-center gap-3">
-                {/* Export Button */}
                 <ReusableButton
                   module="role"
                   action="export"
@@ -365,8 +469,6 @@ const RoleManagement = () => {
                   className="text-gray-600 hover:text-gray-800 p-2 rounded-lg hover:bg-gray-100 border border-gray-300"
                   size={18}
                 />
-
-                {/* Add New Role Button */}
                 <ReusableButton
                   module="role"
                   action="create"
@@ -382,47 +484,74 @@ const RoleManagement = () => {
               </div>
             }
           />
+
           <div className="p-6">
-            {/* Role Cards Grid */}
-            {filteredRoles.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <ShieldCheck className="mx-auto h-12 w-12 mb-4 text-gray-400" />
-                <h3 className="text-lg font-medium mb-2">No roles found</h3>
-                <p>
-                  {searchQuery
-                    ? "Try adjusting your search terms"
-                    : "Get started by creating your first role"}
-                </p>
-                {!searchQuery && (
-                  <ReusableButton
-                    module="role"
-                    action="create"
-                    icon={Plus}
-                    title="Create your first role"
-                    buttonName="Create First Role"
-                    onClick={handleAddRole}
-                    className="mt-4 bg-indigo-600 text-white px-6 py-3 rounded-lg 
-                             hover:bg-indigo-700 transition-colors duration-200 
-                             flex items-center justify-center gap-2 mx-auto"
-                    size={18}
-                  />
-                )}
+
+            {/* Tenant roles loading state */}
+            {isSuperAdmin && selectedTenant && tenantRolesLoading && (
+              <div className="text-center py-12 text-gray-400">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-indigo-400 border-t-transparent mb-3" />
+                <p className="text-sm">Loading roles for {selectedTenant.label}...</p>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {filteredRoles.map((role) => (
-                  <RoleCard
-                    key={role.role_id}
-                    role={role}
-                    onEdit={handleEditRole}
-                    onDelete={handleDeleteRole}
-                    onDuplicate={handleDuplicateRole}
-                    onAssignUsers={handleAssignUsers}
-                    onViewAssignedUsers={handleViewAssignedUsers}
-                    onView={handleViewDetails}
-                  />
-                ))}
+            )}
+
+            {/* Tenant roles error state */}
+            {isSuperAdmin && tenantRolesError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm mb-4">
+                {tenantRolesError}
+                <button
+                  onClick={() => fetchTenantRoles(selectedTenant.value)}
+                  className="ml-3 underline text-red-600 hover:text-red-800"
+                >
+                  Retry
+                </button>
               </div>
+            )}
+
+            {/* Role cards */}
+            {!(isSuperAdmin && selectedTenant && tenantRolesLoading) && (
+              filteredRoles.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <ShieldCheck className="mx-auto h-12 w-12 mb-4 text-gray-400" />
+                  <h3 className="text-lg font-medium mb-2">No roles found</h3>
+                  <p>
+                    {searchQuery
+                      ? "Try adjusting your search terms"
+                      : "Get started by creating your first role"}
+                  </p>
+                  {!searchQuery && (
+                    <ReusableButton
+                      module="role"
+                      action="create"
+                      icon={Plus}
+                      title="Create your first role"
+                      buttonName="Create First Role"
+                      onClick={handleAddRole}
+                      className="mt-4 bg-indigo-600 text-white px-6 py-3 rounded-lg 
+                               hover:bg-indigo-700 transition-colors duration-200 
+                               flex items-center justify-center gap-2 mx-auto"
+                      size={18}
+                    />
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {filteredRoles.map((role) => (
+                    <RoleCard
+                      key={role.role_id}
+                      role={role}
+                      onEdit={canEditRole(role) ? handleEditRole : null}
+                      onDelete={canEditRole(role) ? handleDeleteRole : null}
+                      onDuplicate={handleDuplicateRole}
+                      onAssignUsers={handleAssignUsers}
+                      onViewAssignedUsers={handleViewAssignedUsers}
+                      onView={handleViewDetails}
+                      isLocked={!canEditRole(role)}
+                      isSuperAdmin={isSuperAdmin}
+                    />
+                  ))}
+                </div>
+              )
             )}
 
             {/* Loading overlay when fetching role details */}
@@ -440,7 +569,7 @@ const RoleManagement = () => {
               </div>
             )}
 
-            {/* Role Form Modal - Only show when data is ready */}
+            {/* Role Form Modal */}
             {showRoleFormModal && modalDataReady && (
               <RoleForm
                 isOpen={showRoleFormModal}
@@ -449,8 +578,10 @@ const RoleManagement = () => {
                 mode={formMode}
                 initialData={getFormData()}
                 roleDetailsError={roleDetailsError}
-                formError={formError} // Pass the error to display in form
-                isSubmitting={isSubmitting} // Pass loading state
+                formError={formError}
+                isSubmitting={isSubmitting}
+                isSystemRole={isSuperAdmin && !selectedTenant}
+                isSuperAdmin={isSuperAdmin}
               />
             )}
           </div>

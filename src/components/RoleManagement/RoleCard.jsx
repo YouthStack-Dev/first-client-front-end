@@ -17,9 +17,9 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from "../ui/Card"; // Adjust the import path as needed
+} from "../ui/Card";
 
-function RoleCard({ role, onEdit, onDelete, onView, variant = "default" }) {
+function RoleCard({ role, onEdit, onDelete, onView, variant = "default", isSuperAdmin = false }) {
   // Format date for display - handle API date format
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -100,6 +100,11 @@ function RoleCard({ role, onEdit, onDelete, onView, variant = "default" }) {
         return "bg-app-surface";
     }
   };
+
+  // ── Show edit/delete if:
+  //    - Not a system role (anyone can edit tenant roles)
+  //    - OR SuperAdmin (can edit system roles too)
+  const canEdit = !role.is_system_role || isSuperAdmin;
 
   return (
     <Card className={`h-full ${getCardBackground()}`}>
@@ -205,7 +210,7 @@ function RoleCard({ role, onEdit, onDelete, onView, variant = "default" }) {
 
           {/* Action Buttons */}
           <div className="flex items-center space-x-2">
-            {/* View Button */}
+            {/* View Button - always visible */}
             <ReusableButton
               module="role"
               action="read"
@@ -216,29 +221,29 @@ function RoleCard({ role, onEdit, onDelete, onView, variant = "default" }) {
               className={`flex items-center justify-center p-2 rounded-md bg-app-tertiary text-sidebar-primary hover:bg-gradient-to-r ${variantStyles.accent} hover:text-white transition-all duration-300`}
             />
 
-            {/* Edit Button - Only show if NOT system role */}
-            {!role.is_system_role && (
+            {/* Edit Button - visible for non-system roles OR SuperAdmin */}
+            {canEdit && onEdit && (
               <ReusableButton
                 module="role"
                 action="update"
                 buttonName=""
                 icon={Edit}
-                title="Edit role"
+                title={role.is_system_role ? "Edit system role" : "Edit role"}
                 onClick={() => onEdit(role)}
                 className={`flex items-center justify-center p-2 rounded-md bg-app-tertiary text-sidebar-primary hover:bg-gradient-to-r ${variantStyles.accent} hover:text-white transition-all duration-300`}
               />
             )}
 
-            {/* Delete Button - Only show if NOT system role */}
-            {!role.is_system_role && (
+            {/* Delete Button - visible for non-system roles OR SuperAdmin */}
+            {canEdit && onDelete && (
               <ReusableButton
                 module="role"
                 action="delete"
                 buttonName=""
                 icon={Trash2}
-                title="Delete role"
+                title={role.is_system_role ? "Delete system role" : "Delete role"}
                 onClick={() => onDelete(role)}
-                className={`flex items-center justify-center p-2 rounded-md bg-app-tertiary text-sidebar-primary hover:bg-gradient-to-r from-red-500 to-red-600 hover:text-white transition-all duration-300`}
+                className="flex items-center justify-center p-2 rounded-md bg-app-tertiary text-sidebar-primary hover:bg-gradient-to-r from-red-500 to-red-600 hover:text-white transition-all duration-300"
               />
             )}
           </div>

@@ -347,6 +347,8 @@ const ManageVehicleTypes = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={modalMode === "view" ? null : handleSubmit}
+        mode={modalMode}   // ✅ IMPORTANT
+        submitText={modalMode === "edit" ? "Update" : "Create"} // optional
         title={
           modalMode === "view"
             ? "View Vehicle Type"
