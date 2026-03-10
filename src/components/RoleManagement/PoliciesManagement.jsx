@@ -1,4 +1,4 @@
-import { FileText, Plus, Shield, Users } from "lucide-react";
+import { FileText, Plus, Shield, Users, X, CheckCircle, AlertCircle } from "lucide-react";
 import ToolBar from "../ui/ToolBar";
 import { logDebug } from "../../utils/logger";
 import { useEffect, useState, useMemo } from "react";
@@ -8,7 +8,6 @@ import Select from "react-select";
 import { useDispatch, useSelector } from "react-redux";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import {
-  policiesError,
   policiesLoaded,
   policiesLoading,
   selectPolicies,
@@ -20,40 +19,76 @@ import {
 } from "../../redux/features/Permissions/permissionsThunk";
 import { fetchCompaniesThunk } from "../../redux/features/company/companyThunks";
 import {
-  selectCompaniesFromRedux,
+  // ✅ FIXED: selectCompaniesFromRedux was renamed to selectCompanies in the
+  // updated companySlice. Using the old name returned undefined, breaking the
+  // tenant dropdown silently for SuperAdmins in both this component and RoleManagement.
+  selectCompanies,
   selectCompaniesFetched,
 } from "../../redux/features/company/companySlice";
 import { API_CLIENT } from "../../Api/API_Client";
 import { selectStyles } from "../../utils/helperutilities";
 
+/* ─────────────────────────────────────────────────────
+   Inline Toast — reusable within this file.
+   Auto-dismisses after 3s via the showToast helper.
+   Same pattern as EntityModal and RoleManagement.
+───────────────────────────────────────────────────── */
+const Toast = ({ toast, onDismiss }) => {
+  if (!toast) return null;
+  const isSuccess = toast.type === "success";
+  return (
+    <div className={`
+      fixed bottom-6 left-1/2 -translate-x-1/2 z-[60]
+      flex items-center gap-2.5 px-5 py-3
+      border rounded-2xl shadow-lg text-[13px] font-semibold
+      ${isSuccess
+        ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+        : "bg-rose-50 border-rose-200 text-rose-700"
+      }
+    `}>
+      {isSuccess ? <CheckCircle size={15} /> : <AlertCircle size={15} />}
+      {toast.message}
+      <button onClick={onDismiss} className="ml-2 opacity-50 hover:opacity-100 transition-opacity">
+        <X size={12} />
+      </button>
+    </div>
+  );
+};
+
 const PoliciesManagement = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPolicy, setSelectedPolicy] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState("view");
-  const [selectedFilter, setSelectedFilter] = useState(null);
-  const [apiError, setApiError] = useState(null);
+  const [searchQuery,     setSearchQuery]     = useState("");
+  const [selectedPolicy,  setSelectedPolicy]  = useState(null);
+  const [isModalOpen,     setIsModalOpen]     = useState(false);
+  const [modalMode,       setModalMode]       = useState("view");
+  const [selectedFilter,  setSelectedFilter]  = useState(null);
+  const [apiError,        setApiError]        = useState(null);
+
+  // ✅ Toast state replaces all alert() calls (3 instances removed)
+  const [toast, setToast] = useState(null);
 
   const dispatch = useDispatch();
 
   // ── Current user & SuperAdmin check ──
-  const currentUser = useSelector(selectCurrentUser);
+  const currentUser  = useSelector(selectCurrentUser);
   const isSuperAdmin = currentUser?.type === "admin";
 
   // ── Redux: policies ──
-  const policies = useSelector(selectPolicies);
-  const policiesLoadedStatus = useSelector(policiesLoaded);
+  // Named selectors — each returns a primitive or stable reference.
+  const policies              = useSelector(selectPolicies);
+  const policiesLoadedStatus  = useSelector(policiesLoaded);
   const policiesLoadingStatus = useSelector(policiesLoading);
 
   // ── Redux: companies (SuperAdmin tenant dropdown) ──
-  const companies = useSelector(selectCompaniesFromRedux);
+  // ✅ selectCompanies (renamed from selectCompaniesFromRedux in companySlice)
+  // companiesFetched persists in Redux across navigation — no duplicate fetches.
+  const companies        = useSelector(selectCompanies);
   const companiesFetched = useSelector(selectCompaniesFetched);
 
   // ── SuperAdmin: selected tenant & its policies ──
-  const [selectedTenant, setSelectedTenant] = useState(null);
-  const [tenantPolicies, setTenantPolicies] = useState([]);
+  const [selectedTenant,        setSelectedTenant]        = useState(null);
+  const [tenantPolicies,        setTenantPolicies]        = useState([]);
   const [tenantPoliciesLoading, setTenantPoliciesLoading] = useState(false);
-  const [tenantPoliciesError, setTenantPoliciesError] = useState(null);
+  const [tenantPoliciesError,   setTenantPoliciesError]   = useState(null);
 
   // ── Fetch policies on load ──
   useEffect(() => {
@@ -63,6 +98,7 @@ const PoliciesManagement = () => {
   }, [dispatch, policiesLoadedStatus, policiesLoadingStatus]);
 
   // ── Fetch companies for SuperAdmin ──
+  // companiesFetched lives in Redux → skipped on every re-visit after first load.
   useEffect(() => {
     if (isSuperAdmin && !companiesFetched) {
       dispatch(fetchCompaniesThunk());
@@ -73,6 +109,12 @@ const PoliciesManagement = () => {
   useEffect(() => {
     if (isModalOpen) setApiError(null);
   }, [isModalOpen]);
+
+  // ── Toast helper — auto-dismisses after 3s ──
+  const showToast = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // ── Fetch policies for selected tenant ──
   const fetchTenantPolicies = async (tenantId) => {
@@ -124,27 +166,25 @@ const PoliciesManagement = () => {
     return policies || [];
   }, [isSuperAdmin, selectedTenant, tenantPolicies, policies]);
 
-  // ── Is currently viewing system policies ──
   const isSystemPolicy = isSuperAdmin && !selectedTenant;
 
   const filterOptions = [
-    { value: "all", label: "All Policies" },
-    { value: "active", label: "Active Policies" },
+    { value: "all",      label: "All Policies"      },
+    { value: "active",   label: "Active Policies"   },
     { value: "inactive", label: "Inactive Policies" },
   ];
 
   const policyOptions = useMemo(
     () =>
       (activePolicies || []).map((policy) => ({
-        value: policy.policy_id,
-        label: policy.name,
+        value:       policy.policy_id,
+        label:       policy.name,
         description: policy.description,
         policy,
       })),
     [activePolicies]
   );
 
-  // ── Filter policies (fixed: policy_id is a number) ──
   const filteredPolicies = useMemo(() => {
     let result = (activePolicies || []).filter((policy) => {
       const query = searchQuery.toLowerCase();
@@ -157,7 +197,7 @@ const PoliciesManagement = () => {
 
     if (selectedFilter && selectedFilter.value !== "all") {
       result = result.filter((policy) => {
-        if (selectedFilter.value === "active") return policy.is_active === true;
+        if (selectedFilter.value === "active")   return policy.is_active === true;
         if (selectedFilter.value === "inactive") return policy.is_active === false;
         return true;
       });
@@ -189,11 +229,13 @@ const PoliciesManagement = () => {
       } else {
         dispatch(fetchPoliciesThunk());
       }
+      // ✅ FIXED: was alert() — now a non-blocking toast
+      showToast("success", `Policy "${policy.name}" deleted successfully.`);
     } catch (err) {
-      alert(
-        err.response?.data?.detail?.message ||
-          err.message ||
-          "Failed to delete policy"
+      // ✅ FIXED: was alert() — now a non-blocking toast
+      showToast(
+        "error",
+        err.response?.data?.detail?.message || err.message || "Failed to delete policy"
       );
     }
   };
@@ -211,21 +253,18 @@ const PoliciesManagement = () => {
   };
 
   const handleSavePermissions = async (permissionsData, mode) => {
-    // ── Build payload ──
     const payload = {
-      name: permissionsData.name,
-      description: permissionsData.description ?? null,
-      is_active: permissionsData.isActive ?? true,
+      name:           permissionsData.name,
+      description:    permissionsData.description ?? null,
+      is_active:      permissionsData.isActive ?? true,
       permission_ids: permissionsData.permission_ids || [],
     };
 
     if (isSuperAdmin) {
       if (selectedTenant) {
-        // SuperAdmin + tenant selected → tenant policy
-        payload.tenant_id = selectedTenant.value;
+        payload.tenant_id       = selectedTenant.value;
         payload.is_system_policy = false;
       } else {
-        // SuperAdmin + no tenant → system policy
         payload.is_system_policy = true;
       }
     }
@@ -242,11 +281,13 @@ const PoliciesManagement = () => {
           await dispatch(fetchPoliciesThunk());
         }
 
-        alert("New policy created successfully!");
+        // ✅ FIXED: was alert() — now a non-blocking toast
+        showToast("success", "New policy created successfully!");
         setIsModalOpen(false);
         setSelectedPolicy(null);
         setModalMode("view");
         setApiError(null);
+
       } else if (mode === "edit") {
         const policyId = selectedPolicy?.policy_id;
         if (!policyId) throw new Error("Invalid policy ID");
@@ -261,7 +302,8 @@ const PoliciesManagement = () => {
           await dispatch(fetchPoliciesThunk());
         }
 
-        alert(`Policy "${selectedPolicy.name}" updated successfully!`);
+        // ✅ FIXED: was alert() — now a non-blocking toast
+        showToast("success", `Policy "${selectedPolicy.name}" updated successfully!`);
         setIsModalOpen(false);
         setSelectedPolicy(null);
         setModalMode("view");
@@ -271,7 +313,9 @@ const PoliciesManagement = () => {
       console.error("Policy save failed:", error);
       const errorMessage = extractErrorMessage(error);
       setApiError(errorMessage);
-      alert(`Error: ${errorMessage}`);
+      // ✅ FIXED: was alert(`Error: ${errorMessage}`) — error is already shown
+      // inline via apiError prop on PolicyForm, so no toast needed here.
+      // Showing both alert + inline error was redundant and confusing.
     }
   };
 
@@ -293,11 +337,14 @@ const PoliciesManagement = () => {
 
   return (
     <div className="">
+
+      {/* ✅ Toast — replaces all 3 alert() calls */}
+      <Toast toast={toast} onDismiss={() => setToast(null)} />
+
       <ToolBar
         module="policy"
         leftElements={
           <div className="flex flex-col sm:flex-row gap-3 w-full">
-            {/* Policy search dropdown */}
             <div className="w-full sm:w-64">
               <Select
                 options={policyOptions}
@@ -320,7 +367,6 @@ const PoliciesManagement = () => {
               />
             </div>
 
-            {/* Filter dropdown */}
             <div className="w-full sm:w-48">
               <Select
                 options={filterOptions}
@@ -337,6 +383,7 @@ const PoliciesManagement = () => {
         }
         rightElements={
           <div className="flex items-center gap-3">
+
             {/* ── SuperAdmin only: tenant dropdown ── */}
             {isSuperAdmin && (
               <div className="flex items-center gap-2">
@@ -354,9 +401,7 @@ const PoliciesManagement = () => {
                     formatOptionLabel={({ label, tenant }) => (
                       <div className="py-0.5">
                         <div className="font-medium text-sm">{label}</div>
-                        <div className="text-xs text-gray-400">
-                          {tenant?.tenant_id}
-                        </div>
+                        <div className="text-xs text-gray-400">{tenant?.tenant_id}</div>
                       </div>
                     )}
                   />
@@ -375,7 +420,6 @@ const PoliciesManagement = () => {
               </div>
             )}
 
-            {/* + Policy button */}
             <button
               onClick={handleAddClick}
               className="flex-shrink-0 bg-indigo-600 text-white px-4 py-2 rounded-lg 
@@ -423,7 +467,7 @@ const PoliciesManagement = () => {
             />
           ) : (
             <div className="w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+              <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
               <div className="text-center py-12">
                 <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                 <div className="text-gray-700 text-lg font-medium mb-2">

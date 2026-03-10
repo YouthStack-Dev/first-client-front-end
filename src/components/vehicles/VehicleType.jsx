@@ -10,9 +10,7 @@ import ReusableButton from "../ui/ReusableButton";
 import { Modal } from "../../components/SmallComponents";
 import InputField from "../InputField";
 import AuditLogsModal from "../modals/AuditLogsModal";
-import {
-  useSearchParams,
-} from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import VehicleTypeList from "../vehicles/VehicleTypeList";
 
 import {
@@ -33,7 +31,6 @@ import { toast } from "react-toastify";
 
 const MODULE = "vehicle-type";
 
-// Embedded debounce hook (no external file needed)
 const useDebounce = (value, delay) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -43,7 +40,6 @@ const useDebounce = (value, delay) => {
     }, delay);
 
     return () => {
-      // console.log(`🛑 Debounce cleared (user still typing)`);  // DEBUG: See cancellations
       clearTimeout(handler);
     };
   }, [value, delay]);
@@ -62,20 +58,17 @@ const ManageVehicleTypes = () => {
   const vehicleTypes = useSelector(vehicleTypeSelectors.selectAll);
   const loading = useSelector(selectVehicleTypesLoading);
 
- const { vendorOptions } = useVendorOptions(null, !isVendorUser);
-
+  const { vendorOptions } = useVendorOptions(null, !isVendorUser);
 
   const tenantId =
     user?.employee?.tenant_id ||
     user?.vendor_user?.tenant_id ||
     user?.tenant_id;
 
-
   const getVendorLabelById = useCallback(
     (id) => vendorOptions.find((v) => v.value === id)?.label || "—",
     [vendorOptions]
   );
-
 
   /* ================= STATE ================= */
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -92,7 +85,6 @@ const ManageVehicleTypes = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // Debounce searchTerm (increased to 500ms for testing)
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   /* ================= PARAM BUILDER ================= */
@@ -113,6 +105,7 @@ const ManageVehicleTypes = () => {
 
     if (status === "Active") params.active_only = 1;
     if (status === "Inactive") params.active_only = 0;
+
     return params;
   }, [
     isVendorUser,
@@ -126,10 +119,7 @@ const ManageVehicleTypes = () => {
   useEffect(() => {
     const params = buildFetchParams();
     if (params) {
-      // console.log("🚀 Dispatching fetch with params:", params);  // DEBUG: Confirm dispatch trigger
       dispatch(fetchVehicleTypesThunk(params));
-    } else {
-      // console.log("⏭️ Skipping fetch (no params)");  // DEBUG: Vendor check
     }
   }, [buildFetchParams, dispatch]);
 
@@ -139,7 +129,6 @@ const ManageVehicleTypes = () => {
   const handleClearFilters = () => {
     setSearchTerm("");
     setStatus("All");
-    // Vendor stays selected
   };
 
   /* ================= MODAL ================= */
@@ -160,49 +149,53 @@ const ManageVehicleTypes = () => {
     setIsModalOpen(true);
   };
 
+  /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    const payload = {
-      name: selectedVehicleType.name,        // ✅ REQUIRED
-      seats: Number(selectedVehicleType.seats), // ✅ REQUIRED
-      description: selectedVehicleType.description || "",
-      is_active: selectedVehicleType.is_active,
+    try {
+      // Build payload explicitly — avoids spread bugs that drop fields
+      const payload = {
+        name: selectedVehicleType.name,
+        seats: Number(selectedVehicleType.seats),
+        description: selectedVehicleType.description || "",
+        is_active: selectedVehicleType.is_active,
+      };
 
-       ...(!isVendorUser && {
-        vendor_id: selectedVehicleType.vendor_id
-    })  // admin login
-    };
+      // Only include vendor_id for admin users
+      if (!isVendorUser) {
+        payload.vendor_id = selectedVehicleType.vendor_id;
+      }
 
-    console.log("FINAL PAYLOAD:", payload); // 🔍 DEBUG once
+      if (modalMode === "edit") {
+        await dispatch(
+          updateVehicleType({
+            id: selectedVehicleType.vehicle_type_id,
+            payload,
+            vendor_id: payload.vendor_id,
+          })
+        ).unwrap();
 
-    if (modalMode === "edit") {
-      await dispatch(
-        updateVehicleType({
-          id: selectedVehicleType.vehicle_type_id,
-          payload,
-          vendor_id: payload.vendor_id,
-        })
-      ).unwrap();
+        toast.success("Vehicle type updated");
+      } else {
+        await dispatch(
+          createVehicleType({
+            payload,
+            vendor_id: isVendorUser ? user.vendor_id : selectedVehicleType.vendor_id,
+          })
+        ).unwrap();
+        toast.success("Vehicle type created");
+      }
 
-      toast.success("Vehicle type updated");
-    } 
-    else {
-      await dispatch(createVehicleType(payload)).unwrap();
-      toast.success("Vehicle type created");
+      const params = buildFetchParams();
+      if (params) dispatch(fetchVehicleTypesThunk(params));
+
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save vehicle type");
     }
-
-    const params = buildFetchParams();
-    if (params) dispatch(fetchVehicleTypesThunk(params));
-
-    setIsModalOpen(false);
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to save vehicle type");
-  }
-};
-
+  };
 
   /* ================= UI ================= */
   return (
@@ -218,10 +211,7 @@ const ManageVehicleTypes = () => {
               key="search"
               placeholder="Search vehicle types..."
               value={searchTerm}
-              onChange={(e) => {
-                // console.log(`⌨️ Raw search change: "${e.target.value}"`);  // DEBUG: Per-keystroke input
-                setSearchTerm(e.target.value);
-              }}
+              onChange={(e) => setSearchTerm(e.target.value)}
               disabled={shouldShowNoVendorMessage}
             />
             <button
@@ -235,36 +225,21 @@ const ManageVehicleTypes = () => {
         }
         rightElements={
           <div className="flex gap-3 items-center">
-
-            {/* <ReusableButton
-              module="vehicle-type"
-              action="read"
-              buttonName={"History"}
-              icon={History}
-              title="Audit History"
-              disabled={shouldShowNoVendorMessage}
-              onClick={() => {
-                setSelectedVehicleTypeName(null);
-                setShowAuditModal(true);
-              }}
-              className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md"
-            /> */}
-
-              {!isVendorUser && (
-                <ReusableButton
-                  module="vehicle"
-                  action="read"
-                  buttonName={"History"}
-                  icon={History}
-                  title="Audit History"
-                  disabled={shouldShowNoVendorMessage}
-                  onClick={() => {
-                    setSelectedVehicleTypeName(null);
-                    setShowAuditModal(true);
-                  }}
-                  className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md"
-                />
-              )}
+            {!isVendorUser && (
+              <ReusableButton
+                module="vehicle"
+                action="read"
+                buttonName={"History"}
+                icon={History}
+                title="Audit History"
+                disabled={shouldShowNoVendorMessage}
+                onClick={() => {
+                  setSelectedVehicleTypeName(null);
+                  setShowAuditModal(true);
+                }}
+                className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md"
+              />
+            )}
 
             {!isVendorUser && (
               <div className="min-w-[200px] z-10 relative">
@@ -287,10 +262,7 @@ const ManageVehicleTypes = () => {
 
             <SelectField
               value={status}
-              onChange={(newStatus) => {
-                console.log(`🔄 Status changed to: "${newStatus}"`); // DEBUG: Status trigger
-                setStatus(newStatus);
-              }}
+              onChange={(newStatus) => setStatus(newStatus)}
               options={[
                 { label: "All Status", value: "All" },
                 { label: "Active", value: "Active" },
@@ -347,8 +319,8 @@ const ManageVehicleTypes = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={modalMode === "view" ? null : handleSubmit}
-        mode={modalMode}   // ✅ IMPORTANT
-        submitText={modalMode === "edit" ? "Update" : "Create"} // optional
+        mode={modalMode}
+        submitText={modalMode === "edit" ? "Update" : "Create"}
         title={
           modalMode === "view"
             ? "View Vehicle Type"
@@ -432,7 +404,7 @@ const ManageVehicleTypes = () => {
         </div>
       </Modal>
 
-       <AuditLogsModal
+      <AuditLogsModal
         isOpen={showAuditModal}
         onClose={() => {
           setShowAuditModal(false);
@@ -443,7 +415,6 @@ const ManageVehicleTypes = () => {
         showUserColumn={true}
         selectedCompany={tenantId}
       />
-
     </div>
   );
 };

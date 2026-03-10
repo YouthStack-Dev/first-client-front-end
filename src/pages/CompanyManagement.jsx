@@ -1,5 +1,5 @@
 // src/pages/CompanyManagement.jsx
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Plus, Search, RefreshCw } from "lucide-react";
 import EntityModal from "@components/EntityModal";
@@ -10,8 +10,13 @@ import {
   updateTenantThunk,
   fetchCompanyByIdThunk,
 } from "../redux/features/company/companyThunks";
+import {
+  selectCompanies,
+  selectCompaniesFetched,
+  selectCompaniesLoading,
+  selectCompaniesError,
+} from "../redux/features/company/companySlice";
 
-// ✅ Fix #6 (minor): Extract status constants to avoid scattered string literals
 const STATUS = {
   ALL: "all",
   ACTIVE: "Active",
@@ -21,39 +26,42 @@ const STATUS = {
 const CompanyManagement = () => {
   const dispatch = useDispatch();
 
-  const {
-    data: companies = [],
-    loading,
-    error,
-  } = useSelector((state) => state.company || {});
+  // ✅ Split selectors — no object literal, no || {} fallback
+  // Each returns a primitive or the stable Redux array reference.
+  // Uses named selectors from the slice for consistency and reusability.
+  const companies = useSelector(selectCompanies);
+  const fetched   = useSelector(selectCompaniesFetched);
+  const loading   = useSelector(selectCompaniesLoading);
+  const error     = useSelector(selectCompaniesError);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState("create");
-  const [selectedEntity, setSelectedEntity] = useState(null);
-  const [loadingTenant, setLoadingTenant] = useState(false);
-  const [tenantCache, setTenantCache] = useState({});
+  const [isModalOpen,     setIsModalOpen]     = useState(false);
+  const [modalMode,       setModalMode]       = useState("create");
+  const [selectedEntity,  setSelectedEntity]  = useState(null);
+  const [loadingTenant,   setLoadingTenant]   = useState(false);
+  const [tenantCache,     setTenantCache]     = useState({});
+  const [searchTerm,      setSearchTerm]      = useState("");
+  const [statusFilter,    setStatusFilter]    = useState(STATUS.ALL);
+  const [isSubmitting,    setIsSubmitting]    = useState(false);
+  const [editError,       setEditError]       = useState(null);
+  const [submitError,     setSubmitError]     = useState(null);
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState(STATUS.ALL);
-
-  // ✅ Fix #4 (Issue 4): Submit guard to prevent double-submits
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // ✅ Fix #2 (Issue 2): Error state for handleEdit silent failure
-  const [editError, setEditError] = useState(null);
-
-  // ✅ Fix #5 (Issue 5): Error state for handleSubmit silent failure
-  const [submitError, setSubmitError] = useState(null);
-
-  // ✅ Fix #3 (Issue 3): Replace fragile companies.length dependency with a hasFetched ref
-  const hasFetched = useRef(false);
-
+  // ✅ useRef removed — fetched now lives in Redux and survives unmount/remount.
+  //
+  // WHY useRef FAILED:
+  //   useRef is scoped to a single component instance. When you navigate away,
+  //   the component unmounts and the ref is destroyed. On the next visit it
+  //   remounts with hasFetched.current = false, triggering a fresh fetch every
+  //   single time — exactly the duplicate API hits you were seeing.
+  //
+  // WHY Redux fetched WORKS:
+  //   Redux state persists for the lifetime of the app (until page reload or
+  //   explicit reset). Once fetched = true it stays true no matter how many
+  //   times this component mounts and unmounts. Navigation is free.
   useEffect(() => {
-    if (!hasFetched.current) {
-      hasFetched.current = true;
+    if (!fetched) {
       dispatch(fetchCompaniesThunk());
     }
-  }, [dispatch]);
+  }, [fetched, dispatch]);
 
   const filteredCompanies = useMemo(() => {
     return companies.filter((company) => {
@@ -83,7 +91,6 @@ const CompanyManagement = () => {
     setEditError(null);
     setSubmitError(null);
 
-    // ✅ Fix #7 (minor): Comment clarifying the two ID types
     // tenant_id is the external tenant identifier; company.id is the internal DB record ID
     if (tenantCache[company.tenant_id]) {
       setSelectedEntity(tenantCache[company.tenant_id]);
@@ -102,27 +109,22 @@ const CompanyManagement = () => {
         id: company.id,
         company: {
           tenant_id: response.tenant.tenant_id,
-          name: response.tenant.name,
-          address: response.tenant.address,
-          latitude: response.tenant.latitude,
+          name:      response.tenant.name,
+          address:   response.tenant.address,
+          latitude:  response.tenant.latitude,
           longitude: response.tenant.longitude,
           is_active: response.tenant.is_active,
         },
         employee_email: response.tenant.employee?.email || "",
         employee_phone: response.tenant.employee?.phone || "",
-        permissions: response.admin_policy?.permissions || [],
+        permissions:    response.admin_policy?.permissions || [],
       };
 
-      setTenantCache((prev) => ({
-        ...prev,
-        [company.tenant_id]: entity,
-      }));
-
+      setTenantCache((prev) => ({ ...prev, [company.tenant_id]: entity }));
       setSelectedEntity(entity);
       setIsModalOpen(true);
     } catch (err) {
       console.error("Failed to fetch tenant details:", err);
-      // ✅ Fix #2 (Issue 2): Surface error to user instead of silent failure
       setEditError("Failed to load company details. Please try again.");
     } finally {
       setLoadingTenant(false);
@@ -130,7 +132,6 @@ const CompanyManagement = () => {
   };
 
   const handleSubmit = async (formData) => {
-    // ✅ Fix #4 (Issue 4): Guard against double-submits
     if (isSubmitting) return;
 
     setIsSubmitting(true);
@@ -147,7 +148,7 @@ const CompanyManagement = () => {
           })
         ).unwrap();
 
-        // ✅ Fix #1 (Issue 1): Invalidate stale cache entry after a successful update
+        // Invalidate stale tenant cache entry so next edit re-fetches fresh data
         setTenantCache((prev) => {
           const updated = { ...prev };
           delete updated[selectedEntity.company.tenant_id];
@@ -158,7 +159,6 @@ const CompanyManagement = () => {
       setIsModalOpen(false);
     } catch (err) {
       console.error("Failed to save company:", err);
-      // ✅ Fix #5 (Issue 5): Surface submit error inside the modal
       setSubmitError("Failed to save company. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -175,7 +175,7 @@ const CompanyManagement = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="px-6 lg:px-10 py-6 space-y-6">
 
-        {/* ✅ Fix #2 (Issue 2): Edit error banner shown above toolbar */}
+        {/* Edit error banner */}
         {editError && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center justify-between">
             <span>{editError}</span>
@@ -188,11 +188,11 @@ const CompanyManagement = () => {
           </div>
         )}
 
-        {/* 🔎 TOP TOOLBAR */}
+        {/* TOP TOOLBAR */}
         <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
-            {/* LEFT — Search Only */}
+            {/* Search */}
             <div className="relative w-full md:w-80">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -204,10 +204,9 @@ const CompanyManagement = () => {
               />
             </div>
 
-            {/* RIGHT — Status + Sync + Add */}
+            {/* Status + Sync + Add */}
             <div className="flex flex-col sm:flex-row items-center gap-3">
 
-              {/* Status Dropdown */}
               <div className="w-full sm:w-40">
                 <select
                   value={statusFilter}
@@ -220,7 +219,7 @@ const CompanyManagement = () => {
                 </select>
               </div>
 
-              {/* ✅ Fix #8 (minor): aria-label added for accessibility */}
+              {/* Sync = intentional manual refresh, bypasses fetched guard */}
               <button
                 onClick={() => dispatch(fetchCompaniesThunk())}
                 aria-label="Sync companies"
@@ -230,7 +229,6 @@ const CompanyManagement = () => {
                 Sync
               </button>
 
-              {/* Add Company Button */}
               <button
                 onClick={handleCreate}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition text-sm"
@@ -243,7 +241,7 @@ const CompanyManagement = () => {
           </div>
         </div>
 
-        {/* 📋 COMPANY LIST */}
+        {/* COMPANY LIST */}
         <div>
           {loading ? (
             <div className="text-center py-12 text-gray-500">
@@ -261,11 +259,6 @@ const CompanyManagement = () => {
           )}
         </div>
 
-        {/* 🧾 MODAL */}
-        {/*
-          ✅ Fix #4: isSubmitting passed to disable submit button inside modal
-          ✅ Fix #5: submitError passed to show inline error inside modal
-        */}
         <EntityModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
