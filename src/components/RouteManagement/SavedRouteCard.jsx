@@ -18,7 +18,7 @@ import {
   OverflowPopover,
 } from "../RouteManagement/EmployeeChipComponents";
 
-import { renderSafeValue, getStatusInfo, isFemaleGender } from "../RouteManagement/routeCardUtils";
+import { renderSafeValue, getStatusInfo, isFemaleGender } from "./routeCards";
 import { ESCORT_COLORS, MAX_VISIBLE_CHIPS } from "../RouteManagement/routeCardConstants";
 import { API_CLIENT } from "../../Api/API_Client";
 import { logError }   from "../../utils/logger";
