@@ -30,9 +30,6 @@ import {
   rolesError,
 } from "../../redux/features/Permissions/permissionsSlice";
 import {
-  // ✅ FIXED: selectCompaniesFromRedux was renamed to selectCompanies in the
-  // updated companySlice. Using the old name caused a silent undefined selector
-  // which would break the tenant dropdown for SuperAdmins.
   selectCompanies,
   selectCompaniesFetched,
 } from "../../redux/features/company/companySlice";
