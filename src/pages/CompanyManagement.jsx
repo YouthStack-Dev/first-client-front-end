@@ -15,7 +15,7 @@ import {
   selectCompaniesFetched,
   selectCompaniesLoading,
   selectCompaniesError,
-} from "../redux/features/company/companySlice";
+} from "../redux/features/company/companyslice";
 
 const STATUS = {
   ALL: "all",

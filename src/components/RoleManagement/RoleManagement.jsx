@@ -32,7 +32,7 @@ import {
 import {
   selectCompanies,
   selectCompaniesFetched,
-} from "../../redux/features/company/companySlice";
+} from "../../redux/features/company/companyslice";
 import { API_CLIENT } from "../../Api/API_Client";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 import { selectStyles } from "../../utils/helperutilities";
