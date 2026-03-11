@@ -9,7 +9,7 @@ import {
   clearError,
 }                              from "../redux/features/notifications/announcementsSlice";
 
-import AnnouncementList       from "../components/announcements/AnnouncementList";
+import AnnouncementList       from "../components/announcements/Announcementlist";
 import AnnouncementForm       from "../components/announcements/AnnouncementForm";
 import AnnouncementRecipients from "../components/announcements/AnnouncementRecipients";
 
