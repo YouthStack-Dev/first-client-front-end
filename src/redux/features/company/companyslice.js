@@ -17,7 +17,7 @@ const initialState = {
   selectedCompany: null,
   fetchingSingle: false,
   toggling: false,
-  fetched: false, // 🟢 New status to track if companies have been fetched
+  fetched: false,
 };
 
 const companySlice = createSlice({
@@ -28,95 +28,107 @@ const companySlice = createSlice({
       state.selectedCompany = null;
     },
     resetFetchedStatus: (state) => {
-      state.fetched = false; // 🟢 Reset fetched status if needed
+      // Use this intentionally when you want to force a re-fetch
+      // e.g. after a bulk delete, or when switching tenant context
+      state.fetched = false;
     },
   },
   extraReducers: (builder) => {
-    // Fetch companies
+
+    // ── Fetch all companies ──────────────────────────────────────────────────
     builder
       .addCase(fetchCompaniesThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
-        state.fetched = false; // 🟢 Reset to false when starting new fetch
+        // ✅ Do NOT reset fetched here.
+        //
+        // WHY: If fetched were reset to false on every pending, a re-render
+        // mid-request (e.g. triggered by another Redux update) would see
+        // fetched=false and dispatch a second fetch, creating a race condition.
+        // fetched should only ever transition:
+        //   false → true  (on fulfilled)
+        //   true  → false (only via resetFetchedStatus action, intentionally)
       })
       .addCase(fetchCompaniesThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload;
-        state.fetched = true; // 🟢 Set to true when successfully fetched
+        state.data    = action.payload;
+        state.error   = null;
+        state.fetched = true; // persists across component unmount/remount
       })
       .addCase(fetchCompaniesThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
-        state.fetched = false; // 🟢 Remain false on error
+        state.error   = action.payload;
+        // ✅ Leave fetched as-is on failure.
+        //
+        // WHY: If we had data from a previous successful fetch, we don't want
+        // a background re-fetch failure to reset fetched=false and trigger
+        // yet another fetch loop. The Sync button is the recovery path.
+        // On first-ever load failure, fetched stays false — which is correct
+        // because we have no data and the user should be able to retry.
       });
 
-    // Create company
+    // ── Create company ───────────────────────────────────────────────────────
     builder
       .addCase(createCompanyThunk.pending, (state) => {
         state.creating = true;
-        state.error = null;
+        state.error    = null;
       })
       .addCase(createCompanyThunk.fulfilled, (state, action) => {
         state.creating = false;
+        // Optimistically append to local list so the UI updates immediately
+        // without needing a full re-fetch
         if (action.payload) state.data.push(action.payload);
-        // 🟢 Don't modify fetched status here as we're just adding to existing data
       })
       .addCase(createCompanyThunk.rejected, (state, action) => {
         state.creating = false;
-        state.error = action.payload;
+        state.error    = action.payload;
       });
 
-   builder
-  .addCase(updateTenantThunk.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  .addCase(updateTenantThunk.fulfilled, (state, action) => {
-    state.loading = false;
-    state.error = null;
+    // ── Update company (tenant) ──────────────────────────────────────────────
+    builder
+      .addCase(updateTenantThunk.pending, (state) => {
+        state.updating = true; // ✅ use state.updating, not state.loading
+        state.error    = null;
+      })
+      .addCase(updateTenantThunk.fulfilled, (state, action) => {
+        state.updating = false;
+        state.error    = null;
 
-    const updatedTenant = action.payload;
+        const updatedTenant = action.payload;
 
-    // Resolve the tenant ID from payload or original request arg
-    const tenantId =
-      updatedTenant?.tenant_id ||
-      updatedTenant?.id ||
-      action.meta?.arg?.tenantId;
+        // Resolve the tenant ID — try payload first, then fall back to the
+        // original arg passed into the thunk (tenantId from updateTenantThunk)
+        const tenantId =
+          updatedTenant?.tenant_id ||
+          updatedTenant?.id        ||
+          action.meta?.arg?.tenantId;
 
-    if (!tenantId) return;
+        if (!tenantId) return;
 
-    // ── If you're using a normalized entities object ──
-    if (state.entities) {
-      state.entities[tenantId] = {
-        ...(state.entities[tenantId] || {}),
-        ...updatedTenant,
-      };
-    }
+        // ✅ FIXED: was incorrectly referencing state.tenants which doesn't exist.
+        // This slice stores companies in state.data (a flat array).
+        const index = state.data.findIndex(
+          (c) => c.tenant_id === tenantId || c.id === tenantId
+        );
 
-    // ── If you're using a flat array (most common) ──
-    if (Array.isArray(state.tenants)) {
-      const index = state.tenants.findIndex(
-        (t) => t.tenant_id === tenantId || t.id === tenantId
-      );
-      if (index !== -1) {
-        // Merge so no fields are accidentally lost
-        state.tenants[index] = {
-          ...state.tenants[index],
-          ...updatedTenant,
-        };
-      }
-    }
-  })
-  .addCase(updateTenantThunk.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload || "Failed to update tenant";
-  });
+        if (index !== -1) {
+          // Merge so no existing fields (e.g. is_active, employee info) are lost
+          state.data[index] = {
+            ...state.data[index],
+            ...updatedTenant,
+          };
+        }
+      })
+      .addCase(updateTenantThunk.rejected, (state, action) => {
+        state.updating = false;
+        state.error    = action.payload || "Failed to update tenant";
+      });
 
-    // ✅ Toggle company active/inactive status
+    // ── Toggle active / inactive ─────────────────────────────────────────────
     builder
       .addCase(toggleCompanyStatusThunk.pending, (state) => {
         state.toggling = true;
-        state.error = null;
+        state.error    = null;
       })
       .addCase(toggleCompanyStatusThunk.fulfilled, (state, action) => {
         state.toggling = false;
@@ -125,20 +137,19 @@ const companySlice = createSlice({
         const index = state.data.findIndex((c) => c.tenant_id === tenant_id);
 
         if (index !== -1) {
-          // Toggle status locally
           state.data[index].is_active = !state.data[index].is_active;
         }
       })
       .addCase(toggleCompanyStatusThunk.rejected, (state, action) => {
         state.toggling = false;
-        state.error = action.payload || "Failed to toggle company status";
+        state.error    = action.payload || "Failed to toggle company status";
       });
 
-    // Fetch single company
+    // ── Fetch single company ─────────────────────────────────────────────────
     builder
       .addCase(fetchCompanyByIdThunk.pending, (state) => {
         state.fetchingSingle = true;
-        state.error = null;
+        state.error          = null;
       })
       .addCase(fetchCompanyByIdThunk.fulfilled, (state, action) => {
         state.fetchingSingle = false;
@@ -146,13 +157,17 @@ const companySlice = createSlice({
       })
       .addCase(fetchCompanyByIdThunk.rejected, (state, action) => {
         state.fetchingSingle = false;
-        state.error = action.payload;
+        state.error          = action.payload;
       });
   },
 });
 
-export const { clearSelectedCompany, resetFetchedStatus } =
-  companySlice.actions;
-export const selectCompaniesFromRedux = (state) => state.company.data;
-export const selectCompaniesFetched = (state) => state.company.fetched; // 🟢 Selector for fetched status
+export const { clearSelectedCompany, resetFetchedStatus } = companySlice.actions;
+
+// ── Selectors ────────────────────────────────────────────────────────────────
+export const selectCompanies      = (state) => state.company.data;
+export const selectCompaniesFetched = (state) => state.company.fetched;
+export const selectCompaniesLoading = (state) => state.company.loading;
+export const selectCompaniesError   = (state) => state.company.error;
+
 export default companySlice.reducer;

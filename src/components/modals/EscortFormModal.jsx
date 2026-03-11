@@ -184,6 +184,31 @@ const EscortFormModal = ({
               </FormField>
             </div>
 
+            {/* Password (create only, optional) */}
+            {mode === "create" && (
+              <div>
+                <FormField label="Password (Optional)" error={errors.password}>
+                  <input
+                    type="password"
+                    value={formData.password || ""}
+                    onChange={(e) => onChange("password", e.target.value)}
+                    disabled={mode === "view"}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-app-primary focus:border-app-primary transition-colors ${
+                      mode === "view"
+                        ? "bg-app-tertiary text-app-text-muted"
+                        : "bg-app-surface text-app-text-primary"
+                    } ${
+                      errors.password
+                        ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                        : "border-app-border"
+                    }`}
+                    placeholder="Leave blank to use phone number"
+                    autoComplete="new-password"
+                  />
+                </FormField>
+              </div>
+            )}
+
             {/* Gender */}
             <div>
               <FormField label="Gender">

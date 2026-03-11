@@ -1,30 +1,31 @@
 // AssignDriverModal.jsx
 import React, { useState, useMemo, useEffect } from "react";
-import { X, Car, Check, Search, RefreshCw } from "lucide-react";
+import { createPortal } from "react-dom";
+import { X, Car, Check, Search, RefreshCw, Loader2 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { selectAllVehicles } from "../../redux/features/manageVehicles/vehicleSelectors";
 import { fetchVehiclesThunk } from "../../redux/features/manageVehicles/vehicleThunk";
 
+// ✅ Props added: tenantId, isAssigning
 const AssignDriverModal = ({
   isOpen,
   onClose,
   onAssign,
   selectedRoutesCount,
   routeIds,
+  tenantId,       // ✅ NEW — forwarded from ShiftRoutingManagement
+  isAssigning,    // ✅ NEW — loading state from parent during API call
 }) => {
   const [selectedAssignment, setSelectedAssignment] = useState("");
-  const [search, setSearch] = useState("");
-  const [localLoading, setLocalLoading] = useState(false);
+  const [search,             setSearch]             = useState("");
+  const [localLoading,       setLocalLoading]       = useState(false);
   const dispatch = useDispatch();
 
   const allVehicles = useSelector(selectAllVehicles);
 
-  console.log("All vehicles in AssignDriverModal:", allVehicles);
-
-  // Fetch vehicles if not already fetched
+  // Fetch vehicles on open if not already loaded
   useEffect(() => {
     if (isOpen && allVehicles.length === 0) {
-      console.log("Fetching vehicles data...");
       setLocalLoading(true);
       dispatch(fetchVehiclesThunk())
         .unwrap()
@@ -32,306 +33,315 @@ const AssignDriverModal = ({
     }
   }, [isOpen, dispatch, allVehicles.length]);
 
-  // Handle manual refresh
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) { setSelectedAssignment(""); setSearch(""); }
+  }, [isOpen]);
+
   const handleRefresh = async () => {
     setLocalLoading(true);
     try {
       await dispatch(fetchVehiclesThunk()).unwrap();
-    } catch (error) {
-      console.error("Failed to refresh vehicles:", error);
+    } catch (err) {
+      console.error("Failed to refresh vehicles:", err);
     } finally {
       setLocalLoading(false);
     }
   };
 
-  // Filter active vehicles and transform for display - FIXED DATA ACCESS
-  const availableAssignments = useMemo(() => {
-    return allVehicles
-      .filter((vehicle) => vehicle.is_active) // Only show active vehicles
-      .map((vehicle) => ({
-        id: vehicle.vehicle_id || vehicle.vehicle_id, // Handle both possible property names
-        vehicle_id: vehicle.vehicle_id || vehicle.vehicle_id, // Ensure vehicle_id is available
-        vehicle_rc: vehicle.rc_number || vehicle.vehicle_rc || "N/A",
-        driver_name: vehicle.driver_name || "Unassigned",
-        status: vehicle.driver_id ? "Available" : "No Driver",
-        vehicle_type:
-          vehicle.vehicle_type_name || vehicle.vehicle_type || "Unknown Type",
-        // Include original vehicle for reference
-        originalVehicle: vehicle,
-      }));
-  }, [allVehicles]);
+  // ✅ FIXED: removed duplicate `vehicle_id || vehicle_id` mapping
+  const availableAssignments = useMemo(() =>
+    allVehicles
+      .filter((v) => v.is_active)
+      .map((v) => ({
+        vehicle_id:   v.vehicle_id,
+        vehicle_rc:   v.rc_number   || v.vehicle_rc  || "N/A",
+        driver_name:  v.driver_name || "Unassigned",
+        vehicle_type: v.vehicle_type_name || v.vehicle_type || "Unknown Type",
+        status:       v.driver_id ? "Available" : "No Driver",
+      })),
+    [allVehicles]
+  );
 
-  // Filter by RC number
   const filteredAssignments = useMemo(() => {
     if (!search.trim()) return availableAssignments;
-
-    const searchTerm = search.toLowerCase();
-    return availableAssignments.filter(
-      (assignment) =>
-        assignment.vehicle_rc.toLowerCase().includes(searchTerm) ||
-        (assignment.driver_name &&
-          assignment.driver_name.toLowerCase().includes(searchTerm))
+    const q = search.toLowerCase();
+    return availableAssignments.filter((a) =>
+      a.vehicle_rc.toLowerCase().includes(q) ||
+      a.driver_name.toLowerCase().includes(q)
     );
   }, [search, availableAssignments]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!selectedAssignment) {
-      alert("Please select a vehicle assignment");
-      return;
-    }
-
-    const assignment = availableAssignments.find(
-      (a) => a.vehicle_id === selectedAssignment // Use id for finding
-    );
-
-    if (!assignment) {
-      alert("Selected assignment not found");
-      return;
-    }
-
-    // Pass vehicle_id, driver_name, and rc_number to onAssign
-    onAssign(assignment.vehicle_id);
-    setSelectedAssignment("");
-    setSearch("");
+    if (!selectedAssignment) return;
+    onAssign(selectedAssignment);
   };
 
   const handleClose = () => {
-    setSelectedAssignment("");
-    setSearch("");
+    if (isAssigning) return; // prevent close during API call
+    setSelectedAssignment(""); setSearch("");
     onClose();
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Available":
-        return "text-green-600 bg-green-100";
-      case "No Driver":
-        return "text-yellow-600 bg-yellow-100";
-      case "On Duty":
-        return "text-red-600 bg-red-100";
-      default:
-        return "text-gray-600 bg-gray-100";
-    }
-  };
+  const getStatusColor = (status) => ({
+    "Available": "text-green-600 bg-green-100",
+    "No Driver": "text-yellow-600 bg-yellow-100",
+    "On Duty":   "text-red-600 bg-red-100",
+  }[status] ?? "text-gray-600 bg-gray-100");
 
-  const isDataLoading = localLoading;
-  const hasNoVehicles = availableAssignments.length === 0;
+  const isBusy      = localLoading || isAssigning;
+  const hasVehicles = availableAssignments.length > 0;
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] flex flex-col">
+  return createPortal(
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={handleClose}
+        style={{
+          position: "fixed", inset: 0, zIndex: 50000,
+          background: "rgba(15,23,42,0.45)", backdropFilter: "blur(3px)",
+          animation: "admFadeIn 0.18s ease",
+        }}
+      />
+
+      {/* Panel */}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: "fixed", zIndex: 50001,
+          top: "50%", left: "50%", transform: "translate(-50%,-50%)",
+          width: "min(480px, calc(100vw - 32px))",
+          maxHeight: "min(700px, 90vh)",
+          background: "#fff", borderRadius: 16,
+          boxShadow: "0 24px 60px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.06)",
+          display: "flex", flexDirection: "column", overflow: "hidden",
+          animation: "admSlideUp 0.22s cubic-bezier(0.34,1.56,0.64,1)",
+        }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b shrink-0">
-          <div className="flex items-center gap-3">
-            <div>
-              <h2 className="text-lg font-semibold">Assign Vehicle</h2>
-              <p className="text-sm text-gray-600">
-                {selectedRoutesCount} route
-                {selectedRoutesCount !== 1 ? "s" : ""} selected
-              </p>
+        <div style={{
+          padding: "16px 20px 14px",
+          borderBottom: "1px solid #f1f5f9",
+          background: "linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 100%)",
+          display: "flex", alignItems: "flex-start", gap: 10,
+        }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+            background: "linear-gradient(135deg,#34d399,#059669)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 2px 8px #34d39955",
+          }}>
+            <Car size={18} color="#fff" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: 15, color: "#1e293b" }}>Assign Vehicle</div>
+            <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
+              {selectedRoutesCount} route{selectedRoutesCount !== 1 ? "s" : ""} selected
+              {tenantId && <span style={{ color: "#94a3b8", marginLeft: 6 }}>· tenant {tenantId}</span>}
             </div>
           </div>
           <button
-            onClick={handleClose}
-            className="p-1 hover:bg-gray-100 rounded transition-colors"
-            type="button"
+            onClick={handleRefresh}
+            disabled={isBusy}
+            title="Refresh vehicles"
+            style={{
+              width: 28, height: 28, borderRadius: 8, border: "1px solid #e2e8f0",
+              background: "#fff", cursor: isBusy ? "not-allowed" : "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", marginRight: 4,
+            }}
           >
-            <X className="w-5 h-5" />
+            <RefreshCw size={13} color="#64748b" style={{ animation: localLoading ? "admSpin 0.8s linear infinite" : "none" }} />
+          </button>
+          <button
+            onClick={handleClose}
+            disabled={isAssigning}
+            style={{
+              width: 28, height: 28, borderRadius: 8, border: "none",
+              background: "#f1f5f9", cursor: isAssigning ? "not-allowed" : "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}
+          >
+            <X size={14} color="#64748b" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-4 overflow-hidden flex-1 flex flex-col">
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-4 flex-1 flex flex-col"
-          >
-            {/* Search Bar */}
-            <div className="shrink-0">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Search Vehicle RC Number
-              </label>
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search by RC number..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  disabled={isDataLoading || hasNoVehicles}
-                />
-              </div>
+        {/* Body */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
+
+          {/* Search */}
+          <div style={{ position: "relative" }}>
+            <Search size={13} color="#94a3b8" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }} />
+            <input
+              type="text"
+              placeholder="Search by RC number or driver…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              disabled={isBusy || !hasVehicles}
+              style={{
+                width: "100%", paddingLeft: 30, paddingRight: 12, paddingTop: 8, paddingBottom: 8,
+                borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12,
+                background: isBusy || !hasVehicles ? "#f8fafc" : "#fff",
+                outline: "none", boxSizing: "border-box",
+                fontFamily: "inherit", color: "#1e293b",
+              }}
+            />
+          </div>
+
+          {/* Count row */}
+          {!localLoading && hasVehicles && (
+            <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>
+              {filteredAssignments.length} of {availableAssignments.length} vehicles
             </div>
+          )}
 
-            {/* Refresh Button */}
-            <div className="shrink-0 flex justify-end">
-              <button
-                type="button"
-                onClick={handleRefresh}
-                disabled={isDataLoading}
-                className="flex items-center gap-2 px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <RefreshCw
-                  className={`w-4 h-4 ${isDataLoading ? "animate-spin" : ""}`}
-                />
-                Refresh
-              </button>
+          {/* Loading state */}
+          {localLoading && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 0", gap: 10 }}>
+              <Loader2 size={22} color="#059669" style={{ animation: "admSpin 0.8s linear infinite" }} />
+              <span style={{ fontSize: 12, color: "#94a3b8" }}>Loading vehicles…</span>
             </div>
+          )}
 
-            {/* Loading State */}
-            {isDataLoading && (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="text-gray-600 mt-2">Loading vehicles...</p>
-                </div>
-              </div>
-            )}
+          {/* Empty state */}
+          {!localLoading && !hasVehicles && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 0", gap: 8 }}>
+              <Car size={32} color="#e2e8f0" />
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#94a3b8" }}>No vehicles available</span>
+              <span style={{ fontSize: 11, color: "#cbd5e1" }}>
+                {allVehicles.length === 0 ? "No vehicles found in the system." : "No active vehicles with drivers."}
+              </span>
+            </div>
+          )}
 
-            {/* Empty States */}
-            {!isDataLoading && hasNoVehicles && (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <Car className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p className="text-lg font-medium mb-2">
-                    No Vehicles Available
-                  </p>
-                  <p className="text-sm">
-                    {allVehicles.length === 0
-                      ? "No vehicles found in the system."
-                      : "No active vehicles with drivers available."}
-                  </p>
+          {/* Vehicle list */}
+          {!localLoading && hasVehicles && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {filteredAssignments.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "24px 0", color: "#94a3b8", fontSize: 12 }}>
+                  No vehicles match your search
                 </div>
-              </div>
-            )}
-
-            {/* Assignments List */}
-            {!isDataLoading && !hasNoVehicles && (
-              <div className="flex-1 overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between mb-2 shrink-0">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Available Vehicles
-                  </label>
-                  <span className="text-xs text-gray-500">
-                    {filteredAssignments.length} of{" "}
-                    {availableAssignments.length} available
-                  </span>
-                </div>
-                <div className="border rounded-lg overflow-hidden flex-1 flex flex-col">
-                  <div className="overflow-y-auto flex-1 p-2">
-                    {filteredAssignments.length === 0 ? (
-                      <div className="text-center text-gray-500 py-8">
-                        <Search className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                        <p>No matching vehicles found</p>
-                        <p className="text-sm mt-1">
-                          Try adjusting your search terms
-                        </p>
+              ) : (
+                filteredAssignments.map((a) => {
+                  const isSelected   = selectedAssignment === a.vehicle_id;
+                  const isDisabled   = a.status !== "Available";
+                  return (
+                    <div
+                      key={a.vehicle_id}
+                      onClick={() => !isDisabled && setSelectedAssignment(a.vehicle_id)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 10,
+                        padding: "10px 12px", borderRadius: 8,
+                        border: `1px solid ${isSelected ? "#6ee7b7" : "#e2e8f0"}`,
+                        background: isSelected ? "#f0fdf4" : "#fff",
+                        cursor: isDisabled ? "not-allowed" : "pointer",
+                        opacity: isDisabled ? 0.5 : 1,
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      <div style={{
+                        width: 34, height: 34, borderRadius: 8, flexShrink: 0,
+                        background: isSelected ? "#dcfce7" : "#f8fafc",
+                        border: `1px solid ${isSelected ? "#bbf7d0" : "#e2e8f0"}`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <Car size={15} color={isSelected ? "#059669" : "#94a3b8"} />
                       </div>
-                    ) : (
-                      filteredAssignments.map((assignment) => (
-                        <div
-                          key={assignment.vehicle_id} // Use id as key
-                          className={`p-3 border rounded-lg cursor-pointer transition-colors flex items-center justify-between mb-2 last:mb-0 ${
-                            selectedAssignment === assignment.vehicle_id // Use id for selection
-                              ? "border-blue-500 bg-blue-50"
-                              : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                          } ${
-                            assignment.status !== "Available"
-                              ? "opacity-50 cursor-not-allowed"
-                              : ""
-                          }`}
-                          onClick={
-                            () =>
-                              assignment.status === "Available" &&
-                              setSelectedAssignment(assignment.vehicle_id) // Use id for selection
-                          }
-                        >
-                          <div className="flex items-center gap-3">
-                            <Car className="w-4 h-4 text-blue-500 shrink-0" />
-                            <div>
-                              <div className="font-medium text-gray-900">
-                                {assignment.vehicle_rc}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                Driver: {assignment.driver_name} •{" "}
-                                {assignment.vehicle_type}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`px-2 py-1 rounded text-xs ${getStatusColor(
-                                assignment.status
-                              )}`}
-                            >
-                              {assignment.status}
-                            </span>
-                            {selectedAssignment === assignment.vehicle_id && ( // Use id for selection
-                              <Check className="w-4 h-4 text-blue-500 shrink-0" />
-                            )}
-                          </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>{a.vehicle_rc}</div>
+                        <div style={{ fontSize: 11, color: "#64748b", marginTop: 1 }}>
+                          {a.driver_name} · {a.vehicle_type}
                         </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Selection Summary */}
-            {selectedAssignment && (
-              <div className="p-3 bg-gray-50 rounded-lg border shrink-0">
-                <h4 className="font-medium text-sm mb-2">Selected Vehicle:</h4>
-                <div className="text-sm">
-                  <div className="flex items-center gap-2">
-                    <Car className="w-4 h-4 text-blue-500 shrink-0" />
-                    <span>
-                      {availableAssignments.find(
-                        (a) => a.vehicle_id === selectedAssignment // Use id for finding
-                      )?.vehicle_rc || "N/A"}
-                      {" - "}
-                      {availableAssignments.find(
-                        (a) => a.vehicle_id === selectedAssignment // Use id for finding
-                      )?.driver_name || "No Driver"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-4 shrink-0">
-              <button
-                type="button"
-                onClick={handleClose}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                disabled={isDataLoading}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={!selectedAssignment || isDataLoading}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-              >
-                {isDataLoading ? (
-                  "Loading..."
-                ) : (
-                  <>
-                    Assign to {selectedRoutesCount} Route
-                    {selectedRoutesCount !== 1 ? "s" : ""}
-                  </>
-                )}
-              </button>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                        <span style={{
+                          fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20,
+                          background: a.status === "Available" ? "#f0fdf4" : "#fffbeb",
+                          color:      a.status === "Available" ? "#15803d" : "#92400e",
+                          border:     `1px solid ${a.status === "Available" ? "#bbf7d0" : "#fde68a"}`,
+                        }}>
+                          {a.status}
+                        </span>
+                        {isSelected && <Check size={14} color="#059669" />}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
-          </form>
+          )}
+
+          {/* Selected summary */}
+          {selectedAssignment && !localLoading && (
+            <div style={{
+              padding: "10px 12px", borderRadius: 8,
+              background: "#f0fdf4", border: "1px solid #bbf7d0",
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#15803d", marginBottom: 4 }}>SELECTED VEHICLE</div>
+              {(() => {
+                const a = availableAssignments.find((x) => x.vehicle_id === selectedAssignment);
+                return a ? (
+                  <div style={{ fontSize: 12, color: "#1e293b", display: "flex", alignItems: "center", gap: 6 }}>
+                    <Car size={12} color="#059669" />
+                    <strong>{a.vehicle_rc}</strong>
+                    <span style={{ color: "#64748b" }}>· {a.driver_name}</span>
+                  </div>
+                ) : null;
+              })()}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          padding: "12px 20px", borderTop: "1px solid #f1f5f9",
+          display: "flex", gap: 10, justifyContent: "flex-end",
+          background: "#fafafa",
+        }}>
+          <button
+            onClick={handleClose}
+            disabled={isAssigning}
+            style={{
+              padding: "8px 18px", borderRadius: 8, border: "1.5px solid #e2e8f0",
+              background: "#fff", fontSize: 12, fontWeight: 600, color: "#64748b",
+              cursor: isAssigning ? "not-allowed" : "pointer", fontFamily: "inherit",
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={!selectedAssignment || isBusy}
+            style={{
+              padding: "8px 20px", borderRadius: 8, border: "none",
+              background: !selectedAssignment || isBusy
+                ? "#e2e8f0"
+                : "linear-gradient(135deg,#34d399,#059669)",
+              color: !selectedAssignment || isBusy ? "#94a3b8" : "#fff",
+              fontSize: 12, fontWeight: 700, fontFamily: "inherit",
+              cursor: !selectedAssignment || isBusy ? "not-allowed" : "pointer",
+              display: "flex", alignItems: "center", gap: 6,
+              boxShadow: selectedAssignment && !isBusy ? "0 2px 8px #34d39955" : "none",
+              transition: "all 0.15s",
+            }}
+          >
+            {isAssigning
+              ? <><Loader2 size={13} style={{ animation: "admSpin 0.8s linear infinite" }} /> Assigning…</>
+              : <>Assign to {selectedRoutesCount} Route{selectedRoutesCount !== 1 ? "s" : ""}</>
+            }
+          </button>
         </div>
       </div>
-    </div>
+
+      <style>{`
+        @keyframes admFadeIn  { from{opacity:0} to{opacity:1} }
+        @keyframes admSlideUp { from{opacity:0;transform:translate(-50%,-46%) scale(0.97)} to{opacity:1;transform:translate(-50%,-50%) scale(1)} }
+        @keyframes admSpin    { to{transform:rotate(360deg)} }
+      `}</style>
+    </>,
+    document.body
   );
 };
 

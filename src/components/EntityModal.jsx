@@ -27,12 +27,10 @@ import { fetchPermissionsThunk } from "../redux/features/Permissions/permissions
 import CompanyAddressMap from "../companies/CompanyAddressMap";
 
 /* ─────────────────────────────────────────────
-   NOTE: Import DM Sans in your global CSS or
-   index.html instead of injecting inside JSX.
+   Add Plus Jakarta Sans in your index.html <head>:
 
-   In index.html <head>:
    <link href="https://fonts.googleapis.com/css2?
-     family=DM+Sans:wght@400;500;600;700;800&display=swap"
+     family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
      rel="stylesheet"/>
 ───────────────────────────────────────────── */
 
@@ -59,7 +57,6 @@ const COMPANY_FIELDS = [
   { key: "longitude",  label: "Longitude",    icon: Globe,     type: "number" },
 ];
 
-/* ── CRUD color metadata ── */
 const CRUD_META = {
   create: { tag: "C", tile: "bg-emerald-50 border-emerald-200", label: "text-emerald-700", badge: "bg-emerald-100 text-emerald-600 border border-emerald-200" },
   read:   { tag: "R", tile: "bg-blue-50   border-blue-200",    label: "text-blue-700",    badge: "bg-blue-100   text-blue-600   border border-blue-200"   },
@@ -67,9 +64,7 @@ const CRUD_META = {
   delete: { tag: "D", tile: "bg-rose-50   border-rose-200",    label: "text-rose-700",    badge: "bg-rose-100   text-rose-500   border border-rose-200"   },
 };
 
-/* ───────────────────────────────────────
-   Field — unchanged from original
-─────────────────────────────────────── */
+/* ── Field ── */
 const Field = ({ def, value, onChange, error, optional = false }) => {
   const Icon = def.icon;
   const [showPassword, setShowPassword] = useState(false);
@@ -78,7 +73,7 @@ const Field = ({ def, value, onChange, error, optional = false }) => {
 
   return (
     <div data-error={!!error}>
-      <label className="block text-[11px] font-semibold uppercase tracking-[.08em] text-slate-400 mb-1.5">
+      <label className="block text-[11px] font-semibold uppercase tracking-[.08em] text-slate-500 mb-1.5">
         {def.label}
         {!optional && <span className="text-rose-400 ml-0.5">*</span>}
         {optional && (
@@ -101,7 +96,7 @@ const Field = ({ def, value, onChange, error, optional = false }) => {
           autoComplete={def.type === "password" ? "new-password" : undefined}
           className={`
             w-full pl-8 pr-${def.type === "password" ? "9" : "3"} py-2.5
-            text-[13px] rounded-xl border bg-slate-50/60
+            text-[13px] font-medium rounded-xl border bg-slate-50/60
             placeholder:text-slate-300 text-slate-800 outline-none transition-all
             focus:bg-white focus:shadow-[0_0_0_3px]
             ${error
@@ -132,21 +127,17 @@ const Field = ({ def, value, onChange, error, optional = false }) => {
   );
 };
 
-/* ───────────────────────────────────────
-   SectionHead — unchanged
-─────────────────────────────────────── */
+/* ── SectionHead ── */
 const SectionHead = ({ color, label }) => (
   <div className="flex items-center gap-3 mb-5">
     <span className={`w-1 h-5 rounded-full ${color}`} />
-    <span className="text-[11px] font-extrabold uppercase tracking-[.1em] text-slate-400">
+    <span className="text-[11px] font-extrabold uppercase tracking-[.1em] text-slate-500">
       {label}
     </span>
   </div>
 );
 
-/* ───────────────────────────────────────
-   PermCard — UPDATED with better UI
-─────────────────────────────────────── */
+/* ── PermCard ── */
 const PermCard = ({ module, actions, onChange }) => {
   const entries = Object.entries(actions);
   const active  = entries.filter(([, d]) => d.is_active).length;
@@ -158,16 +149,13 @@ const PermCard = ({ module, actions, onChange }) => {
     entries.forEach(([action]) => onChange(module, action, !allOn));
 
   return (
-    <div
-      className={`
-        bg-white rounded-2xl p-4 flex flex-col gap-3 transition-all duration-200 group
-        ${allOn
-          ? "border border-blue-200 shadow-[0_4px_20px_-4px_rgba(59,130,246,.2)]"
-          : "border border-slate-100 hover:border-blue-100 hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,.08)]"
-        }
-      `}
-    >
-      {/* ── Card header ── */}
+    <div className={`
+      bg-white rounded-2xl p-4 flex flex-col gap-3 transition-all duration-200 group
+      ${allOn
+        ? "border border-blue-200 shadow-[0_4px_20px_-4px_rgba(59,130,246,.2)]"
+        : "border border-slate-100 hover:border-blue-100 hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,.08)]"
+      }
+    `}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors
@@ -178,8 +166,6 @@ const PermCard = ({ module, actions, onChange }) => {
             {module}
           </span>
         </div>
-
-        {/* All / Revoke button — always clearly visible */}
         <button
           type="button"
           onClick={toggleAll}
@@ -187,8 +173,8 @@ const PermCard = ({ module, actions, onChange }) => {
             flex items-center gap-1 flex-shrink-0
             text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all
             ${allOn
-              ? "bg-rose-50 border border-rose-200 text-rose-500 hover:bg-rose-100"
-              : "bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-100"
+              ? "bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100"
+              : "bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100"
             }
           `}
         >
@@ -196,7 +182,6 @@ const PermCard = ({ module, actions, onChange }) => {
         </button>
       </div>
 
-      {/* ── Progress bar ── */}
       <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
         <div
           className="h-full rounded-full bg-gradient-to-r from-blue-500 to-sky-400 transition-all duration-300"
@@ -204,7 +189,6 @@ const PermCard = ({ module, actions, onChange }) => {
         />
       </div>
 
-      {/* ── CRUD tiles in 2-column grid ── */}
       <div className="grid grid-cols-2 gap-1.5">
         {entries.map(([action, data]) => {
           const meta = CRUD_META[action.toLowerCase()] || {
@@ -222,7 +206,6 @@ const PermCard = ({ module, actions, onChange }) => {
                 ${data.is_active ? meta.tile : "bg-slate-50 border-slate-100 hover:border-slate-200"}
               `}
             >
-              {/* Custom checkbox */}
               <span className="relative flex-shrink-0">
                 <input
                   type="checkbox"
@@ -245,13 +228,10 @@ const PermCard = ({ module, actions, onChange }) => {
                   )}
                 </span>
               </span>
-
-              <span className={`text-[11px] font-medium capitalize flex-1 transition-colors
+              <span className={`text-[11px] font-semibold capitalize flex-1 transition-colors
                 ${data.is_active ? meta.label : "text-slate-400"}`}>
                 {action}
               </span>
-
-              {/* Color-coded letter badge */}
               <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md flex-shrink-0 ${meta.badge}`}>
                 {meta.tag}
               </span>
@@ -260,10 +240,9 @@ const PermCard = ({ module, actions, onChange }) => {
         })}
       </div>
 
-      {/* ── Footer: count + mini bar chart ── */}
       <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-        <span className="text-[11px] text-slate-400">
-          <span className={`font-bold ${allOn ? "text-blue-500" : "text-slate-600"}`}>{active}</span>
+        <span className="text-[11px] font-medium text-slate-500">
+          <span className={`font-bold ${allOn ? "text-blue-500" : "text-slate-700"}`}>{active}</span>
           {" / "}{total} active
         </span>
         <div className="flex items-end gap-[3px]">
@@ -280,9 +259,7 @@ const PermCard = ({ module, actions, onChange }) => {
   );
 };
 
-/* ───────────────────────────────────────
-   DiscardDialog — unchanged
-─────────────────────────────────────── */
+/* ── DiscardDialog ── */
 const DiscardDialog = ({ onConfirm, onCancel }) => (
   <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/80 backdrop-blur-[2px] rounded-3xl">
     <div className="bg-white border border-slate-200 rounded-2xl shadow-xl p-6 w-80 text-center">
@@ -290,12 +267,12 @@ const DiscardDialog = ({ onConfirm, onCancel }) => (
         <AlertCircle size={20} className="text-rose-500" />
       </div>
       <p className="font-bold text-[14px] text-slate-800 mb-1">Discard changes?</p>
-      <p className="text-[12px] text-slate-400 mb-5">
+      <p className="text-[12px] font-medium text-slate-500 mb-5">
         You have unsaved changes. Closing will lose everything you've entered.
       </p>
       <div className="flex gap-3">
         <button onClick={onCancel}
-          className="flex-1 py-2 text-[13px] font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
+          className="flex-1 py-2 text-[13px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
           Keep editing
         </button>
         <button onClick={onConfirm}
@@ -307,9 +284,7 @@ const DiscardDialog = ({ onConfirm, onCancel }) => (
   </div>
 );
 
-/* ───────────────────────────────────────
-   Toast — unchanged
-─────────────────────────────────────── */
+/* ── Toast ── */
 const Toast = ({ type, message, onDismiss }) => {
   useEffect(() => {
     const t = setTimeout(onDismiss, 4000);
@@ -337,9 +312,7 @@ const Toast = ({ type, message, onDismiss }) => {
   );
 };
 
-/* ───────────────────────────────────────
-   Sidebar — unchanged
-─────────────────────────────────────── */
+/* ── Sidebar ── */
 const Sidebar = ({ step, mode, entityType, totalActive }) => (
   <aside
     className="hidden md:flex flex-col w-56 flex-shrink-0 rounded-l-3xl p-7 justify-between"
@@ -358,14 +331,14 @@ const Sidebar = ({ step, mode, entityType, totalActive }) => (
             {mode === "create" ? "New" : "Edit"}{" "}
             {entityType.charAt(0).toUpperCase() + entityType.slice(1)}
           </p>
-          <p className="text-[11px] mt-0.5" style={{ color: "#60a5fa" }}>Entity setup</p>
+          <p className="text-[11px] font-medium mt-0.5" style={{ color: "#60a5fa" }}>Entity setup</p>
         </div>
       </div>
 
       <div className="flex flex-col gap-1">
         {[
           { n: 1, label: "Details",     sub: "Company & employee" },
-          { n: 2, label: "Permissions", sub: "Access control" },
+          { n: 2, label: "Permissions", sub: "Access control"     },
         ].map(({ n, label, sub }) => {
           const done    = step > n;
           const current = step === n;
@@ -388,7 +361,7 @@ const Sidebar = ({ step, mode, entityType, totalActive }) => (
                   style={{ color: current ? "#fff" : done ? "rgba(255,255,255,.65)" : "#475569" }}>
                   {label}
                 </p>
-                <p className="text-[11px] leading-none"
+                <p className="text-[11px] font-medium leading-none"
                   style={{ color: current ? "#93c5fd" : "#334155" }}>
                   {sub}
                 </p>
@@ -404,7 +377,7 @@ const Sidebar = ({ step, mode, entityType, totalActive }) => (
         <div className="rounded-xl p-3 text-[12px] flex items-center gap-2"
           style={{ background: "rgba(59,130,246,.12)", border: "1px solid rgba(59,130,246,.25)", color: "#93c5fd" }}>
           <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse flex-shrink-0" />
-          <span>
+          <span className="font-medium">
             <span className="font-extrabold" style={{ color: "#bfdbfe" }}>{totalActive}</span>{" "}
             permission{totalActive !== 1 ? "s" : ""} selected
           </span>
@@ -414,9 +387,7 @@ const Sidebar = ({ step, mode, entityType, totalActive }) => (
   </aside>
 );
 
-/* ───────────────────────────────────────
-   Main Modal
-─────────────────────────────────────── */
+/* ── Main Modal ── */
 const EntityModal = ({
   isOpen,
   onClose,
@@ -426,15 +397,13 @@ const EntityModal = ({
   mode = "create",
 }) => {
   const dispatch = useDispatch();
-  
-  // ✅ FIXED: Correct Redux selectors
-  const { permissions, permissionsLoading, permissionsLoaded } = useSelector(
-    (state) => ({
-      permissions: state.permissions.permissions,
-      permissionsLoading: state.permissions.permissionsLoading,
-      permissionsLoaded: state.permissions.permissionsLoaded,
-    })
-  );
+
+  // ✅ Split selectors — no inline object literal.
+  // Each returns a primitive or stable reference so === passes correctly
+  // and Redux doesn't schedule unnecessary re-renders.
+  const permissions        = useSelector((state) => state.permissions.permissions);
+  const permissionsLoading = useSelector((state) => state.permissions.permissionsLoading);
+  const permissionsLoaded  = useSelector((state) => state.permissions.permissionsLoaded);
 
   const [formData,      setFormData]      = useState(initialFormState);
   const [errors,        setErrors]        = useState({});
@@ -448,7 +417,9 @@ const EntityModal = ({
 
   const entityTenantId = entityData?.company?.tenant_id;
 
-  // ✅ FIXED: Use correct state variable
+  // ✅ Permissions fetch guard — permissionsLoaded persists in Redux.
+  // Permissions are fetched only once per app session regardless of how many
+  // times the modal opens/closes. Stops repeated GET /permissions/ hits.
   useEffect(() => {
     if (isOpen && !permissionsLoaded) {
       dispatch(fetchPermissionsThunk());
@@ -526,7 +497,6 @@ const EntityModal = ({
     }));
   };
 
-  /* ── Bulk permission helpers ── */
   const grantAll = () =>
     Object.keys(formData.permissions).forEach((mod) =>
       Object.keys(formData.permissions[mod]).forEach((act) =>
@@ -678,6 +648,7 @@ const EntityModal = ({
           onClick={handleCloseRequest}
         />
 
+        {/* ✅ Font: Plus Jakarta Sans — structured, crisp at small sizes, dark-friendly */}
         <div
           className="
             relative z-10 flex w-full max-w-7xl max-h-[92vh]
@@ -685,7 +656,7 @@ const EntityModal = ({
             shadow-[0_32px_64px_-12px_rgba(0,0,0,.5)]
             ring-1 ring-white/10
           "
-          style={{ fontFamily: "'DM Sans', sans-serif" }}
+          style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
         >
           {showDiscard && (
             <DiscardDialog
@@ -704,7 +675,7 @@ const EntityModal = ({
                 <h2 className="text-[15px] font-extrabold text-slate-800 tracking-tight leading-none">
                   {step === 1 ? "Company & Employee Details" : "Access Permissions"}
                 </h2>
-                <p className="text-[12px] text-slate-400 mt-1 leading-none">
+                <p className="text-[12px] font-medium text-slate-500 mt-1 leading-none">
                   {step === 1
                     ? "Fill in the required information below"
                     : "Select permissions to grant this company"}
@@ -712,30 +683,28 @@ const EntityModal = ({
               </div>
               <button
                 onClick={handleCloseRequest}
-                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors flex-shrink-0"
+                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors flex-shrink-0"
               >
                 <X size={14} />
               </button>
             </div>
 
-            {/* ── Step 2: bulk action toolbar ── */}
+            {/* Step 2: bulk action toolbar */}
             {step === 2 && (
               <div className="flex items-center justify-between px-7 py-3 border-b border-slate-100 bg-slate-50/70 flex-shrink-0">
-                {/* Live counter */}
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full">
                   <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                  <span className="text-[12px] font-semibold text-blue-700">
+                  <span className="text-[12px] font-semibold text-blue-800">
                     <span className="font-bold">{totalActive}</span>
-                    <span className="text-blue-400 font-normal"> / {totalPerms}</span> active
+                    <span className="text-blue-500 font-medium"> / {totalPerms}</span> active
                   </span>
                 </div>
-                {/* Bulk buttons */}
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={grantAll}
                     className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-lg
-                      bg-emerald-50 border border-emerald-200 text-emerald-600 hover:bg-emerald-100 transition-colors"
+                      bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-colors"
                   >
                     <Zap size={10} /> Grant All
                   </button>
@@ -743,7 +712,7 @@ const EntityModal = ({
                     type="button"
                     onClick={revokeAll}
                     className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-lg
-                      bg-rose-50 border border-rose-200 text-rose-500 hover:bg-rose-100 transition-colors"
+                      bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 transition-colors"
                   >
                     <Ban size={10} /> Revoke All
                   </button>
@@ -752,7 +721,7 @@ const EntityModal = ({
             )}
 
             {submitError && (
-              <div className="mx-7 mt-4 flex items-center gap-2.5 px-4 py-3 bg-rose-50 border border-rose-200 rounded-xl text-[12px] text-rose-700 font-medium">
+              <div className="mx-7 mt-4 flex items-center gap-2.5 px-4 py-3 bg-rose-50 border border-rose-200 rounded-xl text-[12px] text-rose-700 font-semibold">
                 <AlertCircle size={14} className="flex-shrink-0 text-rose-500" />
                 {submitError}
                 <button onClick={() => setSubmitError(null)} className="ml-auto text-rose-400 hover:text-rose-600">
@@ -779,7 +748,7 @@ const EntityModal = ({
                         />
                       ))}
                       <div>
-                        <label className="block text-[11px] font-semibold uppercase tracking-[.08em] text-slate-400 mb-1.5">
+                        <label className="block text-[11px] font-semibold uppercase tracking-[.08em] text-slate-500 mb-1.5">
                           Status
                         </label>
                         <button
@@ -793,7 +762,7 @@ const EntityModal = ({
                             text-[13px] font-semibold transition-all
                             ${formData.company.is_active
                               ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-                              : "bg-slate-50 border-slate-200 text-slate-500"}
+                              : "bg-slate-50 border-slate-200 text-slate-600"}
                           `}
                         >
                           {formData.company.is_active
@@ -828,7 +797,7 @@ const EntityModal = ({
                         />
                       ) : (
                         <div className="flex flex-col">
-                          <label className="block text-[11px] font-semibold uppercase tracking-[.08em] text-slate-400 mb-1.5">
+                          <label className="block text-[11px] font-semibold uppercase tracking-[.08em] text-slate-500 mb-1.5">
                             Password
                           </label>
                           {!showChangePwd ? (
@@ -836,7 +805,7 @@ const EntityModal = ({
                               type="button"
                               onClick={() => setShowChangePwd(true)}
                               className="w-full flex items-center gap-2 px-3 py-2.5
-                                text-[13px] font-semibold text-blue-600
+                                text-[13px] font-semibold text-blue-700
                                 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-100 transition-colors"
                             >
                               <KeyRound size={14} /> Change password
@@ -885,19 +854,17 @@ const EntityModal = ({
               {/* ══ STEP 2 — Permissions ══ */}
               {step === 2 && (
                 <form onSubmit={handleSubmit} className="px-7 py-6 space-y-5">
-                  {/* ✅ FIXED: Use correct loading state */}
                   {permissionsLoading ? (
                     <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-4">
                       <div className="w-9 h-9 rounded-full border-2 border-blue-300 border-t-blue-600 animate-spin" />
-                      <p className="text-[13px]">Loading permissions…</p>
+                      <p className="text-[13px] font-medium">Loading permissions…</p>
                     </div>
                   ) : Object.keys(formData.permissions).length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-3">
                       <Shield size={36} className="text-slate-200" />
-                      <p className="text-[13px] text-slate-400">No permissions available</p>
+                      <p className="text-[13px] font-medium text-slate-500">No permissions available</p>
                     </div>
                   ) : (
-                    /* ── 4-column grid on large screens ── */
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                       {Object.entries(formData.permissions).map(([module, actions]) => (
                         <PermCard
@@ -910,14 +877,13 @@ const EntityModal = ({
                     </div>
                   )}
 
-                  {/* Footer */}
                   <div className="flex items-center justify-between pt-4 pb-1 border-t border-slate-100">
                     <button
                       type="button"
                       onClick={handleBack}
                       className="inline-flex items-center gap-2 px-5 py-2.5
                         bg-white hover:bg-slate-50 active:scale-[.97]
-                        text-slate-600 text-[13px] font-bold
+                        text-slate-700 text-[13px] font-bold
                         border border-slate-200 rounded-xl transition-all"
                     >
                       <ArrowLeft size={15} /> Back

@@ -126,22 +126,8 @@ export const baseSidebarConfig = [
     {
       title: "Route Management",
       icon: MapPin,
-      path: "/companies/routing", // Keep the path for the parent
+      path: "/companies/routing", 
       permission: "route.read",
-      // subItems: [ // ✅ Add subItems array
-      //   {
-      //     title: "Route Scheduling",
-      //     icon: MapPin,
-      //     path: "/companies/routing",
-      //     permission: "route.read",
-      //   },
-      //   // {
-      //   //   title: "Vendor Routing",
-      //   //   icon: Truck,
-      //   //   path: "/companies/vendor-routing",
-      //   //   permission: "route.read", // Adjust permission as needed
-      //   // },
-      // ],
     },
       {
         title: "Shift Management",
@@ -184,6 +170,11 @@ export const baseSidebarConfig = [
         path: "/companies/notification",
         permission: "alert.read",
       },
+      // {
+      //   title: "Announcements",
+      //   path: "/companies/announcements",
+      //   icon: Bell
+      // },
     ],
   },
   {

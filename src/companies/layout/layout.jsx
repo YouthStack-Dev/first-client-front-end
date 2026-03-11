@@ -94,10 +94,13 @@ const Layout = ({ type }) => {
           sidebarOpen ? "lg:ml-64" : "lg:ml-16"
         }`}
       >
-        {/* Header — fixed at top */}
-        <Header toggleSidebar={toggleSidebar} title={title} />
+        {/* ✅ Pass isSidebarOpen so Header offsets itself correctly */}
+        <Header
+          toggleSidebar={toggleSidebar}
+          title={title}
+          isSidebarOpen={sidebarOpen}
+        />
 
-        {/* ✅ Main content — pt-16 offsets fixed header, flex-col + min-h-0 so children can use h-full */}
         <main className="flex-1 flex flex-col min-h-0 pt-16 overflow-hidden">
           <div className="flex-1 min-h-0 w-full mx-auto overflow-y-auto">
             <Outlet />

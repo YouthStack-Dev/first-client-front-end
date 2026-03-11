@@ -1,6 +1,6 @@
 // components/EscortTable.jsx
 import React from "react";
-import { Trash2, Eye, Edit } from "lucide-react";
+import { Trash2, Eye, Edit, KeyRound } from "lucide-react";
 
 import ReusableButton from "../ui/ReusableButton";
 import ReusableToggle from "../ui/ReusableToggle";
@@ -13,6 +13,7 @@ const EscortTable = ({
   onDelete,
   onToggleActive,
   onToggleAvailable,
+  onResetPassword,
 }) => {
   const getVendorName = (vendorId) => {
     return vendors.find((v) => v.value === vendorId)?.label || "N/A";
@@ -116,6 +117,14 @@ const EscortTable = ({
                       title="Edit Escort"
                       onClick={() => onEdit(escort)}
                       className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all"
+                    />
+                    <ReusableButton
+                      module="escort"
+                      action="update"
+                      icon={KeyRound}
+                      title="Reset Password"
+                      onClick={() => onResetPassword?.(escort)}
+                      className="text-gray-600 hover:text-amber-600 hover:bg-amber-50 p-2 rounded-lg transition-all"
                     />
                     <ReusableButton
                       module="escort"

@@ -27,8 +27,10 @@ const RoleForm = ({
   mode = "create", // 'create', 'edit', or 'view'
   initialData = null,
   roleDetailsError = null,
-  formError, // New prop
-  isSubmitting, // New prop
+  formError,
+  isSubmitting,
+  isSuperAdmin = false,   // ── NEW
+  isSystemRole = false,   // ── NEW
 }) => {
   const dispatch = useDispatch();
 
@@ -49,7 +51,6 @@ const RoleForm = ({
   const [availablePolicies, setAvailablePolicies] = useState([]);
   const [selectedPolicies, setSelectedPolicies] = useState([]);
 
-  logDebug("the selected role in role form ", initialData);
   const isViewMode = mode === "view";
   const isEditMode = mode === "edit";
   const isCreateMode = mode === "create";
@@ -83,7 +84,6 @@ const RoleForm = ({
       const allPolicies = transformPolicies(policies);
 
       if (mode === "create") {
-        // Clear everything for create mode
         setFormData({
           name: "",
           description: "",
@@ -94,7 +94,6 @@ const RoleForm = ({
         setSelectedPolicies([]);
         setAvailablePolicies(allPolicies);
       } else if (initialData && (mode === "edit" || mode === "view")) {
-        // Handle edit/view mode with initial data
         const selected =
           initialData.policies?.map((policy) => ({
             policy_id: policy.policy_id,
@@ -194,7 +193,7 @@ const RoleForm = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (isViewMode || isSubmitting) return onClose(); // Prevent submission when loading
+    if (isViewMode || isSubmitting) return onClose();
 
     const submitData = {
       name: formData.name.trim(),
@@ -211,9 +210,14 @@ const RoleForm = ({
     console.log("Submitting role data:", submitData);
     console.log("Policy IDs to submit:", submitData.policy_ids);
 
-    // Clear previous errors when resubmitting
-    // (if you're using local error state in the form)
     onSubmit(submitData);
+  };
+
+  // ── Can remove a system policy from this role:
+  //    SuperAdmin can always remove; others cannot remove system policies in edit mode
+  const canRemovePolicy = (policy) => {
+    if (isSuperAdmin) return true;
+    return !(policy.is_system_policy && isEditMode);
   };
 
   if (!isOpen) return null;
@@ -221,6 +225,7 @@ const RoleForm = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[95vh] flex flex-col">
+
         {/* Header */}
         {formError && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
@@ -245,13 +250,21 @@ const RoleForm = ({
               )}
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-white">
-                {isViewMode
-                  ? "View Role Details"
-                  : isEditMode
-                  ? "Edit Role"
-                  : "Create New Role"}
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-white">
+                  {isViewMode
+                    ? "View Role Details"
+                    : isEditMode
+                    ? "Edit Role"
+                    : "Create New Role"}
+                </h2>
+                {/* SuperAdmin badge when editing a system role */}
+                {isSuperAdmin && isSystemRole && (
+                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-200 text-purple-800">
+                    System Role
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-white mt-1">
                 {isViewMode
                   ? "View role information and assigned policies"
@@ -273,6 +286,7 @@ const RoleForm = ({
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto">
             <div className="p-6 space-y-6">
+
               {/* Error Message from parent */}
               {roleDetailsError && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
@@ -406,9 +420,7 @@ const RoleForm = ({
                     {selectedPolicies.length > 0 && (
                       <div className="mb-6">
                         <h4 className="text-sm font-medium text-gray-700 mb-3">
-                          {isViewMode
-                            ? "Assigned Policies"
-                            : "Selected Policies"}{" "}
+                          {isViewMode ? "Assigned Policies" : "Selected Policies"}{" "}
                           ({selectedPolicies.length})
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -447,29 +459,26 @@ const RoleForm = ({
                                 <button
                                   type="button"
                                   onClick={() => {
+                                    if (!canRemovePolicy(policy)) return;
                                     handleRemovePolicy(policy.policy_id);
-                                    logDebug(
-                                      "Remove policy from the role clicked",
-                                      policy?.policy_id
-                                    );
+                                    logDebug("Remove policy from the role clicked", policy?.policy_id);
                                   }}
-                                  className="p-1 text-red-500 hover:bg-red-100 rounded transition-colors ml-2"
-                                  disabled={
-                                    policy.is_system_policy && isEditMode
-                                  }
+                                  // ── SuperAdmin can always remove; others blocked on system policies
+                                  disabled={!canRemovePolicy(policy)}
                                   title={
-                                    policy.is_system_policy && isEditMode
+                                    !canRemovePolicy(policy)
                                       ? "System policies cannot be removed"
                                       : "Remove policy"
                                   }
+                                  className={`p-1 rounded transition-colors ml-2 ${
+                                    canRemovePolicy(policy)
+                                      ? "text-red-500 hover:bg-red-100"
+                                      : "text-gray-300 cursor-not-allowed"
+                                  }`}
                                 >
                                   <Trash2
                                     size={16}
-                                    className={
-                                      policy.is_system_policy && isEditMode
-                                        ? "opacity-50"
-                                        : ""
-                                    }
+                                    className={!canRemovePolicy(policy) ? "opacity-40" : ""}
                                   />
                                 </button>
                               )}
@@ -520,15 +529,11 @@ const RoleForm = ({
                                   )}
                                   <div className="mt-1">
                                     <span className="text-xs text-gray-500">
-                                      {policy.permissions?.length || 0}{" "}
-                                      permissions
+                                      {policy.permissions?.length || 0} permissions
                                     </span>
                                   </div>
                                 </div>
-                                <Plus
-                                  size={16}
-                                  className="text-gray-400 ml-2"
-                                />
+                                <Plus size={16} className="text-gray-400 ml-2" />
                               </div>
                             ))}
                           </div>
@@ -536,16 +541,12 @@ const RoleForm = ({
                       )}
 
                     {/* Empty States */}
-                    {!loading &&
-                      selectedPolicies.length === 0 &&
-                      isViewMode && (
-                        <div className="text-center py-8 text-gray-500">
-                          <Shield className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                          <p className="text-sm">
-                            No policies assigned to this role
-                          </p>
-                        </div>
-                      )}
+                    {!loading && selectedPolicies.length === 0 && isViewMode && (
+                      <div className="text-center py-8 text-gray-500">
+                        <Shield className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                        <p className="text-sm">No policies assigned to this role</p>
+                      </div>
+                    )}
 
                     {(isCreateMode || isEditMode) &&
                       !loading &&
@@ -564,9 +565,7 @@ const RoleForm = ({
                       searchTerm !== "" && (
                         <div className="text-center py-8 text-gray-500">
                           <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                          <p className="text-sm">
-                            No policies found matching your search
-                          </p>
+                          <p className="text-sm">No policies found matching your search</p>
                         </div>
                       )}
                   </div>
