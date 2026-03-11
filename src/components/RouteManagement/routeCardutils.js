@@ -1,13 +1,6 @@
 import { CHIP_COLORS, FEMALE_CHIP_COLOR } from "./routeCardConstants";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Pure utility functions — no JSX, no side effects, fully testable.
-// ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Returns the chip color palette for a given employee.
- * Female employees always get the pink palette regardless of code.
- */
 export const getChipColor = (code = "", isFemale = false) => {
   if (isFemale) return FEMALE_CHIP_COLOR;
   const sum = code.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
