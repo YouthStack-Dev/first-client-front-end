@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { MapPin, Users } from "lucide-react";
-import { getChipColor, getCodeInitials, shortLocation, isFemaleGender } from "./routeCards";
+import { getChipColor, getCodeInitials, shortLocation, isFemaleGender } from "./routeCardUtils";
 import { FEMALE_ICON_COLOR, MAX_VISIBLE_CHIPS } from "./routeCardConstants";
 
 // ─────────────────────────────────────────────────────────────────────────────
