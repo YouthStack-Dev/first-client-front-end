@@ -19,12 +19,10 @@ import {
 } from "../../redux/features/Permissions/permissionsThunk";
 import { fetchCompaniesThunk } from "../../redux/features/company/companyThunks";
 import {
-  // ✅ FIXED: selectCompaniesFromRedux was renamed to selectCompanies in the
-  // updated companySlice. Using the old name returned undefined, breaking the
-  // tenant dropdown silently for SuperAdmins in both this component and RoleManagement.
+
   selectCompanies,
   selectCompaniesFetched,
-} from "../../redux/features/company/companySlice";
+} from "../../redux/features/company/companyslice";
 import { API_CLIENT } from "../../Api/API_Client";
 import { selectStyles } from "../../utils/helperutilities";
 
