@@ -18,6 +18,7 @@ import employeesReducer from "./features/employees/employeesSlice";
 import employeeBulkReducer from "./features/bulkEmployee/employeeBulkSlice";
 import announcementReducer from "./features/notifications/announcementsSlice";
 import reviewReducer from "./features/reviews/Reviewslice";
+import iamPermissionsReducer from "./features/iampermissions/Iampermissionsslice";
 
 const store = configureStore({
   reducer: {
@@ -40,6 +41,7 @@ const store = configureStore({
     employeeBulk: employeeBulkReducer,
     announcements: announcementReducer,
     reviews: reviewReducer,
+    iamPermissions: iamPermissionsReducer,
   },
 });
 

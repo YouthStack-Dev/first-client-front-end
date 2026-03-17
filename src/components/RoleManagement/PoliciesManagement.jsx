@@ -26,11 +26,7 @@ import {
 import { API_CLIENT } from "../../Api/API_Client";
 import { selectStyles } from "../../utils/helperutilities";
 
-/* ─────────────────────────────────────────────────────
-   Inline Toast — reusable within this file.
-   Auto-dismisses after 3s via the showToast helper.
-   Same pattern as EntityModal and RoleManagement.
-───────────────────────────────────────────────────── */
+
 const Toast = ({ toast, onDismiss }) => {
   if (!toast) return null;
   const isSuccess = toast.type === "success";

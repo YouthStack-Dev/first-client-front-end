@@ -25,10 +25,6 @@ const STATUS = {
 
 const CompanyManagement = () => {
   const dispatch = useDispatch();
-
-  // ✅ Split selectors — no object literal, no || {} fallback
-  // Each returns a primitive or the stable Redux array reference.
-  // Uses named selectors from the slice for consistency and reusability.
   const companies = useSelector(selectCompanies);
   const fetched   = useSelector(selectCompaniesFetched);
   const loading   = useSelector(selectCompaniesLoading);
@@ -45,18 +41,7 @@ const CompanyManagement = () => {
   const [editError,       setEditError]       = useState(null);
   const [submitError,     setSubmitError]     = useState(null);
 
-  // ✅ useRef removed — fetched now lives in Redux and survives unmount/remount.
-  //
-  // WHY useRef FAILED:
-  //   useRef is scoped to a single component instance. When you navigate away,
-  //   the component unmounts and the ref is destroyed. On the next visit it
-  //   remounts with hasFetched.current = false, triggering a fresh fetch every
-  //   single time — exactly the duplicate API hits you were seeing.
-  //
-  // WHY Redux fetched WORKS:
-  //   Redux state persists for the lifetime of the app (until page reload or
-  //   explicit reset). Once fetched = true it stays true no matter how many
-  //   times this component mounts and unmounts. Navigation is free.
+
   useEffect(() => {
     if (!fetched) {
       dispatch(fetchCompaniesThunk());
