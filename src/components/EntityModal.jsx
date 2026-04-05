@@ -6,7 +6,11 @@ import {
   Eye, EyeOff,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchPermissionsThunk } from "../redux/features/Permissions/permissionsThunk";
+import {
+  fetchPermissionsThunk,
+  fetchPolicyPackagesThunk,
+  updatePackagePermissionsThunk,
+} from "../redux/features/Permissions/permissionsThunk";
 import CompanyAddressMap from "../companies/CompanyAddressMap";
 
 // ── Initial State ──────────────────────────────────────────────────────────
@@ -29,7 +33,6 @@ const COMPANY_FIELDS = [
   { key: "latitude",  label: "Latitude",     icon: Globe,     type: "number" },
   { key: "longitude", label: "Longitude",    icon: Globe,     type: "number" },
 ];
-
 
 const CRUD_META = {
   create: { tag: "C", tile: "bg-emerald-50 border-emerald-200", label: "text-emerald-700", badge: "bg-emerald-100 text-emerald-600 border border-emerald-200" },
@@ -300,8 +303,6 @@ const CompanySuccessCard = ({ tenantData, onClose }) => (
     </div>
 
     <div className="rounded-2xl border-2 border-indigo-100 overflow-hidden shadow-sm">
-
-      {/* Card Header */}
       <div className="relative p-5 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600">
         <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full
           bg-white/20 backdrop-blur-sm border border-white/30 text-white text-[11px] font-bold">
@@ -318,7 +319,6 @@ const CompanySuccessCard = ({ tenantData, onClose }) => (
         </p>
       </div>
 
-      {/* Card Info */}
       <div className="p-4 bg-white space-y-3">
         {tenantData?.address && (
           <div className="flex items-center gap-3">
@@ -355,7 +355,6 @@ const CompanySuccessCard = ({ tenantData, onClose }) => (
         </div>
       </div>
 
-      {/* Close only */}
       <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex justify-end">
         <button onClick={onClose}
           className="flex items-center gap-2 px-5 py-2 text-[12px] font-bold text-slate-600
@@ -393,26 +392,44 @@ const EntityModal = ({
   const [isDirty,       setIsDirty]       = useState(false);
   const [showDiscard,   setShowDiscard]   = useState(false);
   const [createdTenant, setCreatedTenant] = useState(null);
-  const formRef = useRef(null);
 
+  // ── Edit mode: { package_id, permission_ids } from GET /iam/policy-packages/
+  const [packageData,   setPackageData]   = useState(null);
+
+  const formRef        = useRef(null);
   const entityTenantId = entityData?.company?.tenant_id;
 
+  // ── Fetch all permissions for the grid (both modes, cached in Redux)
   useEffect(() => {
     if (isOpen && !permissionsLoaded) dispatch(fetchPermissionsThunk());
   }, [isOpen, permissionsLoaded, dispatch]);
 
+  // ── Edit mode only: fetch policy package to get current permission_ids
+  useEffect(() => {
+    if (!isOpen || mode !== "edit" || !entityTenantId) return;
+    dispatch(fetchPolicyPackagesThunk(entityTenantId))
+      .unwrap()
+      .then((data) => setPackageData(data))
+      .catch(() => setPackageData(null));
+  }, [isOpen, mode, entityTenantId, dispatch]);
+
+  // ── Build grouped permissions grid
+  // CREATE: all unchecked
+  // EDIT:   pre-check from packageData.permission_ids (new architecture — direct JSON array)
   useEffect(() => {
     if (!isOpen || permissions.length === 0) return;
+
     const grouped = {};
     permissions.forEach((p) => {
       if (!grouped[p.module]) grouped[p.module] = {};
       grouped[p.module][p.action] = {
         ...p,
-        is_active: mode === "edit" && entityData?.permissions
-          ? entityData.permissions.some((ep) => ep.module === p.module && ep.action === p.action)
+        is_active: mode === "edit" && packageData
+          ? (packageData.permission_ids || []).includes(p.permission_id)
           : false,
       };
     });
+
     if (mode === "edit" && entityData) {
       setFormData({
         company: {
@@ -429,8 +446,9 @@ const EntityModal = ({
       setFormData({ ...initialFormState, permissions: grouped });
     }
     setIsDirty(false);
-  }, [entityTenantId, permissions, isOpen, mode, entityData]);
+  }, [entityTenantId, permissions, packageData, isOpen, mode, entityData]);
 
+  // ── Reset on close
   useEffect(() => {
     if (!isOpen) {
       setFormData(initialFormState);
@@ -440,6 +458,7 @@ const EntityModal = ({
       setIsDirty(false);
       setShowDiscard(false);
       setCreatedTenant(null);
+      setPackageData(null);
     }
   }, [isOpen]);
 
@@ -479,7 +498,6 @@ const EntityModal = ({
     else if (isNaN(lat) || lat < -90  || lat > 90)  e.latitude  = "Must be between -90 and 90";
     if (!formData.company.longitude && formData.company.longitude !== 0) e.longitude = "Longitude is required";
     else if (isNaN(lng) || lng < -180 || lng > 180) e.longitude = "Must be between -180 and 180";
-
     setErrors(e);
     return e;
   };
@@ -492,6 +510,7 @@ const EntityModal = ({
     return [...new Set(ids)];
   };
 
+  // Create: includes permission_ids → POST /tenants/
   const buildCreatePayload = () => {
     const lat = parseFloat(formData.company.latitude);
     const lng = parseFloat(formData.company.longitude);
@@ -506,16 +525,16 @@ const EntityModal = ({
     };
   };
 
-  const buildEditPayload = () => {
+  // Edit: details only (no permission_ids) → PUT /tenants/{id}
+  const buildEditDetailsPayload = () => {
     const lat = parseFloat(formData.company.latitude);
     const lng = parseFloat(formData.company.longitude);
     return {
-      name:           formData.company.name.trim(),
-      address:        formData.company.address.trim(),
-      latitude:       isNaN(lat) ? null : lat,
-      longitude:      isNaN(lng) ? null : lng,
-      is_active:      formData.company.is_active,
-      permission_ids: buildPermissionIds(),
+      name:      formData.company.name.trim(),
+      address:   formData.company.address.trim(),
+      latitude:  isNaN(lat) ? null : lat,
+      longitude: isNaN(lng) ? null : lng,
+      is_active: formData.company.is_active,
     };
   };
 
@@ -537,13 +556,25 @@ const EntityModal = ({
     e.preventDefault();
     setSubmitError(null);
     try {
-      const payload = mode === "create" ? buildCreatePayload() : buildEditPayload();
-      const result  = await onSubmit(payload);
-      setIsDirty(false);
       if (mode === "create") {
+        // Single call: POST /tenants/ with permission_ids
+        const result = await onSubmit(buildCreatePayload());
         setCreatedTenant(result);
+        setIsDirty(false);
         setStep(3);
       } else {
+        // Call 1: PUT /tenants/{id} — details only
+        await onSubmit(buildEditDetailsPayload());
+
+        // Call 2: PUT /iam/policy-packages/{package_id}/permissions
+        if (packageData?.package_id) {
+          await dispatch(updatePackagePermissionsThunk({
+            packageId:      packageData.package_id,
+            permission_ids: buildPermissionIds(),
+          })).unwrap();
+        }
+
+        setIsDirty(false);
         setToast({ type: "success", message: "Company updated successfully!" });
         onClose();
       }
@@ -592,7 +623,7 @@ const EntityModal = ({
       if (step === 2) return "Select permissions — click Create Tenant when done";
       return "Your company is ready";
     }
-    return step === 1 ? "Update company information" : "Update permission settings";
+    return step === 1 ? "Update company information" : "Update permission boundary";
   };
 
   return (

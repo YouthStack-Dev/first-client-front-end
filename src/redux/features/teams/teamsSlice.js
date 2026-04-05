@@ -89,7 +89,8 @@ const teamsSlice = createSlice({
         // Update total count
         state.total = total || items.length;
 
-        logDebug("Teams fetched and normalized:", {
+        logDebug("Teams fetched and normalized:",
+           {
           totalTeams: state.teams.allIds.length,
           totalFromAPI: total,
           tenants: Object.keys(state.teams.byTenant).length,

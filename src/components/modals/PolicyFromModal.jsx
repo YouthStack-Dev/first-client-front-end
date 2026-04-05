@@ -1,13 +1,38 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Save, X, Edit, Eye, Shield, Users } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { ModuleCard } from "../RoleManagement/ModuleCard";
-import { dummyPermission } from "../../staticData/permissionModules";
-import { useSelector } from "react-redux";
-import { selectPermissions } from "../../redux/features/auth/authSlice";
-import { transformPermissionsForMode } from "../../utils/permissionModules";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchPolicyPackagesThunk } from "../../redux/features/Permissions/permissionsThunk";
+import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 
+// ─────────────────────────────────────────────────────────────
+// Helper — build grouped permissions grid from package boundary
+// packagePermissions → tenant's full permission boundary
+// existingIds        → what this specific policy already has (pre-check)
+// ─────────────────────────────────────────────────────────────
+const buildPermissionGrid = (packagePermissions = [], existingIds = []) => {
+  const grouped = {};
+  packagePermissions.forEach((p) => {
+    const module = p.module || p.resource || "General";
+    const action = p.action || p.name;
+    const id     = p.permission_id || p.id;
+
+    if (!grouped[module]) grouped[module] = { name: module, actions: [] };
+    grouped[module].actions.push({
+      permission_id: id,
+      action,
+      name:    action,
+      enabled: existingIds.includes(id),
+    });
+  });
+  return Object.values(grouped);
+};
+
+// ─────────────────────────────────────────────────────────────
+// Main Component
+// ─────────────────────────────────────────────────────────────
 export const PolicyForm = ({
   policy,
   onSave,
@@ -17,78 +42,120 @@ export const PolicyForm = ({
   onModeChange,
   apiError,
   clearApiError,
-  isSuperAdmin = false,
+  isSuperAdmin  = false,
   isSystemPolicy = false,
-  selectedTenant = null,
+  selectedTenant = null,   // { value: "IBM001", label: "IBM India" } — SuperAdmin only
+  tenantId       = null,   // ✅ explicit tenantId prop
+                           //    SuperAdmin  → selectedTenant.value passed from parent
+                           //    Regular     → currentUser.tenant_id passed from parent
 }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [permissions, setPermissions] = useState([]);
-  const [currentMode, setCurrentMode] = useState(mode);
-  const [formData, setFormData] = useState({
-    name: "",
+  const dispatch    = useDispatch();
+  const currentUser = useSelector(selectCurrentUser);
+
+  // ── Resolve tenantId — prop wins, fallback to currentUser for regular admins ──
+  const resolvedTenantId = tenantId || currentUser?.tenant_id || null;
+
+  const [isLoading,    setIsLoading]    = useState(true);
+  const [permissions,  setPermissions]  = useState([]);
+  const [currentMode,  setCurrentMode]  = useState(mode);
+  const [packageData,  setPackageData]  = useState(null);
+  const [formData,     setFormData]     = useState({
+    name:        "",
     description: "",
-    isActive: true,
+    isActive:    true,
   });
 
-  const permission = useSelector(selectPermissions);
-  const allPermissions = dummyPermission;
-
-  useEffect(() => {
-    if (isOpen) {
-      setIsLoading(true);
-      setTimeout(() => {
-        if (mode === "create") {
-          setFormData({ name: "", description: "", isActive: true });
-        } else if (policy) {
-          setFormData({
-            name: policy.name || "",
-            description: policy.description || "",
-            isActive: policy.is_active !== undefined ? policy.is_active : true,
-          });
-        }
-
-        const transformedPermissions = transformPermissionsForMode(
-          mode,
-          policy,
-          allPermissions
-        );
-        setPermissions(transformedPermissions);
-        setCurrentMode(mode);
-        setIsLoading(false);
-      }, 100);
+  // ── Fetch policy package (tenant's permission boundary) ──────────────────
+  const loadPackage = useCallback(async (tid) => {
+    if (!tid) return null;
+    try {
+      const result = await dispatch(fetchPolicyPackagesThunk(tid)).unwrap();
+      return result;
+    } catch (err) {
+      console.error("Failed to fetch policy package:", err);
+      return null;
     }
-  }, [isOpen, mode, policy]);
+  }, [dispatch]);
 
+  // ── Build grid when modal opens ──────────────────────────────────────────
+  useEffect(() => {
+    if (!isOpen) return;
+
+      console.log("PolicyForm opened:", {
+    resolvedTenantId,
+    tenantIdProp: tenantId,
+    currentUserTenantId: currentUser?.tenant_id,
+    currentUser,
+  });
+
+    setIsLoading(true);
+    setCurrentMode(mode);
+
+    // Pre-fill form data
+    if (mode === "create") {
+      setFormData({ name: "", description: "", isActive: true });
+    } else if (policy) {
+      setFormData({
+        name:        policy.name        || "",
+        description: policy.description || "",
+        isActive:    policy.is_active   ?? true,
+      });
+    }
+
+    // Fetch package to get tenant's permission boundary
+    loadPackage(resolvedTenantId).then((pkg) => {
+      setPackageData(pkg);
+
+      const boundaryPermissions = pkg?.permissions || [];
+
+      // For edit/view: get this policy's existing permission_ids to pre-check
+      const existingIds =
+        mode !== "create" && policy?.permissions
+          ? policy.permissions.map((p) => p.permission_id || p.id)
+          : [];
+
+      setPermissions(buildPermissionGrid(boundaryPermissions, existingIds));
+      setIsLoading(false);
+    });
+  }, [isOpen, mode, policy, resolvedTenantId]);
+
+  // ── Reset on close ───────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!isOpen) {
+      setPermissions([]);
+      setPackageData(null);
+      setFormData({ name: "", description: "", isActive: true });
+      setIsLoading(true);
+    }
+  }, [isOpen]);
+
+  // ── Handlers ─────────────────────────────────────────────────────────────
   const handleSave = () => {
     const enabledPermissionIds = permissions
-      .flatMap((module) => module.actions)
-      .filter((action) => action.enabled)
-      .map((action) => action.permission_id);
+      .flatMap((m) => m.actions)
+      .filter((a) => a.enabled)
+      .map((a) => a.permission_id);
 
     onSave({ ...formData, permission_ids: enabledPermissionIds }, currentMode);
   };
 
   const toggleAction = (moduleIndex, actionIndex) => {
     if (currentMode !== "edit" && currentMode !== "create") return;
-    const newPermissions = [...permissions];
-    newPermissions[moduleIndex].actions[actionIndex].enabled =
-      !newPermissions[moduleIndex].actions[actionIndex].enabled;
-    setPermissions(newPermissions);
+    const updated = [...permissions];
+    updated[moduleIndex].actions[actionIndex].enabled =
+      !updated[moduleIndex].actions[actionIndex].enabled;
+    setPermissions(updated);
   };
 
   const toggleAllModuleActions = (moduleIndex, enable) => {
     if (currentMode !== "edit" && currentMode !== "create") return;
-    const newPermissions = [...permissions];
-    newPermissions[moduleIndex].actions.forEach((a) => (a.enabled = enable));
-    setPermissions(newPermissions);
+    const updated = [...permissions];
+    updated[moduleIndex].actions.forEach((a) => (a.enabled = enable));
+    setPermissions(updated);
   };
 
   const handleModeChange = (newMode) => {
     setCurrentMode(newMode);
-    if (newMode === "view") {
-      const transformedPermissions = transformPermissionsForMode("view");
-      setPermissions(transformedPermissions);
-    }
     onModeChange?.(newMode);
   };
 
@@ -104,53 +171,46 @@ export const PolicyForm = ({
 
   const handleEnableAll = () => {
     if (currentMode !== "edit" && currentMode !== "create") return;
-    setPermissions(
-      permissions.map((m) => ({
-        ...m,
-        actions: m.actions.map((a) => ({ ...a, enabled: true })),
-      }))
+    setPermissions((prev) =>
+      prev.map((m) => ({ ...m, actions: m.actions.map((a) => ({ ...a, enabled: true })) }))
     );
   };
 
   const handleDisableAll = () => {
     if (currentMode !== "edit" && currentMode !== "create") return;
-    setPermissions(
-      permissions.map((m) => ({
-        ...m,
-        actions: m.actions.map((a) => ({ ...a, enabled: false })),
-      }))
+    setPermissions((prev) =>
+      prev.map((m) => ({ ...m, actions: m.actions.map((a) => ({ ...a, enabled: false })) }))
     );
   };
 
   const handleResetToDefault = () => {
     if (currentMode !== "edit" && currentMode !== "create") return;
-    if (currentMode === "create") {
-      setPermissions(
-        permissions.map((m) => ({
-          ...m,
-          actions: m.actions.map((a) => ({ ...a, enabled: false })),
-        }))
-      );
-    } else {
-      setPermissions(transformPermissionsForMode("view"));
-    }
+    // Re-build from package boundary with original policy's permission_ids
+    const existingIds =
+      policy?.permissions?.map((p) => p.permission_id || p.id) || [];
+    setPermissions(
+      buildPermissionGrid(packageData?.permissions || [], existingIds)
+    );
   };
 
   const getTitle = () => {
     switch (currentMode) {
       case "create": return "Create New Policy";
-      case "edit": return "Edit Policy";
-      default: return "Policy Details";
+      case "edit":   return "Edit Policy";
+      default:       return "Policy Details";
     }
   };
 
   const getDescription = () => {
     switch (currentMode) {
       case "create": return "Configure permissions for the new policy";
-      case "edit": return "Modify permissions for this policy";
-      default: return "View policy permissions and details";
+      case "edit":   return "Modify permissions for this policy";
+      default:       return "View policy permissions and details";
     }
   };
+
+  const totalEnabled = permissions.flatMap((m) => m.actions).filter((a) => a.enabled).length;
+  const totalModules = permissions.length;
 
   if (!isOpen) return null;
 
@@ -183,17 +243,14 @@ export const PolicyForm = ({
                 <>
                   <div className="flex items-center gap-2 mb-1">
                     <h2 className="text-2xl font-bold">{getTitle()}</h2>
-                    {/* ── SuperAdmin context badge ── */}
                     {isSuperAdmin && (
                       isSystemPolicy ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-white bg-opacity-20 text-white">
-                          <Shield size={11} />
-                          System Policy
+                          <Shield size={11} /> System Policy
                         </span>
                       ) : selectedTenant ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-white bg-opacity-20 text-white">
-                          <Users size={11} />
-                          {selectedTenant.label}
+                          <Users size={11} /> {selectedTenant.label}
                         </span>
                       ) : null
                     )}
@@ -202,14 +259,14 @@ export const PolicyForm = ({
                 </>
               )}
             </div>
+
             <div className="flex items-center gap-2">
               {!isLoading && currentMode === "view" && (
                 <button
                   onClick={() => handleModeChange("edit")}
                   className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 bg-opacity-20 rounded-lg hover:bg-opacity-30 transition-colors"
                 >
-                  <Edit size={16} />
-                  Edit
+                  <Edit size={16} /> Edit
                 </button>
               )}
               {!isLoading && currentMode === "edit" && (
@@ -217,14 +274,13 @@ export const PolicyForm = ({
                   onClick={() => handleModeChange("view")}
                   className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 bg-opacity-20 rounded-lg hover:bg-opacity-30 transition-colors"
                 >
-                  <Eye size={16} />
-                  View
+                  <Eye size={16} /> View
                 </button>
               )}
               <button
                 onClick={onClose}
-                className="text-white hover:text-blue-100 transition-colors p-2 rounded-full hover:bg-white hover:bg-opacity-10"
                 disabled={isLoading}
+                className="text-white hover:text-blue-100 transition-colors p-2 rounded-full hover:bg-white hover:bg-opacity-10"
               >
                 <X size={28} />
               </button>
@@ -239,9 +295,7 @@ export const PolicyForm = ({
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Policy Name *
               </label>
-              {isLoading ? (
-                <Skeleton height={36} />
-              ) : (
+              {isLoading ? <Skeleton height={36} /> : (
                 <input
                   type="text"
                   value={formData.name}
@@ -254,25 +308,19 @@ export const PolicyForm = ({
             </div>
 
             <div className="flex-shrink-0">
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              {isLoading ? (
-                <Skeleton height={36} width={100} />
-              ) : (
+              <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+              {isLoading ? <Skeleton height={36} width={100} /> : (
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={toggleActiveStatus}
                     disabled={currentMode === "view"}
-                    className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                      formData.isActive ? "bg-green-500" : "bg-gray-300"
-                    } ${currentMode === "view" ? "cursor-not-allowed opacity-60" : ""}`}
+                    className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                      ${formData.isActive ? "bg-green-500" : "bg-gray-300"}
+                      ${currentMode === "view" ? "cursor-not-allowed opacity-60" : ""}`}
                   >
-                    <span
-                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        formData.isActive ? "translate-x-4" : "translate-x-0"
-                      }`}
+                    <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
+                      ${formData.isActive ? "translate-x-4" : "translate-x-0"}`}
                     />
                   </button>
                   <span className={`text-xs font-medium ${formData.isActive ? "text-green-600" : "text-gray-600"}`}>
@@ -283,12 +331,8 @@ export const PolicyForm = ({
             </div>
 
             <div className="flex-1">
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              {isLoading ? (
-                <Skeleton height={36} />
-              ) : (
+              <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+              {isLoading ? <Skeleton height={36} /> : (
                 <textarea
                   value={formData.description}
                   onChange={(e) => handleInputChange("description", e.target.value)}
@@ -308,20 +352,36 @@ export const PolicyForm = ({
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Permissions Configuration
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {permissions.map((module, moduleIndex) => (
-                <ModuleCard
-                  key={moduleIndex}
-                  module={module}
-                  moduleIndex={moduleIndex}
-                  onToggleAction={toggleAction}
-                  onToggleAllActions={toggleAllModuleActions}
-                  isLoading={isLoading}
-                  isEditable={currentMode === "edit" || currentMode === "create"}
-                  mode={currentMode}
-                />
-              ))}
-            </div>
+
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
+                <div className="w-8 h-8 rounded-full border-2 border-blue-300 border-t-blue-600 animate-spin" />
+                <p className="text-sm font-medium">Loading permissions...</p>
+              </div>
+            ) : permissions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
+                <Shield size={36} className="opacity-30" />
+                <p className="text-sm font-medium">No permissions available</p>
+                {!resolvedTenantId && (
+                  <p className="text-xs text-gray-400">No tenant selected</p>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {permissions.map((module, moduleIndex) => (
+                  <ModuleCard
+                    key={moduleIndex}
+                    module={module}
+                    moduleIndex={moduleIndex}
+                    onToggleAction={toggleAction}
+                    onToggleAllActions={toggleAllModuleActions}
+                    isLoading={false}
+                    isEditable={currentMode === "edit" || currentMode === "create"}
+                    mode={currentMode}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -330,25 +390,17 @@ export const PolicyForm = ({
           {!isLoading && (currentMode === "edit" || currentMode === "create") && (
             <div className="flex items-center justify-between">
               <div className="flex flex-wrap gap-3">
-                <h4 className="font-bold text-blue-900 text-sm mr-2 self-center">
-                  Quick Actions:
-                </h4>
-                <button
-                  onClick={handleEnableAll}
-                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
-                >
+                <h4 className="font-bold text-blue-900 text-sm mr-2 self-center">Quick Actions:</h4>
+                <button onClick={handleEnableAll}
+                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium">
                   Enable All
                 </button>
-                <button
-                  onClick={handleDisableAll}
-                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
-                >
+                <button onClick={handleDisableAll}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium">
                   Disable All
                 </button>
-                <button
-                  onClick={handleResetToDefault}
-                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm font-medium"
-                >
+                <button onClick={handleResetToDefault}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm font-medium">
                   Reset to Default
                 </button>
               </div>
@@ -356,39 +408,28 @@ export const PolicyForm = ({
           )}
 
           <div className="flex items-center justify-between">
-            {isLoading ? (
-              <Skeleton width={200} height={20} />
-            ) : (
+            {isLoading ? <Skeleton width={200} height={20} /> : (
               <div className="text-sm text-gray-600">
-                <span className="font-semibold">
-                  {permissions.flatMap((m) => m.actions).filter((a) => a.enabled).length}
-                </span>
+                <span className="font-semibold">{totalEnabled}</span>
                 <span> permissions enabled across </span>
-                <span className="font-semibold">{permissions.length}</span>
+                <span className="font-semibold">{totalModules}</span>
                 <span> modules</span>
               </div>
             )}
             <div className="flex items-center gap-3">
               {isLoading ? (
-                <>
-                  <Skeleton width={120} height={40} />
-                  <Skeleton width={140} height={40} />
-                </>
+                <><Skeleton width={120} height={40} /><Skeleton width={140} height={40} /></>
               ) : (
                 <>
-                  <button
-                    onClick={onClose}
-                    className="flex items-center gap-2 px-6 py-3 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 shadow-sm transition-all duration-200"
-                  >
+                  <button onClick={onClose}
+                    className="flex items-center gap-2 px-6 py-3 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 shadow-sm transition-all duration-200">
                     <X size={18} />
                     {currentMode === "view" ? "Close" : "Cancel"}
                   </button>
                   {(currentMode === "edit" || currentMode === "create") && (
-                    <button
-                      onClick={handleSave}
+                    <button onClick={handleSave}
                       disabled={!formData.name.trim()}
-                      className="flex items-center gap-2 px-6 py-3 text-base font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
+                      className="flex items-center gap-2 px-6 py-3 text-base font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                       <Save size={18} />
                       {currentMode === "create" ? "Create Policy" : "Save Changes"}
                     </button>

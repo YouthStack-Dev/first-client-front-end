@@ -631,6 +631,7 @@ const TeamEmployeesManagement = () => {
         onClose={() => setIsModalOpen(false)}
         mode={modalMode}
         employeeData={modalEmployeeData}
+        tenantId={tenantId}
       />
 
       <WeekOffModal

@@ -20,11 +20,15 @@ export const createEmployee = createAsyncThunk(
 );
 
 // In userTrunk.js - update the thunk to match your API function signature
-export const fetchTeam = async (page = 1, limit = 20, search = "") => {
+export const fetchTeam = async (tenantId = null,page = 1, limit = 20, search = "") => {
   const params = {
     skip: (page - 1) * limit,
     limit,
   };
+
+   if (tenantId) {
+    params.tenant_id = tenantId;
+  }
 
   // Add search parameter if provided
   if (search && search.length > 0) {

@@ -487,18 +487,23 @@ const PoliciesManagement = () => {
       </div>
 
       <PolicyForm
-        policy={selectedPolicy}
-        isOpen={isModalOpen}
-        onSave={handleSavePermissions}
-        onClose={handleCloseModal}
-        mode={modalMode}
-        onModeChange={handleModeChange}
-        apiError={apiError}
-        clearApiError={() => setApiError(null)}
-        isSuperAdmin={isSuperAdmin}
-        isSystemPolicy={isSystemPolicy}
-        selectedTenant={selectedTenant}
-      />
+      policy={selectedPolicy}
+      isOpen={isModalOpen}
+      onSave={handleSavePermissions}
+      onClose={handleCloseModal}
+      mode={modalMode}
+      onModeChange={handleModeChange}
+      apiError={apiError}
+      clearApiError={() => setApiError(null)}
+      isSuperAdmin={isSuperAdmin}
+      isSystemPolicy={isSystemPolicy}
+      selectedTenant={selectedTenant}
+      tenantId={                              // ✅ ADD THIS
+        isSuperAdmin
+          ? selectedTenant?.value ?? null     // SuperAdmin → from dropdown
+          : currentUser?.tenant_id ?? null    // Regular admin → from token
+      }
+    />
     </div>
   );
 };
