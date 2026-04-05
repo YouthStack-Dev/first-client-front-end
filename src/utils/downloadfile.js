@@ -40,7 +40,7 @@ export const downloadFile = async (
     // ✅ Use environment API base URL if available
     const baseURL =
       import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
-      "https://api.gocab.tech/api";
+      "https://api.mltcorporate.com/api";
 
     // ✅ If filePath is absolute (e.g., http...), use it directly
     let url = filePath.startsWith("http")
@@ -131,7 +131,7 @@ export const previewFile = async (
   try {
     const baseURL =
       import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
-      "https://api.gocab.tech/api";
+      "https://api.mltcorporate.com/api";
 
     // Encode each segment of path to handle special characters
     let url;

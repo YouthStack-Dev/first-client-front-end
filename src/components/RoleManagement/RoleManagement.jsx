@@ -41,8 +41,6 @@ const RoleManagement = () => {
   const [activeTab, setActiveTab] = useState("roles");
   const [searchQuery, setSearchQuery] = useState("");
   const [syncLoading, setSyncLoading] = useState(false);
-
-  // ✅ Production: toast state replaces alert() for sync feedback
   const [syncToast, setSyncToast] = useState(null);
 
   const dispatch = useDispatch();
@@ -52,40 +50,33 @@ const RoleManagement = () => {
   const isSuperAdmin = currentUser?.type === "admin";
 
   // ── Redux: roles ──
-  // Uses named selectors — each returns a primitive or stable reference,
-  // no inline object selector anti-pattern here.
   const roles     = useSelector(selectRoles);
   const isLoading = useSelector(rolesLoading);
   const isLoaded  = useSelector(rolesLoaded);
   const error     = useSelector(rolesError);
 
   // ── Redux: companies (SuperAdmin tenant dropdown) ──
-  // ✅ selectCompanies (renamed from selectCompaniesFromRedux in companySlice)
-  // companiesFetched persists across navigation — no duplicate GET /companies/
   const companies        = useSelector(selectCompanies);
   const companiesFetched = useSelector(selectCompaniesFetched);
 
   // ── SuperAdmin: selected tenant & its roles ──
-  const [selectedTenant,      setSelectedTenant]      = useState(null);
-  const [tenantRoles,         setTenantRoles]         = useState([]);
-  const [tenantRolesLoading,  setTenantRolesLoading]  = useState(false);
-  const [tenantRolesError,    setTenantRolesError]    = useState(null);
+  const [selectedTenant,     setSelectedTenant]     = useState(null);
+  const [tenantRoles,        setTenantRoles]        = useState([]);
+  const [tenantRolesLoading, setTenantRolesLoading] = useState(false);
+  const [tenantRolesError,   setTenantRolesError]   = useState(null);
 
   // ── Modal states ──
-  const [showRoleFormModal,   setShowRoleFormModal]   = useState(false);
-  const [selectedRole,        setSelectedRole]        = useState(null);
-  const [formMode,            setFormMode]            = useState("create");
-  const [roleDetailedData,    setRoleDetailedData]    = useState(null);
-  const [roleDetailsLoading,  setRoleDetailsLoading]  = useState(false);
-  const [roleDetailsError,    setRoleDetailsError]    = useState(null);
-  const [modalDataReady,      setModalDataReady]      = useState(false);
-  const [formError,           setFormError]           = useState(null);
-  const [isSubmitting,        setIsSubmitting]        = useState(false);
+  const [showRoleFormModal,  setShowRoleFormModal]  = useState(false);
+  const [selectedRole,       setSelectedRole]       = useState(null);
+  const [formMode,           setFormMode]           = useState("create");
+  const [roleDetailedData,   setRoleDetailedData]   = useState(null);
+  const [roleDetailsLoading, setRoleDetailsLoading] = useState(false);
+  const [roleDetailsError,   setRoleDetailsError]   = useState(null);
+  const [modalDataReady,     setModalDataReady]     = useState(false);
+  const [formError,          setFormError]          = useState(null);
+  const [isSubmitting,       setIsSubmitting]       = useState(false);
 
   // ── Fetch roles on load ──
-  // Uses Redux isLoaded flag — survives navigation just like companies.fetched.
-  // Adding isLoading to the guard prevents a second dispatch while one is
-  // already in-flight (e.g. React StrictMode double-invoke in development).
   useEffect(() => {
     if (!isLoaded && !isLoading) {
       dispatch(fetchRolesThunk());
@@ -93,9 +84,6 @@ const RoleManagement = () => {
   }, [dispatch, isLoaded, isLoading]);
 
   // ── Fetch companies when SuperAdmin is on roles tab ──
-  // companiesFetched lives in Redux → persists across navigation.
-  // This effect only fires on the very first visit; subsequent tab switches
-  // and page navigations skip the fetch entirely.
   useEffect(() => {
     if (isSuperAdmin && activeTab === "roles" && !companiesFetched) {
       dispatch(fetchCompaniesThunk());
@@ -170,6 +158,7 @@ const RoleManagement = () => {
     [activeRoles, searchQuery]
   );
 
+  // ── Fetch detailed role data (for edit/view) ──
   const fetchRoleDetails = async (roleId) => {
     setRoleDetailsLoading(true);
     setRoleDetailsError(null);
@@ -198,6 +187,7 @@ const RoleManagement = () => {
     }
   };
 
+  // ── Modal open handlers ──
   const handleAddRole = () => {
     setFormMode("create");
     setSelectedRole(null);
@@ -205,6 +195,7 @@ const RoleManagement = () => {
     setRoleDetailsError(null);
     setRoleDetailsLoading(false);
     setModalDataReady(true);
+    setFormError(null);
     setShowRoleFormModal(true);
   };
 
@@ -214,6 +205,7 @@ const RoleManagement = () => {
     setSelectedRole(role);
     setRoleDetailedData(null);
     setRoleDetailsError(null);
+    setFormError(null);
     setModalDataReady(false);
     await fetchRoleDetails(role.role_id);
     setShowRoleFormModal(true);
@@ -224,6 +216,7 @@ const RoleManagement = () => {
     setSelectedRole(role);
     setRoleDetailedData(null);
     setRoleDetailsError(null);
+    setFormError(null);
     setModalDataReady(false);
     await fetchRoleDetails(role.role_id);
     setShowRoleFormModal(true);
@@ -232,13 +225,31 @@ const RoleManagement = () => {
   const handleViewAssignedUsers = (role) => setSelectedRole(role);
   const handleAssignUsers       = (role) => setSelectedRole(role);
 
+  // ── ✅ Resolved tenantId ──
+  // SuperAdmin + tenant selected → selectedTenant.value (e.g. "IBM001")
+  // SuperAdmin + no tenant       → null (system roles have no tenant)
+  // Regular admin                → their own tenant_id from token
+  const resolvedTenantId =
+    isSuperAdmin
+      ? selectedTenant?.value ?? null
+      : currentUser?.tenant_id ?? null;
+
+  // ── Save role (create / edit) ──
   const handleSaveRole = async (roleData) => {
     setIsSubmitting(true);
     setFormError(null);
 
     try {
+      // ✅ Always inject tenant_id from resolvedTenantId — never rely on formData
+      const payload = {
+        ...roleData,
+        ...(resolvedTenantId && { tenant_id: resolvedTenantId }),
+      };
+
+      console.log("Final payload:", payload); // 🔍 remove after confirmed working
+
       if (formMode === "create") {
-        await dispatch(createRole(roleData)).unwrap();
+        await dispatch(createRole(payload)).unwrap();
         handleCancelForm();
         if (isSuperAdmin && selectedTenant) {
           fetchTenantRoles(selectedTenant.value);
@@ -248,7 +259,7 @@ const RoleManagement = () => {
       } else {
         if (!selectedRole?.role_id) throw new Error("Role ID is required for update");
         await dispatch(
-          updateRole({ roleId: selectedRole.role_id, payload: roleData })
+          updateRole({ roleId: selectedRole.role_id, payload })
         ).unwrap();
         handleCancelForm();
         if (isSuperAdmin && selectedTenant) {
@@ -275,9 +286,6 @@ const RoleManagement = () => {
     }
   };
 
-  // ✅ FIXED: handleDuplicateRole previously built a newRole object but never
-  // dispatched it — pure dead code that gave a false sense of functionality.
-  // Replaced with a clear TODO so it's visible and intentional.
   const handleDuplicateRole = (role) => {
     // TODO: dispatch(duplicateRoleThunk(role.role_id)) once the endpoint exists
     console.warn("handleDuplicateRole: not yet implemented", role.role_id);
@@ -290,11 +298,10 @@ const RoleManagement = () => {
     setRoleDetailsError(null);
     setRoleDetailsLoading(false);
     setModalDataReady(false);
+    setFormError(null);
   };
 
-  // ✅ FIXED: replaced alert() with in-component toast state.
-  // alert() is synchronous, blocks the JS thread, and is universally considered
-  // bad UX in production apps. The toast auto-dismisses after 3 seconds.
+  // ── Sync ──
   const handleSync = () => {
     setSyncLoading(true);
     const syncPromise =
@@ -316,6 +323,7 @@ const RoleManagement = () => {
 
   const getFormData = () => roleDetailedData || selectedRole;
 
+  // ── Tab navigation ──
   const TabNavigation = () => (
     <div className="border-b border-gray-200 bg-white">
       <div className="px-6 pt-4">
@@ -347,6 +355,7 @@ const RoleManagement = () => {
     </div>
   );
 
+  // ── Loading / error states ──
   if (isLoading && !isLoaded) {
     return (
       <div className="flex-1 bg-white shadow-md overflow-x-hidden overflow-y-auto flex items-center justify-center">
@@ -381,17 +390,19 @@ const RoleManagement = () => {
   return (
     <div className="flex-1 bg-white shadow-md overflow-x-hidden overflow-y-auto">
 
-      {/* ✅ Sync toast — replaces alert() */}
+      {/* Sync toast */}
       {syncToast && (
-        <div className={`
-          fixed bottom-6 left-1/2 -translate-x-1/2 z-[60]
-          flex items-center gap-2.5 px-5 py-3
-          border rounded-2xl shadow-lg text-[13px] font-semibold
-          ${syncToast.type === "success"
-            ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-            : "bg-rose-50 border-rose-200 text-rose-700"
-          }
-        `}>
+        <div
+          className={`
+            fixed bottom-6 left-1/2 -translate-x-1/2 z-[60]
+            flex items-center gap-2.5 px-5 py-3
+            border rounded-2xl shadow-lg text-[13px] font-semibold
+            ${syncToast.type === "success"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+              : "bg-rose-50 border-rose-200 text-rose-700"
+            }
+          `}
+        >
           {syncToast.message}
           <button
             onClick={() => setSyncToast(null)}
@@ -436,7 +447,7 @@ const RoleManagement = () => {
                   onClick={handleSync}
                   loading={syncLoading}
                   loadingText="Syncing..."
-                  className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm 
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm
                            hover:bg-blue-600 flex items-center gap-2 transition-colors duration-200"
                   size={16}
                 />
@@ -445,7 +456,7 @@ const RoleManagement = () => {
             rightElements={
               <div className="flex items-center gap-3">
 
-                {/* ── SuperAdmin only: tenant dropdown ── */}
+                {/* SuperAdmin only: tenant dropdown */}
                 {isSuperAdmin && (
                   <div className="flex items-center gap-2">
                     <div className="w-56">
@@ -488,8 +499,8 @@ const RoleManagement = () => {
                   title="Create a new role"
                   buttonName="Role"
                   onClick={handleAddRole}
-                  className="flex-shrink-0 bg-indigo-600 text-white px-4 py-2 rounded-lg 
-                           hover:bg-indigo-700 transition-colors duration-200 ease-in-out 
+                  className="flex-shrink-0 bg-indigo-600 text-white px-4 py-2 rounded-lg
+                           hover:bg-indigo-700 transition-colors duration-200 ease-in-out
                            flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
                   size={18}
                 />
@@ -498,6 +509,7 @@ const RoleManagement = () => {
           />
 
           <div className="p-6">
+
             {/* Tenant roles loading */}
             {isSuperAdmin && selectedTenant && tenantRolesLoading && (
               <div className="text-center py-12 text-gray-400">
@@ -538,8 +550,8 @@ const RoleManagement = () => {
                       title="Create your first role"
                       buttonName="Create First Role"
                       onClick={handleAddRole}
-                      className="mt-4 bg-indigo-600 text-white px-6 py-3 rounded-lg 
-                               hover:bg-indigo-700 transition-colors duration-200 
+                      className="mt-4 bg-indigo-600 text-white px-6 py-3 rounded-lg
+                               hover:bg-indigo-700 transition-colors duration-200
                                flex items-center justify-center gap-2 mx-auto"
                       size={18}
                     />
@@ -593,6 +605,7 @@ const RoleManagement = () => {
                 isSubmitting={isSubmitting}
                 isSystemRole={isSuperAdmin && !selectedTenant}
                 isSuperAdmin={isSuperAdmin}
+                tenantId={resolvedTenantId}
               />
             )}
           </div>
