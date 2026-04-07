@@ -488,6 +488,17 @@ export const Login = () => {
               )}
             </button>
           </form>
+
+          <p className="text-center text-sm text-app-text-muted mt-6">
+            By logging in, you agree to our{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/privacy-policy")}
+              className="text-app-primary underline hover:text-sidebar-primary transition-colors font-medium"
+            >
+              Privacy Policy
+            </button>
+          </p>
         </div>
       </div>
     </div>
