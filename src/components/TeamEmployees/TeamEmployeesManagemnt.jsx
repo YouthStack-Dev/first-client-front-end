@@ -24,6 +24,7 @@ import {
 import { toggleEmployeeStatus } from "../../redux/features/employees/employeesThunk";
 import { toast } from "react-toastify";
 import { fetchEmployeesThunk } from "../../redux/features/employees/employeesThunk";
+import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 
 
 
@@ -38,6 +39,9 @@ const TeamEmployeesManagement = () => {
   const employees = useSelector((state) =>
     selectEmployeesByTeamId(state, teamId)
   );
+
+  const user         = useSelector(selectCurrentUser);
+  const userTenantId = user?.tenant_id || ""
 
   // Local state
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
@@ -61,7 +65,7 @@ const TeamEmployeesManagement = () => {
 
 
   const isActive = searchParams.get("active");
-  const tenantId = searchParams.get("tenantId");
+  const tenantId = searchParams.get("tenantId") || userTenantId;
   const targetIsActive = isActive === "true";
 
   useEffect(() => {
@@ -631,6 +635,7 @@ const TeamEmployeesManagement = () => {
         onClose={() => setIsModalOpen(false)}
         mode={modalMode}
         employeeData={modalEmployeeData}
+        tenantId={tenantId}
       />
 
       <WeekOffModal

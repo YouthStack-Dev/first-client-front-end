@@ -51,8 +51,7 @@ export const updateAlertConfigThunk = createAsyncThunk(
   }
 );
 
-// PUT /api/v1/alerts/{alert_id}/acknowledge
-// Body: { notes, acknowledged_by }
+
 export const acknowledgeAlertConfigThunk = createAsyncThunk(
   "alertconfig/acknowledge",
   async ({ alertId, payload = {} }, { rejectWithValue }) => {
@@ -76,15 +75,13 @@ export const escalateAlertConfigThunk = createAsyncThunk(
   "alertconfig/escalate",
   async ({ alertId, payload = {} }, { rejectWithValue }) => {
     try {
-      // Only send fields the API expects
-      const { escalation_level, escalated_to, reason } = payload;
+      const { escalation_level, escalated_to, reason, escalated_by } = payload;
       const response = await API_CLIENT.post(`/alerts/${alertId}/escalate`, {
         escalation_level,
         escalated_to,
         reason,
-        escalated_by
+        escalated_by: String(escalated_by),  // ← safety net
       });
-      logDebug("alert escalated", response.data);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
@@ -94,8 +91,6 @@ export const escalateAlertConfigThunk = createAsyncThunk(
   }
 );
 
-// PUT /api/v1/alerts/{alert_id}/close
-// Body: { resolution_notes, is_false_alarm }
 export const closeAlertThunk = createAsyncThunk(
   "alertconfig/close",
   async ({ alertId, resolution_notes, is_false_alarm = false, closed_by }, { rejectWithValue }) => {

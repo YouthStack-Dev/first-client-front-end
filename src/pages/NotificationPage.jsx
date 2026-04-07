@@ -40,7 +40,6 @@ const SEVERITY_COLORS = {
   LOW:      "bg-blue-500 text-white",
 };
 
-// 3 lifecycle stat boxes — all-time counts, clickable for history
 const STAT_TO_FILTER = {
   triggered:    { status: "TRIGGERED" },
   acknowledged: { status: "ACKNOWLEDGED" },
@@ -87,23 +86,19 @@ const NotificationsPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // All-time counts from team-alerts API (3 calls only)
   const [historicalCounts, setHistoricalCounts] = useState({ triggered: 0, acknowledged: 0, closed: 0 });
   const [countsLoading, setCountsLoading] = useState(false);
 
-  // Action modal states
   const [showAckModal, setShowAckModal] = useState(false);
   const [showEscalateModal, setShowEscalateModal] = useState(false);
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [currentAlert, setCurrentAlert] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  // Form states
   const [ackForm, setAckForm] = useState({ acknowledged_by: null, notes: "" });
   const [escalateForm, setEscalateForm] = useState({ escalated_by: null, escalation_level: 1, escalated_to: "", reason: "" });
   const [closeForm, setCloseForm] = useState({ closed_by: null, resolution_notes: "", is_false_alarm: false });
 
-  // Inline history states
   const [activeStatKey, setActiveStatKey] = useState(null);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyAlerts, setHistoryAlerts] = useState([]);
@@ -114,7 +109,6 @@ const NotificationsPage = () => {
   const historyAbortRef = useRef(null);
   const dateDebounceRef = useRef(null);
 
-  // Timeline modal states
   const [showTimelineModal, setShowTimelineModal] = useState(false);
   const [timelineAlert, setTimelineAlert] = useState(null);
   const [timelineEvents, setTimelineEvents] = useState([]);
@@ -137,7 +131,6 @@ const NotificationsPage = () => {
     }
   };
 
-  // 3 parallel calls — limit=1 each, we only need the `total` field
   const fetchHistoricalCounts = async () => {
     try {
       setCountsLoading(true);
@@ -171,16 +164,21 @@ const NotificationsPage = () => {
       setHistoryLoading(true);
       const statFilter = STAT_TO_FILTER[statKey] || {};
       const params = {
-        limit: HISTORY_PAGE_SIZE,
-        offset: (page - 1) * HISTORY_PAGE_SIZE,
+        page,                        // ✅ API uses page/page_size, not limit/offset
+        page_size: HISTORY_PAGE_SIZE,
         ...statFilter,
         ...(dateFilters.start_date && { start_date: dateFilters.start_date }),
         ...(dateFilters.end_date && { end_date: dateFilters.end_date }),
       };
       const response = await API_CLIENT.get("/alerts/team-alerts", { params, signal: controller.signal });
+      const total = response.data.data?.total || 0;
       setHistoryAlerts(response.data.data?.alerts || []);
-      setHistoryTotal(response.data.data?.total || 0);
+      setHistoryTotal(total);
       setHistoryPage(page);
+      // ✅ Update stat box count from this same response — no extra API call needed
+      if (statKey) {
+        setHistoricalCounts((prev) => ({ ...prev, [statKey]: total }));
+      }
     } catch (err) {
       if (err.name === "CanceledError" || err.code === "ERR_CANCELED") return;
       toast.error("Failed to fetch alert history");
@@ -195,6 +193,7 @@ const NotificationsPage = () => {
     setHistoryAlerts([]);
     setHistoryTotal(0);
     setShowHistoryModal(true);
+    // ✅ Single API call — fetchHistory updates both the table AND the stat box count
     fetchHistory(1, key, { start_date: "", end_date: "" });
   };
 
@@ -227,8 +226,7 @@ const NotificationsPage = () => {
   };
 
   useEffect(() => {
-    fetchAlerts();
-    fetchHistoricalCounts();
+    fetchAlerts(); // Only fetch active alerts on load
   }, []);
 
   const activeStatusCounts = {
@@ -260,10 +258,12 @@ const NotificationsPage = () => {
       setAckForm({ acknowledged_by: String(currentUserId), notes: "" });
       setShowAckModal(true);
     } else if (action === "escalate") {
-      setEscalateForm({ escalated_by: currentUserId, escalation_level: 1, escalated_to: "", reason: "" });
+      // ✅ FIX: String() added — API expects escalated_by as string, not number
+      setEscalateForm({ escalated_by: String(currentUserId), escalation_level: 1, escalated_to: "", reason: "" });
       setShowEscalateModal(true);
     } else if (action === "closealert") {
-      setCloseForm({ closed_by: currentUserId, resolution_notes: "", is_false_alarm: false });
+      // ✅ FIX: String() added — API expects closed_by as string, not number
+      setCloseForm({ closed_by: String(currentUserId), resolution_notes: "", is_false_alarm: false });
       setShowCloseModal(true);
     } else if (action === "timeline") {
       setTimelineAlert(alert);
@@ -281,31 +281,43 @@ const NotificationsPage = () => {
         toast.success("Alert acknowledged!");
         setAlerts((prev) => prev.map((a) => a.alert_id === currentAlert.alert_id ? { ...a, status: "ACKNOWLEDGED" } : a));
         setShowAckModal(false);
-      } else throw new Error(result.payload?.message || "Failed");
+      } else throw new Error(result.payload?.message || "Failed to acknowledge alert");
     } catch (err) { toast.error(err.message); }
     finally { setActionLoading(false); }
   };
 
   const handleEscalateSubmit = async () => {
     if (!currentAlert) return;
+    // Basic validation before dispatch
+    if (!escalateForm.escalated_to || !escalateForm.reason) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
     try {
       setActionLoading(true);
       const result = await dispatch(escalateAlertConfigThunk({ alertId: currentAlert.alert_id, payload: escalateForm }));
       if (escalateAlertConfigThunk.fulfilled.match(result)) {
         toast.success("Alert escalated!");
+        setAlerts((prev) => prev.map((a) => a.alert_id === currentAlert.alert_id ? { ...a, status: "IN_PROGRESS" } : a));
         setShowEscalateModal(false);
-      } else throw new Error(result.payload?.message || "Failed");
+      } else throw new Error(result.payload?.message || "Failed to escalate alert");
     } catch (err) { toast.error(err.message); }
     finally { setActionLoading(false); }
   };
 
   const handleCloseAlert = async () => {
     if (!currentAlert) return;
+    // Basic validation before dispatch
+    if (!closeForm.resolution_notes?.trim()) {
+      toast.error("Resolution notes are required");
+      return;
+    }
     try {
       setActionLoading(true);
       const result = await dispatch(closeAlertThunk({
         alertId: currentAlert.alert_id,
-        closed_by: closeForm.closed_by,
+        // ✅ FIX: String() added as safety net in case form state was set before fix
+        closed_by: String(closeForm.closed_by),
         resolution_notes: closeForm.resolution_notes,
         is_false_alarm: closeForm.is_false_alarm,
       }));
@@ -313,7 +325,7 @@ const NotificationsPage = () => {
         toast.success("Alert closed!");
         setAlerts((prev) => prev.filter((a) => a.alert_id !== currentAlert.alert_id));
         setShowCloseModal(false);
-      } else throw new Error(result.payload?.message || "Failed");
+      } else throw new Error(result.payload?.message || "Failed to close alert");
     } catch (err) { toast.error(err.message); }
     finally { setActionLoading(false); }
   };
@@ -355,7 +367,7 @@ const NotificationsPage = () => {
                 />
               </div>
               <button
-                onClick={() => { fetchAlerts(); fetchHistoricalCounts(); }}
+                onClick={() => { fetchAlerts(); }}
                 disabled={loading}
                 className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-2 disabled:opacity-50 transition-colors"
               >
@@ -388,15 +400,15 @@ const NotificationsPage = () => {
                         {config.label}
                       </p>
                       <p className={`text-3xl font-bold ${isActive ? "text-white" : "text-gray-900"}`}>
-                        {countsLoading
+                        {countsLoading && activeStatKey === key
                           ? <span className="inline-block w-8 h-7 bg-gray-200 rounded animate-pulse" />
-                          : count
+                          : historicalCounts[key] > 0 ? historicalCounts[key] : "—"
                         }
                       </p>
                       <p className={`text-xs mt-1 ${isActive ? "text-white/50" : "text-gray-400"}`}>
                         {isActive ? (
                           <span className="flex items-center gap-0.5"><ChevronDown className="h-3 w-3" /> viewing history</span>
-                        ) : "all-time · click to view"}
+                        ) : "click to load"}
                       </p>
                     </div>
                     <div className={`p-2.5 rounded-xl ${isActive ? "bg-white/20" : config.iconBg}`}>
@@ -492,10 +504,11 @@ const NotificationsPage = () => {
                   <thead className="sticky top-0 bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Alert ID</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
                       <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Severity</th>
                       <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                       <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Employee ID</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Employee Name</th>
+                      
                       <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Booking ID</th>
                       <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Triggered At</th>
                     </tr>
@@ -503,9 +516,8 @@ const NotificationsPage = () => {
                   <tbody className="divide-y divide-gray-100">
                     {historyAlerts.map((alert, idx) => (
                       <tr key={alert.alert_id} className={`hover:bg-gray-50 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}`}>
-                        <td className="px-5 py-3.5 font-semibold text-gray-900 whitespace-nowrap">
-                          #{alert.alert_id}
-                        </td>
+                        <td className="px-5 py-3.5 font-semibold text-gray-900 whitespace-nowrap">#{alert.alert_id}</td>
+                        <td className="px-5 py-3.5 text-gray-700 font-medium whitespace-nowrap">{alert.alert_type || <span className="text-gray-300">—</span>}</td>
                         <td className="px-5 py-3.5 whitespace-nowrap">
                           <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${SEVERITY_COLORS[alert.severity] || "bg-gray-200 text-gray-700"}`}>
                             {alert.severity}
@@ -516,12 +528,7 @@ const NotificationsPage = () => {
                             {alert.status}
                           </span>
                         </td>
-                        <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">
-                          #{alert.employee_id}
-                        </td>
-                        <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">
-                          {alert.employee_name || <span className="text-gray-300">—</span>}
-                        </td>
+                        <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">#{alert.employee_id}</td>
                         <td className="px-5 py-3.5 text-gray-600 whitespace-nowrap">
                           {alert.booking_id ? <span>#{alert.booking_id}</span> : <span className="text-gray-300">—</span>}
                         </td>
@@ -565,7 +572,7 @@ const NotificationsPage = () => {
         </div>
       )}
 
-            {/* ── Active Alerts ── */}
+      {/* ── Active Alerts ── */}
       <div className="px-6 py-5">
         {loading ? (
           <div className="text-center py-16 text-gray-400">
@@ -720,17 +727,21 @@ const NotificationsPage = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Escalated To (email)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Escalated To (email) <span className="text-red-500">*</span>
+            </label>
             <input type="email" value={escalateForm.escalated_to}
               onChange={(e) => setEscalateForm({ ...escalateForm, escalated_to: e.target.value })}
-              placeholder="director@company.com" required disabled={actionLoading}
+              placeholder="director@company.com" disabled={actionLoading}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Reason <span className="text-red-500">*</span>
+            </label>
             <textarea value={escalateForm.reason}
               onChange={(e) => setEscalateForm({ ...escalateForm, reason: e.target.value })}
-              rows={3} required disabled={actionLoading} placeholder="Explain why this needs escalation..."
+              rows={3} disabled={actionLoading} placeholder="Explain why this needs escalation..."
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" />
           </div>
         </div>
@@ -755,7 +766,7 @@ const NotificationsPage = () => {
             </label>
             <textarea value={closeForm.resolution_notes}
               onChange={(e) => setCloseForm({ ...closeForm, resolution_notes: e.target.value })}
-              rows={4} required disabled={actionLoading} placeholder="Describe how the alert was resolved..."
+              rows={4} disabled={actionLoading} placeholder="Describe how the alert was resolved..."
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" />
           </div>
           <div className="flex items-center gap-3">

@@ -10,16 +10,16 @@ import ReusableButton    from "../ui/ReusableButton";
 import Tooltip           from "../ui/Tooltip";
 import ConfirmationModal from "../modals/ConfirmationModal";
 import RouteEditModal    from "../RouteManagement/Routeeditmodal";
-import AssignEscortModal from "./AssignEscortModal";
+import AssignEscortModal from "../RouteManagement/AssignEscortModal";
 
 import {
   EmployeeChip,
   EmployeeMiniCard,
   OverflowPopover,
-} from "./EmployeeChipComponents";
+} from "../RouteManagement/EmployeeChipComponents";
 
 import { renderSafeValue, getStatusInfo, isFemaleGender } from "./routeCardUtils";
-import { ESCORT_COLORS, MAX_VISIBLE_CHIPS } from "./routeCardConstants";
+import { ESCORT_COLORS, MAX_VISIBLE_CHIPS } from "../RouteManagement/routeCardConstants";
 import { API_CLIENT } from "../../Api/API_Client";
 import { logError }   from "../../utils/logger";
 
@@ -31,21 +31,6 @@ const STATUS_ICONS = {
   User:         <User className="w-3 h-3" />,
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SavedRouteCard
-//
-// Props:
-//   route            {object}
-//   isSelected       {boolean}
-//   onRouteSelect    {(routeId) => void}
-//   selectedBookings {Set}
-//   onBookingSelect  {(bookingId) => void}
-//   OnOperation      {() => void}
-//   detachBooking    {() => void}
-//   onRouteUpdate    {(route) => void}
-//   tenantId         {string|null}
-//   onToast          {{ success, error, info }} — ✅ NEW, replaces alert()
-// ─────────────────────────────────────────────────────────────────────────────
 const SavedRouteCard = ({
   route,
   isSelected,
