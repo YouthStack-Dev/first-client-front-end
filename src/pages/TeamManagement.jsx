@@ -571,7 +571,7 @@ const TeamManagement = () => {
         isOpen={isAuditModalOpen}
         onClose={() => setIsAuditModalOpen(false)}
         moduleName="Team"
-        apimodule="teams"
+        apimodule="team"
         selectedCompany={currentTenantId}
       />
     </div>

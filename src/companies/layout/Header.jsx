@@ -1,7 +1,9 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Megaphone, Star, Menu, User, LogOut, ChevronDown } from "lucide-react";
 import { useNavigate }                                       from "react-router-dom";
 import { useDispatch, useSelector }                          from "react-redux";
+import { jwtDecode }                                         from "jwt-decode";
+import Cookies                                               from "js-cookie";
 import { logout, selectCurrentUser }                         from "../../redux/features/auth/authSlice";
 
 const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
@@ -12,15 +14,34 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
 
-  const initials     = user?.name ? user.name.slice(0, 2).toUpperCase() : "AD";
-  const displayName  = user?.name  ?? "Admin User";
-  const displayEmail = user?.email ?? "";
+  // ── Real email decoded from JWT (avoids dummy@gmail.com from Redux) ───
+  const displayEmail = useMemo(() => {
+    try {
+      const token = Cookies.get("auth_token");
+      if (token) {
+        const decoded = jwtDecode(token);
+        return (
+          decoded.email      ||
+          decoded.user_email ||
+          decoded.sub        ||
+          user?.email        ||
+          ""
+        );
+      }
+    } catch {
+      // fall through
+    }
+    return user?.email || "";
+  }, [user]);
 
+  const initials    = user?.name ? user.name.slice(0, 2).toUpperCase() : "AD";
+  const displayName = user?.name ?? "Admin User";
+
+  // ── Close on outside click ─────────────────────────────────────────────
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (profileRef.current && !profileRef.current.contains(e.target)) {
+      if (profileRef.current && !profileRef.current.contains(e.target))
         setIsProfileOpen(false);
-      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -33,10 +54,13 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
   const handleLogout            = useCallback(() => { dispatch(logout()); setIsProfileOpen(false); }, [dispatch]);
 
   return (
+    // ✅ z-40 so dropdown (z-50) always renders above main content
+    // ✅ left-0 on mobile, lg:left-[256px/64px] on desktop
     <header className={`
-      bg-white border-b border-gray-100 fixed top-0 right-0 z-10
+      bg-white border-b border-gray-100 fixed top-0 right-0 z-40
       transition-all duration-300 shadow-sm
-      ${isSidebarOpen ? "left-[256px]" : "left-[64px]"}
+      left-0
+      ${isSidebarOpen ? "lg:left-[256px]" : "lg:left-[64px]"}
     `}>
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -57,7 +81,7 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
           {/* Right — announcements + reviews + avatar */}
           <div className="flex items-center gap-1">
 
-            {/* Announcements button */}
+            {/* Announcements */}
             <button
               type="button"
               onClick={handleAnnouncementClick}
@@ -73,10 +97,9 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
               </span>
             </button>
 
-            {/* Divider */}
             <div className="w-px h-6 bg-gray-200 mx-1" />
 
-            {/* Reviews button */}
+            {/* Reviews */}
             <button
               type="button"
               onClick={handleReviewsClick}
@@ -86,7 +109,6 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
             >
               <div className="relative p-1.5 rounded-lg bg-gray-100 group-hover:bg-amber-100 transition-colors">
                 <Star className="h-4 w-4" />
-                {/* New reviews dot */}
                 <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-white" />
               </div>
               <span className="text-xs font-semibold tracking-wide hidden sm:block">
@@ -94,7 +116,6 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
               </span>
             </button>
 
-            {/* Divider */}
             <div className="w-px h-6 bg-gray-200 mx-1" />
 
             {/* Profile dropdown */}
@@ -125,12 +146,12 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
                 />
               </button>
 
-              {/* Dropdown */}
+              {/* ✅ Dropdown z-50 — always above header and main content */}
               {isProfileOpen && (
                 <div className="absolute right-0 mt-2 w-52 rounded-xl shadow-lg bg-white
-                  ring-1 ring-black ring-opacity-5 z-20 overflow-hidden">
+                  ring-1 ring-black ring-opacity-5 z-50 overflow-hidden">
 
-                  {/* User info header */}
+                  {/* User info */}
                   <div className="px-4 py-3 bg-gradient-to-br from-blue-50 to-indigo-50 border-b border-gray-100">
                     <div className="flex items-center gap-3">
                       <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600
@@ -139,6 +160,7 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-gray-800 truncate">{displayName}</p>
+                        {/* ✅ Real email from JWT */}
                         {displayEmail && (
                           <p className="text-xs text-gray-500 truncate">{displayEmail}</p>
                         )}
