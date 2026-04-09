@@ -336,7 +336,7 @@ const NewVendorManagement = () => {
             />
 
             {/* Add Vendor Button */}
-            <ReusableButton
+            {/* <ReusableButton
               module="vendor"
               action="create"
               icon={Plus}
@@ -345,7 +345,7 @@ const NewVendorManagement = () => {
               onClick={handleAddVendor}
               className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 flex items-center gap-2 transition-colors duration-200"
               size={16}
-            />
+            /> */}
           </div>
         }
       />
