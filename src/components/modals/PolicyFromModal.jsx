@@ -67,12 +67,17 @@ export const PolicyForm = ({
 
   // ── Fetch policy package (tenant's permission boundary) ──────────────────
   const loadPackage = useCallback(async (tid) => {
-    if (!tid) return null;
+    if (!tid) {
+      console.warn("⚠️ PolicyForm: Cannot load package - no tenantId provided", { tid });
+      return null;
+    }
     try {
+      console.log("📦 PolicyForm: Loading package for tenant:", tid);
       const result = await dispatch(fetchPolicyPackagesThunk(tid)).unwrap();
+      console.log("✅ PolicyForm: Package loaded successfully:", result);
       return result;
     } catch (err) {
-      console.error("Failed to fetch policy package:", err);
+      console.error("❌ PolicyForm: Failed to fetch policy package:", err);
       return null;
     }
   }, [dispatch]);
