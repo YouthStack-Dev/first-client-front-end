@@ -386,7 +386,7 @@ const PoliciesManagement = () => {
                     options={tenantOptions}
                     value={selectedTenant}
                     onChange={handleTenantSelect}
-                    placeholder="System policies..."
+                    placeholder="Select tenant ID..."
                     isClearable
                     isSearchable
                     isLoading={!companiesFetched}
@@ -428,6 +428,14 @@ const PoliciesManagement = () => {
       />
 
       <div className="px-5">
+        {/* SuperAdmin: instruction to select tenant */}
+        {isSuperAdmin && !selectedTenant && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 text-blue-800 text-sm">
+            <p className="font-semibold mb-1">📌 Select a tenant to proceed</p>
+            <p>Please select a tenant ID from the dropdown above to view and manage policies for that organization.</p>
+          </div>
+        )}
+
         {/* Tenant policies loading */}
         {isSuperAdmin && selectedTenant && tenantPoliciesLoading && (
           <div className="text-center py-12 text-gray-400">

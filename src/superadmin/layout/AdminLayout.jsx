@@ -49,8 +49,14 @@ const AdminLayout = () => {
   }, [sidebarOpen]);
 
   const toggleSidebar = useCallback(() => {
-    setSidebarOpen((prev) => !prev);
-  }, []);
+    setSidebarOpen((prev) => {
+      const nextOpen = !prev;
+      if (nextOpen && !isPinned) {
+        setIsPinned(true);
+      }
+      return nextOpen;
+    });
+  }, [isPinned]);
 
   const closeSidebar = useCallback(() => {
     if (window.innerWidth < 1024) {
@@ -129,7 +135,7 @@ const AdminLayout = () => {
         }`}
       >
         {/* Admin Header */}
-        <AdminHeader toggleSidebar={toggleSidebar} title={title} />
+        <AdminHeader toggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} title={title} />
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto pt-16 pb-6 bg-gray-50">

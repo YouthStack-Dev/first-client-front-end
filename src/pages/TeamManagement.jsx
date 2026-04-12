@@ -11,7 +11,7 @@ import { logDebug, logError } from "../utils/logger";
 import { toggleTeamStatus, fetchTeamsThunk } from "../redux/features/teams/teamsTrunk";
 import {
   selectAllTeams,
-  selectTeamsByTenantId,
+  makeSelectTeamsByTenantId,
   selectTeamsLoading,
   selectTeamsError,
   selectTogglingTeamId,
@@ -33,7 +33,7 @@ const TeamManagement = () => {
   const userType       = user?.type       || "";
   const isSuperAdmin   = userType === "admin";
   const isCompanyAdmin = userType === "employee";
-  const userTenantId   = user?.tenant_id  || ""; // ✅ normalized by authSlice selector
+  const userTenantId   = user?.tenant_id  || "";
 
   const isLoading      = useSelector(selectTeamsLoading);
   const teamsError     = useSelector(selectTeamsError);
@@ -53,22 +53,24 @@ const TeamManagement = () => {
   const itemsPerPage = 10;
 
   // ── selectedTenantId — superadmin only ────────────────────────────────
-  // Pre-fill from CompanyCard navigation state if available
   const [selectedTenantId, setSelectedTenantId] = useState(
     isSuperAdmin ? (location.state?.tenant_id || null) : null
   );
 
   // ── currentTenantId ───────────────────────────────────────────────────
-  // SuperAdmin  → from dropdown selection
-  // Company admin/employee → from Redux user object (no localStorage)
   const currentTenantId = useMemo(() => {
     if (isSuperAdmin) return selectedTenantId;
-    return userTenantId; // ✅ straight from Redux
+    return userTenantId;
   }, [isSuperAdmin, selectedTenantId, userTenantId]);
 
-  const teamsByTenant = useSelector((state) =>
-    currentTenantId ? selectTeamsByTenantId(state, currentTenantId) : []
+  // ✅ FIX — instantiate the factory selector with useMemo so useSelector
+  //    always receives a stable function reference, not a new one each render
+  const selectTeamsForCurrentTenant = useMemo(
+    () => makeSelectTeamsByTenantId(currentTenantId),
+    [currentTenantId]
   );
+
+  const teamsByTenant = useSelector(selectTeamsForCurrentTenant);
 
   const teams = useMemo(() => {
     if (!currentTenantId) return allTeams;
@@ -84,11 +86,9 @@ const TeamManagement = () => {
       };
 
       if (isSuperAdmin && selectedTenantId) {
-        // SuperAdmin — use selected tenant from dropdown
         queryParams.tenant_id = selectedTenantId;
       } else if (!isSuperAdmin && userTenantId) {
-        // Company admin/employee — use their own tenant from Redux
-        queryParams.tenant_id = userTenantId; // ✅ no localStorage
+        queryParams.tenant_id = userTenantId;
       }
 
       try {
@@ -99,11 +99,9 @@ const TeamManagement = () => {
       }
     };
 
-    // SuperAdmin: only fetch when a tenant is selected
-    // Company admin: always fetch using their own tenantId from Redux
     const shouldFetch = isSuperAdmin
       ? !!selectedTenantId
-      : !!userTenantId; // ✅ no localStorage
+      : !!userTenantId;
 
     if (shouldFetch) fetchTeams();
   }, [dispatch, currentPage, isSuperAdmin, selectedTenantId, userTenantId]);
@@ -212,7 +210,6 @@ const TeamManagement = () => {
 
   const handleViewEmployees = (team) => {
     const teamId   = team.team_id;
-    // ✅ team.tenant_id first, then currentTenantId (which uses Redux for company admin)
     const tenantId = team.tenant_id || currentTenantId || "";
     const basePath = isSuperAdmin ? "/superadmin" : "/companies";
     navigate(`${basePath}/teams/${teamId}/employees?tenantId=${tenantId}`, {
@@ -552,7 +549,7 @@ const TeamManagement = () => {
         mode={editingTeam?.mode || (editingTeam ? "edit" : "create")}
         userType={userType}
         tenantOptions={tenantOptions}
-        selectedTenant={isSuperAdmin ? selectedTenantId : userTenantId} // ✅ no localStorage
+        selectedTenant={isSuperAdmin ? selectedTenantId : userTenantId}
       />
 
       <TeamEmployeeModal
@@ -574,7 +571,7 @@ const TeamManagement = () => {
         isOpen={isAuditModalOpen}
         onClose={() => setIsAuditModalOpen(false)}
         moduleName="Team"
-        apimodule="teams"
+        apimodule="team"
         selectedCompany={currentTenantId}
       />
     </div>
