@@ -228,19 +228,20 @@ export const initializeAuth = () => async (dispatch) => {
     // Decode token and set basic user info
     const decoded = jwtDecode(token);
     logDebug(" thi is the decoded data ", decoded);
-    const user = {
-      email: decoded.email || "dummy@gmail.com",
-      type: decoded.user_type,
-
-      tenant_id: decoded.tenant_id || null,
-    };
 
     const storedData = sessionStorage.getItem("userPermissions");
 
     if (storedData) {
       try {
         const parsedData = JSON.parse(storedData);
-        const { permissions = [] } = parsedData;
+        const { user: storedUser = {}, permissions = [] } = parsedData;
+
+        // ✅ Use complete user data from storage (preserves name, email, etc.)
+        const user = {
+          ...storedUser,
+          type: decoded.user_type || storedUser.type,
+          tenant_id: decoded.tenant_id || storedUser.tenant_id || null,
+        };
 
         dispatch(
           setAuthFromToken({

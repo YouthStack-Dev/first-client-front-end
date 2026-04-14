@@ -13,7 +13,8 @@ export const AdminRoutes = () => (
   <Route element={<AdminLayout />}>
     <Route path="dashboard"             element={<SuperAdminDashboard />} />
     <Route path="manage-companies"      element={<CompanyManagement />} />
-    <Route path="repots-management"     element={<ReportsManagement />} />
+    <Route path="reports-management"    element={<ReportsManagement />} />
+    <Route path="manage-vendors"        element={<NewVendorManagement />} />
     <Route path="new-vendor-management" element={<NewVendorManagement />} />
     <Route path="role-management"       element={<RoleManagement />} />
     <Route path="iam/permissions"       element={<IamPermissionsPage />} />

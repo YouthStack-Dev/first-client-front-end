@@ -150,6 +150,15 @@ const AdminSidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
     }
   };
 
+  // ── Display name — prefer full name fields, extract from email if needed
+  const displayName =
+    user?.name           ||
+    user?.full_name      ||
+    user?.employee?.name ||
+    user?.vendor_user?.name ||
+    (user?.email ? user.email.split("@")[0] : "Admin User");
+
+
   const sidebarWidth = isOpen ? "w-sidebar" : "w-sidebar-collapsed";
   const sidebarClass = `h-screen ${sidebarWidth} bg-gradient-to-b from-blue-50 via-white to-blue-50 text-app-text-primary flex flex-col fixed left-0 transition-all duration-300 ease-in-out z-50 shadow-sidebar border-r border-app-border`;
 
@@ -178,7 +187,7 @@ const AdminSidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-app-text-primary">
-                    {user?.name || "Admin User"}
+                    {displayName}
                   </h2>
                   {/* <p className="text-xs text-app-text-secondary">
                     {user?.role || "Team Member"}

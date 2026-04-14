@@ -268,7 +268,6 @@ const TeamEmployeeModal = ({
         const diffData = {};
 
         Object.keys(formData).forEach((key) => {
-          if (key === "password") return;
           const original = employeeData[key] === undefined ? "" : employeeData[key];
           const current  = formData[key]      === undefined ? "" : formData[key];
 
@@ -463,8 +462,8 @@ const TeamEmployeeModal = ({
                 placeholder="Enter alternate phone" />
             </div>
 
-            {/* Password — create only */}
-            {mode === "create" && (
+            {/* Password — create & edit */}
+            {(mode === "create" || isEditing) && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Password <span className="text-red-500">*</span>

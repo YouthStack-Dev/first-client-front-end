@@ -133,15 +133,6 @@ const CompanyCard = ({
 
   // ── Navigate to existing superadmin pages filtered by tenant_id ─────────
   // Paths match AdminRoutes: /superadmin/teams, /superadmin/role-management
-  const handleViewEmployees = () =>
-    navigate("/superadmin/teams", {
-      state: {
-        tenant_id:     company.tenant_id,
-        companyName:   company.name,
-        openEmployees: true,
-      },
-    });
-
   const handleViewTeams = () =>
     navigate("/superadmin/teams", {
       state: {
@@ -291,18 +282,8 @@ const CompanyCard = ({
             </button>
           </div>
 
-          {/* Row 2 — Employees · Roles · Teams (navigate to existing pages) */}
+          {/* Row 2 — Roles · Teams (navigate to existing pages) */}
           <div className="flex items-center gap-1.5">
-            <ActionBtn
-              tooltip="Opens TeamManagement filtered by this company"
-              onClick={handleViewEmployees}
-              colorClass="border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
-              wide
-            >
-              <UserPlus size={13} />
-              Employees
-            </ActionBtn>
-
             <ActionBtn
               tooltip="Opens RoleManagement filtered by this company"
               onClick={handleViewRoles}

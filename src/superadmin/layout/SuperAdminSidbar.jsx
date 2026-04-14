@@ -24,23 +24,13 @@ export const superAdminMenuItems = [
     icon: Building2,
   },
   {
-    name: "Vendors",
+    name: "Manage Vendors",
     path: "/superadmin/manage-vendors",
     icon: Truck,
   },
   {
-    name: "Vendor Management",
-    path: "/superadmin/new-vendor-management",
-    icon: BarChart3,
-  },
-  {
     name: "Reports Management",
     path: "/superadmin/reports-management",
-    icon: BarChart3,
-  },
-  {
-    name: "Dempartment",
-    path: "/superadmin/departments",
     icon: BarChart3,
   },
   {
