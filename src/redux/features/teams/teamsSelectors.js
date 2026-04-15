@@ -38,29 +38,49 @@ export const selectTogglingTeamId = createSelector(
 // Derived selectors - get all teams as array
 export const selectAllTeams = createSelector(
   [selectTeamsById, selectTeamsAllIds],
-  (teamsById, allIds) => allIds.map((id) => teamsById[id]).filter(Boolean)
-);
-
-// Selector to get teams by tenant ID (O(1) access) - USED in your component
-export const selectTeamsByTenantId = createSelector(
-  [selectTeamsById, selectTeamsByTenant, (state, tenantId) => tenantId],
-  (teamsById, byTenant, tenantId) => {
-    if (!tenantId) return [];
-    const teamIds = byTenant[tenantId] || [];
-    return teamIds.map((id) => teamsById[id]).filter(Boolean);
+  (teamsById, allIds) => {
+    if (!allIds || allIds.length === 0) return [];
+    return allIds.map((id) => teamsById[id]).filter(Boolean);
   }
 );
 
-// Selector to get a single team by ID (O(1) access) - KEEPING as it's useful
-export const selectTeamById = createSelector(
-  [selectTeamsById, (state, teamId) => teamId],
-  (teamsById, teamId) => teamsById[teamId] || null
-);
+// Factory to create memoized team-by-tenant selector
+const teamsByTenantCache = {};
+
+export const makeSelectTeamsByTenantId = (tenantId) => {
+  if (!teamsByTenantCache[tenantId]) {
+    teamsByTenantCache[tenantId] = createSelector(
+      [selectTeamsById, selectTeamsByTenant],
+      (teamsById, byTenant) => {
+        if (!tenantId) return [];
+        const teamIds = byTenant[tenantId] || [];
+        if (!teamIds || teamIds.length === 0) return [];
+        return teamIds.map((id) => teamsById[id]).filter(Boolean);
+      }
+    );
+  }
+  return teamsByTenantCache[tenantId];
+};
+
+// Factory to create memoized team-by-id selector
+const teamByIdCache = {};
+
+export const makeSelectTeamById = (teamId) => {
+  if (!teamByIdCache[teamId]) {
+    teamByIdCache[teamId] = createSelector(
+      [selectTeamsById],
+      (teamsById) => teamsById[teamId] || null
+    );
+  }
+  return teamByIdCache[teamId];
+};
 
 // Selector to get unique tenants from teams data - USED in your component
 export const selectUniqueTenantsFromTeams = createSelector(
   [selectAllTeams],
   (teams) => {
+    if (!teams || teams.length === 0) return [];
+    
     const tenantMap = {};
     teams.forEach((team) => {
       if (team.tenant_id && !tenantMap[team.tenant_id]) {

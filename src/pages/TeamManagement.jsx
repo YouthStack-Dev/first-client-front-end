@@ -11,7 +11,7 @@ import { logDebug, logError } from "../utils/logger";
 import { toggleTeamStatus, fetchTeamsThunk } from "../redux/features/teams/teamsTrunk";
 import {
   selectAllTeams,
-  selectTeamsByTenantId,
+  makeSelectTeamsByTenantId,
   selectTeamsLoading,
   selectTeamsError,
   selectTogglingTeamId,
@@ -26,9 +26,14 @@ import BulkUploadEmployeesSection from "../components/modals/BulkUploadEmployees
 const TeamManagement = () => {
   const dispatch  = useDispatch();
   const navigate  = useNavigate();
-  const location  = useLocation(); // ← reads state passed from CompanyCard
-  const user      = useSelector(selectCurrentUser);
-  const userType  = user?.type || "";
+  const location  = useLocation();
+
+  // ── Current user from Redux ────────────────────────────────────────────
+  const user           = useSelector(selectCurrentUser);
+  const userType       = user?.type       || "";
+  const isSuperAdmin   = userType === "admin";
+  const isCompanyAdmin = userType === "employee";
+  const userTenantId   = user?.tenant_id  || "";
 
   const isLoading      = useSelector(selectTeamsLoading);
   const teamsError     = useSelector(selectTeamsError);
@@ -47,45 +52,32 @@ const TeamManagement = () => {
   const [isAuditModalOpen,       setIsAuditModalOpen]       = useState(false);
   const itemsPerPage = 10;
 
-  // ── selectedTenantId ───────────────────────────────────────────────────
-  // Superadmin  → use tenant_id from CompanyCard navigation state (if any)
-  // Company admin/employee → always null here; they use localStorage tenant
+  // ── selectedTenantId — superadmin only ────────────────────────────────
   const [selectedTenantId, setSelectedTenantId] = useState(
-    userType === "admin" ? (location.state?.tenant_id || null) : null
+    isSuperAdmin ? (location.state?.tenant_id || null) : null
   );
 
-  // ── Helper: get tenant from localStorage (company admin / employee) ────
-  const getTenantFromLocalStorage = () => {
-    try {
-      const tenantData = localStorage.getItem("tenant");
-      if (tenantData) {
-        const parsedTenant = JSON.parse(tenantData);
-        return parsedTenant.tenant_id || "";
-      }
-    } catch (error) {
-      logError("Error getting tenant from localStorage:", error);
-    }
-    return "";
-  };
-
-  // ── currentTenantId ────────────────────────────────────────────────────
-  // Superadmin  → uses selected tenant from dropdown (or pre-filled from CompanyCard)
-  // Non-admin   → always uses their own tenant from localStorage
+  // ── currentTenantId ───────────────────────────────────────────────────
   const currentTenantId = useMemo(() => {
-    if (userType === "admin") return selectedTenantId;
-    return getTenantFromLocalStorage();
-  }, [userType, selectedTenantId]);
+    if (isSuperAdmin) return selectedTenantId;
+    return userTenantId;
+  }, [isSuperAdmin, selectedTenantId, userTenantId]);
 
-  const teamsByTenant = useSelector((state) =>
-    currentTenantId ? selectTeamsByTenantId(state, currentTenantId) : []
+  // ✅ FIX — instantiate the factory selector with useMemo so useSelector
+  //    always receives a stable function reference, not a new one each render
+  const selectTeamsForCurrentTenant = useMemo(
+    () => makeSelectTeamsByTenantId(currentTenantId),
+    [currentTenantId]
   );
+
+  const teamsByTenant = useSelector(selectTeamsForCurrentTenant);
 
   const teams = useMemo(() => {
     if (!currentTenantId) return allTeams;
     return teamsByTenant;
   }, [currentTenantId, allTeams, teamsByTenant]);
 
-  // ── Fetch teams ─────────────────────────────────────────────────────────
+  // ── Fetch teams ────────────────────────────────────────────────────────
   useEffect(() => {
     const fetchTeams = async () => {
       const queryParams = {
@@ -93,13 +85,10 @@ const TeamManagement = () => {
         limit: itemsPerPage,
       };
 
-      if (userType === "admin" && selectedTenantId) {
-        // Superadmin: pass selected tenant_id
+      if (isSuperAdmin && selectedTenantId) {
         queryParams.tenant_id = selectedTenantId;
-      } else if (userType !== "admin") {
-        // Company admin/employee: pass their own tenant_id
-        const tenantId = getTenantFromLocalStorage();
-        if (tenantId) queryParams.tenant_id = tenantId;
+      } else if (!isSuperAdmin && userTenantId) {
+        queryParams.tenant_id = userTenantId;
       }
 
       try {
@@ -110,16 +99,14 @@ const TeamManagement = () => {
       }
     };
 
-    // Superadmin: only fetch when a tenant is selected (avoids 400 TENANT_ID_REQUIRED)
-    // Non-admin:  always fetch using their own localStorage tenant
-    const shouldFetch = userType === "admin"
+    const shouldFetch = isSuperAdmin
       ? !!selectedTenantId
-      : !!getTenantFromLocalStorage();
+      : !!userTenantId;
 
     if (shouldFetch) fetchTeams();
-  }, [dispatch, currentPage, userType, selectedTenantId]);
+  }, [dispatch, currentPage, isSuperAdmin, selectedTenantId, userTenantId]);
 
-  // ── Filtered teams ──────────────────────────────────────────────────────
+  // ── Filtered teams ─────────────────────────────────────────────────────
   const filteredTeams = useMemo(() => {
     let filtered = teams;
     if (searchTerm?.trim()) {
@@ -151,9 +138,9 @@ const TeamManagement = () => {
   const startItem  = (currentPage - 1) * itemsPerPage + 1;
   const endItem    = Math.min(currentPage * itemsPerPage, totalItems);
 
-  // ── Tenant options (superadmin only) ────────────────────────────────────
+  // ── Tenant options — superadmin only ──────────────────────────────────
   const tenantOptions = useMemo(() => {
-    if (userType !== "admin" || !uniqueTenants?.length) return [];
+    if (!isSuperAdmin || !uniqueTenants?.length) return [];
     return [
       { value: "", label: "All Tenants" },
       ...uniqueTenants.map((t) => ({
@@ -161,9 +148,9 @@ const TeamManagement = () => {
         label: t.tenant_name || `Tenant ${t.tenant_id}`,
       })),
     ];
-  }, [uniqueTenants, userType]);
+  }, [uniqueTenants, isSuperAdmin]);
 
-  // ── Handlers ────────────────────────────────────────────────────────────
+  // ── Handlers ───────────────────────────────────────────────────────────
   const handleTeamSelect = (selectedOption) => {
     if (selectedOption?.data) {
       const t = selectedOption.data;
@@ -206,7 +193,7 @@ const TeamManagement = () => {
     try {
       toast.success("Team deleted successfully");
       dispatch(fetchTeamsThunk({
-        skip: (currentPage - 1) * itemsPerPage,
+        skip:  (currentPage - 1) * itemsPerPage,
         limit: itemsPerPage,
         ...(currentTenantId ? { tenant_id: currentTenantId } : {}),
       }));
@@ -224,7 +211,8 @@ const TeamManagement = () => {
   const handleViewEmployees = (team) => {
     const teamId   = team.team_id;
     const tenantId = team.tenant_id || currentTenantId || "";
-    navigate(`/superadmin/teams/${teamId}/employees?tenantId=${tenantId}`, {
+    const basePath = isSuperAdmin ? "/superadmin" : "/companies";
+    navigate(`${basePath}/teams/${teamId}/employees?tenantId=${tenantId}`, {
       state: { team, teamName: team.name, tenantId },
     });
   };
@@ -240,7 +228,7 @@ const TeamManagement = () => {
     setSelectedTeamFromSearch(null);
     setSearchTerm("");
     dispatch(fetchTeamsThunk({
-      skip: (currentPage - 1) * itemsPerPage,
+      skip:  (currentPage - 1) * itemsPerPage,
       limit: itemsPerPage,
       ...(currentTenantId ? { tenant_id: currentTenantId } : {}),
     }));
@@ -250,8 +238,8 @@ const TeamManagement = () => {
     setShowBulkUpload(false);
     toast.success("Employees uploaded successfully");
     dispatch(fetchTeamsThunk({
-      skip: (currentPage - 1) * itemsPerPage,
-      limit: itemsPerPage,
+      skip:      (currentPage - 1) * itemsPerPage,
+      limit:     itemsPerPage,
       tenant_id: currentTenantId,
     }));
   };
@@ -319,8 +307,8 @@ const TeamManagement = () => {
   return (
     <div className="p-1">
 
-      {/* ── Banner: shown only for superadmin when coming from CompanyCard ── */}
-      {userType === "admin" && location.state?.companyName && (
+      {/* ── Banner: superadmin navigating from CompanyCard ── */}
+      {isSuperAdmin && location.state?.companyName && (
         <div className="mb-4 flex items-center gap-3 px-4 py-2.5 bg-blue-50
           border border-blue-200 rounded-xl text-[13px]">
           <span className="font-semibold text-blue-700">
@@ -364,7 +352,7 @@ const TeamManagement = () => {
             </div>
 
             {/* Tenant filter — superadmin only */}
-            {userType === "admin" && tenantOptions.length > 0 && (
+            {isSuperAdmin && tenantOptions.length > 0 && (
               <div className="w-full sm:w-48">
                 <Select
                   options={tenantOptions}
@@ -430,8 +418,7 @@ const TeamManagement = () => {
             <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500 mx-auto mb-4" />
             <p className="text-gray-600 font-medium">Loading teams...</p>
           </div>
-        ) : userType === "admin" && !selectedTenantId ? (
-          // Superadmin with no tenant selected — prompt them to pick one
+        ) : isSuperAdmin && !selectedTenantId ? (
           <div className="p-12 text-center">
             <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-600 mb-2">Select a tenant</h3>
@@ -562,18 +549,18 @@ const TeamManagement = () => {
         mode={editingTeam?.mode || (editingTeam ? "edit" : "create")}
         userType={userType}
         tenantOptions={tenantOptions}
-        selectedTenant={userType === "admin" ? selectedTenantId : getTenantFromLocalStorage()}
+        selectedTenant={isSuperAdmin ? selectedTenantId : userTenantId}
       />
 
       <TeamEmployeeModal
         isOpen={isEmployeeModalOpen}
         onClose={() => setIsEmployeeModalOpen(false)}
         mode="create"
-        tenantId={currentTenantId}  
+        tenantId={currentTenantId}
         onSuccess={() => {
           setIsEmployeeModalOpen(false);
           dispatch(fetchTeamsThunk({
-            skip: (currentPage - 1) * itemsPerPage,
+            skip:  (currentPage - 1) * itemsPerPage,
             limit: itemsPerPage,
             ...(currentTenantId ? { tenant_id: currentTenantId } : {}),
           }));
@@ -584,7 +571,7 @@ const TeamManagement = () => {
         isOpen={isAuditModalOpen}
         onClose={() => setIsAuditModalOpen(false)}
         moduleName="Team"
-        apimodule="teams"
+        apimodule="team"
         selectedCompany={currentTenantId}
       />
     </div>

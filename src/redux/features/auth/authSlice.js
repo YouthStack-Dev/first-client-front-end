@@ -63,7 +63,13 @@ const authSlice = createSlice({
       const userWithType = { ...user, type: userType };
 
       // Update state
-      state.user = userWithType;
+      // state.user = userWithType;
+        state.user = {
+    ...user,
+    type: userType,
+    // ✅ Only guarantee tenant_id is at top level — nothing else changes
+    tenant_id: user.tenant_id || user.employee?.tenant_id || user.vendor_user?.tenant_id || null,
+  };
       state.token = token;
       state.isAuthenticated = true;
 
@@ -97,7 +103,11 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         const { user, token, allowedModules } = action.payload;
         logDebug(" this is the payload ", action.payload);
-        state.user = user;
+        // state.user = user;
+         state.user = {
+            ...user,
+            tenant_id: user.tenant_id || user.employee?.tenant_id || user.vendor_user?.tenant_id || null,
+          };
         state.token = token;
         state.permissions = allowedModules;
         state.isAuthenticated = true;

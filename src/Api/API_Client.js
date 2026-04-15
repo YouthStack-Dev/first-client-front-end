@@ -2,12 +2,19 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { logDebug } from "../utils/logger";
 
-// Read the environment variable
-const baseURL = import.meta.env.VITE_API_URL;
+// ─────────────────────────────────────────────────────────────
+// Environment-based API URL
+//   Production  (fleet.mltcorporate.com)         → https://api.mltcorporate.com/api/v1
+//   Staging     (staging-fleet.mltcorporate.com)  → https://staging-api.mltcorporate.com/api/v1
+//
+// Set via .env.production or .env.staging at build time.
+// ─────────────────────────────────────────────────────────────
+const baseURL =
+  import.meta.env.VITE_API_URL || "https://api.mltcorporate.com/api/v1";
 
 // Create Axios instance
 export const API_CLIENT = axios.create({
-  baseURL: "https://api.mltcorporate.com/api/v1",
+  baseURL,
 });
 
 // ───────────────────────────────────
