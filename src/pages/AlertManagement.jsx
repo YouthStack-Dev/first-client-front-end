@@ -1,5 +1,5 @@
 // pages/AlertConfigPage.js - Fixed
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import AlertConfigCard from "../components/Schedulemanagement/AlertConfigCard";
 import AlertConfigForm from "../components/Schedulemanagement/AlertConfigForm";
 import ToolBar from "../components/ui/ToolBar";
@@ -43,9 +43,9 @@ const AlertManagement = () => {
   const dispatch = useDispatch();
 
   // Get data from Redux store
-  const configs = useSelector((state) =>
-    state.alertconfig.allIds.map((id) => state.alertconfig.byId[id])
-  );
+  const allIds = useSelector((state) => state.alertconfig.allIds);
+  const byId = useSelector((state) => state.alertconfig.byId);
+  const configs = useMemo(() => allIds.map((id) => byId[id]), [allIds, byId]);
 
   const loading = useSelector((state) => state.alertconfig.loading.fetch);
 

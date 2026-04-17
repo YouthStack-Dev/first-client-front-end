@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { icons } from "lucide-react";
 
 const DefaultIcon = icons.AlertCircle || icons.Info;
@@ -19,6 +20,8 @@ const ReusableButton = ({
   showTooltip = true,
 }) => {
   const [showTooltipState, setShowTooltipState] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
+  const buttonRef = useRef(null);
 
   // Don't render if module or action is not provided
   if (!module || !action) {
@@ -61,6 +64,7 @@ const ReusableButton = ({
   return (
     <div className="relative inline-flex">
       <button
+        ref={buttonRef}
         type={type}
         className={`inline-flex items-center justify-center rounded transition-all duration-200 ${className} ${
           disabled || loading
@@ -68,7 +72,16 @@ const ReusableButton = ({
             : "cursor-pointer hover:scale-105"
         }`}
         onClick={handleClick}
-        onMouseEnter={() => setShowTooltipState(true)}
+        onMouseEnter={() => {
+          if (buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            setTooltipPos({
+              top: rect.top - 8,
+              left: rect.left + rect.width / 2,
+            });
+          }
+          setShowTooltipState(true);
+        }}
         onMouseLeave={() => setShowTooltipState(false)}
         disabled={disabled || loading}
         aria-label={title || buttonName}
@@ -88,20 +101,26 @@ const ReusableButton = ({
         )}
       </button>
 
-      {/* Custom Tailwind Tooltip */}
-      {title && showTooltip && !loading && (
-        <div
-          className={`absolute -top-10 left-1/2 transform -translate-x-1/2 px-3 py-2 bg-gray-900 text-white text-sm rounded-md shadow-lg whitespace-nowrap transition-all duration-150 ${
-            showTooltipState
-              ? "opacity-100 visible scale-100"
-              : "opacity-0 invisible scale-95"
-          } z-50 pointer-events-none`}
-          role="tooltip"
-        >
-          {title}
-          <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
-        </div>
-      )}
+      {/* Tooltip rendered in a portal so it escapes all stacking contexts */}
+      {title && showTooltip && !loading && showTooltipState &&
+        createPortal(
+          <div
+            role="tooltip"
+            style={{
+              position: "fixed",
+              top: tooltipPos.top,
+              left: tooltipPos.left,
+              transform: "translate(-50%, -100%)",
+              zIndex: 99999,
+            }}
+            className="px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md shadow-lg whitespace-nowrap pointer-events-none"
+          >
+            {title}
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45" />
+          </div>,
+          document.body
+        )
+      }
     </div>
   );
 };

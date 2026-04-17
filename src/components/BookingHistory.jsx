@@ -192,8 +192,8 @@ const BookingHistory = ({
         <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
 
         <div className="flex items-center gap-2 text-gray-600">
-          <Filter className="w-4 h-4" />
-          <span className="text-sm font-medium">Filters</span>
+          {/* <Filter className="w-4 h-4" />
+          <span className="text-sm font-medium">Filters</span> */}
         </div>
       </div>
 
@@ -232,7 +232,7 @@ const BookingHistory = ({
         </div>
 
         {/* Shift */}
-        <div>
+        {/* <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Shift Type
           </label>
@@ -245,7 +245,7 @@ const BookingHistory = ({
             <option value="1">IN</option>
             <option value="2">OUT</option>
           </select>
-        </div>
+        </div> */}
 
         {/* Clear Filters */}
         <div className="flex items-end">

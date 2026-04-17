@@ -254,7 +254,7 @@ const ShiftBookingsTable = ({
   return (
     <>
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
         <div className="bg-app-tertiary rounded-lg p-4">
           <p className="text-sm text-app-text-secondary mb-1">Shifts</p>
           <p className="text-xl font-semibold text-app-text-primary">{safeData.length}</p>
@@ -266,15 +266,15 @@ const ShiftBookingsTable = ({
           </p>
         </div>
         <div className="bg-app-tertiary rounded-lg p-4">
-          <p className="text-sm text-app-text-secondary mb-1">Unrouted</p>
-          <p className="text-xl font-semibold text-amber-600">
-            {safeData.reduce((sum, s) => sum + (s.stats?.unrouted_bookings || 0), 0)}
+          <p className="text-sm text-app-text-secondary mb-1">Routes</p>
+          <p className="text-xl font-semibold text-blue-600">
+            {safeData.reduce((sum, s) => sum + (s.stats?.route_count || 0), 0)}
           </p>
         </div>
         <div className="bg-app-tertiary rounded-lg p-4">
-          <p className="text-sm text-app-text-secondary mb-1">Drivers</p>
-          <p className="text-xl font-semibold text-app-text-primary">
-            {safeData.reduce((sum, s) => sum + (s.stats?.driver_assigned || 0), 0)}
+          <p className="text-sm text-app-text-secondary mb-1">Unrouted</p>
+          <p className="text-xl font-semibold text-amber-600">
+            {safeData.reduce((sum, s) => sum + (s.stats?.unrouted_bookings || 0), 0)}
           </p>
         </div>
       </div>
@@ -356,8 +356,9 @@ const ShiftBookingsTable = ({
                       </td>
 
                       <td className="px-4 py-3">
-                        <div className="text-lg font-semibold text-app-text-primary">{shift.stats?.routed_bookings || 0}</div>
-                        <div className="text-xs text-app-text-secondary">Routed</div>
+                        <div className="text-lg font-semibold text-app-text-primary">{shift.stats?.route_count || 0}</div>
+                        <div className="text-xs text-app-text-secondary">Routes</div>
+                        <div className="text-xs text-app-text-secondary mt-1">{shift.stats?.routed_bookings || 0} routed</div>
                         {shift.stats?.total_bookings > 0 && (
                           <div className="mt-2">
                             <div className="text-xs text-app-text-secondary mb-1">{completionRate}% complete</div>

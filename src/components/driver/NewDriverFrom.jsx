@@ -48,7 +48,8 @@ const DriverFormModal = ({
   const dispatch = useDispatch();
 
   const [initialFormData, setInitialFormData] = useState(null);
-
+  const MAX_FILE_SIZE = 3 * 1024 * 1024; // 3MB
+  const [showPassword, setShowPassword] = useState(false);
 
   // logDebug(" this are the vendor from the parrent in driver form ", vendors);
   
@@ -101,12 +102,28 @@ const DriverFormModal = ({
     }
   };
 
-  const handleFileChange = (fileKey, file) => {
-    setFormData((prev) => ({
-      ...prev,
-      [fileKey]: file,
-    }));
-  };
+    const handleFileChange = (fileKey, file) => {
+    if (!file) return;
+
+    // ✅ Allow only PDF
+    if (file.type !== "application/pdf") {
+      setError("Only PDF files are allowed.");
+      return;
+    }
+
+    // ✅ Limit size to 3MB
+      if (file.size > MAX_FILE_SIZE) {
+        setError("File size must be less than or equal to 3MB.");
+        return;
+      }
+
+      setError(null);
+
+      setFormData((prev) => ({
+        ...prev,
+        [fileKey]: file,
+      }));
+    };
 
   const handleRemoveFile = (fileKey) => {
     setFormData((prev) => ({
@@ -941,18 +958,17 @@ const DriverFormModal = ({
                                 <label className="flex items-center justify-center gap-2 w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
                                   <Upload className="w-4 h-4 text-gray-400" />
                                   <span className="text-xs text-gray-600">
-                                    Upload File *
+                                    Upload PDF (Max 3MB) *
                                   </span>
                                   <input
                                     type="file"
-                                    accept=".pdf,.jpg,.jpeg,.png"
+                                    accept=".pdf"
                                     className="hidden"
-                                    onChange={(e) =>
-                                      handleFileChange(
-                                        doc.fileKey,
-                                        e.target.files[0]
-                                      )
-                                    }
+                                    onChange={(e) => {
+                                      const file = e.target.files[0];
+                                      handleFileChange(doc.fileKey, file);
+                                      e.target.value = null; // reset input
+                                    }}
                                   />
                                 </label>
                               )

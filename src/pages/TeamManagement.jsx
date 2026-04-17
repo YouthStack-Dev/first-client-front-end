@@ -398,8 +398,8 @@ const TeamManagement = () => {
               module="employee" action="create"
               buttonName="Bulk Upload" icon={Plus}
               title="Bulk Upload Employees"
+               className="bg-app-primary p-1"
               onClick={() => setShowBulkUpload(true)}
-              className="text-white bg-green-600 p-2 rounded-md"
             />
           </div>
         }
