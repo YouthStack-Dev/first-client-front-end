@@ -1,5 +1,10 @@
 version: "3.8"
 
+# ============================================================
+# PRODUCTION ENVIRONMENT — fleet.mltcorporate.com
+# API: https://api.mltcorporate.com
+# ============================================================
+
 services:
   db_servicemgr:
     image: postgres:15
@@ -24,6 +29,18 @@ services:
     ports:
       - "8100:8100"
     restart: always
+
+  fleet_frontend_prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fleet_frontend_prod:latest
+    container_name: fleet_frontend_prod
+    ports:
+      - "5174:80"
+    restart: always
+    environment:
+      - NODE_ENV=production
 
 volumes:
   servicemgr_data:

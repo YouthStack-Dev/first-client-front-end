@@ -1,0 +1,19 @@
+version: "3.8"
+
+# ============================================================
+# STAGING ENVIRONMENT — staging-fleet.mltcorporate.com
+# API: https://staging-api.mltcorporate.com
+# ============================================================
+
+services:
+  fleet_frontend_staging:
+    build:
+      context: .
+      dockerfile: Dockerfile.staging
+    image: fleet_frontend_staging:latest
+    container_name: fleet_frontend_staging
+    ports:
+      - "5175:80"
+    restart: always
+    environment:
+      - NODE_ENV=staging

@@ -1,7 +1,7 @@
 # ============================================================
-# Dockerfile — PRODUCTION
-# Deployed at: fleet.mltcorporate.com
-# API target:  https://api.mltcorporate.com
+# Dockerfile.staging — STAGING
+# Deployed at: staging-fleet.mltcorporate.com
+# API target:  https://staging-api.mltcorporate.com
 # ============================================================
 
 # ── Stage 1: Build ──────────────────────────────────────────
@@ -14,8 +14,8 @@ RUN npm ci
 
 COPY . .
 
-# Build with production mode → picks up .env.production
-RUN npm run build:production
+# Build with staging mode → picks up .env.staging
+RUN npm run build:staging
 
 # ── Stage 2: Serve ──────────────────────────────────────────
 FROM nginx:alpine

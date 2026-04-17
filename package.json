@@ -4,9 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "npm run dev ",
+    "start": "npm run dev",
     "dev": "vite",
     "build": "vite build",
+    "build:production": "vite build --mode production",
+    "build:staging": "vite build --mode staging",
     "lint": "eslint .",
     "preview": "vite preview",
     "cy:open": "cypress open",

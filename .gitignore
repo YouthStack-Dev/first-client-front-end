@@ -16,7 +16,10 @@ vps.txt
 cypress
 cypress.config.js
 .env
-
+.env.local
+# Allow environment-specific files to be tracked (no secrets, just API URLs)
+!.env.production
+!.env.staging
 
 # Editor directories and files
 .vscode/*
