@@ -11,6 +11,7 @@ import { selectAllShifts } from "../redux/features/shift/shiftSlice";
 import { logDebug } from "../utils/logger";
 import { fetchShiftTrunk } from "../redux/features/shift/shiftTrunk";
 import { bookingSchema } from "../validations/bookingValidation";
+import { toast } from "react-toastify";
 
 export default function ProfilePage() {
   const [step, setStep] = useState("welcome");
@@ -50,11 +51,11 @@ export default function ProfilePage() {
       if (response.data.success) {
         setUserProfile(response.data.data.user);
       } else {
-        setErrors(["Failed to load profile"]);
+        toast.error("Failed to load profile", { position: "top-right", autoClose: 5000 });
       }
     } catch (err) {
       console.error("Error fetching user profile:", err);
-      setErrors(["Something went wrong while fetching profile"]);
+      toast.error("Something went wrong while fetching profile", { position: "top-right", autoClose: 5000 });
     }
   }, []);
 
@@ -135,24 +136,7 @@ export default function ProfilePage() {
   }, []); // Empty dependency array - runs only once on mount
 
   // Error display component
-  const renderErrors = () => {
-    if (errors.length === 0) return null;
-
-    return (
-      <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-        <h3 className="text-red-800 font-semibold mb-2">
-          Please fix the following errors:
-        </h3>
-        <ul className="list-disc list-inside space-y-1">
-          {errors.map((error, index) => (
-            <li key={index} className="text-red-700 text-sm">
-              {error}
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  };
+  const renderErrors = () => null;
 
   const handleBookingSubmit = async () => {
     setIsSubmitting(true);
@@ -169,17 +153,23 @@ export default function ProfilePage() {
     // Validate using Zod
     const result = bookingSchema.safeParse(payload);
     if (!result.success) {
-      const validationErrors = result.error.errors.map(
-        (err) => `${err.path.join(".")}: ${err.message}`
+      result.error.errors.forEach((err) =>
+        toast.error(`${err.path.join(".")}: ${err.message}`, {
+          position: "top-right",
+          autoClose: 5000,
+        })
       );
-      setErrors(validationErrors);
       setIsSubmitting(false);
       return;
     }
 
     try {
       const response = await API_CLIENT.post(endpoint.booking, payload);
-      console.log("Booking successful:", response.data);
+
+      toast.success(
+        response.data?.message || "Booking confirmed successfully!",
+        { position: "top-right", autoClose: 4000 }
+      );
 
       // Reset form and show success
       setSelectedDates([]);
@@ -191,12 +181,11 @@ export default function ProfilePage() {
         fetchBookingHistory();
       }
     } catch (error) {
-      console.error("Booking failed:", error);
       const errorMessage =
         error.response?.data?.detail?.message ||
         error.response?.data?.message ||
         "Booking failed. Please try again.";
-      setErrors([errorMessage]);
+      toast.error(errorMessage, { position: "top-right", autoClose: 5000 });
     } finally {
       setIsSubmitting(false);
     }
@@ -216,7 +205,7 @@ export default function ProfilePage() {
   // Navigation handlers
   const handleNextToShift = () => {
     if (selectedDates.length === 0) {
-      setErrors(["Please select at least one date"]);
+      toast.error("Please select at least one date", { position: "top-right", autoClose: 4000 });
       return;
     }
     setErrors([]);
@@ -293,6 +282,12 @@ export default function ProfilePage() {
               {...userProfile}
               onBookShift={() => setStep("calendar")}
               onViewBookingHistory={handleViewBookingHistory}
+              step={step}
+              onBack={
+                step === "shift"   ? handleBackToCalendar :
+                step === "calendar" || step === "history" ? handleBackToWelcome :
+                undefined
+              }
             />
           </div>
 

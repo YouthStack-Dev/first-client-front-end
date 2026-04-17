@@ -49,14 +49,18 @@ export const toggleShiftStatus = createAsyncThunk(
         `/shifts/${shift_id}/toggle-status`
       );
 
-      // Check for successful status
-      if (response.status === 200) {
-        return response.data; // return updated shift
+      // ✅ Check BOTH status + success flag
+      if (response.status === 200 && response.data?.success) {
+        return response.data.data; // return actual shift
       }
 
-      return rejectWithValue("Failed to toggle shift status");
+      return rejectWithValue(
+        response.data?.message || "Failed to toggle shift status"
+      );
     } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
+      return rejectWithValue(
+        error.response?.data?.message || error.message
+      );
     }
   }
 );

@@ -21,6 +21,17 @@ export const getAdminTitleFromPath = (pathname) => {
     "/admin/settings": "Admin Settings",
     "/admin/system-health": "System Health",
     "/admin/login": "Admin Login",
+    
+    // SuperAdmin routes
+    "/superadmin/dashboard": "Dashboard",
+    "/superadmin/manage-companies": "Manage Companies",
+    "/superadmin/manage-vendors": "Manage Vendors",
+    "/superadmin/new-vendor-management": "Manage Vendors",
+    "/superadmin/reports-management": "Reports Management",
+    "/superadmin/departments": "Departments",
+    "/superadmin/teams": "Teams",
+    "/superadmin/role-management": "Role Management",
+    "/superadmin/iam/permissions": "IAM Permissions",
   };
 
   // Try exact match first
@@ -30,7 +41,7 @@ export const getAdminTitleFromPath = (pathname) => {
 
   // Try partial match for nested routes
   for (const [key, value] of Object.entries(pathMap)) {
-    if (pathname.startsWith(key) && key !== "/admin") {
+    if (pathname.startsWith(key) && key !== "/admin" && key !== "/superadmin") {
       return value;
     }
   }

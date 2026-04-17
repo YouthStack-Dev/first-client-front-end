@@ -111,17 +111,32 @@ const RoleForm = ({
   // ── Effective tenantId ─────────────────────────────────────
   // Create → use prop directly
   // Edit/View → prefer initialData.tenant_id, fallback to prop
+  // ✅ BUT: if editing a system role, use null (show all policies)
   const effectiveTenantId =
     isCreateMode
       ? tenantId
+      : initialData?.is_system_role
+      ? null  // System roles show all policies
       : initialData?.tenant_id || tenantId || null;
 
-  // ── Fetch policies when modal opens or tenant changes ──────
-  // ✅ Always re-fetch for tenant roles (ignore cache)
-  // ✅ Use cache only for system roles (no tenant)
+  // DEBUG
+  // console.log("RoleForm Debug:", {
+  //   mode,
+  //   isOpen,
+  //   isSystemRole: initialData?.is_system_role,
+  //   effectiveTenantId,
+  //   initialData,
+  //   tenantIdProp: tenantId,
+  //   policiesLoaded: loaded,
+  //   policiesCount: policies?.length,
+  // });
+
+ 
   useEffect(() => {
     if (!isOpen) return;
 
+    // console.log("Fetching policies for tenantId:", effectiveTenantId);
+    
     if (effectiveTenantId) {
       // Tenant role — always fetch fresh scoped to that tenant
       dispatch(fetchPoliciesThunk({ tenant_id: effectiveTenantId }));
@@ -145,6 +160,14 @@ const RoleForm = ({
         )
       : allPolicies;
 
+    // console.log("Policy filtering debug:", {
+    //   allPoliciesCount: allPolicies.length,
+    //   selectablePoliciesCount: selectablePolicies.length,
+    //   effectiveTenantId,
+    //   isSystemRole: initialData?.is_system_role,
+    //   mode,
+    // });
+
     if (isCreateMode) {
       setFormData({ ...EMPTY_FORM, tenant_id: tenantId || null });
       setSelectedPolicies([]);
@@ -165,10 +188,16 @@ const RoleForm = ({
 
       const selectedIds = selected.map((p) => p.policy_id);
 
+      const available = selectablePolicies.filter((p) => !selectedIds.includes(p.policy_id));
+      
+      // console.log("Edit mode policies debug:", {
+      //   selectedCount: selected.length,
+      //   availableCount: available.length,
+      //   selectablePoliciesCount: selectablePolicies.length,
+      // });
+
       setSelectedPolicies(selected);
-      setAvailablePolicies(
-        selectablePolicies.filter((p) => !selectedIds.includes(p.policy_id))
-      );
+      setAvailablePolicies(available);
       setFormData({
         name:        initialData.name        || "",
         description: initialData.description || "",
@@ -415,14 +444,14 @@ const RoleForm = ({
                     )}
 
                     {/* ✅ Tenant boundary notice */}
-                    {!isViewMode && effectiveTenantId && (
+                    {/* {!isViewMode && effectiveTenantId && (
                       <div className="mb-4 flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
                         <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
                         <p className="text-xs text-amber-700">
                           Only policies belonging to this tenant are shown. System policies are excluded.
                         </p>
                       </div>
-                    )}
+                    )} */}
 
                     {/* Selected policies */}
                     {selectedPolicies.length > 0 && (

@@ -141,7 +141,7 @@ const shiftSlice = createSlice({
         })
         .addCase(toggleShiftStatus.fulfilled, (state, action) => {
           state.loading = false;
-          const updatedShift = action.payload.data; // <-- use .data here
+          const updatedShift = action.payload; // <-- use .data here
           if (updatedShift && state.shifts.byId[updatedShift.shift_id]) {
             state.shifts.byId[updatedShift.shift_id] = {
               ...state.shifts.byId[updatedShift.shift_id],

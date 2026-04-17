@@ -12,7 +12,7 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
 
   return (
     <header className={`
-      bg-white border-b border-gray-200 fixed top-0 right-0 z-10 transition-all duration-300
+      bg-white border-b border-gray-200 fixed top-0 right-0 z-30 transition-all duration-300
       ${isSidebarOpen ? "left-[220px]" : "left-[56px]"}
     `}>
       <div className="px-4 sm:px-6 lg:px-8">

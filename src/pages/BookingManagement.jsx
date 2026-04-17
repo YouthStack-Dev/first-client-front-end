@@ -395,6 +395,12 @@ export default function BookingManagement() {
             address={employee?.address || "N/A"}
             onBookShift={handleBookShift}
             onViewBookingHistory={handleBookingHistory}
+            step={step}
+            onBack={
+              step === "shift"    ? handleBackToCalendar :
+              step === "calendar" || step === "history" ? handleBackToWelcome :
+              undefined
+            }
           />
         </div>
 
@@ -510,7 +516,7 @@ export default function BookingManagement() {
                 selectedDates={selectedDates}
                 onDateSelect={setSelectedDates}
                 restrictedDays={restrictedDays}
-                monthsForward={1}
+                monthsForward={3}
                 onNext={handleNextToShift}
                 onBack={handleBackToWelcome}
               />
