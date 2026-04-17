@@ -173,7 +173,7 @@ const PermCard = ({ module, actions, onChange }) => {
 
 // ── Discard Dialog ─────────────────────────────────────────────────────────
 const DiscardDialog = ({ onConfirm, onCancel }) => (
-  <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/80 backdrop-blur-[2px] rounded-3xl">
+  <div className="absolute inset-0 z-[9999] flex items-center justify-center bg-white/80 backdrop-blur-[2px] rounded-3xl">
     <div className="bg-white border border-slate-200 rounded-2xl shadow-xl p-6 w-80 text-center">
       <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-3">
         <AlertCircle size={20} className="text-rose-500" />
