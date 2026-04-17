@@ -52,18 +52,21 @@ const ShiftManagement = () => {
     setIsModalOpen(true);
   };
 
-  const handleStatusToggle = async (shift) => {
-    try {
-      const result = dispatch(toggleShiftStatus(shift.shift_id));
-      if (toggleShiftStatus.fulfilled.match(result)) {
-        toast.success(`Shift "${shift.shift_code}" status updated!`);
-      } else {
-        toast.error(result.payload || "Failed to toggle shift status");
-      }
-    } catch {
-      toast.error("Something went wrong while updating shift status");
-    }
-  };
+const handleStatusToggle = async (shift) => {
+  try {
+    const res = await dispatch(
+      toggleShiftStatus(shift.shift_id)
+    ).unwrap();
+
+    console.log("✅ Toggle success:", res);
+
+    toast.success(`Shift "${shift.shift_code}" status updated!`);
+  } catch (error) {
+    console.error("❌ Toggle failed:", error);
+
+    toast.error(error || "Failed to toggle shift status");
+  }
+};
 
   const handleFormSubmit = async (data) => {
     try {

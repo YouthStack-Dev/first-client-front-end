@@ -34,8 +34,20 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
     return user?.email || "";
   }, [user]);
 
-  const initials    = user?.name ? user.name.slice(0, 2).toUpperCase() : "AD";
-  const displayName = user?.name ?? "Admin User";
+  const displayName =
+    user?.name              ||
+    user?.full_name         ||
+    user?.employee?.name    ||
+    user?.vendor_user?.name ||
+    displayEmail.split("@")[0] ||
+    "Admin User";
+
+  const initials = displayName
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "AD";
 
   // ── Close on outside click ─────────────────────────────────────────────
   useEffect(() => {
@@ -87,8 +99,7 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
               onClick={handleAnnouncementClick}
               className="group relative flex items-center gap-2 px-3 py-2 rounded-xl
                 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50
-                transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-            >
+                transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-300" >
               <div className="relative p-1.5 rounded-lg bg-gray-100 group-hover:bg-indigo-100 transition-colors">
                 <Megaphone className="h-4 w-4" />
               </div>

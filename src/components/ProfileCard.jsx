@@ -1,4 +1,4 @@
-import { User, Mail, Phone, MapPin, UserCircle, Calendar, History, Smartphone } from 'lucide-react';
+import { User, Mail, Phone, MapPin, UserCircle, Calendar, History, Smartphone, ArrowLeft } from 'lucide-react';
 import ReusableButton from './ui/ReusableButton';
 
 const ProfileCard = ({ 
@@ -10,13 +10,24 @@ const ProfileCard = ({
   gender, 
   address, 
   onBookShift,
-  onViewBookingHistory 
+  onViewBookingHistory,
+  step = "welcome",
+  onBack,
 }) => {
   return (
     <div className="bg-white rounded-xl shadow-lg p-4  h-fit sticky top-6">
       {/* Header without photo */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+        {step !== "welcome" && onBack && (
+          <button
+            onClick={onBack}
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors shrink-0"
+            title="Go back"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+        )}
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shrink-0">
           <UserCircle className="w-7 h-7 text-white" />
         </div>
         <div>
@@ -66,25 +77,28 @@ const ProfileCard = ({
 
       {/* Action Buttons */}
       <div className="flex flex-col gap-3">
-        <ReusableButton
-          module="booking"
-          action="create"
-          icon={Calendar}
-          buttonName="Book Shift"
-          onClick={onBookShift}
-          className="w-full justify-center py-2.5 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium transition-colors text-sm"
-          size={16}
-        />
-        
-        <ReusableButton
-          module="booking"
-          action="read"
-          icon={History}
-          buttonName="Booking History"
-          onClick={onViewBookingHistory}
-          className="w-full justify-center py-2.5 bg-purple-600 text-white hover:bg-purple-700 rounded-lg font-medium transition-colors text-sm"
-          size={16}
-        />
+        {step === "welcome" && (
+          <>
+            <ReusableButton
+              module="booking"
+              action="create"
+              icon={Calendar}
+              buttonName="Book Ride"
+              onClick={onBookShift}
+              className="w-full justify-center py-2.5 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium transition-colors text-sm"
+              size={16}
+            />
+            <ReusableButton
+              module="booking"
+              action="read"
+              icon={History}
+              buttonName="Booking History"
+              onClick={onViewBookingHistory}
+              className="w-full justify-center py-2.5 bg-purple-600 text-white hover:bg-purple-700 rounded-lg font-medium transition-colors text-sm"
+              size={16}
+            />
+          </>
+        )}
       </div>
     </div>
   );

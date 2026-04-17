@@ -380,7 +380,7 @@ const TeamEmployeeModal = ({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white z-10">
           <h2 className="text-2xl font-bold text-gray-800">
-            {mode === "create" ? "Add Team Employee" : isEditing ? "Edit Team Employee" : "View Team Employee"}
+            {mode === "create" ? "Add Employee" : isEditing ? "Edit Employee" : "View Employee"}
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
             <X size={24} />
@@ -608,10 +608,10 @@ const TeamEmployeeModal = ({
             </div>
 
             {/* Active toggle */}
-            <Toggle label="Active"     fieldName="is_active"     />
+            <Toggle label="Employee Active"     fieldName="is_active"     />
 
             {/* App Active toggle */}
-            <Toggle label="App Active" fieldName="is_app_active" />
+            <Toggle label="App Access" fieldName="is_app_active" />
 
           </div>
 

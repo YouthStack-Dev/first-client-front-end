@@ -12,7 +12,7 @@ export const pathTitleMap = {
   "/employees": "Employee Management",
   "/employee": "Employee",
   "/department": "Department Employees",
-  "/vendor-user-management": "Vendor User Management",
+
   // Management
   "/departments": "Departments",
   "/groups": "Group Management",
@@ -26,14 +26,15 @@ export const pathTitleMap = {
   "/tenants": "Tenant Management",
 
   // Fleet Management
-  "/vehicles": "Manage Vehicles",
-  "/old-vehicles": "Manage Vehicles (Legacy)",
-  "/vehicle-types": "Vehicle Types",
-  "/vehicle-group": "Vehicle Groups",
-  "/drivers": "Manage Drivers",
+  "/vehicles-management": "Manage Vehicles",
+  // "/old-vehicles": "Manage Vehicles (Legacy)",
+  // "/vehicle-types": "Vehicle Types",
+  // "/vehicle-group": "Vehicle Groups",
+  "/driverform": "Manage Drivers",
 
   // Vendor Management
-  "/vendors": "Manage Vendors",
+  "/new-vendor-management": "Manage Vendors",
+  "/vendor-user-management": "Vendor Users",
 
   // Operations
   "/routing": "Route Management",
@@ -45,14 +46,14 @@ export const pathTitleMap = {
 
   // Shift Management
   "/shifts": "Manage Shifts",
-  "/manage-shift": "Shift Management",
-  "/shift-categories": "Shift Categories",
-  "/shift-Categories": "Shift Categories Management",
-  "/cutoff": "Cutoff Settings",
+  // "/manage-shift": "Shift Management",
+  // "/shift-categories": "Shift Categories",
+  // "/shift-Categories": "Shift Categories Management",
+  "/cutoff": "System Configuration",
 
   // Additional Routes
   "/manage-company": "Manage Companies",
-  "/role-management": "Role Mangement",
+  // "/role-permission": "Role And Policies Mangement",
   "/staffs": "Manage Staff",
   "/manage-client": "Manage Clients",
   "/vehicle-contract": "Vehicle Contracts",
@@ -61,6 +62,18 @@ export const pathTitleMap = {
 
   // Utility
   "/unauthorized": "Unauthorized",
+
+  // ✅ Add these missing ones
+"/teams":                "Team Management",
+"/announcements":        "Announcements",
+"/reviews":              "Reviews",
+"/profile":              "Profile",
+"/reports":              "Reports Management",
+"/alert-config":          "Alert Configuration",
+"/notification":          "Alert Notifications",
+"/role-permission":      "User Role & Permission",
+"/escort-management":    "Escort Management",
+
 };
 
 /**
@@ -69,13 +82,17 @@ export const pathTitleMap = {
  * @returns {string} The matching title or 'Dashboard' as fallback
  */
 export const getTitleFromPath = (path) => {
-  // Handle root path
   if (path === "/") return "Login";
 
-  // Split path into segments
-  const segments = path.split("/").filter((segment) => segment !== "");
+  // ✅ Strip base prefixes so "/companies/vehicles" matches "/vehicles"
+  const strippedPath = path
+    .replace(/^\/companies/, "")
+    .replace(/^\/superadmin/, "")
+    .replace(/^\/vendor(?=\/|$)/, "");
 
-  // Try to find the longest matching path
+  const segments = strippedPath.split("/").filter((segment) => segment !== "");
+
+  // Try longest match first
   for (let i = segments.length; i > 0; i--) {
     const testPath = "/" + segments.slice(0, i).join("/");
     if (pathTitleMap[testPath]) {
@@ -83,6 +100,5 @@ export const getTitleFromPath = (path) => {
     }
   }
 
-  // Fallback to Dashboard if no match found
   return "Dashboard";
 };

@@ -164,7 +164,7 @@ const EscortFormModal = ({
 
             {/* Email */}
             <div>
-              <FormField label="Email" error={errors.email}>
+              <FormField label="Email" required error={errors.email}>
                 <input
                   type="email"
                   value={formData.email}
@@ -211,7 +211,7 @@ const EscortFormModal = ({
 
             {/* Gender */}
             <div>
-              <FormField label="Gender">
+              <FormField label="Gender" required error={errors.gender}>
                 <Select
                   value={genderOptions.find((g) => g.value === formData.gender)}
                   onChange={(selected) =>

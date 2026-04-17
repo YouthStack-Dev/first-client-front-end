@@ -321,8 +321,6 @@ const ManageEmployees = () => {
               onClick={() => setShowBulkUpload((prev) => !prev)}
               className="text-white bg-green-600 p-2 rounded-md"
             />
-
-
           </div>
         }
       />

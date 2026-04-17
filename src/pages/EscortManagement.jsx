@@ -145,6 +145,8 @@ const EscortManagement = () => {
     if (!formData.phone.trim()) newErrors.phone = "Phone required";
     else if (phoneDigits.length < 10)
       newErrors.phone = "Phone must have at least 10 digits";
+    if (!formData.email?.trim()) newErrors.email = "Email is required";
+    if (!formData.gender) newErrors.gender = "Gender is required";
 
     setFormErrors(newErrors);
     return !Object.keys(newErrors).length;

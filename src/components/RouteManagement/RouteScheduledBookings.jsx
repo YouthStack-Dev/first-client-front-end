@@ -157,10 +157,10 @@ const RouteScheduledBookings = () => {
   const tenant_id = currentUser?.employee?.tenant_id;
   // logDebug("user type", type, "tenant_id", tenant_id);
 
-  // ✅ NEW: helper to show auto-dismissing toast instead of alert()
-  const showToast = useCallback((message, variant = "success") => {
-    setToast({ message, variant });
-    setTimeout(() => setToast(null), 3500);
+  // helper to show auto-dismissing toast instead of alert()
+  const showToast = useCallback((message, variant = "success", hint = null) => {
+    setToast({ message, hint, variant });
+    setTimeout(() => setToast(null), variant === "error" ? 6000 : 3500);
   }, []);
 
   // ── Fetch shifts ────────────────────────────────────────────────────────────
@@ -183,6 +183,8 @@ const RouteScheduledBookings = () => {
               shift_code: shift.shift_code,
               shift_time: shift.shift_time,
               log_type: shift.log_type,
+              drop_latitude:  shift.drop_latitude  ?? null,
+              drop_longitude: shift.drop_longitude ?? null,
               // ✅ FIXED: added 3 missing fields the table reads
               stats: shift.stats || {
                 route_count:       shift.route_count       || 0,
@@ -202,7 +204,7 @@ const RouteScheduledBookings = () => {
           // logDebug("transformed shifts data", transformedData);
           dispatch(addShiftsFromAPI(transformedData));
         } else {
-          throw new Error(response.data.message || "Failed to fetch shifts data");
+          throw new Error(response.data.detail?.message || response.data.message || "Failed to fetch shifts data");
         }
       } catch (error) {
         console.error("Error fetching shifts data:", error);
@@ -228,6 +230,35 @@ const RouteScheduledBookings = () => {
   // ── Generate / Regenerate route ─────────────────────────────────────────────
   const handleGenerateRoute = useCallback(
     async (shiftId) => {
+      // ── Front-end coordinate validation ────────────────────────────────────
+      // Only block when the API DID return coordinates and they are clearly wrong.
+      // If the shifts endpoint doesn't include drop coords (null/undefined),
+      // skip the check and let the backend validate instead.
+      const shifts = shiftsData?.shifts || [];
+      const shift  = shifts.find((s) => s.shift_id === shiftId);
+      if (shift) {
+        const hasLat = shift.drop_latitude  != null && shift.drop_latitude  !== "";
+        const hasLng = shift.drop_longitude != null && shift.drop_longitude !== "";
+
+        if (hasLat && hasLng) {
+          // Coords were returned — validate their ranges
+          const lat = parseFloat(shift.drop_latitude);
+          const lng = parseFloat(shift.drop_longitude);
+          const latInvalid = isNaN(lat) || lat < -90  || lat > 90;
+          const lngInvalid = isNaN(lng) || lng < -180 || lng > 180;
+
+          if (latInvalid || lngInvalid) {
+            showToast(
+              `Invalid drop-point coordinates for shift ${shift.shift_code || shiftId}.`,
+              "error",
+              `Current values: (${shift.drop_latitude}, ${shift.drop_longitude}). Valid lat is −90…90, lng is −180…180. Please update the drop location and try again.`
+            );
+            return;
+          }
+        }
+        // If coords are absent from this API response, fall through and let backend handle it.
+      }
+
       try {
         setGeneratingRoute(shiftId);
 
@@ -237,23 +268,27 @@ const RouteScheduledBookings = () => {
 
         if (response.data.success) {
           await fetchShiftsData(selectedDate);
-          // ✅ FIXED: replaced alert() with toast
           showToast("Route generated successfully!");
         } else {
-          throw new Error(response.data.message || "Failed to generate route");
+          const errDetail = response.data.detail;
+          throw new Error(errDetail?.message || response.data.message || "Failed to generate route");
         }
       } catch (error) {
         console.error("Error generating route:", error);
-        // ✅ FIXED: replaced alert() with toast
-        showToast(
-          error.response?.data?.message || error.message || "Failed to generate route",
-          "error"
-        );
+        // Handle both flat {message, hint} and nested {detail: {message, hint}} 422 shapes
+        const respData = error.response?.data ?? {};
+        const detail   = respData.detail ?? respData;          // prefer nested, fall back to flat
+        const message  = detail?.message
+          || respData.message
+          || error.message
+          || "Failed to generate route";
+        const hint = detail?.hint ?? respData.hint ?? null;
+        showToast(message, "error", hint);
       } finally {
         setGeneratingRoute(null);
       }
     },
-    [selectedDate, config, fetchShiftsData, showToast]
+    [selectedDate, config, fetchShiftsData, showToast, shiftsData]
   );
 
   // ✅ FIXED: removed hasFetchedRef — useEffect now correctly re-runs on date change
@@ -380,17 +415,22 @@ const RouteScheduledBookings = () => {
         onSave={handleConfigSave}
       />
 
-      {/* ✅ NEW: Toast notification — replaces all alert() calls */}
+      {/* Toast notification */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-lg shadow-lg text-white text-sm flex items-center gap-3 transition-all ${
+          className={`fixed top-6 right-6 z-50 max-w-sm px-5 py-3 rounded-lg shadow-lg text-white text-sm flex items-start gap-3 transition-all ${
             toast.variant === "error" ? "bg-red-500" : "bg-green-500"
           }`}
         >
-          <span>{toast.message}</span>
+          <div className="flex-1">
+            <p className="font-medium">{toast.message}</p>
+            {toast.hint && (
+              <p className="text-white/80 text-xs mt-1">{toast.hint}</p>
+            )}
+          </div>
           <button
             onClick={() => setToast(null)}
-            className="ml-2 text-white/80 hover:text-white font-bold"
+            className="shrink-0 text-white/80 hover:text-white font-bold leading-none"
           >
             ✕
           </button>

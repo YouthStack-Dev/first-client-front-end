@@ -101,7 +101,8 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        const { user, token, allowedModules } = action.payload;
+        const { user, token,refresh_token, allowedModules } = action.payload;
+        console.log("🔥 REFRESH TOKEN FROM PAYLOAD:", refresh_token);
         logDebug(" this is the payload ", action.payload);
         // state.user = user;
          state.user = {
@@ -125,6 +126,12 @@ const authSlice = createSlice({
         };
 
         Cookies.set("auth_token", token, cookieOptions);
+
+         Cookies.set("refresh_token", refresh_token, {
+            path: "/",
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+          });
 
         // Persist to session storage
         sessionStorage.setItem(
@@ -158,8 +165,21 @@ const authSlice = createSlice({
       .addCase(fetchUserFromToken.fulfilled, (state, action) => {
         const { user, permissions: allowedModules, user_type } = action.payload;
         logDebug(" this is the refresh payload user ", action.payload);
-        state.user = { ...user, type: user_type };
+        state.user = {
+          ...user,
+          type: user_type,
+          tenant_id:
+            user.tenant_id ||
+            user.employee?.tenant_id ||
+            user.vendor_user?.tenant_id ||
+            null,
+        };
         state.permissions = allowedModules;
+        // Sync token from cookie (updated by refresh interceptor)
+        const freshToken = Cookies.get("auth_token");
+        if (freshToken) {
+          state.token = freshToken;
+        }
         state.isAuthenticated = true;
         state.loading = false;
         state.error = null;
