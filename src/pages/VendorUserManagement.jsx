@@ -208,11 +208,15 @@ const VendorUserManagement = () => {
     setShowVendorUserModal(true);
   };
 
-  const handleEditVendorUser = (vendorUser) => {
-    setSelectedVendorUser(vendorUser);
-    setModalMode(MODAL_MODES.EDIT);
-    setShowVendorUserModal(true);
-  };
+ const handleEditVendorUser = (vendorUser) => {
+  // ✅ normalize so VendorUserForm always gets `id`
+  setSelectedVendorUser({
+    ...vendorUser,
+    id: vendorUser.id || vendorUser.vendor_user_id, // ✅ fix here
+  });
+  setModalMode(MODAL_MODES.EDIT);
+  setShowVendorUserModal(true);
+};
 
   const handleCreateVendorUser = () => {
     setSelectedVendorUser(null);

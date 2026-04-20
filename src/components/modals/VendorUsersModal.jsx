@@ -1,5 +1,5 @@
 // components/Vendor/VendorUserForm.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react"; // ✅ added useRef
 import { toast } from "react-toastify";
 import Select from "react-select";
 import {
@@ -19,7 +19,7 @@ import { API_CLIENT } from "../../Api/API_Client";
 import { logDebug } from "../../utils/logger";
 import endpoint from "../../Api/Endpoints";
 import { useValidation } from "../../hooks/useValidation";
-import { useRoleOptions } from "../../hooks/useRoles"; // Import the role hook
+import { useRoleOptions } from "../../hooks/useRoles";
 import { Modal } from "../SmallComponents";
 
 const VendorUserForm = ({
@@ -37,66 +37,63 @@ const VendorUserForm = ({
   const [selectedRole, setSelectedRole] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Use the validation hook
+  // ✅ ref to prevent role pre-fill from running more than once per open
+  const rolePrefilled = useRef(false);
+
   const { errors, validateForm, clearError } = useValidation(
     "vendorUser",
-    mode === "create" ? "create" : "edit"
+    mode === "create" ? "create" : mode === "view" ? "view" : "update"
   );
 
-  // Fetch roles for dropdown
   const { options: roleOptions, loading: rolesLoading } = useRoleOptions(
     isOpen && (mode === "create" || mode === "edit" || mode === "view")
   );
 
-  // Form state
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     vendor_id: "",
-    role_id: "", // Add role_id to form data
+    role_id: "",
     is_active: true,
     password: "",
   });
 
-  // Initialize form when modal opens or data changes
+  // ✅ useEffect 1 — form init only, NO roleOptions in deps
   useEffect(() => {
     if (isOpen) {
+      rolePrefilled.current = false; // ✅ reset on every open
+
       if (initialData) {
-        // Set form values from initialData
         setFormData({
           name: initialData.name || "",
           email: initialData.email || "",
           phone: initialData.phone || "",
           vendor_id: initialData.vendor_id || "",
-          role_id: initialData.role_id || "", // Add role_id
+          role_id: initialData.role_id || "",
           is_active:
             initialData.is_active !== undefined ? initialData.is_active : true,
-          password: "", // Don't pre-fill password for security
+          password: "",
         });
 
-        // Find and set selected vendor
+        // Set selected vendor
         if (initialData.vendor_id && vendors.length > 0) {
-          const vendor = vendors.find(
-            (v) =>
-              v.id === initialData.vendor_id ||
-              v.vendor_id === initialData.vendor_id
-          );
-          if (vendor) {
-            setSelectedVendor({
-              value: vendor.vendor_id,
-              label: vendor.name || vendor.vendor_name || `Vendor ${vendor.id}`,
-            });
-          }
+                const vendor = vendors.find(
+                  (v) => v.value === initialData.vendor_id
+                );
+                if (vendor) {
+                  setSelectedVendor(vendor); // ✅ already correct format, use directly
+                }
         }
+
       } else {
-        // Reset form for create mode
+        // Reset for create mode
         setFormData({
           name: "",
           email: "",
           phone: "",
           vendor_id: "",
-          role_id: "", // Reset role_id
+          role_id: "",
           is_active: true,
           password: "",
         });
@@ -104,48 +101,57 @@ const VendorUserForm = ({
         setSelectedRole(null);
       }
 
-      // Set edit mode based on modal mode prop
       setIsEditMode(mode === "create" || mode === "edit");
+
+    } else {
+      rolePrefilled.current = false; // ✅ reset on close too
     }
   }, [isOpen, initialData, mode, vendors]);
 
-  // Handle input changes
+  // ✅ useEffect 2 — role pre-fill with ref guard, NO dependency array
+  // Runs every render but ref ensures setSelectedRole fires only ONCE per open
+  useEffect(() => {
+    if (
+      !rolePrefilled.current &&
+      isOpen &&
+      initialData?.role_id &&
+      roleOptions.length > 0
+    ) {
+      const role = roleOptions.find((r) => r.value === initialData.role_id);
+      if (role) {
+        setSelectedRole(role);
+        rolePrefilled.current = true; // ✅ block further runs
+      }
+    }
+  }); // ✅ intentionally no dep array
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
-
-    // Clear error for this field when user starts typing
     clearError(name);
   };
 
-  // Handle vendor selection
   const handleVendorSelect = (selectedOption) => {
     setSelectedVendor(selectedOption);
     setFormData((prev) => ({
       ...prev,
       vendor_id: selectedOption?.value || "",
     }));
-
-    // Clear vendor error if exists
     clearError("vendor_id");
   };
 
-  // Handle role selection
   const handleRoleSelect = (selectedOption) => {
     setSelectedRole(selectedOption);
     setFormData((prev) => ({
       ...prev,
       role_id: selectedOption?.value || "",
     }));
-
-    // Clear role error if exists
     clearError("role_id");
   };
 
-  // Toggle password visibility
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -154,11 +160,9 @@ const VendorUserForm = ({
     e.preventDefault();
     logDebug("Submitting vendor user data:", formData);
 
-    // Validate form using Zod schema
     const validationResult = validateForm(formData);
 
     if (!validationResult.isValid) {
-      // Check if there are specific field errors
       const hasFieldErrors = Object.keys(validationResult.errors).some(
         (key) => key !== "general"
       );
@@ -172,52 +176,43 @@ const VendorUserForm = ({
 
     setIsLoading(true);
     try {
-      // Use validated data from Zod parsing
       const validatedData = validationResult.validatedData;
 
-      // Prepare payload
       const payload = {
         ...validatedData,
-        // Ensure vendor_id and role_id are numbers
         vendor_id: parseInt(validatedData.vendor_id) || validatedData.vendor_id,
         role_id: parseInt(formData.role_id) ? parseInt(formData.role_id) : null,
       };
-      logDebug(" this is the vendor user subbmiting payloud", payload);
+
+      logDebug("Vendor user payload:", payload);
+
       let response;
+
       if (mode === "create") {
+        // ✅ POST /vendor-users/
         response = await API_CLIENT.post(endpoint.VendorUser, payload);
+        toast.success("Vendor user created successfully!");
+
       } else if (mode === "edit" && initialData?.id) {
-        // For edit, remove password if it's empty string
+        // ✅ PUT /vendor-users/:id
         if (payload.password === "") {
           delete payload.password;
         }
         response = await API_CLIENT.put(
-          `${endpoint.VendorUser}/${initialData.id}`,
+          `${endpoint.VendorUser}${initialData.id}`,
           payload
         );
-        toast.success("Vendor user updated successfully!");
       }
 
-      // Call success callback
-      if (onSuccess) {
-        onSuccess(response?.data);
-      }
-
-      // Refresh vendor list if function provided
-      if (refreshVendors) {
-        refreshVendors();
-      }
-
-      // Close modal
+      if (onSuccess) onSuccess(response?.data);
+      if (refreshVendors) refreshVendors();
       onClose();
+
     } catch (error) {
-      // Handle FastAPI-style validation errors (Pydantic errors in "detail" array)
       if (error.response?.data?.detail) {
         const validationErrors = error.response.data.detail;
 
-        // Check if it's a list of validation errors
         if (Array.isArray(validationErrors)) {
-          // Extract and display each validation error
           validationErrors.forEach((err) => {
             const fieldPath = err.loc || [];
             const field =
@@ -225,75 +220,55 @@ const VendorUserForm = ({
                 ? fieldPath[fieldPath.length - 1]
                 : "unknown_field";
             const message = err.msg || "Validation error";
-
-            // Display error for specific field
             toast.error(`${field}: ${message}`);
           });
-        }
-        // Handle single error message (non-array detail)
-        else if (typeof validationErrors === "string") {
+        } else if (typeof validationErrors === "string") {
           toast.error(validationErrors);
-        }
-        // Handle error object
-        else if (validationErrors.message) {
+        } else if (validationErrors.message) {
           toast.error(validationErrors.message);
         }
-      }
-      // Handle non-FastAPI validation errors (legacy format)
-      else if (error.response?.data?.errors) {
-        const validationErrors = error.response.data.errors;
 
-        // Extract and display each validation error
-        validationErrors.forEach((err) => {
+      } else if (error.response?.data?.errors) {
+        error.response.data.errors.forEach((err) => {
           const field = err.loc ? err.loc[err.loc.length - 1] : "unknown_field";
           const message = err.msg || "Validation error";
-
-          // Display error for specific field
           toast.error(`${field}: ${message}`);
         });
-      }
-      // Fallback to general error message
-      else {
-        const errorMessage =
+
+      } else {
+        toast.error(
           error.response?.data?.message ||
           error.response?.data?.detail ||
-          "Failed to save vendor user";
-        toast.error(errorMessage);
+          "Failed to save vendor user"
+        );
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Toggle edit mode (for view mode)
   const toggleEditMode = () => {
     setIsEditMode(!isEditMode);
-    clearError(); // Clear all errors
+    clearError();
   };
 
-  // Handle modal close
   const handleClose = () => {
     setIsEditMode(mode === "create" || mode === "edit");
     setShowPassword(false);
     setSelectedRole(null);
+    rolePrefilled.current = false; // ✅ reset on manual close too
     onClose();
   };
 
-  // Prepare modal title
   const getModalTitle = () => {
     switch (mode) {
-      case "create":
-        return "Create Vendor User";
-      case "edit":
-        return "Edit Vendor User";
-      case "view":
-        return "Vendor User Details";
-      default:
-        return "Vendor User";
+      case "create": return "Create Vendor User";
+      case "edit":   return "Edit Vendor User";
+      case "view":   return "Vendor User Details";
+      default:       return "Vendor User";
     }
   };
 
-  // Determine if we should show the edit toggle in the Modal header
   const showEditToggle = mode === "view";
 
   return (
@@ -311,6 +286,7 @@ const VendorUserForm = ({
       submitText={mode === "create" ? "Create" : "Save Changes"}
     >
       <div className="space-y-5">
+
         {/* Vendor Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -345,7 +321,7 @@ const VendorUserForm = ({
           )}
         </div>
 
-        {/* Role Selection (for create/edit/edit mode) */}
+        {/* Role Selection */}
         {(mode === "create" ||
           mode === "edit" ||
           (mode === "view" && isEditMode)) && (
@@ -361,9 +337,7 @@ const VendorUserForm = ({
                 onChange={handleRoleSelect}
                 isLoading={rolesLoading}
                 isDisabled={(mode === "view" && !isEditMode) || rolesLoading}
-                placeholder={
-                  rolesLoading ? "Loading roles..." : "Select a role..."
-                }
+                placeholder={rolesLoading ? "Loading roles..." : "Select a role..."}
                 className="react-select-container"
                 classNamePrefix="react-select"
                 noOptionsMessage={() => "No roles found"}
@@ -385,7 +359,7 @@ const VendorUserForm = ({
           </div>
         )}
 
-        {/* Display role in view mode (non-edit) */}
+        {/* Display role in view mode */}
         {mode === "view" && !isEditMode && selectedRole && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -470,7 +444,7 @@ const VendorUserForm = ({
           )}
         </div>
 
-        {/* Password (only for create mode or when editing) */}
+        {/* Password */}
         {(mode === "create" ||
           (mode === "view" && isEditMode) ||
           mode === "edit") && (
@@ -480,8 +454,7 @@ const VendorUserForm = ({
               {mode === "create" && <span className="text-red-500">*</span>}
               {mode !== "create" && (
                 <span className="text-gray-500 text-xs">
-                  {" "}
-                  (Leave blank to keep current)
+                  {" "}(Leave blank to keep current)
                 </span>
               )}
             </label>
@@ -519,7 +492,7 @@ const VendorUserForm = ({
           </div>
         )}
 
-        {/* Active Status */}
+        {/* Active Status - create/edit mode */}
         {(mode === "create" ||
           mode === "edit" ||
           (mode === "view" && isEditMode)) && (
@@ -543,7 +516,7 @@ const VendorUserForm = ({
           </div>
         )}
 
-        {/* Display active status in view mode */}
+        {/* Active Status - view mode */}
         {mode === "view" && !isEditMode && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -570,6 +543,7 @@ const VendorUserForm = ({
             </div>
           </div>
         )}
+
       </div>
     </Modal>
   );
