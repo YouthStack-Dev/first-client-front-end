@@ -171,6 +171,7 @@ const TeamEmployeesManagement = () => {
   };
 
   const handleView = (employee) => {
+      console.log("EMPLOYEE DATA PASSED TO MODAL:", employee);
     setModalMode("view");
     setModalEmployeeData(employee);
     setIsModalOpen(true);
