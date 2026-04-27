@@ -222,8 +222,13 @@ const BulkUploadEmployeesSection = ({ isOpen, onClose, onSuccess }) => {
           <div className="bg-red-50 border border-red-200 rounded p-3">
             <p className="text-sm font-medium text-red-700">Upload Failed</p>
             <p className="text-xs text-red-600 mt-1">
-              {error?.message || "Something went wrong. Please try again."}
+              {error?.detail?.message || error?.message || "Something went wrong. Please try again."}
             </p>
+            {error?.detail?.error_code && (
+              <p className="text-xs text-red-500 mt-1 font-mono">
+                Code: {error.detail.error_code}
+              </p>
+            )}
           </div>
         )}
 

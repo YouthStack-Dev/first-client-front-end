@@ -28,7 +28,7 @@ import {
 } from "../../redux/features/manageVehicles/vehicleSelectors";
 
 import { useVendorOptions } from "../../hooks/useVendorOptions";
-import AuditLogsModal from "../modals/AuditLogsModal"; // ✅ ADDED
+import AuditLogsModal from "../modals/AuditLogsModal";
 
 /* ======================================================
    🔁 DEBOUNCE HOOK (SAME AS VEHICLE TYPES)

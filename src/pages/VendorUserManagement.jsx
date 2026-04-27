@@ -486,7 +486,7 @@ const handleToggleVendorUser = async (user) => {
         moduleName="Vendor User"
         showUserColumn={true}
         apimodule="vendor_user"
-        selectedCompany={"SAM001"}
+        selectedCompany={tenant_id}
       />
     </div>
   );
