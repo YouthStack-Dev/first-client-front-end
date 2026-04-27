@@ -254,7 +254,7 @@ const TeamEmployeeModal = ({
           is_active:     formData.is_active,
           is_app_active: formData.is_app_active,
         };
-        delete sanitizedData.role_id; // not part of create API
+        delete sanitizedData.role_id;
         Object.keys(sanitizedData).forEach((key) => {
           if (sanitizedData[key] === "") sanitizedData[key] = null;
         });
@@ -297,14 +297,42 @@ const TeamEmployeeModal = ({
           return;
         }
 
-        await dispatch(
+        // ✅ Capture the result from API
+        const result = await dispatch(
           updateEmployeeThunk({ employeeId: employeeData.employee_id, employeeData: diffData })
         ).unwrap();
+        console.log("UPDATE RESULT:", result);
+
+        // ✅ Update formData with fresh data from API response
+        const updatedEmployee = result?.data?.employee || null;
+        if (updatedEmployee) {
+          setFormData({
+            name:                     updatedEmployee.name                     || "",
+            email:                    updatedEmployee.email                    || "",
+            phone:                    updatedEmployee.phone                    || "",
+            alternate_phone:          updatedEmployee.alternate_phone          || "",
+            employee_code:            updatedEmployee.employee_code            || "",
+            gender:                   updatedEmployee.gender                   || "",
+            password:                 "",
+            special_needs:            updatedEmployee.special_needs            || "",
+            special_needs_start_date: updatedEmployee.special_needs_start_date || "",
+            special_needs_end_date:   updatedEmployee.special_needs_end_date   || "",
+            address:                  updatedEmployee.address                  || "",
+            latitude:                 updatedEmployee.latitude                 || "",
+            longitude:                updatedEmployee.longitude                || "",
+            landmark:                 updatedEmployee.landmark                 || "",
+            team_id:                  updatedEmployee.team_id                  || "",
+            tenant_id:                updatedEmployee.tenant_id || tenantId    || "",
+            is_active:                updatedEmployee.is_active                ?? true,
+            is_app_active:            updatedEmployee.is_app_active            ?? true,
+            role_id:                  updatedEmployee.role_id                  || "",
+          });
+        }
 
         toast.success("Employee updated successfully!");
         setIsEditing(false);
         if (onSuccess) onSuccess();
-        onClose();
+        // ✅ Don't close — stay open so user sees fresh data
       }
     } catch (error) {
       console.error("Submission error:", error);

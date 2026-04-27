@@ -1,6 +1,38 @@
 import React, { useEffect, useRef } from "react";
 import { X, AlertCircle } from "lucide-react";
 
+/* ── Constants ──────────────────────────────────────────── */
+const PYDANTIC_NOISE = [
+  (l) => l.startsWith("1 validation error"),
+  (l) => l.startsWith("For further"),
+  (l) => l.includes("pydantic.dev"),
+  (l) => l.includes("errors.pydantic"),
+];
+
+/* ── Helper: parse pydantic error string into readable lines ── */
+const parseErrorString = (errorStr) => {
+  if (!errorStr) return ["Unknown error"];
+  if (typeof errorStr !== "string") return [String(errorStr)];
+
+  const lines = errorStr
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l && !PYDANTIC_NOISE.some((check) => check(l)));
+
+  return lines.length > 0 ? lines : [errorStr];
+};
+
+/* ── Helper: normalize errors array from API ── */
+// API sends: err.errors = ['Team ID is required']  (array)
+// Fallback:  err.error  = "1 validation error..."  (pydantic string)
+const getErrorLines = (err) => {
+  if (Array.isArray(err.errors) && err.errors.length > 0) {
+    return err.errors;
+  }
+  return parseErrorString(err.error);
+};
+
+/* ── Component ──────────────────────────────────────────── */
 const BulkUploadErrorModal = ({ isOpen, onClose, errors }) => {
   const modalRef = useRef(null);
 
@@ -27,6 +59,7 @@ const BulkUploadErrorModal = ({ isOpen, onClose, errors }) => {
 
   if (!isOpen) return null;
 
+  /* ── Empty state ── */
   if (!errors || errors.length === 0) {
     return (
       <div
@@ -56,28 +89,7 @@ const BulkUploadErrorModal = ({ isOpen, onClose, errors }) => {
     );
   }
 
-  // ── Helper: parse pydantic error string into readable lines ───────────────
-  // API sends: "1 validation error for EmployeeCreate\npassword\n  Value error..."
-  // We strip boilerplate and show only the field name + error message
-  const parseErrorString = (errorStr) => {
-    if (!errorStr) return ["Unknown error"];
-    if (typeof errorStr !== "string") return [String(errorStr)];
-
-    const lines = errorStr
-      .split("\n")
-      .map((l) => l.trim())
-      .filter(
-        (l) =>
-          l &&
-          !l.startsWith("1 validation error") &&
-          !l.startsWith("For further") &&
-          !l.includes("pydantic.dev") &&
-          !l.includes("errors.pydantic")
-      );
-
-    return lines.length > 0 ? lines : [errorStr];
-  };
-
+  /* ── Main modal ── */
   return (
     <div
       className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
@@ -129,18 +141,20 @@ const BulkUploadErrorModal = ({ isOpen, onClose, errors }) => {
               </thead>
               <tbody>
                 {errors.map((err, idx) => {
-                  const errorLines = parseErrorString(err.error);
+                  // ✅ API uses employee_name + errors[] array
+                  const errorLines = getErrorLines(err);
 
                   return (
                     <tr
-                      key={idx}
+                      key={err.row ?? idx}
                       className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
                     >
                       <td className="px-3 py-3 align-top font-medium text-gray-700">
                         {err.row || idx + 1}
                       </td>
                       <td className="px-3 py-3 align-top text-gray-800">
-                        {err.name || "-"}
+                        {/* ✅ API sends employee_name, fallback to name */}
+                        {err.employee_name || err.name || "-"}
                       </td>
                       <td className="px-3 py-3 align-top text-gray-600">
                         {err.email || "-"}

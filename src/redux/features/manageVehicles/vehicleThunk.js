@@ -69,7 +69,7 @@ export const updateVehicleThunk = createAsyncThunk(
         },
       });
 
-      return response.data.data?.vehicle;
+      return response.data
     } catch (error) {
       return rejectWithValue(
         error.response?.data || "Failed to update vehicle"
@@ -95,7 +95,7 @@ export const toggleVehicleStatus = createAsyncThunk(
         }
       );
 
-      return response.data.data?.vehicle;
+      return response.data;
     } catch (err) {
       return rejectWithValue(
         err.response?.data || "Failed to toggle vehicle status"
