@@ -40,7 +40,7 @@ export const createVehicleType = createAsyncThunk(
         vendor_id,
       });
 
-      return response.data?.data?.vehicle_type;
+      return response.data;
     } catch (error) {
       return rejectWithValue(
         error.response?.data || "Failed to create vehicle type"
@@ -75,7 +75,7 @@ export const updateVehicleType = createAsyncThunk(
         }
       );
 
-      return response.data?.data?.vehicle_type || response.data?.data;
+      return response.data;
     } catch (error) {
       return rejectWithValue(
         error.response?.data || "Failed to update vehicle type"
@@ -106,8 +106,7 @@ export const toggleVehicleTypeStatus = createAsyncThunk(
           params: { vendor_id },
         }
       );
-
-      return response.data?.data?.vehicle_type || response.data?.data;
+     return response.data;
     } catch (error) {
       return rejectWithValue(
         error.response?.data || "Failed to toggle vehicle type status"

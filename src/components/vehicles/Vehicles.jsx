@@ -148,7 +148,7 @@ const handleToggle = async (vehicle) => {
       })
     ).unwrap();
 
-    console.log("RESULT MESSAGE:", result?.message); // ← ADD HERE
+    // console.log("RESULT MESSAGE:", result?.message); // ← ADD HERE
 
     toast.success(result?.message || "Vehicle status updated successfully");
   } catch {
