@@ -87,11 +87,11 @@ const vehicleTypeSlice = createSlice({
         state.error = null;
       })
 
-      .addCase(createVehicleType.fulfilled, (state, action) => {
+        .addCase(createVehicleType.fulfilled, (state, action) => {
         state.loading = false;
-
-        if (action.payload?.vehicle_type_id) {
-          vehicleTypeAdapter.addOne(state, action.payload);
+        const vehicle = action.payload?.data?.vehicle_type;
+        if (vehicle?.vehicle_type_id) {
+          vehicleTypeAdapter.addOne(state, vehicle);
           state.total += 1;
         }
       })
@@ -110,9 +110,9 @@ const vehicleTypeSlice = createSlice({
 
       .addCase(updateVehicleType.fulfilled, (state, action) => {
         state.loading = false;
-
-        if (action.payload?.vehicle_type_id) {
-          vehicleTypeAdapter.upsertOne(state, action.payload);
+        const vehicle = action.payload?.data?.vehicle_type;
+        if (vehicle?.vehicle_type_id) {
+          vehicleTypeAdapter.upsertOne(state, vehicle);
         }
       })
 
@@ -128,11 +128,12 @@ const vehicleTypeSlice = createSlice({
         state.error = null;
       })
 
-      .addCase(toggleVehicleTypeStatus.fulfilled, (state, action) => {
-        if (action.payload?.vehicle_type_id) {
-          vehicleTypeAdapter.upsertOne(state, action.payload);
-        }
-      })
+    .addCase(toggleVehicleTypeStatus.fulfilled, (state, action) => {
+      const vehicle = action.payload?.data?.vehicle_type;
+      if (vehicle?.vehicle_type_id) {
+        vehicleTypeAdapter.upsertOne(state, vehicle);
+      }
+    })
 
       .addCase(toggleVehicleTypeStatus.rejected, (state, action) => {
         state.error =
