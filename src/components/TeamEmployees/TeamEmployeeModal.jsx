@@ -331,7 +331,7 @@ const TeamEmployeeModal = ({
 
         toast.success("Employee updated successfully!");
         setIsEditing(false);
-        if (onSuccess) onSuccess();
+        if (onSuccess) onSuccess(updatedEmployee);
         // ✅ Don't close — stay open so user sees fresh data
       }
     } catch (error) {

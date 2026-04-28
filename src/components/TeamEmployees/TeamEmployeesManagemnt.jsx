@@ -633,6 +633,17 @@ const TeamEmployeesManagement = () => {
         mode={modalMode}
         employeeData={modalEmployeeData}
         tenantId={tenantId}
+        onSuccess={(updatedEmployee) => {
+          if (updatedEmployee) {
+            setModalEmployeeData(updatedEmployee); // ← keeps modal fresh on reopen
+          }
+          dispatch(fetchEmployeesThunk({
+            team_id: teamId,
+            tenant_id: tenantId,
+            page: 1,
+            limit: 50,
+          }));
+        }}
       />
 
       <WeekOffModal
