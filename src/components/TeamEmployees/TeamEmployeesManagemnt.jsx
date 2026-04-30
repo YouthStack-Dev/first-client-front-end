@@ -171,6 +171,7 @@ const TeamEmployeesManagement = () => {
   };
 
   const handleView = (employee) => {
+      // console.log("EMPLOYEE DATA PASSED TO MODAL:", employee);
     setModalMode("view");
     setModalEmployeeData(employee);
     setIsModalOpen(true);
@@ -242,29 +243,25 @@ const TeamEmployeesManagement = () => {
 
   // TeamEmployeesManagement.js - handleStatusToggle function
   const handleStatusToggle = async (employeeId, currentStatus) => {
-    try {
-      setUpdatingEmployeeId(employeeId);
+  try {
+    setUpdatingEmployeeId(employeeId);
 
-      // Call the async thunk
-      await dispatch(
-        toggleEmployeeStatus({
-          employeeId,
-          isActive: !currentStatus,
-        })
-      ).unwrap();
+    const result = await dispatch(
+      toggleEmployeeStatus({
+        employeeId,
+        isActive: !currentStatus,
+      })
+    ).unwrap();
 
-      // No need for separate toast - the state is updated automatically
-      // through the extraReducer when the thunk is fulfilled
-    } catch (error) {
-      // Error handling
-      toast.error(error || "Failed to update employee status");
+    // ✅ result.data = response.data = { message, success, data: {...} }
+    toast.success(result?.data?.message || "Employee status updated successfully");
 
-      // The state won't be updated because the thunk was rejected
-      // So the toggle button will revert to its original state
-    } finally {
-      setUpdatingEmployeeId(null);
-    }
-  };
+  } catch (error) {
+    toast.error(typeof error === "string" ? error : "Failed to update employee status");
+  } finally {
+    setUpdatingEmployeeId(null);
+  }
+};
 
   const handleHistoryClick = () => {
     setShowAuditModal(true);
@@ -636,6 +633,17 @@ const TeamEmployeesManagement = () => {
         mode={modalMode}
         employeeData={modalEmployeeData}
         tenantId={tenantId}
+        onSuccess={(updatedEmployee) => {
+          if (updatedEmployee) {
+            setModalEmployeeData(updatedEmployee); // ← keeps modal fresh on reopen
+          }
+          dispatch(fetchEmployeesThunk({
+            team_id: teamId,
+            tenant_id: tenantId,
+            page: 1,
+            limit: 50,
+          }));
+        }}
       />
 
       <WeekOffModal

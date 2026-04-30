@@ -236,7 +236,7 @@ const TeamManagement = () => {
 
   const handleBulkUploadSuccess = () => {
     setShowBulkUpload(false);
-    toast.success("Employees uploaded successfully");
+    // toast.success("Employees uploaded successfully");
     dispatch(fetchTeamsThunk({
       skip:      (currentPage - 1) * itemsPerPage,
       limit:     itemsPerPage,
@@ -483,9 +483,9 @@ const TeamManagement = () => {
                           <ReusableButton module="team" action="read" icon={Eye} title="View Team"
                             onClick={() => handleView(team)}
                             className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all" />
-                          <ReusableButton module="team" action="delete" icon={Trash} title="Delete Team"
+                          {/* <ReusableButton module="team" action="delete" icon={Trash} title="Delete Team"
                             onClick={() => handleDelete(team.team_id || team.id)}
-                            className="text-gray-600 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all" />
+                            className="text-gray-600 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all" /> */}
                         </div>
                       </td>
                     </tr>

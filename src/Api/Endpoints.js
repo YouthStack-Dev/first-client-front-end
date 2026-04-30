@@ -18,6 +18,7 @@ const endpoint = {
   toggleEmployeStatus: "/employees/",
   toggleTeamStatus: "/teams/",
   VendorUser: "/vendor-users/",
+  Vendor: "/vendors/",
 
   //  Boookings
   booking: "/bookings/",

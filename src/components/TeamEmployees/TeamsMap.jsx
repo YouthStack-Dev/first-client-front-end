@@ -14,16 +14,19 @@ const TeamsMap = ({ formData, setFormData, isReadOnly = false }) => {
 
   const [position, setPosition] = useState(getCoordinates());
 
-  // Sync position when formData changes
+  // ✅ FIX — sync position AND re-center map when formData changes from parent
   useEffect(() => {
     const coords = getCoordinates();
-    if (
-      coords &&
-      (!position || position.lat !== coords.lat || position.lng !== coords.lng)
-    ) {
+    if (coords) {
       setPosition(coords);
     }
   }, [formData.latitude, formData.longitude]);
+
+  // ✅ FIX — also sync address field when formData.address changes from parent
+  useEffect(() => {
+    // address is already controlled via formData.address in the input
+    // nothing extra needed here — just ensure position stays in sync
+  }, [formData.address]);
 
   const handlePositionChange = useCallback(
     (newPosition) => {
@@ -44,7 +47,6 @@ const TeamsMap = ({ formData, setFormData, isReadOnly = false }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🔥 UPDATED → handles reverse geocode also
   const handleCoordinateChange = (e) => {
     if (isReadOnly) return;
 
@@ -64,10 +66,8 @@ const TeamsMap = ({ formData, setFormData, isReadOnly = false }) => {
     const newPosition = { lat: newLat, lng: newLng };
     setPosition(newPosition);
 
-    // 🔥 Reverse Geocode
     if (window.google && window.google.maps) {
       const geocoder = new window.google.maps.Geocoder();
-
       geocoder.geocode({ location: newPosition }, (results, status) => {
         if (status === "OK" && results && results.length > 0) {
           setFormData((prev) => ({
@@ -169,12 +169,16 @@ const MapContentComponent = ({
   const map = useMap();
   const defaultCenter = { lat: 12.9716, lng: 77.5946 };
 
-  // 🔥 Reverse Geocode function
+  // ✅ FIX — re-center map when position prop changes from parent
+  useEffect(() => {
+    if (map && position) {
+      map.panTo(position);
+    }
+  }, [map, position]);
+
   const reverseGeocode = (lat, lng) => {
     if (!window.google || !window.google.maps) return;
-
     const geocoder = new window.google.maps.Geocoder();
-
     geocoder.geocode({ location: { lat, lng } }, (results, status) => {
       if (status === "OK" && results && results.length > 0) {
         setAddress(results[0].formatted_address);
@@ -182,7 +186,6 @@ const MapContentComponent = ({
     });
   };
 
-  // Address search
   useEffect(() => {
     if (!inputRef.current || isReadOnly) return;
 
@@ -194,16 +197,13 @@ const MapContentComponent = ({
 
         const listener = autocomplete.addListener("place_changed", () => {
           const place = autocomplete.getPlace();
-
           if (place.geometry?.location) {
             const newPosition = {
               lat: place.geometry.location.lat(),
               lng: place.geometry.location.lng(),
             };
-
             setPosition(newPosition);
             setAddress(place.formatted_address || place.name);
-
             map?.panTo(newPosition);
             map?.setZoom(14);
           }
@@ -231,16 +231,12 @@ const MapContentComponent = ({
             draggable={!isReadOnly}
             onDragEnd={(e) => {
               if (isReadOnly) return;
-
               const newPosition = {
                 lat: e.latLng.lat(),
                 lng: e.latLng.lng(),
               };
-
               setPosition(newPosition);
               map?.panTo(newPosition);
-
-              // 🔥 KEY FIX
               reverseGeocode(newPosition.lat, newPosition.lng);
             }}
           />

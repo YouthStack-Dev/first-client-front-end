@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { X, Eye, EyeOff } from "lucide-react";
+import { toast } from "react-toastify"; // ✅ added
 
 import {
   fetchEscortsThunk,
@@ -44,7 +45,7 @@ const EscortManagement = () => {
   const [resetPasswordError, setResetPasswordError] = useState("");
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
- 
+
   const { vendorOptions } = useVendorOptions(null, true);
 
   function getInitialFormData() {
@@ -88,20 +89,22 @@ const EscortManagement = () => {
     setIsModalOpen(true);
   };
 
+  // ✅ alert → toast
   const handleDelete = async (escortId) => {
     if (!window.confirm("Delete this escort?")) return;
-
     try {
       await dispatch(deleteEscortThunk(escortId)).unwrap();
+      toast.success("Escort deleted successfully!");
     } catch (err) {
       if (err?.errorCode === "ESCORT_NOT_FOUND") {
-        alert("Escort already deleted or not found.");
+        toast.error("Escort already deleted or not found.");
       } else {
-        alert(err?.message || "Failed to delete escort.");
+        toast.error(err?.message || "Failed to delete escort.");
       }
     }
   };
 
+  // ✅ alert + console.error → toast
   const handleOnToggleActive = async (escort) => {
     try {
       await dispatch(
@@ -110,15 +113,15 @@ const EscortManagement = () => {
           currentState: escort.is_active,
         })
       ).unwrap();
-    } catch (error) {
-      console.error("Failed to toggle active status:", error);
-      // You could show a toast notification here
-      alert(
-        `Failed to update active status: ${error.message || "Unknown error"}`
+      toast.success(
+        `Escort ${escort.is_active ? "deactivated" : "activated"} successfully!`
       );
+    } catch (error) {
+      toast.error(error?.message || "Failed to update active status");
     }
   };
 
+  // ✅ alert + console.error → toast
   const handleOnToggleAvailable = async (escort) => {
     try {
       await dispatch(
@@ -127,12 +130,11 @@ const EscortManagement = () => {
           currentState: escort.is_available,
         })
       ).unwrap();
-    } catch (error) {
-      console.error("Failed to toggle available status:", error);
-      // You could show a toast notification here
-      alert(
-        `Failed to update available status: ${error.message || "Unknown error"}`
+      toast.success(
+        `Escort marked as ${escort.is_available ? "unavailable" : "available"}!`
       );
+    } catch (error) {
+      toast.error(error?.message || "Failed to update available status");
     }
   };
 
@@ -152,11 +154,10 @@ const EscortManagement = () => {
     return !Object.keys(newErrors).length;
   };
 
+  // ✅ added success toasts + error toast
   const handleSubmit = async () => {
     if (!validateForm()) return;
-
     setIsSubmitting(true);
-
     try {
       const basePayload = {
         vendor_id: formData.vendor_id,
@@ -175,6 +176,7 @@ const EscortManagement = () => {
           createPayload.password = formData.password.trim();
         }
         await dispatch(createEscortThunk(createPayload)).unwrap();
+        toast.success("Escort created successfully!"); // ✅
       } else {
         await dispatch(
           updateEscortThunk({
@@ -182,11 +184,12 @@ const EscortManagement = () => {
             data: basePayload,
           })
         ).unwrap();
+        toast.success("Escort updated successfully!"); // ✅
       }
 
       setIsModalOpen(false);
     } catch (error) {
-      console.error("Form submission error:", error);
+      toast.error(error?.message || "Failed to save escort"); // ✅
     } finally {
       setIsSubmitting(false);
     }
@@ -208,22 +211,14 @@ const EscortManagement = () => {
     setResetPasswordError("");
   };
 
+  // ✅ alert → toast
   const submitResetPassword = async () => {
     const value = resetPassword.trim();
     const confirmValue = confirmResetPassword.trim();
 
-    if (!value) {
-      setResetPasswordError("Password is required.");
-      return;
-    }
-    if (value.length < 6) {
-      setResetPasswordError("Password must be at least 6 characters.");
-      return;
-    }
-    if (value !== confirmValue) {
-      setResetPasswordError("Passwords do not match.");
-      return;
-    }
+    if (!value) { setResetPasswordError("Password is required."); return; }
+    if (value.length < 6) { setResetPasswordError("Password must be at least 6 characters."); return; }
+    if (value !== confirmValue) { setResetPasswordError("Passwords do not match."); return; }
 
     setResetPasswordError("");
     setIsResettingPassword(true);
@@ -235,9 +230,10 @@ const EscortManagement = () => {
         })
       ).unwrap();
       closeResetPasswordModal();
-      alert("Password updated successfully.");
+      toast.success("Password updated successfully!"); // ✅
     } catch (err) {
       setResetPasswordError(err?.message || "Failed to reset password.");
+      toast.error(err?.message || "Failed to reset password."); // ✅
     } finally {
       setIsResettingPassword(false);
     }
@@ -257,7 +253,7 @@ const EscortManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 ">
+    <div className="min-h-screen bg-gray-50">
       {/* Toolbar */}
       <ToolBar
         module="escort"
@@ -300,11 +296,14 @@ const EscortManagement = () => {
         isSubmitting={isSubmitting}
       />
 
+      {/* Reset Password Modal */}
       {passwordEscort && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md overflow-hidden rounded-lg border border-app-border bg-app-surface shadow-xl">
             <div className="flex items-center justify-between bg-gradient-to-r from-sidebar-primary to-sidebar-secondary px-6 py-4">
-              <h2 className="text-lg font-semibold text-white">Reset Escort Password</h2>
+              <h2 className="text-lg font-semibold text-white">
+                Reset Escort Password
+              </h2>
               <button
                 type="button"
                 onClick={closeResetPasswordModal}
@@ -325,6 +324,7 @@ const EscortManagement = () => {
                 .
               </p>
 
+              {/* New Password */}
               <div className="relative">
                 <label className="mb-1 block text-sm font-medium text-app-text-secondary">
                   New Password
@@ -351,6 +351,7 @@ const EscortManagement = () => {
                 </div>
               </div>
 
+              {/* Confirm Password */}
               <div className="relative">
                 <label className="mb-1 block text-sm font-medium text-app-text-secondary">
                   Confirm Password

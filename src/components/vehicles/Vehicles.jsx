@@ -28,7 +28,7 @@ import {
 } from "../../redux/features/manageVehicles/vehicleSelectors";
 
 import { useVendorOptions } from "../../hooks/useVendorOptions";
-import AuditLogsModal from "../modals/AuditLogsModal"; // ✅ ADDED
+import AuditLogsModal from "../modals/AuditLogsModal";
 
 /* ======================================================
    🔁 DEBOUNCE HOOK (SAME AS VEHICLE TYPES)
@@ -139,19 +139,22 @@ const NewVehicleManagement = () => {
     setIsModalOpen(true);
   };
 
-  const handleToggle = async (vehicle) => {
-    try {
-      await dispatch(
-        toggleVehicleStatus({
-          vehicleId: vehicle.vehicle_id,
-          isActive: !vehicle.is_active,
-        })
-      ).unwrap();
-      toast.success("Vehicle status updated");
-    } catch {
-      toast.error("Failed to update vehicle status");
-    }
-  };
+const handleToggle = async (vehicle) => {
+  try {
+    const result = await dispatch(
+      toggleVehicleStatus({
+        vehicleId: vehicle.vehicle_id,
+        isActive: !vehicle.is_active,
+      })
+    ).unwrap();
+
+    // console.log("RESULT MESSAGE:", result?.message); // ← ADD HERE
+
+    toast.success(result?.message || "Vehicle status updated successfully");
+  } catch {
+    toast.error("Failed to update vehicle status");
+  }
+};
 
   const handleClearFilters = () => {
     setSearchTerm("");

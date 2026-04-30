@@ -5,36 +5,34 @@ import {
   Edit2,
   Trash2,
   Building,
-  CheckCircle,
-  XCircle,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
 import { logDebug } from "../../utils/logger";
+import ReusableToggle from "../ui/ReusableToggle";
 
 export const VendorUsersTable = ({
   vendorUsers,
   onView,
   onEdit,
   onDelete,
+  onToggle,
   isLoading,
   totalItems = 0,
   itemsPerPage = 10,
   onPageChange,
   currentPage = 1,
+  vendorOptions = [], // ✅ added
 }) => {
   const [pageSize, setPageSize] = useState(itemsPerPage);
   const [localPage, setLocalPage] = useState(currentPage);
-  // Calculate total pages
-  const totalPages = Math.ceil(totalItems / pageSize);
+  const [togglingId, setTogglingId] = useState(null);
 
-  // If onPageChange is provided, use controlled pagination
-  // Otherwise, use local state for pagination
+  const totalPages = Math.ceil(totalItems / pageSize);
   const page = onPageChange ? currentPage : localPage;
 
-  // Get paginated data if no external pagination
   const getPaginatedData = () => {
     if (onPageChange || !vendorUsers) return vendorUsers;
     const startIndex = (page - 1) * pageSize;
@@ -44,9 +42,25 @@ export const VendorUsersTable = ({
 
   const paginatedUsers = getPaginatedData();
 
+  // ✅ helper to get vendor name from vendorOptions
+  const getVendorName = (user) => {
+    if (user.vendor_name) return user.vendor_name;
+    const found = vendorOptions.find((v) => v.value === user.vendor_id);
+    return found?.label || `Vendor ${user.vendor_id}`;
+  };
+
+  const handleToggle = async (user) => {
+    const userId = user.vendor_user_id || user.id;
+    setTogglingId(userId);
+    try {
+      await onToggle(user);
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   const handlePageChange = (newPage) => {
     if (newPage < 1 || newPage > totalPages) return;
-
     if (onPageChange) {
       onPageChange(newPage, pageSize);
     } else {
@@ -111,35 +125,26 @@ export const VendorUsersTable = ({
 
         {/* Pagination controls */}
         <div className="flex items-center space-x-2">
-          {/* First page */}
           <button
             onClick={() => handlePageChange(1)}
             disabled={page === 1}
             className={`p-1.5 rounded-md ${
-              page === 1
-                ? "text-gray-400 cursor-not-allowed"
-                : "text-gray-600 hover:bg-gray-100"
+              page === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"
             }`}
             title="First page"
           >
             <ChevronsLeft size={18} />
           </button>
-
-          {/* Previous page */}
           <button
             onClick={() => handlePageChange(page - 1)}
             disabled={page === 1}
             className={`p-1.5 rounded-md ${
-              page === 1
-                ? "text-gray-400 cursor-not-allowed"
-                : "text-gray-600 hover:bg-gray-100"
+              page === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"
             }`}
             title="Previous page"
           >
             <ChevronLeft size={18} />
           </button>
-
-          {/* Page numbers */}
           <div className="flex space-x-1">
             {pages.map((pageNum) => (
               <button
@@ -155,29 +160,21 @@ export const VendorUsersTable = ({
               </button>
             ))}
           </div>
-
-          {/* Next page */}
           <button
             onClick={() => handlePageChange(page + 1)}
             disabled={page === totalPages}
             className={`p-1.5 rounded-md ${
-              page === totalPages
-                ? "text-gray-400 cursor-not-allowed"
-                : "text-gray-600 hover:bg-gray-100"
+              page === totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"
             }`}
             title="Next page"
           >
             <ChevronRight size={18} />
           </button>
-
-          {/* Last page */}
           <button
             onClick={() => handlePageChange(totalPages)}
             disabled={page === totalPages}
             className={`p-1.5 rounded-md ${
-              page === totalPages
-                ? "text-gray-400 cursor-not-allowed"
-                : "text-gray-600 hover:bg-gray-100"
+              page === totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"
             }`}
             title="Last page"
           >
@@ -214,114 +211,119 @@ export const VendorUsersTable = ({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Email
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Phone
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Vendor
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {paginatedUsers.map((user, index) => (
-              <tr key={index} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                      <UsersRound className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
-                        {user.name}
+            {paginatedUsers.map((user, index) => {
+              const userId = user.vendor_user_id || user.id;
+              const isToggling = togglingId === userId;
+
+              return (
+                <tr key={index} className="hover:bg-gray-50 transition-colors">
+
+                  {/* Name */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                        <UsersRound className="h-5 w-5 text-blue-600" />
                       </div>
-                      <div className="text-xs text-gray-500">ID: {user.vendor_user_id}</div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{user.email}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{user.phone}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <Building className="h-4 w-4 text-gray-400 mr-2" />
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
-                        {user.vendor_name || `Vendor ${user.vendor_id}`}
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {user.name}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          ID: {user.vendor_user_id}
+                        </div>
                       </div>
-                      {/* <div className="text-xs text-gray-500">
-                        {user.company_name || `Company ${user.company_id}`}
-                      </div> */}
                     </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                      user.is_active
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {user.is_active ? (
-                      <>
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Active
-                      </>
+                  </td>
+
+                  {/* Email */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{user.email}</div>
+                  </td>
+
+                  {/* Phone */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{user.phone}</div>
+                  </td>
+
+                  {/* Vendor ✅ now shows name from vendorOptions */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <Building className="h-4 w-4 text-gray-400 mr-2" />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {getVendorName(user)} {/* ✅ uses helper */}
+                        </div>
+                        {/* <div className="text-xs text-gray-500">
+                          {user.company_name || `Company ${user.company_id}`}
+                        </div> */}
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* Status — ReusableToggle */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {isToggling ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400" />
+                        <span className="text-xs text-gray-500">Updating...</span>
+                      </div>
                     ) : (
-                      <>
-                        <XCircle className="h-3 w-3 mr-1" />
-                        Inactive
-                      </>
+                      <ReusableToggle
+                        module="vendor-user"
+                        action="update"
+                        isActive={user.is_active}
+                        onToggle={() => handleToggle(user)}
+                        disabled={isToggling || !onToggle}
+                        showLabels={true}
+                        activeLabel="Active"
+                        inactiveLabel="Inactive"
+                        size="md"
+                      />
                     )}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={() => onView(user)}
-                      className="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded transition-colors"
-                      title="View Details"
-                    >
-                      <Eye size={18} />
-                    </button>
-                    <button
-                      onClick={() => onEdit(user)}
-                      className="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded transition-colors"
-                      title="Edit"
-                    >
-                      <Edit2 size={18} />
-                    </button>
-                    <button
-                      onClick={() => onDelete(user.id)}
-                      className="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+
+                  {/* Actions */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex space-x-3">
+                      <button
+                        onClick={() => onView(user)}
+                        className="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded transition-colors"
+                        title="View Details"
+                      >
+                        <Eye size={18} />
+                      </button>
+                      <button
+                        onClick={() => onEdit(user)}
+                        className="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded transition-colors"
+                        title="Edit"
+                      >
+                        <Edit2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => onDelete(user.vendor_user_id || user.id)}
+                        className="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </td>
+
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
-
-      {/* Pagination */}
       {renderPagination()}
     </div>
   );

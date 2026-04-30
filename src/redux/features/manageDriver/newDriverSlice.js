@@ -16,7 +16,7 @@ export const NewfetchDriversThunk = createAsyncThunk(
       const response = await API_CLIENT.get("/drivers/vendor", {
         params,
       });
-      console.log("API Response →", response.data);
+      // console.log("API Response →", response.data);
 
       return {
         ...response.data.data,

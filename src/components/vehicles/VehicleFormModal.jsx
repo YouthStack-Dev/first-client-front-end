@@ -191,8 +191,21 @@ const VehicleFormModal = ({
   const handleChange = (field, value) =>
     setFormData((p) => ({ ...p, [field]: value }));
 
-  const handleFileChange = (field, file) =>
+  const MAX_FILE_SIZE = 3 * 1024 * 1024; // 3MB
+
+  const handleFileChange = (field, file) => {
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      setError("Only PDF files are allowed.");
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      setError("File size must be less than or equal to 3MB.");
+      return;
+    }
+    setError(null);
     setFormData((p) => ({ ...p, [field]: file }));
+  };
 
   /* ===== Secure VIEW ===== */
   const handleViewFile = (file) => {
@@ -234,13 +247,13 @@ const VehicleFormModal = ({
           <span className="text-sm font-semibold">{doc.label}</span>
         </div>
 
-        <label className="text-xs font-medium">Expiry Date *</label>
+        <label className="block text-xs font-medium text-gray-700 mb-1">Expiry Date *</label>
         <input
           type="date"
           value={formData[doc.expiryKey] || ""}
           onChange={(e) => handleChange(doc.expiryKey, e.target.value)}
           disabled={isReadOnly}
-          className="w-full border px-2 py-1 text-xs rounded mb-2"
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 mb-2"
         />
 
         {file ? (
@@ -280,16 +293,17 @@ const VehicleFormModal = ({
           </div>
         ) : (
           !isReadOnly && (
-            <label className="flex gap-2 justify-center border-2 border-dashed p-2 rounded cursor-pointer">
-              <Upload className="w-4 h-4" />
-              <span className="text-xs">Upload File *</span>
+            <label className="flex gap-2 justify-center border-2 border-dashed p-2 rounded cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+              <Upload className="w-4 h-4 text-gray-400" />
+              <span className="text-xs text-gray-600">Upload PDF (Max 3MB) *</span>
               <input
                 type="file"
                 hidden
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) =>
-                  handleFileChange(doc.fileKey, e.target.files[0])
-                }
+                accept=".pdf"
+                onChange={(e) => {
+                  handleFileChange(doc.fileKey, e.target.files[0]);
+                  e.target.value = null;
+                }}
               />
             </label>
           )
@@ -351,43 +365,63 @@ const VehicleFormModal = ({
   /* ================= RENDER ================= */
   return (
     <>
-      <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
-
       <div className="fixed inset-0 z-50 flex justify-center items-center p-4">
-        <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] flex flex-col">
+        {/* Backdrop */}
+        <div className="absolute inset-0 bg-black bg-opacity-60" onClick={onClose} />
+
+        {/* Modal card */}
+        <div className="relative bg-white rounded-lg max-w-5xl w-full max-h-[90vh] flex flex-col shadow-xl">
           {/* HEADER */}
-          <div className="p-4 border-b flex justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between p-4 border-b bg-white">
+            <div className="flex items-center gap-3">
               <Car className="w-6 h-6 text-blue-600" />
-              <h2 className="text-xl font-semibold">
-                {mode === "create"
-                  ? "Add Vehicle"
-                  : mode === "edit"
-                  ? "Edit Vehicle"
-                  : "Vehicle Details"}
-              </h2>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {mode === "create"
+                    ? "Add Vehicle"
+                    : mode === "edit"
+                    ? "Edit Vehicle"
+                    : "Vehicle Details"}
+                </h2>
+                <p className="text-sm text-gray-500">
+                  {mode === "create"
+                    ? "Fill in the vehicle details below"
+                    : mode === "edit"
+                    ? `Editing: ${formData.rc_number || "vehicle"}`
+                    : `Viewing: ${formData.rc_number || "vehicle"}`}
+                </p>
+              </div>
             </div>
-            <button onClick={onClose}>
-              <X />
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+              <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* TABS */}
-          <div className="border-b flex">
+          <div className="border-b border-gray-200 flex">
             {TABS.map((t) => (
               <button
                 key={t}
+                type="button"
                 onClick={() => setActiveTab(t)}
-                className={`flex-1 py-2 ${
+                className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === t
-                    ? "border-b-2 border-blue-500 text-blue-600"
-                    : "text-gray-500"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
                 }`}
               >
                 {t === "basic" ? "Basic Info" : "Documents"}
               </button>
             ))}
           </div>
+
+          {/* ERROR BANNER */}
+          {error && (
+            <div className="mx-4 mt-3 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm flex justify-between items-start">
+              <span>{error}</span>
+              <button onClick={() => setError(null)} className="ml-3 text-red-500 hover:text-red-700">×</button>
+            </div>
+          )}
 
           {/* BODY */}
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
@@ -396,106 +430,93 @@ const VehicleFormModal = ({
                 {/* Vendor – ONLY FOR NON-VENDOR USERS */}
                 {!isVendorUser && (
                   <div>
-                    <label className="text-xs font-medium">Vendor *</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Vendor *</label>
                     {isReadOnly ? (
-                      <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded border">
+                      <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded border border-gray-300">
                         <Building className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm">
-                          {
-                            vendorOptions.find((v) => v.value === formData.vendor_id)?.label
-                          }
-                        </span>
+                        <span className="text-sm">{vendorOptions.find((v) => v.value === formData.vendor_id)?.label}</span>
                       </div>
                     ) : (
-                      <select
-                        value={formData.vendor_id || ""}
-                        onChange={(e) =>
-                          handleChange("vendor_id", e.target.value)
-                        }
-                        className="w-full px-3 py-2 text-sm border rounded"
-                      >
-                        <option value="">Select Vendor</option>
-                        {vendorOptions.map((v) => (
-                          <option key={v.value} value={v.value}>
-                            {v.label}
-                          </option>
-                        ))}
-                      </select>
+                      <Select
+                        options={vendorOptions}
+                        value={vendorOptions.find((v) => v.value === formData.vendor_id) || null}
+                        onChange={(v) => handleChange("vendor_id", v?.value || "")}
+                        isDisabled={isReadOnly}
+                        placeholder="Select vendor..."
+                        classNamePrefix="select"
+                        isClearable
+                      />
                     )}
                   </div>
                 )}
 
                 <div>
-                  <label className="text-xs font-medium">Vehicle Type *</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Vehicle Type *</label>
                   <Select
                     options={vehicleTypeOptions}
-                    value={vehicleTypeOptions.find(
-                      (o) => o.value === formData.vehicle_type_id
-                    )}
+                    value={vehicleTypeOptions.find((o) => o.value === formData.vehicle_type_id)}
                     onChange={(v) => handleChange("vehicle_type_id", v?.value)}
                     isDisabled={isReadOnly}
+                    placeholder="Select type..."
+                    classNamePrefix="select"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium">Driver *</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Driver *</label>
                   <Select
                     options={driverOptions}
-                    value={driverOptions.find(
-                      (o) => o.value === formData.driver_id
-                    )}
+                    value={driverOptions.find((o) => o.value === formData.driver_id)}
                     onChange={(v) => handleChange("driver_id", v?.value)}
                     isDisabled={isReadOnly}
+                    placeholder="Select driver..."
+                    classNamePrefix="select"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium">RC Number *</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">RC Number *</label>
                   <input
-                    className="border p-2 rounded w-full"
+                    type="text"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
                     value={formData.rc_number}
                     onChange={(e) => handleChange("rc_number", e.target.value)}
                     disabled={isReadOnly}
+                    placeholder="e.g. KA01AB1234"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium">
-                    RC Expiry Date *
-                  </label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">RC Expiry Date *</label>
                   <input
                     type="date"
-                    className="border p-2 rounded w-full"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
                     value={formData.rc_expiry_date || ""}
-                    onChange={(e) =>
-                      handleChange("rc_expiry_date", e.target.value)
-                    }
+                    onChange={(e) => handleChange("rc_expiry_date", e.target.value)}
                     disabled={isReadOnly}
                   />
                 </div>
 
                 <div className="col-span-3">
-                  <label className="text-xs font-medium">Description</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
                   <textarea
-                    className="border p-2 rounded w-full"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
                     rows={3}
                     value={formData.description || ""}
-                    onChange={(e) =>
-                      handleChange("description", e.target.value)
-                    }
+                    onChange={(e) => handleChange("description", e.target.value)}
                     disabled={isReadOnly}
+                    placeholder="Optional description..."
                   />
                 </div>
 
-                <div className="col-span-3 flex items-center">
-                  <label className="flex items-center gap-2 text-sm">
+                <div className="col-span-3">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={formData.is_active}
                       disabled={isReadOnly}
-                      onChange={(e) =>
-                        handleChange("is_active", e.target.checked)
-                      }
+                      onChange={(e) => handleChange("is_active", e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded"
                     />
                     Active
                   </label>
@@ -510,14 +531,25 @@ const VehicleFormModal = ({
             )}
 
             {!isReadOnly && (
-              <div className="mt-6 text-right">
+              <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={isSubmitting}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-blue-600 text-white px-4 py-2 rounded"
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {isSubmitting ? (
-                    <Loader2 className="animate-spin w-4 h-4" />
+                    <>
+                      <Loader2 className="animate-spin w-4 h-4" />
+                      {mode === "create" ? "Creating..." : "Saving..."}
+                    </>
                   ) : mode === "create" ? (
                     "Create Vehicle"
                   ) : (

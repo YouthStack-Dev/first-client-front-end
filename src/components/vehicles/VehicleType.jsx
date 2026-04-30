@@ -149,12 +149,12 @@ const ManageVehicleTypes = () => {
     setIsModalOpen(true);
   };
 
+  // ✅ UPDATED: handleSubmit now shows API response message instead of hardcoded text
   /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      // Build payload explicitly — avoids spread bugs that drop fields
       const payload = {
         name: selectedVehicleType.name,
         seats: Number(selectedVehicleType.seats),
@@ -162,29 +162,30 @@ const ManageVehicleTypes = () => {
         is_active: selectedVehicleType.is_active,
       };
 
-      // Only include vendor_id for admin users
       if (!isVendorUser) {
         payload.vendor_id = selectedVehicleType.vendor_id;
       }
 
       if (modalMode === "edit") {
-        await dispatch(
+        // ✅ UPDATED: capture result and show API message
+        const result = await dispatch(
           updateVehicleType({
             id: selectedVehicleType.vehicle_type_id,
             payload,
             vendor_id: payload.vendor_id,
           })
         ).unwrap();
+        toast.success(result?.message || "Vehicle type updated");
 
-        toast.success("Vehicle type updated");
       } else {
-        await dispatch(
+        // ✅ UPDATED: capture result and show API message
+        const result = await dispatch(
           createVehicleType({
             payload,
             vendor_id: isVendorUser ? user.vendor_id : selectedVehicleType.vendor_id,
           })
         ).unwrap();
-        toast.success("Vehicle type created");
+        toast.success(result?.message || "Vehicle type created");
       }
 
       const params = buildFetchParams();
@@ -303,15 +304,21 @@ const ManageVehicleTypes = () => {
             setModalMode("edit");
             setIsModalOpen(true);
           }}
-          onStatusToggle={(row) =>
-            dispatch(
-              toggleVehicleTypeStatus({
-                id: row.vehicle_type_id,
-                vendor_id: row.vendor_id,
-                is_active: !row.is_active,
-              })
-            )
-          }
+          // ✅ UPDATED: added async/await + toast on success and failure
+          onStatusToggle={async (row) => {
+            try {
+              const result = await dispatch(
+                toggleVehicleTypeStatus({
+                  id: row.vehicle_type_id,
+                  vendor_id: row.vendor_id,
+                  is_active: !row.is_active,
+                })
+              ).unwrap();
+              toast.success(result?.message || "Status updated successfully");
+            } catch (error) {
+              toast.error(typeof error === "string" ? error : "Failed to update status");
+            }
+          }}
         />
       )}
 

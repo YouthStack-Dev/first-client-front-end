@@ -28,7 +28,6 @@ import { API_CLIENT } from "../Api/API_Client";
 import endpoint from "../Api/Endpoints";
 import { fetchCompaniesThunk } from "../redux/features/company/companyThunks";
 
-// Reusable helpers
 import {
   buildSearchParams,
   getSearchPlaceholder,
@@ -38,11 +37,6 @@ import {
 
 import VendorUsersModal from "../components/modals/VendorUsersModal";
 
-/**
- * Constants for vendor-related data
- */
-
-// Vendor user statuses
 const VENDOR_USER_STATUS = {
   ACTIVE: "active",
   INACTIVE: "inactive",
@@ -55,7 +49,6 @@ const MODAL_MODES = {
   EDIT: "edit",
 };
 
-// Default pagination values
 const DEFAULT_PAGINATION = {
   PAGE: 1,
   PAGE_SIZE: 10,
@@ -75,26 +68,19 @@ const VendorUserManagement = () => {
   const [filteredVendorUsers, setFilteredVendorUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(DEFAULT_PAGINATION.PAGE);
-  const [itemsPerPage, setItemsPerPage] = useState(
-    DEFAULT_PAGINATION.PAGE_SIZE
-  );
+  const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGINATION.PAGE_SIZE);
   const [totalItems, setTotalItems] = useState(0);
 
   const dispatch = useDispatch();
-  const { vendorOptions, loading: vendorLoading } = useVendorOptions(
-    null,
-    true
-  );
+  const { vendorOptions, loading: vendorLoading } = useVendorOptions(null, true);
   const { type: userType, tenant_id } = useSelector(selectCurrentUser);
 
-  // Get companies from Redux
   const {
     data: companies = [],
     loading: companyLoading = false,
     error: companyError = null,
   } = useSelector((state) => state.company || {});
 
-  // Map real companies to options
   const companyOptions = [
     { value: "", label: "All Companies" },
     ...(companies?.map((company) => ({
@@ -103,14 +89,12 @@ const VendorUserManagement = () => {
     })) || []),
   ];
 
-  // Fetch companies on mount
   useEffect(() => {
     if (!companies || companies.length === 0) {
       dispatch(fetchCompaniesThunk());
     }
   }, [dispatch, companies]);
 
-  // Single fetch function
   const fetchVendorUsers = useCallback(
     async (page, size, search = "", companyId = "", vendorId = "") => {
       setIsLoading(true);
@@ -131,7 +115,6 @@ const VendorUserManagement = () => {
         };
 
         const response = await API_CLIENT.get(endpoint.VendorUser, { params });
-
         const { data: users, total } = extractDataFromResponse(response);
 
         setVendorUsers(users);
@@ -149,7 +132,6 @@ const VendorUserManagement = () => {
     [tenant_id]
   );
 
-  // Debounced wrapper
   const debouncedFetchVendorUsers = useCallback(
     debounce((page, size, search, companyId, vendorId) => {
       fetchVendorUsers(page, size, search, companyId, vendorId);
@@ -157,7 +139,6 @@ const VendorUserManagement = () => {
     [fetchVendorUsers]
   );
 
-  // Trigger search when inputs change
   useEffect(() => {
     debouncedFetchVendorUsers(
       currentPage,
@@ -166,7 +147,6 @@ const VendorUserManagement = () => {
       selectedCompanyId,
       selectedVendorId
     );
-
     return () => {
       debouncedFetchVendorUsers.cancel();
     };
@@ -180,20 +160,17 @@ const VendorUserManagement = () => {
   ]);
 
   const handleCompanyChange = (e) => {
-    const value = e.target.value;
-    setSelectedCompanyId(value);
+    setSelectedCompanyId(e.target.value);
     setCurrentPage(DEFAULT_PAGINATION.PAGE);
   };
 
   const handleVendorChange = (e) => {
-    const value = e.target.value;
-    setSelectedVendorId(value);
+    setSelectedVendorId(e.target.value);
     setCurrentPage(DEFAULT_PAGINATION.PAGE);
   };
 
   const handleSearch = (e) => {
-    const value = e.target.value;
-    setSearchTerm(value);
+    setSearchTerm(e.target.value);
     setCurrentPage(DEFAULT_PAGINATION.PAGE);
   };
 
@@ -209,7 +186,10 @@ const VendorUserManagement = () => {
   };
 
   const handleEditVendorUser = (vendorUser) => {
-    setSelectedVendorUser(vendorUser);
+    setSelectedVendorUser({
+      ...vendorUser,
+      id: vendorUser.id || vendorUser.vendor_user_id,
+    });
     setModalMode(MODAL_MODES.EDIT);
     setShowVendorUserModal(true);
   };
@@ -224,8 +204,7 @@ const VendorUserManagement = () => {
     if (window.confirm("Are you sure you want to delete this vendor user?")) {
       setIsLoading(true);
       try {
-        await API_CLIENT.delete(`${endpoint.VendorUser}/${id}`);
-
+        await API_CLIENT.delete(`${endpoint.VendorUser}${id}`);
         await fetchVendorUsers(
           currentPage,
           itemsPerPage,
@@ -233,18 +212,55 @@ const VendorUserManagement = () => {
           selectedCompanyId,
           selectedVendorId
         );
-
         toast.success("Vendor user deleted successfully!");
       } catch (error) {
-        console.error("Error deleting vendor user:", error);
-        toast.error(
-          error.response?.data?.message || "Failed to delete vendor user"
-        );
+        toast.error(error.response?.data?.message || "Failed to delete vendor user");
       } finally {
         setIsLoading(false);
       }
     }
   };
+
+const handleToggleVendorUser = async (user) => {
+  const userId = user.vendor_user_id || user.id;
+
+  // ✅ Optimistically update UI instantly — no refetch
+  const updateUsers = (users) =>
+    users.map((u) =>
+      (u.vendor_user_id || u.id) === userId
+        ? { ...u, is_active: !u.is_active }
+        : u
+    );
+
+  setVendorUsers((prev) => updateUsers(prev));
+  setFilteredVendorUsers((prev) => updateUsers(prev));
+
+  try {
+    const response = await API_CLIENT.patch(
+      `${endpoint.VendorUser}${userId}/toggle-status`
+    );
+    toast.success(
+      response.data?.message || "Vendor user status updated successfully!"
+    );
+    // ✅ No refetch needed — UI already updated
+
+  } catch (error) {
+    // ✅ Rollback on failure — revert the optimistic update
+    const revertUsers = (users) =>
+      users.map((u) =>
+        (u.vendor_user_id || u.id) === userId
+          ? { ...u, is_active: user.is_active } // revert to original
+          : u
+      );
+
+    setVendorUsers((prev) => revertUsers(prev));
+    setFilteredVendorUsers((prev) => revertUsers(prev));
+
+    toast.error(
+      error.response?.data?.message || "Failed to toggle vendor user status"
+    );
+  }
+};
 
   const handlePageChange = (newPage, newPageSize) => {
     setCurrentPage(newPage);
@@ -269,9 +285,7 @@ const VendorUserManagement = () => {
   };
 
   const activeUsersCount = vendorUsers.filter((user) => user.is_active).length;
-  const inactiveUsersCount = vendorUsers.filter(
-    (user) => !user.is_active
-  ).length;
+  const inactiveUsersCount = vendorUsers.filter((user) => !user.is_active).length;
 
   return (
     <div className="p-1">
@@ -292,7 +306,7 @@ const VendorUserManagement = () => {
         }
         rightElements={
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Vendor Filter Dropdown with Icon */}
+            {/* Vendor Filter */}
             <div className="relative">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10">
                 <Truck className="w-4 h-4 text-gray-500" />
@@ -339,8 +353,7 @@ const VendorUserManagement = () => {
               />
             )}
 
-            {/* Audit Log Button with Better Design */}
-           
+            {/* Audit Log Button */}
             <ReusableButton
               module="vendor-user"
               action="read"
@@ -376,9 +389,7 @@ const VendorUserManagement = () => {
               <UsersRound className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500 font-medium">
-                Total Vendor Users
-              </p>
+              <p className="text-sm text-gray-500 font-medium">Total Vendor Users</p>
               <p className="text-2xl font-bold text-gray-800">
                 {totalItems || vendorUsers.length}
               </p>
@@ -392,9 +403,7 @@ const VendorUserManagement = () => {
             </div>
             <div>
               <p className="text-sm text-gray-500 font-medium">Active Users</p>
-              <p className="text-2xl font-bold text-gray-800">
-                {activeUsersCount}
-              </p>
+              <p className="text-2xl font-bold text-gray-800">{activeUsersCount}</p>
             </div>
           </div>
         </div>
@@ -404,18 +413,14 @@ const VendorUserManagement = () => {
               <XCircle className="h-6 w-6 text-red-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500 font-medium">
-                Inactive Users
-              </p>
-              <p className="text-2xl font-bold text-gray-800">
-                {inactiveUsersCount}
-              </p>
+              <p className="text-sm text-gray-500 font-medium">Inactive Users</p>
+              <p className="text-2xl font-bold text-gray-800">{inactiveUsersCount}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Active Filters Display */}
+      {/* Active Filters */}
       {(searchTerm || selectedVendorId) && (
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -432,10 +437,7 @@ const VendorUserManagement = () => {
                 <span className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 text-indigo-700 text-sm font-medium rounded-full">
                   <Truck className="w-3 h-3" />
                   <span>
-                    {
-                      vendorOptions.find((v) => v.value === selectedVendorId)
-                        ?.label
-                    }
+                    {vendorOptions.find((v) => v.value === selectedVendorId)?.label}
                   </span>
                 </span>
               )}
@@ -454,6 +456,7 @@ const VendorUserManagement = () => {
           onView={handleViewVendorUser}
           onEdit={handleEditVendorUser}
           onDelete={handleDeleteVendorUser}
+          onToggle={handleToggleVendorUser} // ✅ ADDED
           isLoading={isLoading}
           totalItems={totalItems}
           itemsPerPage={itemsPerPage}
@@ -483,7 +486,7 @@ const VendorUserManagement = () => {
         moduleName="Vendor User"
         showUserColumn={true}
         apimodule="vendor_user"
-        selectedCompany={"SAM001"}
+        selectedCompany={tenant_id}
       />
     </div>
   );
