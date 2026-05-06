@@ -66,7 +66,7 @@ export const pathTitleMap = {
   // ✅ Add these missing ones
 "/teams":                "Team Management",
 "/announcements":        "Announcements",
-"/reviews":              "Reviews",
+"/reviews":              "Review Management",
 "/profile":              "Profile",
 "/reports":              "Reports Management",
 "/alert-config":          "Alert Configuration",
