@@ -177,37 +177,37 @@ export const baseSidebarConfig = [
       // },
     ],
   },
-  {
-    title: "Reports",
-    items: [
-      {
-        title: "Reports Management",
-        icon: FileText,
-        path: "/companies/reports-management",
-        permission: "report.read",
-        subItems: [
-          {
-            title: "Tenant Reports",
-            icon: Building,
-            path: "/companies/reports/tenants",
-            permission: "report.tenant.read",
-          },
-          {
-            title: "Vendor Reports",
-            icon: Store,
-            path: "/companies/reports/vendors",
-            permission: "report.vendor.read",
-          },
-          {
-            title: "Operational Reports",
-            icon: MapPin,
-            path: "/companies/reports/operations",
-            permission: "report.operations.read",
-          },
-        ],
-      },
-    ],
-  },
+  // {
+  //   title: "Reports",
+  //   items: [
+  //     {
+  //       title: "Reports Management",
+  //       icon: FileText,
+  //       path: "/companies/reports-management",
+  //       permission: "report.read",
+  //       subItems: [
+  //         {
+  //           title: "Tenant Reports",
+  //           icon: Building,
+  //           path: "/companies/reports/tenants",
+  //           permission: "report.tenant.read",
+  //         },
+  //         {
+  //           title: "Vendor Reports",
+  //           icon: Store,
+  //           path: "/companies/reports/vendors",
+  //           permission: "report.vendor.read",
+  //         },
+  //         {
+  //           title: "Operational Reports",
+  //           icon: MapPin,
+  //           path: "/companies/reports/operations",
+  //           permission: "report.operations.read",
+  //         },
+  //       ],
+  //     },
+  //   ],
+  // },
 ];
 
 // Helper function to check if user has permission

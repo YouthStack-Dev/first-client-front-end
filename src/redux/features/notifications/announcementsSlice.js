@@ -12,12 +12,15 @@ import {
 // ─── Initial state ────────────────────────────────────────────────────────────
 const initialState = {
   // Data
-  announcements:       [],
+  announcements:        [],
   selectedAnnouncement: null,
-  recipients:          [],
+  recipients:           [],
+
+  // Pagination meta returned by the list endpoint.
+  // Shape mirrors the API: { page, per_page, total, total_pages, has_next, has_prev }
+  meta: null,
 
   // Per-operation loading flags
-  // (granular flags let different parts of the UI respond independently)
   loadingList:       false,
   loadingDetail:     false,
   creating:          false,
@@ -28,13 +31,13 @@ const initialState = {
 
   // Per-operation errors
   // Shape: { message: string, status?: number, code?: string } | null
-  listError:        null,
-  detailError:      null,
-  createError:      null,
-  updateError:      null,
-  publishError:     null,
-  deleteError:      null,
-  recipientsError:  null,
+  listError:       null,
+  detailError:     null,
+  createError:     null,
+  updateError:     null,
+  publishError:    null,
+  deleteError:     null,
+  recipientsError: null,
 };
 
 // ─── Slice ────────────────────────────────────────────────────────────────────
@@ -51,8 +54,8 @@ const announcementSlice = createSlice({
 
     /** Clear the recipients list when closing the recipients panel */
     clearRecipients(state) {
-      state.recipients       = [];
-      state.recipientsError  = null;
+      state.recipients      = [];
+      state.recipientsError = null;
     },
 
     /**
@@ -76,6 +79,9 @@ const announcementSlice = createSlice({
       .addCase(fetchAnnouncements.fulfilled, (state, action) => {
         state.loadingList   = false;
         state.announcements = action.payload.data ?? [];
+        // Store meta so consumers can drive pagination from real server values
+        // instead of guessing from the array length.
+        state.meta          = action.payload.meta ?? null;
       })
       .addCase(fetchAnnouncements.rejected, (state, action) => {
         state.loadingList = false;
@@ -84,11 +90,11 @@ const announcementSlice = createSlice({
 
       // ── FETCH SINGLE ────────────────────────────────────────────────────────
       .addCase(fetchAnnouncementById.pending, (state) => {
-        state.loadingDetail  = true;
-        state.detailError    = null;
+        state.loadingDetail = true;
+        state.detailError   = null;
       })
       .addCase(fetchAnnouncementById.fulfilled, (state, action) => {
-        state.loadingDetail       = false;
+        state.loadingDetail        = false;
         state.selectedAnnouncement = action.payload.data;
       })
       .addCase(fetchAnnouncementById.rejected, (state, action) => {
@@ -101,10 +107,11 @@ const announcementSlice = createSlice({
         state.creating    = true;
         state.createError = null;
       })
-      .addCase(createAnnouncement.fulfilled, (state, action) => {
+      .addCase(createAnnouncement.fulfilled, (state) => {
+        // No unshift — ManageAnnouncements calls loadAnnouncements() immediately
+        // after onSuccess, which replaces the list before the next paint.
+        // The re-fetch is the single source of truth.
         state.creating = false;
-        // Prepend so the new draft appears at the top of the list
-        state.announcements.unshift(action.payload.data);
       })
       .addCase(createAnnouncement.rejected, (state, action) => {
         state.creating    = false;
@@ -124,20 +131,18 @@ const announcementSlice = createSlice({
         );
         if (index !== -1) state.announcements[index] = updated;
 
-        // Keep selectedAnnouncement in sync if it's open in a detail panel
         if (state.selectedAnnouncement?.announcement_id === updated.announcement_id) {
           state.selectedAnnouncement = updated;
         }
       })
       .addCase(updateAnnouncement.rejected, (state, action) => {
-        // ▲ Bug fix: was missing — updating flag was stuck true on failure
         state.updating    = false;
         state.updateError = action.payload;
       })
 
       // ── PUBLISH ─────────────────────────────────────────────────────────────
       .addCase(publishAnnouncement.pending, (state) => {
-        state.publishing  = true;
+        state.publishing   = true;
         state.publishError = null;
       })
       .addCase(publishAnnouncement.fulfilled, (state, action) => {
@@ -164,11 +169,12 @@ const announcementSlice = createSlice({
       })
       .addCase(deleteAnnouncement.fulfilled, (state, action) => {
         state.deleting      = false;
-        // action.payload is the bare announcement_id returned by the thunk
         state.announcements = state.announcements.filter(
           (item) => item.announcement_id !== action.payload
         );
-        // Clear detail view if the deleted item was open
+        // Keep meta.total accurate so pagination doesn't lag behind
+        if (state.meta?.total) state.meta.total -= 1;
+
         if (state.selectedAnnouncement?.announcement_id === action.payload) {
           state.selectedAnnouncement = null;
         }
@@ -204,26 +210,29 @@ export const {
 export default announcementSlice.reducer;
 
 // ─── Selectors ────────────────────────────────────────────────────────────────
-// Keep selectors co-located with the slice so consumers never access state shape directly
-
-export const selectAnnouncements       = (state) => state.announcements.announcements;
+export const selectAnnouncements        = (state) => state.announcements.announcements;
 export const selectSelectedAnnouncement = (state) => state.announcements.selectedAnnouncement;
-export const selectRecipients          = (state) => state.announcements.recipients;
+export const selectRecipients           = (state) => state.announcements.recipients;
+
+// Pagination — derived from the meta block the list endpoint returns
+export const selectMeta                 = (state) => state.announcements.meta;
+export const selectTotalPages           = (state) => state.announcements.meta?.total_pages ?? 1;
+export const selectTotal                = (state) => state.announcements.meta?.total ?? 0;
 
 // Loading flags
-export const selectLoadingList         = (state) => state.announcements.loadingList;
-export const selectLoadingDetail       = (state) => state.announcements.loadingDetail;
-export const selectIsCreating          = (state) => state.announcements.creating;
-export const selectIsUpdating          = (state) => state.announcements.updating;
-export const selectIsPublishing        = (state) => state.announcements.publishing;
-export const selectIsDeleting          = (state) => state.announcements.deleting;
-export const selectLoadingRecipients   = (state) => state.announcements.loadingRecipients;
+export const selectLoadingList          = (state) => state.announcements.loadingList;
+export const selectLoadingDetail        = (state) => state.announcements.loadingDetail;
+export const selectIsCreating           = (state) => state.announcements.creating;
+export const selectIsUpdating           = (state) => state.announcements.updating;
+export const selectIsPublishing         = (state) => state.announcements.publishing;
+export const selectIsDeleting           = (state) => state.announcements.deleting;
+export const selectLoadingRecipients    = (state) => state.announcements.loadingRecipients;
 
 // Error selectors
-export const selectListError           = (state) => state.announcements.listError;
-export const selectDetailError         = (state) => state.announcements.detailError;
-export const selectCreateError         = (state) => state.announcements.createError;
-export const selectUpdateError         = (state) => state.announcements.updateError;
-export const selectPublishError        = (state) => state.announcements.publishError;
-export const selectDeleteError         = (state) => state.announcements.deleteError;
-export const selectRecipientsError     = (state) => state.announcements.recipientsError;
+export const selectListError            = (state) => state.announcements.listError;
+export const selectDetailError          = (state) => state.announcements.detailError;
+export const selectCreateError          = (state) => state.announcements.createError;
+export const selectUpdateError          = (state) => state.announcements.updateError;
+export const selectPublishError         = (state) => state.announcements.publishError;
+export const selectDeleteError          = (state) => state.announcements.deleteError;
+export const selectRecipientsError      = (state) => state.announcements.recipientsError;

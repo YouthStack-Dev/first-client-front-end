@@ -14,6 +14,7 @@ import { fetchShiftTrunk } from "../redux/features/shift/shiftTrunk";
 import { bookingSchema } from "../validations/bookingValidation";
 import { fetchEmployeesThunk } from "../redux/features/employees/employeesThunk";
 import UpdateBookingShiftModal from "../components/modals/UpdateBookingShiftModal";
+import { toast } from "react-toastify"; // ✅ added
 
 export default function BookingManagement() {
   const [step, setStep] = useState("welcome");
@@ -35,25 +36,24 @@ export default function BookingManagement() {
   const employeeId = searchParams.get("employeeId");
   const teamId = searchParams.get("teamId");
   const [employee, setEmployee] = useState(location.state?.employee || null);
-  
+
   const dispatch = useDispatch();
   const shifts = useSelector(selectAllShifts);
   const employeesLoading = useSelector((state) => state.employees.loading);
-  const teamEmployees = useSelector((state) => 
+  const teamEmployees = useSelector((state) =>
     teamId ? state.employees.entities : {}
   );
 
   // Booking History Filters State
   const [bookingFilters, setBookingFilters] = useState({
-    date: new Date().toISOString().split("T")[0], // Default to today
+    date: new Date().toISOString().split("T")[0],
     status: "",
     shiftType: "",
     availableStatuses: [],
     availableDates: [],
-    availableShiftTypes: ["1", "2"], // IN and OUT
+    availableShiftTypes: ["1", "2"],
   });
 
-  // Function to convert weekoff config to restricted days array
   const convertWeekOffToRestrictedDays = (weekoffConfig) => {
     const dayMapping = {
       sunday: 0,
@@ -66,7 +66,6 @@ export default function BookingManagement() {
     };
 
     const restricted = [];
-
     Object.keys(dayMapping).forEach((day) => {
       if (weekoffConfig[day] === true) {
         restricted.push(dayMapping[day]);
@@ -79,17 +78,13 @@ export default function BookingManagement() {
 
   useEffect(() => {
     logDebug("This is the shifts from slice", shifts);
-
-    // If no shifts, fetch from backend
     if (!shifts || shifts.length === 0) {
       dispatch(fetchShiftTrunk());
     }
   }, [shifts, dispatch]);
 
-  // Effect to handle direct navigation via URL params
   useEffect(() => {
     if (!employee && teamId && employeeId) {
-      // Check if employee is already in Redux store
       const employeeFromStore = Object.values(teamEmployees).find(
         (emp) => emp.employee_id.toString() === employeeId.toString()
       );
@@ -97,13 +92,11 @@ export default function BookingManagement() {
       if (employeeFromStore) {
         setEmployee(employeeFromStore);
       } else if (!employeesLoading) {
-        // Fetch team employees to populate store
         dispatch(fetchEmployeesThunk({ team_id: teamId }));
       }
     }
   }, [employee, teamId, employeeId, teamEmployees, employeesLoading, dispatch]);
 
-  // Update employee state when it becomes available in Redux
   useEffect(() => {
     if (!employee && employeeId && !employeesLoading) {
       const employeeFromStore = Object.values(teamEmployees).find(
@@ -125,24 +118,16 @@ export default function BookingManagement() {
 
       if (response.data.success && response.data.data.weekoff_config) {
         const weekoffConfig = response.data.data.weekoff_config;
-
-        // Convert API response to restricted days format
-        const convertedRestrictedDays =
-          convertWeekOffToRestrictedDays(weekoffConfig);
+        const convertedRestrictedDays = convertWeekOffToRestrictedDays(weekoffConfig);
         setRestrictedDays(convertedRestrictedDays);
-
-        // You can also fetch holidays from another API if available
-        // For now, using static holidays as example
         setRestrictedDates(["2024-12-25", "2024-01-01", "2024-07-04"]);
       }
     } catch (error) {
       console.error("Error fetching week offs:", error);
-      // Fallback to default restricted days if API fails
-      setRestrictedDays([0, 6]); // Default: Sunday and Saturday
+      setRestrictedDays([0, 6]);
     }
   };
 
-  // Fetch booking history by date
   const fetchBookingHistory = async (date = null) => {
     if (!employee?.employee_id) return;
 
@@ -161,7 +146,6 @@ export default function BookingManagement() {
         const bookings = response.data.data || [];
         setBookingHistoryData(bookings);
 
-        // Update available filter options
         const availableDates = [
           ...new Set(bookings.map((booking) => booking.booking_date)),
         ].sort();
@@ -177,9 +161,7 @@ export default function BookingManagement() {
 
         logDebug(`Loaded ${bookings.length} bookings for date: ${bookingDate}`);
       } else {
-        throw new Error(
-          response.data.message || "Failed to fetch booking history"
-        );
+        throw new Error(response.data.message || "Failed to fetch booking history");
       }
     } catch (error) {
       console.error("Error fetching booking history:", error);
@@ -195,20 +177,17 @@ export default function BookingManagement() {
     }
   };
 
-  // Handle booking history filter changes
   const handleBookingFilterChange = (filterType, value) => {
     setBookingFilters((prev) => ({
       ...prev,
       [filterType]: value,
     }));
 
-    // If date filter changes, fetch new data
     if (filterType === "date" && value) {
       fetchBookingHistory(value);
     }
   };
 
-  // Clear booking history filters
   const handleClearBookingFilters = () => {
     setBookingFilters((prev) => ({
       ...prev,
@@ -219,7 +198,6 @@ export default function BookingManagement() {
     fetchBookingHistory(new Date().toISOString().split("T")[0]);
   };
 
-  // Filter bookings based on current filters (client-side filtering for status and shiftType)
   const filteredBookingHistory = bookingHistoryData.filter((booking) => {
     const matchesStatus =
       !bookingFilters.status || booking.status === bookingFilters.status;
@@ -233,22 +211,18 @@ export default function BookingManagement() {
   useEffect(() => {
     if (employee?.employee_id) {
       fetchWeekOffs();
-
-      // Fetch today's bookings by default when component mounts
       if (step === "history") {
         fetchBookingHistory();
       }
     }
   }, [employee?.employee_id]);
 
-  // Fetch booking history when entering history step
   useEffect(() => {
     if (step === "history" && employee?.employee_id) {
       fetchBookingHistory();
     }
   }, [step, employee?.employee_id]);
 
-  // 🟦 Book shift handler
   const handleBookShift = () => {
     setStep("calendar");
     setSelectedDates([]);
@@ -256,7 +230,6 @@ export default function BookingManagement() {
     setErrors([]);
   };
 
-  // 🟪 Booking history handler
   const handleBookingHistory = () => {
     setStep("history");
   };
@@ -266,7 +239,6 @@ export default function BookingManagement() {
     setIsUpdateModalOpen(true);
   };
 
-  // Navigation handlers
   const handleNextToShift = () => {
     if (selectedDates.length >= 1) {
       setStep("shift");
@@ -296,9 +268,8 @@ export default function BookingManagement() {
       shift_id: selectedShiftId,
     };
 
-    logDebug(" this is the booking submitting data ", payload);
+    logDebug("this is the booking submitting data", payload);
 
-    // Validate using Zod
     const result = bookingSchema.safeParse(payload);
     if (!result.success) {
       const validationErrors = result.error.errors.map(
@@ -313,12 +284,13 @@ export default function BookingManagement() {
       const response = await API_CLIENT.post(endpoint.booking, payload);
       console.log("Booking successful:", response.data);
 
-      // Reset form and show success
       setSelectedDates([]);
       setSelectedShiftId(null);
       setStep("welcome");
 
-      // Refresh booking history if we're going to view it
+      // ✅ Show API message in toast
+      toast.success(response.data.message || "Booking confirmed successfully!");
+
       if (step === "history") {
         fetchBookingHistory();
       }
@@ -329,12 +301,14 @@ export default function BookingManagement() {
         error.response?.data?.message ||
         "Booking failed. Please try again.";
       setErrors([errorMessage]);
+
+      // ✅ Show error toast
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Show error display if there are any errors
   const renderErrors = () => {
     if (errors.length === 0) return null;
 
@@ -397,7 +371,7 @@ export default function BookingManagement() {
             onViewBookingHistory={handleBookingHistory}
             step={step}
             onBack={
-              step === "shift"    ? handleBackToCalendar :
+              step === "shift" ? handleBackToCalendar :
               step === "calendar" || step === "history" ? handleBackToWelcome :
               undefined
             }
@@ -466,8 +440,7 @@ export default function BookingManagement() {
                   <li className="flex items-start gap-2">
                     <span className="text-blue-600 font-bold">1.</span>
                     <span>
-                      Click the <strong>Book Shift</strong> button on the left
-                      to start
+                      Click the <strong>Book Shift</strong> button on the left to start
                     </span>
                   </li>
                   <li className="flex items-start gap-2">

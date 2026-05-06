@@ -3,6 +3,7 @@ import { useDispatch, useSelector }                                   from "reac
 import {
   ChevronRight, Loader2, AlertCircle, X,
   CheckCircle2, Users, Truck, Hash, Upload, Trash2,
+  FileText, Image, Video, Music, File, Link,
 } from "lucide-react";
 
 import {
@@ -36,15 +37,23 @@ const ACCEPT_MAP = {
   pdf:   "application/pdf",
 };
 const FILE_EXT_HINT = { image:"JPG, PNG, WEBP", video:"MP4, MOV", audio:"MP3, WAV", pdf:"PDF" };
-const FILE_ICON     = { image:"🖼", video:"🎬", audio:"🎵", pdf:"📄" };
 
+// Fix A: SVG icon components replace emoji in FILE_ICON
+const FILE_ICON = {
+  image: Image,
+  video: Video,
+  audio: Music,
+  pdf:   File,
+};
+
+// Fix A: SVG icon components replace emoji in CONTENT_OPTS
 const CONTENT_OPTS = [
-  { value:"text",  label:"Text",  icon:"📝" },
-  { value:"image", label:"Image", icon:"🖼" },
-  { value:"video", label:"Video", icon:"🎬" },
-  { value:"audio", label:"Audio", icon:"🎵" },
-  { value:"pdf",   label:"PDF",   icon:"📄" },
-  { value:"link",  label:"Link",  icon:"🔗" },
+  { value:"text",  label:"Text",  Icon: FileText },
+  { value:"image", label:"Image", Icon: Image    },
+  { value:"video", label:"Video", Icon: Video    },
+  { value:"audio", label:"Audio", Icon: Music    },
+  { value:"pdf",   label:"PDF",   Icon: File     },
+  { value:"link",  label:"Link",  Icon: Link     },
 ];
 
 const TARGET_OPTS = [
@@ -77,7 +86,6 @@ const INITIAL = {
 
 // ─── Helpers (outside component — no closure over state) ───────────────────────
 
-// Fix 4: was `!b` which is truthy for 0; use explicit null check instead
 const fmtBytes = (b) =>
   b == null ? "" : b < 1048576
     ? `${(b / 1024).toFixed(1)} KB`
@@ -99,7 +107,6 @@ function validate(f) {
   return e;
 }
 
-// Fix 3: was defined inside component and recreated on every render
 const inputCls = (err) =>
   `w-full rounded-lg border px-3 py-2 text-sm bg-white placeholder:text-gray-300
    focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition-all
@@ -118,8 +125,6 @@ const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
   const isEdit       = !!announcement;
   const fileInputRef = useRef(null);
 
-  // Fix 1: ref flag — when populate effect sets target_type, the target_type
-  // change effect must NOT run its reset or it wipes the target_ids we just set.
   const skipTargetReset = useRef(false);
 
   const isCreating  = useSelector(selectIsCreating);
@@ -149,8 +154,6 @@ const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
   useEffect(() => {
     if (!announcement) return;
 
-    // Raise the flag before setFormData so the change effect skips its reset
-    // on the render cycle triggered by this populate.
     skipTargetReset.current = true;
 
     setFormData({
@@ -164,15 +167,12 @@ const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
       channels:     normalizeChannels(announcement.channels),
     });
 
-    // Fetch list data immediately — target_type won't change so the
-    // normal fetch effect below won't fire in edit mode.
     switch (announcement.target_type) {
       case "specific_employees": dispatch(fetchEmployeesThunk()); break;
       case "teams":              dispatch(fetchTeamsThunk());     break;
       default: break;
     }
 
-    // Driver types: store existing IDs as pills (shown before vendor chosen)
     if (DRIVER_TARGET_TYPES.has(announcement.target_type) && announcement.target_ids?.length)
       setEditModeIds(announcement.target_ids);
   }, [announcement, dispatch]);
@@ -185,7 +185,6 @@ const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
 
   // ── Fetch list on target_type change ────────────────────────────────────────
   useEffect(() => {
-    // Fix 1: skip reset when this run was triggered by the populate effect
     if (skipTargetReset.current) {
       skipTargetReset.current = false;
       return;
@@ -223,8 +222,6 @@ const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }, []);
 
-  // Fix 2: extracted to named handler that also clears the input ref,
-  // so re-selecting the same file after removal correctly fires onChange.
   const handleRemoveFile = useCallback(() => {
     setFormData(p => ({ ...p, media_file:null }));
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -254,7 +251,6 @@ const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
     const errs = validate(formData);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
 
-    // Fix 5: guarantee in_app is always present regardless of state drift
     const channels = formData.channels.includes(ALWAYS_ON_CHANNEL)
       ? formData.channels
       : [...formData.channels, ALWAYS_ON_CHANNEL];
@@ -352,15 +348,16 @@ const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
           <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
             Content Type
           </label>
+          {/* Fix A: Icon component replaces emoji span */}
           <div className="flex flex-wrap gap-1.5">
-            {CONTENT_OPTS.map(ct => (
-              <button key={ct.value} type="button" disabled={isSubmitting}
-                onClick={() => setFormData(p => ({ ...p, content_type:ct.value }))}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all
-                  ${formData.content_type===ct.value
+            {CONTENT_OPTS.map(({ value, label, Icon }) => (
+              <button key={value} type="button" disabled={isSubmitting}
+                onClick={() => setFormData(p => ({ ...p, content_type: value }))}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all
+                  ${formData.content_type === value
                     ? "bg-indigo-600 text-white border-indigo-600"
                     : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"}`}>
-                <span>{ct.icon}</span>{ct.label}
+                <Icon size={12} className="flex-shrink-0" />{label}
               </button>
             ))}
           </div>
@@ -373,7 +370,8 @@ const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
                 onChange={handleFileChange} disabled={isSubmitting} className="hidden" />
               {formData.media_file ? (
                 <div className="flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2">
-                  <span className="text-sm">{FILE_ICON[formData.content_type]}</span>
+                  {/* Fix A: SVG icon component replaces emoji */}
+                  {(() => { const FIcon = FILE_ICON[formData.content_type]; return <FIcon size={16} className="text-indigo-400 flex-shrink-0" />; })()}
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-gray-800 truncate">{formData.media_file.name}</p>
                     <p className="text-[11px] text-gray-400">{fmtBytes(formData.media_file.size)}</p>
@@ -382,7 +380,6 @@ const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
                     className="text-[11px] text-indigo-600 hover:underline cursor-pointer flex items-center gap-0.5">
                     <Upload size={11}/> Replace
                   </label>
-                  {/* Fix 2: use handleRemoveFile so input ref is also cleared */}
                   <button type="button" onClick={handleRemoveFile}
                     className="text-[11px] text-red-500 hover:underline flex items-center gap-0.5">
                     <Trash2 size={11}/> Remove
@@ -415,6 +412,7 @@ const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
           <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
             Audience
           </label>
+          {/* Fix B: teal-600 → indigo-600 */}
           <div className="grid grid-cols-2 gap-1.5">
             {TARGET_OPTS.map(opt => {
               const Icon   = opt.icon;
@@ -424,8 +422,8 @@ const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
                   onClick={() => setFormData(p => ({ ...p, target_type:opt.value }))}
                   className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg border text-xs font-medium transition-all text-left
                     ${active
-                      ? "bg-teal-600 text-white border-teal-600"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-teal-300"}`}>
+                      ? "bg-indigo-600 text-white border-indigo-600"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"}`}>
                   <Icon size={12} className="flex-shrink-0"/>
                   <span className="leading-tight">{opt.label}</span>
                   {active && <CheckCircle2 size={11} className="ml-auto flex-shrink-0"/>}
@@ -438,11 +436,11 @@ const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
           {showTargetList && needsVendor && (
             <div className="mt-2">
               {hasEditIds && (
-                <div className="mb-1.5 flex items-center justify-between rounded-lg bg-teal-50 border border-teal-200 px-3 py-1.5">
-                  <span className="text-[11px] text-teal-700 font-medium">
+                <div className="mb-1.5 flex items-center justify-between rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-1.5">
+                  <span className="text-[11px] text-indigo-700 font-medium">
                     ✓ {editModeIds.length} driver{editModeIds.length !== 1 ? "s" : ""} selected
                   </span>
-                  <span className="text-[11px] text-teal-500">Pick vendor to change</span>
+                  <span className="text-[11px] text-indigo-500">Pick vendor to change</span>
                 </div>
               )}
               <select value={selectedVendorId} disabled={isSubmitting}
@@ -452,7 +450,7 @@ const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
                   setFormData(p => ({ ...p, target_ids:[] }));
                 }}
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white
-                  focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all">
+                  focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all">
                 <option value="">{hasEditIds ? "— Keep current —" : "— Choose a vendor —"}</option>
                 {vendorOpts.map(v => <option key={v.value} value={v.value}>{v.label}</option>)}
               </select>
@@ -467,7 +465,7 @@ const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
                   {hasEditIds && !selectedVendorId ? "Currently selected" : "Select targets"}
                 </p>
                 {formData.target_ids.length > 0 && (
-                  <span className="text-[11px] font-semibold text-teal-600 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
                     {formData.target_ids.length} selected
                   </span>
                 )}
@@ -476,7 +474,7 @@ const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
               {hasEditIds && !selectedVendorId ? (
                 <div className="flex flex-wrap gap-1.5 p-2 border border-gray-200 rounded-lg bg-white">
                   {editModeIds.map(id => (
-                    <span key={id} className="px-2 py-0.5 rounded-lg bg-teal-100 text-teal-700 text-[11px] font-semibold border border-teal-200">
+                    <span key={id} className="px-2 py-0.5 rounded-lg bg-indigo-100 text-indigo-700 text-[11px] font-semibold border border-indigo-200">
                       #{id}
                     </span>
                   ))}
@@ -486,7 +484,7 @@ const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
                   <input placeholder="Search…" value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-xs bg-white mb-1
-                      focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all" />
+                      focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all" />
                   <div className="border border-gray-200 rounded-lg max-h-36 overflow-y-auto bg-white divide-y divide-gray-50">
                     {filteredItems.length === 0 ? (
                       <p className="py-4 text-center text-xs text-gray-400">No results found.</p>
@@ -495,14 +493,14 @@ const AnnouncementForm = ({ announcement, onClose, onSuccess }) => {
                       return (
                         <label key={item.id}
                           className={`flex items-center gap-2 px-3 py-1.5 cursor-pointer text-xs transition-colors
-                            ${checked ? "bg-teal-50" : "hover:bg-gray-50"}`}>
+                            ${checked ? "bg-indigo-50" : "hover:bg-gray-50"}`}>
                           <input type="checkbox" checked={checked}
                             onChange={() => toggleSelection(item.id)}
-                            disabled={isSubmitting} className="rounded accent-teal-600" />
-                          <span className={checked ? "text-teal-700 font-medium" : "text-gray-700"}>
+                            disabled={isSubmitting} className="rounded accent-indigo-600" />
+                          <span className={checked ? "text-indigo-700 font-medium" : "text-gray-700"}>
                             {item.label}
                           </span>
-                          {checked && <CheckCircle2 size={11} className="ml-auto text-teal-500 flex-shrink-0"/>}
+                          {checked && <CheckCircle2 size={11} className="ml-auto text-indigo-500 flex-shrink-0"/>}
                         </label>
                       );
                     })}

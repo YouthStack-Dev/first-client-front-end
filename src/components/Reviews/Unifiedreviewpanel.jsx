@@ -22,16 +22,9 @@ import {
 } from "../../redux/features/reviews/Reviewselector";
 
 import { NewfetchDriversThunk, driversSelectors } from "../../redux/features/manageDriver/newDriverSlice";
-import { fetchVehiclesThunk } from "../../redux/features/manageVehicles/vehicleThunk";
-import { selectVehicles }     from "../../redux/features/manageVehicles/vehicleSelectors";
-import SelectField            from "../ui/SelectField";
-
-// ─── Design tokens ────────────────────────────────────────────────────────────
-// Left panel  : 40%  (2/5)
-// Right panel : 60%  (3/5)
-// Palette     : neutral-900 text, zinc-50 bg, blue-600 accent
-// Typography  : tight tracking, weight contrast (400/700/900)
-// ─────────────────────────────────────────────────────────────────────────────
+import { fetchVehiclesThunk }  from "../../redux/features/manageVehicles/vehicleThunk";
+import { selectVehicles }      from "../../redux/features/manageVehicles/vehicleSelectors";
+import SelectField             from "../ui/SelectField";
 
 const today = () => new Date().toISOString().split("T")[0];
 
@@ -53,9 +46,10 @@ const STATUS_STYLE = {
   Ongoing:   "bg-sky-50    text-sky-700    ring-1 ring-sky-200",
   Scheduled: "bg-zinc-100  text-zinc-500   ring-1 ring-zinc-200",
   Cancelled: "bg-red-50    text-red-600    ring-1 ring-red-200",
+  Request:   "bg-blue-50   text-blue-600   ring-1 ring-blue-200",
 };
 const StatusBadge = ({ status }) => (
-  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold tracking-wide ${STATUS_STYLE[status] || STATUS_STYLE.Scheduled}`}>
+  <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wide ${STATUS_STYLE[status] || STATUS_STYLE.Scheduled}`}>
     {status}
   </span>
 );
@@ -88,9 +82,8 @@ const EmptyWell = ({ icon, title, sub }) => (
   </div>
 );
 
-// Divider with label
 const SectionLabel = ({ children }) => (
-  <p className="text-[10px] font-bold tracking-[0.12em] uppercase text-zinc-400 mb-2">{children}</p>
+  <p className="text-[10px] font-bold tracking-[0.12em] uppercase text-zinc-400 mb-1">{children}</p>
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -101,7 +94,7 @@ const SectionLabel = ({ children }) => (
 const LeftPane = ({ header, children }) => (
   <div className="w-[40%] flex-shrink-0 flex flex-col bg-white border-r border-zinc-100 overflow-hidden">
     {header && (
-      <div className="px-4 py-3.5 border-b border-zinc-100 bg-zinc-50/60 flex flex-col gap-3">
+      <div className="px-4 py-3.5 border-b border-zinc-100 bg-white flex flex-col gap-3">
         {header}
       </div>
     )}
@@ -109,9 +102,9 @@ const LeftPane = ({ header, children }) => (
   </div>
 );
 
-/** 60% right panel */
+/** 60% right panel — matches screenshot's white card on gray bg */
 const RightPane = ({ children }) => (
-  <div className="flex-1 overflow-y-auto bg-zinc-50 px-8 py-6">{children}</div>
+  <div className="flex-1 overflow-y-auto bg-gray-50 px-6 py-6">{children}</div>
 );
 
 const CenterPrompt = ({ icon, title, sub }) => (
@@ -129,7 +122,7 @@ const CenterPrompt = ({ icon, title, sub }) => (
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DetailCard = ({ children, className = "" }) => (
-  <div className={`bg-white rounded-xl border border-zinc-100 ${className}`}>{children}</div>
+  <div className={`bg-white rounded-xl border border-zinc-100 shadow-sm ${className}`}>{children}</div>
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -189,11 +182,11 @@ const VendorSelect = ({ options, value, onChange, onLoad }) => (
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STATS ROW
+// STATS ROW  — matches screenshot: Total | Scheduled | Reviewed
 // ─────────────────────────────────────────────────────────────────────────────
 
 const StatsRow = ({ items }) => (
-  <div className="grid border-b border-zinc-100" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
+  <div className="grid border-b border-zinc-100 bg-white" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
     {items.map(({ l, v, color = "text-zinc-800" }) => (
       <div key={l} className="flex flex-col items-center py-3 border-r border-zinc-100 last:border-r-0">
         <span className={`text-xl font-black tabular-nums ${color}`}>{v}</span>
@@ -204,7 +197,7 @@ const StatsRow = ({ items }) => (
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
-// REVIEW SUMMARY (Driver / Vehicle tabs)
+// REVIEW SUMMARY
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ReviewSummary = ({ summary }) => {
@@ -216,7 +209,6 @@ const ReviewSummary = ({ summary }) => {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Stat cards */}
       <div className="grid grid-cols-2 gap-3">
         <DetailCard className="p-4 text-center">
           <div className={`text-4xl font-black tabular-nums leading-none ${ratingColor}`}>
@@ -234,7 +226,6 @@ const ReviewSummary = ({ summary }) => {
         </DetailCard>
       </div>
 
-      {/* Tag frequency */}
       {Object.keys(summary.tag_counts || {}).length > 0 && (
         <DetailCard className="p-4">
           <SectionLabel>Tag Frequency</SectionLabel>
@@ -255,7 +246,6 @@ const ReviewSummary = ({ summary }) => {
         </DetailCard>
       )}
 
-      {/* Recent comments */}
       {summary.recent_comments?.length > 0 && (
         <DetailCard className="p-4">
           <SectionLabel>Recent Comments</SectionLabel>
@@ -273,7 +263,7 @@ const ReviewSummary = ({ summary }) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// REVIEW LIST (Driver / Vehicle tabs)
+// REVIEW LIST
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ReviewList = ({ reviews, type, pagination, page, onPage }) => (
@@ -322,6 +312,32 @@ const ReviewList = ({ reviews, type, pagination, page, onPage }) => (
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
+// NO REVIEWS CARD — shared by Drivers + Vehicles tabs
+// ─────────────────────────────────────────────────────────────────────────────
+
+const NoReviewsCard = ({ name, type }) => (
+  <DetailCard className="py-14 flex flex-col items-center justify-center text-center gap-3">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+      className="text-zinc-300" stroke="currentColor" strokeWidth="1.4"
+      strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 12h-6l-2 3H10l-2-3H2" />
+      <path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z" />
+    </svg>
+    <div>
+      <p className="text-sm font-bold text-zinc-500">No reviews yet</p>
+      <p className="text-xs text-zinc-400 mt-1 max-w-[200px] mx-auto leading-relaxed">
+        {type === "driver"
+          ? `${name} hasn't received any reviews in the selected period.`
+          : `Vehicle ${name} hasn't received any reviews in the selected period.`}
+      </p>
+    </div>
+    <span className="inline-flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 text-zinc-400 text-[11px] font-semibold px-3 py-1 rounded-full">
+      0 reviews · Try a wider date range
+    </span>
+  </DetailCard>
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
 // TAB: BOOKINGS
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -332,11 +348,11 @@ const BookingsTab = ({ tenantId }) => {
   const reviewCache   = useSelector(selectBookingReviewCache);
   const reviewLoading = useSelector(selectBookingReviewLoading);
 
-  const [date,           setDate]          = useState(today());
-  const [sd,             setSd]            = useState("");
-  const [ed,             setEd]            = useState("");
-  const [openShifts,     setOpenShifts]    = useState({});
-  const [sel,            setSel]           = useState(null);
+  const [date,       setDate]       = useState(today());
+  const [sd,         setSd]         = useState("");
+  const [ed,         setEd]         = useState("");
+  const [openShifts, setOpenShifts] = useState({});
+  const [sel,        setSel]        = useState(null);
 
   const load = useCallback(() => {
     if (!date) return;
@@ -368,26 +384,32 @@ const BookingsTab = ({ tenantId }) => {
       {/* ── 40% LEFT ── */}
       <LeftPane header={
         <>
-          {/* Date + Load */}
-          <div className="flex gap-2 items-end">
-            <div className="flex-1">
-              <SectionLabel>Booking Date</SectionLabel>
-              <input type="date" value={date} onChange={e => setDate(e.target.value)}
-                className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm text-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+          {/* Booking Date + Load — matches screenshot layout */}
+          <div className="flex flex-col gap-1.5">
+            <SectionLabel>Booking Date</SectionLabel>
+            <div className="flex gap-2 items-center">
+              <input
+                type="date"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                className="flex-1 border border-zinc-200 rounded-lg px-3 py-2 text-sm text-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <button
+                onClick={load}
+                className="h-[38px] px-5 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 active:scale-95 transition-all flex-shrink-0"
+              >
+                Load
+              </button>
             </div>
-            <button onClick={load}
-              className="h-[38px] px-5 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 active:scale-95 transition-all">
-              Load
-            </button>
           </div>
           <DateRangeFilter sd={sd} ed={ed} setSd={setSd} setEd={setEd}
             onApply={load} onClear={() => { setSd(""); setEd(""); }} />
         </>
       }>
-        {/* Stats */}
+        {/* Stats row — Total | Scheduled | Reviewed */}
         {shifts && !loading && (
           <StatsRow items={[
-            { l: "Total",     v: all.length,                                      },
+            { l: "Total",     v: all.length },
             { l: "Scheduled", v: all.filter(b => b.status === "Scheduled").length, color: "text-blue-600" },
             { l: "Reviewed",  v: reviewed,                                          color: "text-emerald-600" },
           ]} />
@@ -432,13 +454,14 @@ const BookingsTab = ({ tenantId }) => {
                       : "border-l-2 border-l-transparent hover:bg-zinc-50 hover:border-l-zinc-200"
                     }`}
                 >
-                  {/* Row 1 */}
+                  {/* Row 1: employee code + status badge + reviewed tick + booking id */}
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className={`text-sm font-bold truncate ${active ? "text-blue-700" : "text-zinc-800"}`}>
                         {b.employee_code || `#${b.employee_id}`}
                       </span>
-                      <StatusBadge status={b.status} />
+                      {/* Show status as "Request" badge to match screenshot */}
+                      <StatusBadge status={b.status || "Request"} />
                       {hasReview && (
                         <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 ring-1 ring-emerald-200 px-1.5 py-0.5 rounded-full">
                           ✓
@@ -447,7 +470,7 @@ const BookingsTab = ({ tenantId }) => {
                     </div>
                     <span className="text-[11px] text-zinc-400 font-mono flex-shrink-0">#{b.booking_id}</span>
                   </div>
-                  {/* Route dots */}
+                  {/* Route */}
                   <div className="flex items-start gap-1.5 mb-0.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0 mt-[5px]" />
                     <span className="text-[11px] text-zinc-500 truncate leading-snug">{b.pickup_location || "—"}</span>
@@ -463,36 +486,40 @@ const BookingsTab = ({ tenantId }) => {
         ))}
       </LeftPane>
 
-      {/* ── 60% RIGHT ── */}
+      {/* ── 60% RIGHT ── matches screenshot card layout */}
       <RightPane>
-        {!sel && <CenterPrompt icon="📋" title="Select a booking" sub="Click any booking on the left to view its review" />}
+        {!sel && (
+          <CenterPrompt icon="📋" title="Select a booking" sub="Click any booking on the left to view its review" />
+        )}
 
         {sel && (
-          <div className="max-w-2xl flex flex-col gap-4">
+          <div className="max-w-2xl">
 
-            {/* Booking header card */}
-            <DetailCard className="p-5">
-              <div className="flex items-start justify-between mb-4">
+            {/* ── Single unified card: booking info + review together ── */}
+            <DetailCard className="overflow-hidden">
+
+              {/* ── Header: booking ID + employee + status badge ── */}
+              <div className="flex items-start justify-between px-5 pt-5 pb-4">
                 <div>
-                  <p className="text-[10px] font-bold tracking-[0.12em] uppercase text-zinc-400 mb-1">
+                  <p className="text-[11px] font-semibold text-zinc-400 mb-1 uppercase tracking-wide">
                     Booking #{sel.booking_id}
                   </p>
                   <h2 className="text-2xl font-black text-zinc-900 tracking-tight">
                     {sel.employee_code || `Employee #${sel.employee_id}`}
                   </h2>
                 </div>
-                <StatusBadge status={sel.status} />
+                <StatusBadge status={sel.status || "Request"} />
               </div>
 
-              {/* Route timeline */}
-              <div className="rounded-lg bg-zinc-50 border border-zinc-100 p-3.5 mb-4">
+              {/* ── Route timeline ── */}
+              <div className="mx-5 mb-4 rounded-lg bg-zinc-50 border border-zinc-100 p-4">
                 <div className="flex items-start gap-3">
                   <div className="flex flex-col items-center mt-1 flex-shrink-0">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 block" />
-                    <span className="w-px flex-1 min-h-[20px] bg-zinc-200 block my-1" />
+                    <span className="w-px flex-1 min-h-[24px] bg-zinc-200 block my-1" />
                     <span className="w-2 h-2 rounded-full bg-red-500 block" />
                   </div>
-                  <div className="flex flex-col justify-between min-w-0 gap-3">
+                  <div className="flex flex-col gap-3 min-w-0 flex-1">
                     <div>
                       <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-zinc-400">Pickup</p>
                       <p className="text-sm text-zinc-700 leading-snug">{sel.pickup_location || "—"}</p>
@@ -505,29 +532,49 @@ const BookingsTab = ({ tenantId }) => {
                 </div>
               </div>
 
-              {/* Meta tags */}
-              <div className="flex gap-1.5 flex-wrap">
+              {/* ── Meta tags ── */}
+              <div className="flex gap-2 flex-wrap items-center px-5 pb-4">
                 <Tag label={`📅 ${sel.booking_date}`} />
-                <Tag label={sel.booking_type} />
-                {sel.route_details?.driver_name && <Tag label={`👨‍✈️ ${sel.route_details.driver_name}`} variant="purple" />}
-                {sel.route_details?.vehicle_number && <Tag label={`🚗 ${sel.route_details.vehicle_number}`} variant="blue" />}
+                {sel.booking_type && <Tag label={sel.booking_type} />}
+                {sel.route_details?.driver_name    && <Tag label={`👨‍✈️ ${sel.route_details.driver_name}`}    variant="purple" />}
+                {sel.route_details?.vehicle_number && <Tag label={`🚗 ${sel.route_details.vehicle_number}`} variant="blue"   />}
               </div>
-            </DetailCard>
 
-            {/* Review */}
-            {reviewLoading && <Spinner />}
+              {/* ── Divider ── */}
+              <div className="border-t border-zinc-100" />
 
-            {!reviewLoading && review === null && (
-              <DetailCard className="py-10 text-center">
-                <span className="text-3xl block mb-2 opacity-20">📭</span>
-                <p className="text-sm font-bold text-zinc-500">No review submitted</p>
-                <p className="text-xs text-zinc-400 mt-1">Employee hasn't rated this ride yet</p>
-              </DetailCard>
-            )}
+              {/* ── Review section (below divider, same card) ── */}
+              {reviewLoading && (
+                <div className="py-10"><Spinner /></div>
+              )}
 
-            {!reviewLoading && review && (
-              <>
-                <DetailCard className="p-4">
+              {/* No review — empty state fills bottom of card naturally */}
+              {!reviewLoading && review === null && (
+                <div className="flex flex-col items-center justify-center gap-3 py-14 px-6 text-center">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+                    className="text-zinc-300" stroke="currentColor" strokeWidth="1.4"
+                    strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 12h-6l-2 3H10l-2-3H2" />
+                    <path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-bold text-zinc-500">No review submitted</p>
+                    <p className="text-xs text-zinc-400 mt-1 max-w-[200px] mx-auto leading-relaxed">
+                      Employee hasn't rated this ride yet. Review will appear here once submitted.
+                    </p>
+                  </div>
+                  {/* Subtle pending indicator */}
+                  <span className="mt-1 inline-flex items-center gap-1.5 bg-amber-50 border border-amber-100 text-amber-600 text-[11px] font-semibold px-3 py-1 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse block" />
+                    Awaiting employee feedback
+                  </span>
+                </div>
+              )}
+
+              {/* Review submitted */}
+              {!reviewLoading && review && (
+                <div className="p-5 flex flex-col gap-4">
+                  {/* Overall rating row */}
                   <div className="flex items-center justify-between">
                     <div>
                       <SectionLabel>Overall Rating</SectionLabel>
@@ -542,31 +589,33 @@ const BookingsTab = ({ tenantId }) => {
                       </p>
                     </div>
                   </div>
-                </DetailCard>
 
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { label: "Driver Review",  icon: "👨‍✈️", rating: review.driver_rating,  tags: review.driver_tags,  comment: review.driver_comment,  bg: "bg-violet-50", border: "border-violet-100", variant: "purple" },
-                    { label: "Vehicle Review", icon: "🚗",   rating: review.vehicle_rating, tags: review.vehicle_tags, comment: review.vehicle_comment, bg: "bg-emerald-50", border: "border-emerald-100", variant: "green" },
-                  ].map(({ label, icon, rating, tags, comment, bg, border, variant }) => (
-                    <div key={label} className={`rounded-xl border ${border} ${bg} p-4`}>
-                      <div className="flex items-center justify-between mb-2.5">
-                        <span className="text-xs font-bold text-zinc-700">{icon} {label}</span>
-                        <StarRating value={rating} size={11} />
-                      </div>
-                      {tags?.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-2">
-                          {tags.map(t => <Tag key={t} label={t} variant={variant} />)}
+                  {/* Driver + Vehicle sub-reviews */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: "Driver Review",  icon: "👨‍✈️", rating: review.driver_rating,  tags: review.driver_tags,  comment: review.driver_comment,  bg: "bg-violet-50",  border: "border-violet-100",  variant: "purple" },
+                      { label: "Vehicle Review", icon: "🚗",   rating: review.vehicle_rating, tags: review.vehicle_tags, comment: review.vehicle_comment, bg: "bg-emerald-50", border: "border-emerald-100", variant: "green"  },
+                    ].map(({ label, icon, rating, tags, comment, bg, border, variant }) => (
+                      <div key={label} className={`rounded-xl border ${border} ${bg} p-4`}>
+                        <div className="flex items-center justify-between mb-2.5">
+                          <span className="text-xs font-bold text-zinc-700">{icon} {label}</span>
+                          <StarRating value={rating} size={11} />
                         </div>
-                      )}
-                      <p className="text-xs text-zinc-500 italic leading-relaxed">
-                        {comment ? `"${comment}"` : "No comment left."}
-                      </p>
-                    </div>
-                  ))}
+                        {tags?.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {tags.map(t => <Tag key={t} label={t} variant={variant} />)}
+                          </div>
+                        )}
+                        <p className="text-xs text-zinc-500 italic leading-relaxed">
+                          {comment ? `"${comment}"` : "No comment left."}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </>
-            )}
+              )}
+
+            </DetailCard>
           </div>
         )}
       </RightPane>
@@ -593,6 +642,7 @@ const DriversTab = ({ isVendorUser, vendorId, vendorOptions }) => {
   const summary    = reviewData?.summary    ?? reviewData?.data?.summary    ?? null;
   const reviews    = reviewData?.reviews    ?? reviewData?.data?.reviews    ?? [];
   const pagination = reviewData?.pagination ?? reviewData?.data?.pagination ?? { total: 0, pages: 1 };
+  const hasNoData  = !!reviewData && reviews.length === 0 && (summary?.total_reviews ?? 0) === 0;
   const isLow      = summary && (summary.average_rating ?? 0) < 3 && (summary.total_reviews ?? 0) >= 3;
 
   const loadDrivers = useCallback(() => {
@@ -630,7 +680,7 @@ const DriversTab = ({ isVendorUser, vendorId, vendorOptions }) => {
         {!selVendor && !isVendorUser
           ? <EmptyWell icon="🏢" title="Pick a vendor" sub="Select a vendor first" />
           : drivers.map(d => {
-              const active  = selDriver?.driver_id === d.driver_id;
+              const active   = selDriver?.driver_id === d.driver_id;
               const expiring = new Date(d.license_expiry_date) < new Date(Date.now() + 60 * 864e5);
               return (
                 <button key={d.driver_id} onClick={() => pickDriver(d)}
@@ -680,14 +730,17 @@ const DriversTab = ({ isVendorUser, vendorId, vendorOptions }) => {
 
               {reviewLoading && <Spinner />}
 
+              {/* No data returned at all */}
               {!reviewLoading && !reviewData && (
-                <DetailCard className="py-10 text-center">
-                  <span className="text-3xl block mb-2 opacity-20">📭</span>
-                  <p className="text-sm font-bold text-zinc-500">No reviews found</p>
-                </DetailCard>
+                <NoReviewsCard name={selDriver.name} type="driver" />
               )}
 
-              {!reviewLoading && reviewData && (
+              {/* API returned data but zero reviews */}
+              {!reviewLoading && hasNoData && (
+                <NoReviewsCard name={selDriver.name} type="driver" />
+              )}
+
+              {!reviewLoading && reviewData && !hasNoData && (
                 <>
                   {isLow && (
                     <div className="flex gap-3 items-start bg-red-50 border border-red-100 rounded-xl p-4">
@@ -698,7 +751,13 @@ const DriversTab = ({ isVendorUser, vendorId, vendorOptions }) => {
                     </div>
                   )}
                   <ReviewSummary summary={summary} />
-                  {reviews.length > 0 && <ReviewList reviews={reviews} type="driver" pagination={pagination} page={page} onPage={p => { dispatch(setDriverReviewPage(p)); dispatch(fetchDriverReviewsThunk({ driverId: selDriver.driver_id, page: p, startDate: sd, endDate: ed })); }} />}
+                  {reviews.length > 0 && (
+                    <ReviewList reviews={reviews} type="driver" pagination={pagination} page={page}
+                      onPage={p => {
+                        dispatch(setDriverReviewPage(p));
+                        dispatch(fetchDriverReviewsThunk({ driverId: selDriver.driver_id, page: p, startDate: sd, endDate: ed }));
+                      }} />
+                  )}
                 </>
               )}
             </div>
@@ -728,6 +787,7 @@ const VehiclesTab = ({ isVendorUser, vendorId, vendorOptions }) => {
   const summary    = reviewData?.summary    ?? reviewData?.data?.summary    ?? null;
   const reviews    = reviewData?.reviews    ?? reviewData?.data?.reviews    ?? [];
   const pagination = reviewData?.pagination ?? reviewData?.data?.pagination ?? { total: 0, pages: 1 };
+  const hasNoData  = !!reviewData && reviews.length === 0 && (summary?.total_reviews ?? 0) === 0;
   const isMaint    = summary && (summary.average_rating ?? 0) < 3 && (summary.total_reviews ?? 0) > 5;
   const insExp     = selVehicle && new Date(selVehicle.insurance_expiry_date) < new Date(Date.now() + 30 * 864e5);
 
@@ -814,14 +874,17 @@ const VehiclesTab = ({ isVendorUser, vendorId, vendorOptions }) => {
 
               {reviewLoading && <Spinner />}
 
+              {/* No data returned at all */}
               {!reviewLoading && !reviewData && (
-                <DetailCard className="py-10 text-center">
-                  <span className="text-3xl block mb-2 opacity-20">📭</span>
-                  <p className="text-sm font-bold text-zinc-500">No reviews found</p>
-                </DetailCard>
+                <NoReviewsCard name={selVehicle.rc_number} type="vehicle" />
               )}
 
-              {!reviewLoading && reviewData && (
+              {/* API returned data but zero reviews */}
+              {!reviewLoading && hasNoData && (
+                <NoReviewsCard name={selVehicle.rc_number} type="vehicle" />
+              )}
+
+              {!reviewLoading && reviewData && !hasNoData && (
                 <>
                   {isMaint && (
                     <div className="flex gap-3 items-start bg-amber-50 border border-amber-100 rounded-xl p-4">
@@ -832,7 +895,13 @@ const VehiclesTab = ({ isVendorUser, vendorId, vendorOptions }) => {
                     </div>
                   )}
                   <ReviewSummary summary={summary} />
-                  {reviews.length > 0 && <ReviewList reviews={reviews} type="vehicle" pagination={pagination} page={page} onPage={p => { dispatch(setVehicleReviewPage(p)); dispatch(fetchVehicleReviewsThunk({ vehicleId: selVehicle.vehicle_id, page: p, startDate: sd, endDate: ed })); }} />}
+                  {reviews.length > 0 && (
+                    <ReviewList reviews={reviews} type="vehicle" pagination={pagination} page={page}
+                      onPage={p => {
+                        dispatch(setVehicleReviewPage(p));
+                        dispatch(fetchVehicleReviewsThunk({ vehicleId: selVehicle.vehicle_id, page: p, startDate: sd, endDate: ed }));
+                      }} />
+                  )}
                 </>
               )}
             </div>
@@ -862,15 +931,15 @@ const AllReviewsTab = () => {
     dispatch(fetchAllReviewsThunk({ page: p, ...filters }));
   }, [dispatch, filters]);
 
-  const avg = result?.data?.filter(r => r.overall_rating).length
-    ? (result.data.reduce((s, r) => s + (r.overall_rating || 0), 0) / result.data.filter(r => r.overall_rating).length).toFixed(1)
-    : "—";
+  // API nests under data.data — normalise here
+  const rows      = result?.data?.data     ?? result?.data     ?? [];
+  const meta      = result?.data?.meta     ?? result?.meta     ?? {};
+  const hasNoRows = !!result && rows.length === 0;
 
   const ratingOpts = ["","1","2","3","4","5"].map(v => ({ value: v, label: v ? "★".repeat(+v)+` (${v})` : "Any" }));
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-
       {/* Filter bar */}
       <div className="bg-white border-b border-zinc-100 px-5 py-4 flex-shrink-0">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
@@ -922,14 +991,16 @@ const AllReviewsTab = () => {
 
         {result && !loading && (
           <>
-            {/* Summary stats */}
+            {/* Stats row — always show when result exists */}
             <div className="grid grid-cols-4 gap-3 mb-5">
               {[
-                {l:"Total",    v:result.meta?.total,                                        c:"text-zinc-800"},
-                {l:"Avg",      v:avg,                                                        c:"text-amber-500"},
-                {l:"Low ≤ 2",  v:result.data.filter(r=>r.overall_rating<=2).length,         c:"text-red-500"},
-                {l:"Good ≥ 4", v:result.data.filter(r=>r.overall_rating>=4).length,         c:"text-emerald-600"},
-              ].map(({l,v,c}) => (
+                { l: "Total",    v: meta?.total ?? rows.length,                          c: "text-zinc-800"    },
+                { l: "Avg",      v: rows.filter(r=>r.overall_rating).length
+                    ? (rows.reduce((s,r)=>s+(r.overall_rating||0),0)/rows.filter(r=>r.overall_rating).length).toFixed(1)
+                    : "—",                                                                c: "text-amber-500"   },
+                { l: "Low ≤ 2",  v: rows.filter(r => r.overall_rating <= 2).length,      c: "text-red-500"     },
+                { l: "Good ≥ 4", v: rows.filter(r => r.overall_rating >= 4).length,      c: "text-emerald-600" },
+              ].map(({ l, v, c }) => (
                 <DetailCard key={l} className="p-4 text-center">
                   <div className={`text-2xl font-black tabular-nums ${c}`}>{v}</div>
                   <p className="text-[9px] font-bold tracking-[0.1em] uppercase text-zinc-400 mt-1">{l}</p>
@@ -937,57 +1008,79 @@ const AllReviewsTab = () => {
               ))}
             </div>
 
-            {/* Review cards */}
-            <div className="flex flex-col gap-2.5">
-              {result.data.map(r => (
-                <DetailCard key={r.review_id} className={`p-4 ${r.overall_rating<=2 ? "border-red-100" : ""}`}>
-                  <div className="flex justify-between items-start mb-3 flex-wrap gap-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <StarRating value={r.overall_rating} size={14} />
-                      <span className="text-sm font-bold text-zinc-800">{r.driver_name||`Driver #${r.driver_id}`}</span>
-                      <Tag label={`🚗 ${r.vehicle_number}`} variant="blue" />
-                      {r.route_id && <Tag label={`Route #${r.route_id}`} />}
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[11px] text-zinc-400 font-medium">Booking #{r.booking_id} · Emp #{r.employee_id}</p>
-                      <p className="text-[11px] text-zinc-400 mt-0.5">
-                        {new Date(r.created_at).toLocaleString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {[
-                      {label:"👨‍✈️ Driver", rating:r.driver_rating,  tags:r.driver_tags,  comment:r.driver_comment,  variant:"purple", bg:"bg-violet-50/60 border-violet-100"},
-                      {label:"🚗 Vehicle",  rating:r.vehicle_rating, tags:r.vehicle_tags, comment:r.vehicle_comment, variant:"green",  bg:"bg-emerald-50/60 border-emerald-100"},
-                    ].map(({label,rating,tags,comment,variant,bg}) => (
-                      <div key={label} className={`rounded-xl p-3 border ${bg}`}>
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-xs font-bold text-zinc-600">{label}</span>
-                          <StarRating value={rating} size={11} />
+            {/* Zero results empty state */}
+            {hasNoRows ? (
+              <DetailCard className="py-14 flex flex-col items-center justify-center text-center gap-3">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+                  className="text-zinc-300" stroke="currentColor" strokeWidth="1.4"
+                  strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                </svg>
+                <div>
+                  <p className="text-sm font-bold text-zinc-500">No reviews found</p>
+                  <p className="text-xs text-zinc-400 mt-1 max-w-[220px] mx-auto leading-relaxed">
+                    No reviews match your current filters. Try adjusting the date range or clearing some filters.
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setFilters(blank); dispatch(resetAllReviews()); }}
+                  className="mt-1 inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-600 text-xs font-semibold px-4 py-1.5 rounded-full hover:bg-blue-100 transition">
+                  Clear filters
+                </button>
+              </DetailCard>
+            ) : (
+              <>
+                <div className="flex flex-col gap-2.5">
+                  {rows.map(r => (
+                    <DetailCard key={r.review_id} className={`p-4 ${r.overall_rating <= 2 ? "border-red-100" : ""}`}>
+                      <div className="flex justify-between items-start mb-3 flex-wrap gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <StarRating value={r.overall_rating} size={14} />
+                          <span className="text-sm font-bold text-zinc-800">{r.driver_name || `Driver #${r.driver_id}`}</span>
+                          <Tag label={`🚗 ${r.vehicle_number}`} variant="blue" />
+                          {r.route_id && <Tag label={`Route #${r.route_id}`} />}
                         </div>
-                        {tags?.length>0 && <div className="flex flex-wrap gap-1 mb-1.5">{tags.map(t=><Tag key={t} label={t} variant={variant}/>)}</div>}
-                        {comment && <p className="text-xs text-zinc-500 italic leading-relaxed">"{comment}"</p>}
+                        <div className="text-right">
+                          <p className="text-[11px] text-zinc-400 font-medium">Booking #{r.booking_id} · Emp #{r.employee_id}</p>
+                          <p className="text-[11px] text-zinc-400 mt-0.5">
+                            {new Date(r.created_at).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                        </div>
                       </div>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        {[
+                          { label: "👨‍✈️ Driver", rating: r.driver_rating,  tags: r.driver_tags,  comment: r.driver_comment,  variant: "purple", bg: "bg-violet-50/60 border-violet-100"  },
+                          { label: "🚗 Vehicle",  rating: r.vehicle_rating, tags: r.vehicle_tags, comment: r.vehicle_comment, variant: "green",  bg: "bg-emerald-50/60 border-emerald-100" },
+                        ].map(({ label, rating, tags, comment, variant, bg }) => (
+                          <div key={label} className={`rounded-xl p-3 border ${bg}`}>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-xs font-bold text-zinc-600">{label}</span>
+                              <StarRating value={rating} size={11} />
+                            </div>
+                            {tags?.length > 0 && <div className="flex flex-wrap gap-1 mb-1.5">{tags.map(t => <Tag key={t} label={t} variant={variant} />)}</div>}
+                            {comment && <p className="text-xs text-zinc-500 italic leading-relaxed">"{comment}"</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </DetailCard>
+                  ))}
+                </div>
+
+                <div className="flex justify-between items-center mt-5 pt-4 border-t border-zinc-200">
+                  <span className="text-sm text-zinc-500 font-medium tabular-nums">
+                    Page {page} of {meta?.total_pages ?? 1} · {meta?.total ?? rows.length} total
+                  </span>
+                  <div className="flex gap-2">
+                    {[["← Prev", page - 1, page <= 1], ["Next →", page + 1, page >= (meta?.total_pages ?? 1)]].map(([l, np, dis]) => (
+                      <button key={l} onClick={() => !dis && search(np)} disabled={dis}
+                        className="px-4 py-2 border border-zinc-200 bg-white rounded-lg text-sm text-zinc-600 hover:bg-zinc-50 disabled:opacity-30 disabled:cursor-not-allowed font-semibold transition">
+                        {l}
+                      </button>
                     ))}
                   </div>
-                </DetailCard>
-              ))}
-            </div>
-
-            {/* Pagination */}
-            <div className="flex justify-between items-center mt-5 pt-4 border-t border-zinc-200">
-              <span className="text-sm text-zinc-500 font-medium tabular-nums">
-                Page {page} of {result.meta?.total_pages} · {result.meta?.total} total
-              </span>
-              <div className="flex gap-2">
-                {[["← Prev",page-1,page<=1],["Next →",page+1,page>=result.meta?.total_pages]].map(([l,np,dis]) => (
-                  <button key={l} onClick={()=>!dis&&search(np)} disabled={dis}
-                    className="px-4 py-2 border border-zinc-200 bg-white rounded-lg text-sm text-zinc-600 hover:bg-zinc-50 disabled:opacity-30 disabled:cursor-not-allowed font-semibold transition">
-                    {l}
-                  </button>
-                ))}
-              </div>
-            </div>
+                </div>
+              </>
+            )}
           </>
         )}
       </div>

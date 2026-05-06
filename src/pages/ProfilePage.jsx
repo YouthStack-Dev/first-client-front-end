@@ -39,12 +39,10 @@ export default function ProfilePage() {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [selectedBookingToUpdate, setSelectedBookingToUpdate] = useState(null);
 
-  // API endpoints
   const endpoint = {
     booking: "/bookings/",
   };
 
-  // Fetch user profile - simplified version
   const fetchUserProfile = useCallback(async () => {
     try {
       const response = await API_CLIENT.get("/auth/me");
@@ -59,7 +57,6 @@ export default function ProfilePage() {
     }
   }, []);
 
-  // Fetch booking history
   const fetchBookingHistory = useCallback(
     async (date = null) => {
       if (!userProfile?.employee_id) {
@@ -84,7 +81,6 @@ export default function ProfilePage() {
           const bookings = response.data.data || [];
           setBookingHistoryData(bookings);
 
-          // Update available filter options
           const availableDates = [
             ...new Set(bookings.map((booking) => booking.booking_date)),
           ].sort();
@@ -98,13 +94,9 @@ export default function ProfilePage() {
             availableStatuses,
           }));
 
-          logDebug(
-            `Loaded ${bookings.length} bookings for date: ${bookingDate}`
-          );
+          logDebug(`Loaded ${bookings.length} bookings for date: ${bookingDate}`);
         } else {
-          throw new Error(
-            response.data.message || "Failed to fetch booking history"
-          );
+          throw new Error(response.data.message || "Failed to fetch booking history");
         }
       } catch (error) {
         console.error("Error fetching booking history:", error);
@@ -122,20 +114,15 @@ export default function ProfilePage() {
     [userProfile?.employee_id, bookingFilters.date]
   );
 
-  // Fetch all initial data once on component mount
   useEffect(() => {
     const initializeData = async () => {
-      // Fetch user profile
       await fetchUserProfile();
-
-      // Fetch shifts - always fetch on mount
       dispatch(fetchShiftTrunk());
     };
 
     initializeData();
-  }, []); // Empty dependency array - runs only once on mount
+  }, []);
 
-  // Error display component
   const renderErrors = () => null;
 
   const handleBookingSubmit = async () => {
@@ -150,7 +137,6 @@ export default function ProfilePage() {
 
     logDebug(" this is the booking submitting data ", payload);
 
-    // Validate using Zod
     const result = bookingSchema.safeParse(payload);
     if (!result.success) {
       result.error.errors.forEach((err) =>
@@ -171,12 +157,10 @@ export default function ProfilePage() {
         { position: "top-right", autoClose: 4000 }
       );
 
-      // Reset form and show success
       setSelectedDates([]);
       setSelectedShiftId(null);
       setStep("welcome");
 
-      // Refresh booking history if we're going to view it
       if (step === "history") {
         fetchBookingHistory();
       }
@@ -191,7 +175,6 @@ export default function ProfilePage() {
     }
   };
 
-  // Filter booking history
   const filteredBookingHistory = bookingHistoryData.filter((booking) => {
     const matchesStatus =
       !bookingFilters.status || booking.status === bookingFilters.status;
@@ -202,7 +185,6 @@ export default function ProfilePage() {
     return matchesStatus && matchesShiftType;
   });
 
-  // Navigation handlers
   const handleNextToShift = () => {
     if (selectedDates.length === 0) {
       toast.error("Please select at least one date", { position: "top-right", autoClose: 4000 });
@@ -231,12 +213,21 @@ export default function ProfilePage() {
     setErrors([]);
   };
 
-  const handleBookingFilterChange = useCallback((filterType, value) => {
-    setBookingFilters((prev) => ({
-      ...prev,
-      [filterType]: value,
-    }));
-  }, []);
+  // ✅ Fixed: directly calls fetchBookingHistory so cancel refresh works
+  // even when the date value hasn't changed (useEffect wouldn't re-run)
+  const handleBookingFilterChange = useCallback(
+    (filterType, value) => {
+      setBookingFilters((prev) => ({
+        ...prev,
+        [filterType]: value,
+      }));
+
+      if (filterType === "date" && value) {
+        fetchBookingHistory(value);
+      }
+    },
+    [fetchBookingHistory]
+  );
 
   const handleClearBookingFilters = () => {
     const today = new Date().toISOString().split("T")[0];
@@ -258,22 +249,21 @@ export default function ProfilePage() {
     fetchBookingHistory(bookingFilters.date);
   };
 
-  // Clear errors when step changes
   useEffect(() => {
     setErrors([]);
   }, [step]);
 
-  // Handle date filter changes separately
+  // This useEffect now only handles initial load when profile becomes available
+  // Cancel refresh is handled directly in handleBookingFilterChange
   useEffect(() => {
     if (bookingFilters.date && userProfile?.employee_id) {
       fetchBookingHistory(bookingFilters.date);
     }
-  }, [bookingFilters.date, userProfile?.employee_id]);
+  }, [userProfile?.employee_id]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-8">
-        {/* Error Display */}
         {renderErrors()}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -284,7 +274,7 @@ export default function ProfilePage() {
               onViewBookingHistory={handleViewBookingHistory}
               step={step}
               onBack={
-                step === "shift"   ? handleBackToCalendar :
+                step === "shift" ? handleBackToCalendar :
                 step === "calendar" || step === "history" ? handleBackToWelcome :
                 undefined
               }
@@ -450,7 +440,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Update Booking Shift Modal */}
       <UpdateBookingShiftModal
         isOpen={isUpdateModalOpen}
         onClose={() => setIsUpdateModalOpen(false)}
