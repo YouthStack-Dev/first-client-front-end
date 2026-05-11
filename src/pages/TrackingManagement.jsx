@@ -45,7 +45,7 @@ const TrackingManagement = () => {
       }
 
       const response = await API_CLIENT.get(url);
-      logDebug("Ongoing Routes Response:", response.data);
+      // logDebug("Ongoing Routes Response:", response.data);
 
       // Extract routes from API response structure
       if (

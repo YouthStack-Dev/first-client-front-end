@@ -27,8 +27,8 @@ const LiveTracking = ({
   const API_KEY = import.meta.env.VITE_GOOGLE_API || "";
 
   const companyLocation = useMemo(() => {
-    console.log("=== companyLocation DEBUG ===");
-    console.log("selectedCompany:", selectedCompany);
+    // console.log("=== companyLocation DEBUG ===");
+    // console.log("selectedCompany:", selectedCompany);
 
     if (!selectedCompany) {
       console.warn("⚠️ No company → using hardcoded default");
@@ -46,7 +46,7 @@ const LiveTracking = ({
       return DEFAULT_LOCATION;
     }
 
-    console.log("✅ Using REAL company location:", extracted);
+    // console.log("✅ Using REAL company location:", extracted);
     return extracted;
 
   }, [selectedCompany]);
