@@ -30,7 +30,7 @@ const Sidebar = ({
               <X className="w-5 h-5" />
             </button>
           </div>
-          <p className="text-sm text-gray-500 mt-1">GoCab Platform Guide</p>
+          <p className="text-sm text-gray-500 mt-1">MLT Platform Guide</p>
         </div>
 
         {/* Sidebar Navigation */}

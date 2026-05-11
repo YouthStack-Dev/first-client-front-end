@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-// import Layout from "./Layout";
 import ContentSection from "./sections/ContentSection";
 import MediaSection from "./sections/MediaSection";
 import FeaturesGrid from "./FeaturesGrid";
