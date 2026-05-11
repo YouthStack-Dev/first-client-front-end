@@ -26,13 +26,32 @@ const LiveTracking = ({
 
   const API_KEY = import.meta.env.VITE_GOOGLE_API || "";
 
-  const companyLocation = useMemo(() => {
-    if (!selectedCompany?.location) return DEFAULT_LOCATION;
-    return (
-      extractLocation(selectedCompany.location, ["latitude", "lat"], ["longitude", "lng"]) ||
-      DEFAULT_LOCATION
-    );
-  }, [selectedCompany]);
+ const companyLocation = useMemo(() => {
+  console.log("=== companyLocation DEBUG ===");
+  console.log("selectedCompany:", selectedCompany);
+  console.log("selectedCompany.location:", selectedCompany?.location);
+
+  if (!selectedCompany?.location) {
+    console.warn("⚠️ No company location found → using HARDCODED Bengaluru default");
+    return DEFAULT_LOCATION;
+  }
+
+  const extracted = extractLocation(
+    selectedCompany.location,
+    ["latitude", "lat"],
+    ["longitude", "lng"]
+  );
+
+  if (!extracted) {
+    console.warn("⚠️ extractLocation failed (bad keys?) → using HARDCODED Bengaluru default");
+    console.log("Keys in location object:", Object.keys(selectedCompany.location));
+    return DEFAULT_LOCATION;
+  }
+
+  console.log("✅ Using REAL company location:", extracted);
+  return extracted;
+
+}, [selectedCompany]);
 
   const allRoutes = useMemo(() => {
     if (!Array.isArray(apiRoutes)) return [];

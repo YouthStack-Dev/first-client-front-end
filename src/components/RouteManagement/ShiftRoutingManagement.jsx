@@ -542,6 +542,9 @@ const ShiftRoutingManagement = () => {
         routes={selectedRouteObjects}
         tenantId={tenantId}
         onSuccess={handleRefreshData}
+         shiftId={shiftId}        // ✅ already in scope from useParams()
+          shiftCode={shiftId}      // no shiftCode in this component, use shiftId as fallback
+          bookingDate={date} 
       />
 
       {/* ✅ Toast notification system — replaces all alert() calls */}
