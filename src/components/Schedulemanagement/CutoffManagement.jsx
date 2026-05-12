@@ -385,10 +385,10 @@ const CutoffManagement = () => {
       <div className="bg-app-surface border-b border-app-border sticky top-0 z-10">
         <div className="w-full px-4 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Settings className="w-4 h-4 text-app-primary" />
+            {/* <Settings className="w-4 h-4 text-app-primary" />
             <h1 className="text-sm font-semibold text-app-text-primary">
               Configuration Management
-            </h1>
+            </h1> */}
           </div>
           <div className="flex items-center gap-2">
             {activeTab === "cutoff" && (
