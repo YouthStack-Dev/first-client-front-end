@@ -1,96 +1,106 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Clock,
-  Users,
-  MapPin,
-  Package,
   Eye,
   RefreshCw,
-  MoreVertical,
   Navigation,
-  Zap,
+  Route,
   Trash2,
-  FileText,
-  Edit,
-  Pause,
-  Layers,
   AlertCircle,
   CheckCircle,
   XCircle,
-  Download,
   Car,
   Building,
-  Bell,           // ✅ NEW
+  BellRing,
+  X,
+  AlertTriangle,
 } from "lucide-react";
 import BookingDetailsModal from "../modals/BookingDetailsModal";
-import NotificationLogsModal from "../modals/NotificationLogsModal"; // ✅ NEW
+import NotificationLogsModal from "../modals/NotificationLogsModal";
 import { API_CLIENT } from "../../Api/API_Client";
 
-// ── Dropdown rendered at fixed screen position to escape overflow clipping ──
-const ActionMenu = ({ shift, anchorRect, onClose, onExport, onDelete, deletingShift, isPastDate }) => {
-  const menuRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        onClose();
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onClose]);
-
-  if (!anchorRect) return null;
-
+// ─────────────────────────────────────────────────────────────────────────────
+// Toast component — renders at bottom-center, auto-dismisses
+// ─────────────────────────────────────────────────────────────────────────────
+const Toast = ({ toasts, onDismiss }) => {
+  if (!toasts.length) return null;
   return (
-    <div
-      ref={menuRef}
-      style={{
-        position: "fixed",
-        top: anchorRect.bottom + 4,
-        right: window.innerWidth - anchorRect.right,
-        zIndex: 9999,
-      }}
-      className="w-44 bg-app-surface border border-app-border rounded-lg shadow-xl"
-    >
-      <div className="py-1">
-        <button
-          onClick={() => { onExport(); onClose(); }}
-          className="w-full text-left px-3 py-2 text-sm text-app-text-secondary hover:bg-app-tertiary flex items-center gap-2"
+    <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 items-center pointer-events-none">
+      {toasts.map((t) => (
+        <div
+          key={t.id}
+          className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium animate-slide-up
+            ${t.type === "success"
+              ? "bg-green-50 border-green-200 text-green-800"
+              : "bg-red-50 border-red-200 text-red-800"
+            }`}
         >
-          <FileText className="w-4 h-4" />
-          Export Report
-        </button>
-
-        {/* Delete — disabled for past dates */}
-        <div className="relative group">
+          {t.type === "success"
+            ? <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+            : <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+          }
+          <span>{t.message}</span>
           <button
-            onClick={() => { if (!isPastDate) { onDelete(); onClose(); } }}
-            disabled={deletingShift === shift.shift_id || isPastDate}
-            className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors
-              ${isPastDate
-                ? "text-gray-300 cursor-not-allowed"
-                : "text-red-600 hover:bg-red-50"
-              } disabled:opacity-50`}
+            onClick={() => onDismiss(t.id)}
+            className="ml-1 p-0.5 rounded hover:bg-black/10 transition-colors"
           >
-            {deletingShift === shift.shift_id ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
-            ) : (
-              <Trash2 className="w-4 h-4" />
-            )}
-            Delete Routes
+            <X className="w-3.5 h-3.5" />
           </button>
-          {isPastDate && (
-            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
-              Cannot delete routes from past
-            </div>
-          )}
         </div>
-      </div>
+      ))}
     </div>
   );
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// useToast hook
+// ─────────────────────────────────────────────────────────────────────────────
+const useToast = () => {
+  const [toasts, setToasts] = useState([]);
+
+  const addToast = useCallback((message, type = "success", duration = 3500) => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), duration);
+  }, []);
+
+  const dismiss = useCallback((id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  return { toasts, addToast, dismiss };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// InlineDeleteConfirm — replaces action buttons inside the row
+// ─────────────────────────────────────────────────────────────────────────────
+const InlineDeleteConfirm = ({ onConfirm, onCancel, isDeleting }) => (
+  <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5">
+    <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+    <span className="text-xs text-red-700 font-medium whitespace-nowrap">Delete routes?</span>
+    <button
+      onClick={onConfirm}
+      disabled={isDeleting}
+      className="px-2.5 py-1 text-xs font-semibold bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+    >
+      {isDeleting
+        ? <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" />
+        : "Yes, delete"
+      }
+    </button>
+    <button
+      onClick={onCancel}
+      disabled={isDeleting}
+      className="px-2.5 py-1 text-xs font-semibold bg-white text-red-600 border border-red-200 rounded-md hover:bg-red-50 disabled:opacity-50 transition-colors"
+    >
+      Cancel
+    </button>
+  </div>
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ShiftBookingsTable
+// ─────────────────────────────────────────────────────────────────────────────
 const ShiftBookingsTable = ({
   data,
   date,
@@ -99,18 +109,13 @@ const ShiftBookingsTable = ({
   onGenerateRoute,
   generatingRoute,
   onRefresh,
-  tenantId,        // ✅ NEW — pass down for admin users
+  tenantId,
 }) => {
-  const [modalState, setModalState] = useState({ isOpen: false, shiftId: null });
-  const [deletingShift, setDeletingShift] = useState(null);
-  const [actionMenu, setActionMenu] = useState({ shiftId: null, anchorRect: null });
-
-  // ✅ NEW — notification logs modal state
-  const [logsModal, setLogsModal] = useState({
-    isOpen:    false,
-    shiftId:   null,
-    shiftCode: null,
-  });
+  const [modalState,      setModalState]      = useState({ isOpen: false, shiftId: null });
+  const [deletingShift,   setDeletingShift]   = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [logsModal,       setLogsModal]       = useState({ isOpen: false, shiftId: null, shiftCode: null });
+  const { toasts, addToast, dismiss }         = useToast();
 
   const isPastDate = React.useMemo(() => {
     if (!date) return false;
@@ -133,7 +138,7 @@ const ShiftBookingsTable = ({
     if (!shiftsData || !Array.isArray(shiftsData)) return [];
     if (selectedShiftType === "All") return shiftsData;
     return shiftsData.filter((shift) => {
-      if (selectedShiftType === "In") return shift.log_type === "IN";
+      if (selectedShiftType === "In")  return shift.log_type === "IN";
       if (selectedShiftType === "Out") return shift.log_type === "OUT";
       return true;
     });
@@ -157,8 +162,8 @@ const ShiftBookingsTable = ({
     });
   };
 
-  const handleTotalClick  = (shift) => setModalState({ isOpen: true, shiftId: shift.shift_id });
-  const closeModal        = ()      => setModalState({ isOpen: false, shiftId: null });
+  const handleTotalClick = (shift) => setModalState({ isOpen: true, shiftId: shift.shift_id });
+  const closeModal       = ()      => setModalState({ isOpen: false, shiftId: null });
 
   const needsRegeneration = (shift) => {
     const totalBookings  = shift.stats?.total_bookings  || 0;
@@ -175,47 +180,43 @@ const ShiftBookingsTable = ({
     if (onGenerateRoute && shift.shift_id) onGenerateRoute(shift.shift_id);
   };
 
-  const handleShiftRoutesDelete = async (shift) => {
+  // Step 1 — show inline confirm in the row
+  const handleDeleteClick = (shift) => {
+    if (isPastDate || !shift?.shift_id) return;
+    setConfirmDeleteId(shift.shift_id);
+  };
+
+  // Step 2 — user confirmed, call API
+  const handleDeleteConfirm = async (shift) => {
     if (!shift?.shift_id || !date) return;
-    const isConfirmed = window.confirm(
-      `Delete all routes for ${shift.shift_code || shift.shift_id} on ${formatDate(date)}?`
-    );
-    if (!isConfirmed) return;
     try {
       setDeletingShift(shift.shift_id);
       await API_CLIENT.delete("/routes/bulk", {
         params: { shift_id: shift.shift_id, route_date: date },
       });
-      alert(`Routes for ${shift.shift_code || shift.shift_id} deleted successfully!`);
+      addToast(`Routes for ${shift.shift_code || shift.shift_id} deleted successfully`, "success");
       onRefresh?.();
     } catch {
-      alert("Failed to delete routes. Please try again.");
+      addToast("Failed to delete routes. Please try again.", "error");
     } finally {
       setDeletingShift(null);
+      setConfirmDeleteId(null);
     }
   };
 
-  const toggleActionMenu = (e, shiftId) => {
-    if (actionMenu.shiftId === shiftId) {
-      setActionMenu({ shiftId: null, anchorRect: null });
-    } else {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setActionMenu({ shiftId, anchorRect: rect });
-    }
-  };
+  const handleDeleteCancel = () => setConfirmDeleteId(null);
 
   const getShiftStatus = (shift) => {
     const total    = shift.stats?.total_bookings    || 0;
     const unrouted = shift.stats?.unrouted_bookings || 0;
     const routed   = shift.stats?.routed_bookings   || 0;
-    if (total    === 0)                    return { color: "gray",  text: "No Bookings", icon: AlertCircle };
-    if (unrouted === 0)                    return { color: "green", text: "Complete",    icon: CheckCircle };
-    if (routed > 0 && unrouted > 0)        return { color: "amber", text: "Partial",     icon: AlertCircle };
-    return                                        { color: "red",   text: "Pending",     icon: XCircle    };
+    if (total    === 0)             return { color: "gray",  text: "No Bookings", icon: AlertCircle };
+    if (unrouted === 0)             return { color: "green", text: "Complete",    icon: CheckCircle };
+    if (routed > 0 && unrouted > 0) return { color: "amber", text: "Partial",     icon: AlertCircle };
+    return                                 { color: "red",   text: "Pending",     icon: XCircle    };
   };
 
   const safeData         = Array.isArray(filteredData) ? filteredData : [];
-  const activeShift      = safeData.find((s) => s.shift_id === actionMenu.shiftId);
   const activeModalShift = safeData.find((s) => s.shift_id === modalState.shiftId);
 
   if (loading) {
@@ -286,7 +287,9 @@ const ShiftBookingsTable = ({
             <h3 className="font-medium text-app-text-primary">Shift Management</h3>
             <p className="text-sm text-app-text-secondary">
               {formatDate(date)} • {selectedShiftType} Shifts
-              {isPastDate && <span className="ml-2 text-xs text-amber-600 font-medium" />}
+              {isPastDate && (
+                <span className="ml-2 text-xs text-amber-600 font-medium">Past Date</span>
+              )}
             </p>
           </div>
           {onRefresh && (
@@ -317,15 +320,19 @@ const ShiftBookingsTable = ({
 
               <tbody className="divide-y divide-app-border">
                 {safeData.map((shift, index) => {
-                  const status     = getShiftStatus(shift);
-                  const StatusIcon = status.icon;
+                  const status         = getShiftStatus(shift);
+                  const StatusIcon     = status.icon;
+                  const isConfirming   = confirmDeleteId === shift.shift_id;
+                  const isThisDeleting = deletingShift   === shift.shift_id;
                   const completionRate = shift.stats?.total_bookings
                     ? Math.round(((shift.stats?.routed_bookings || 0) / shift.stats.total_bookings) * 100)
                     : 0;
 
                   return (
-                    <tr key={shift.shift_id || index} className="hover:bg-app-tertiary/30">
-
+                    <tr
+                      key={shift.shift_id || index}
+                      className={`transition-colors ${isConfirming ? "bg-red-50/40" : "hover:bg-app-tertiary/30"}`}
+                    >
                       <td className="px-4 py-3">
                         <div className="font-medium text-app-text-primary">{shift.shift_code || shift.shift_id}</div>
                         <div className="text-xs text-app-text-secondary mt-1">ID: {shift.shift_id}</div>
@@ -415,70 +422,88 @@ const ShiftBookingsTable = ({
 
                       {/* ── Actions ── */}
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5">
+                        {isConfirming ? (
+                          // Inline confirm replaces all buttons when delete is clicked
+                          <InlineDeleteConfirm
+                            onConfirm={() => handleDeleteConfirm(shift)}
+                            onCancel={handleDeleteCancel}
+                            isDeleting={isThisDeleting}
+                          />
+                        ) : (
+                          <div className="flex items-center gap-1.5">
 
-                          {/* View Routes Map */}
-                          <button
-                            onClick={() => handleShiftRoute(shift)}
-                            className="p-2 text-app-text-secondary hover:text-app-primary hover:bg-app-tertiary rounded-lg transition-colors"
-                            title="View Routes Map"
-                          >
-                            <MapPin className="w-4 h-4" />
-                          </button>
+                            {/* 1. Generate / Regenerate */}
+                            <button
+                              onClick={() => handleGenerateClick(shift)}
+                              disabled={generatingRoute === shift.shift_id}
+                              className={`p-2 rounded-lg transition-colors ${
+                                needsRegeneration(shift)
+                                  ? "bg-amber-50 text-amber-600 hover:bg-amber-100"
+                                  : "bg-app-primary/10 text-app-primary hover:bg-app-primary/20"
+                              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                              title={needsRegeneration(shift) ? "Regenerate Routes" : "Generate Routes"}
+                            >
+                              {generatingRoute === shift.shift_id ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
+                              ) : (
+                                <Route className="w-4 h-4" />
+                              )}
+                            </button>
 
-                          {/* View Details */}
-                          <button
-                            onClick={() => handleTotalClick(shift)}
-                            className="p-2 text-app-text-secondary hover:text-app-primary hover:bg-app-tertiary rounded-lg transition-colors"
-                            title="View Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
+                            {/* 2. View Routes Map */}
+                            <button
+                              onClick={() => handleShiftRoute(shift)}
+                              className="p-2 text-app-text-secondary hover:text-app-primary hover:bg-app-tertiary rounded-lg transition-colors"
+                              title="View Routes Map"
+                            >
+                              <Navigation className="w-4 h-4" />
+                            </button>
 
-                          {/* ✅ NEW — Notification Logs */}
-                          <button
-                            onClick={() => setLogsModal({
-                              isOpen:    true,
-                              shiftId:   shift.shift_id,
-                              shiftCode: shift.shift_code,
-                            })}
-                            className="p-2 text-app-text-secondary hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                            title="View Notification Logs"
-                          >
-                            <Bell className="w-4 h-4" />
-                          </button>
+                            {/* 3. View Details */}
+                            <button
+                              onClick={() => handleTotalClick(shift)}
+                              className="p-2 text-app-text-secondary hover:text-app-primary hover:bg-app-tertiary rounded-lg transition-colors"
+                              title="View Booking Details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
 
-                          {/* Generate / Regenerate */}
-                          <button
-                            onClick={() => handleGenerateClick(shift)}
-                            disabled={generatingRoute === shift.shift_id}
-                            className={`p-2 rounded-lg transition-colors ${
-                              needsRegeneration(shift)
-                                ? "bg-amber-50 text-amber-600 hover:bg-amber-100"
-                                : "bg-app-primary/10 text-app-primary hover:bg-app-primary/20"
-                            } disabled:opacity-50 disabled:cursor-not-allowed`}
-                            title={needsRegeneration(shift) ? "Regenerate" : "Generate"}
-                          >
-                            {generatingRoute === shift.shift_id ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
-                            ) : (
-                              <RefreshCw className="w-4 h-4" />
-                            )}
-                          </button>
+                            {/* 4. Notification Logs */}
+                            <button
+                              onClick={() => setLogsModal({
+                                isOpen:    true,
+                                shiftId:   shift.shift_id,
+                                shiftCode: shift.shift_code,
+                              })}
+                              className="p-2 text-app-text-secondary hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                              title="View Notification Logs"
+                            >
+                              <BellRing className="w-4 h-4" />
+                            </button>
 
-                          {/* More options */}
-                          <button
-                            onClick={(e) => toggleActionMenu(e, shift.shift_id)}
-                            className={`p-2 rounded-lg transition-colors ${
-                              actionMenu.shiftId === shift.shift_id
-                                ? "bg-app-tertiary text-app-primary"
-                                : "text-app-text-secondary hover:text-app-primary hover:bg-app-tertiary"
-                            }`}
-                            title="More options"
-                          >
-                            <MoreVertical className="w-4 h-4" />
-                          </button>
-                        </div>
+                            {/* 5. Delete — shows inline confirm on click */}
+                            <div className="relative group">
+                              <button
+                                onClick={() => handleDeleteClick(shift)}
+                                disabled={isPastDate}
+                                className={`p-2 rounded-lg transition-colors ${
+                                  isPastDate
+                                    ? "text-gray-300 cursor-not-allowed"
+                                    : "text-red-500 hover:text-red-600 hover:bg-red-50"
+                                } disabled:opacity-50`}
+                                title="Delete Routes"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                              {isPastDate && (
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                                  Cannot delete past routes
+                                </div>
+                              )}
+                            </div>
+
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
@@ -490,24 +515,8 @@ const ShiftBookingsTable = ({
 
         <div className="px-4 py-3 border-t border-app-border text-sm text-app-text-secondary flex justify-between items-center">
           <span>{safeData.length} shifts</span>
-          <button onClick={() => {}} className="inline-flex items-center gap-2 text-app-text-secondary hover:text-app-text-primary">
-            <Download className="w-4 h-4" /> Export
-          </button>
         </div>
       </div>
-
-      {/* Dropdown portal */}
-      {actionMenu.shiftId && activeShift && (
-        <ActionMenu
-          shift={activeShift}
-          anchorRect={actionMenu.anchorRect}
-          onClose={() => setActionMenu({ shiftId: null, anchorRect: null })}
-          onExport={() => {}}
-          onDelete={() => handleShiftRoutesDelete(activeShift)}
-          deletingShift={deletingShift}
-          isPastDate={isPastDate}
-        />
-      )}
 
       {/* Booking Details Modal */}
       <BookingDetailsModal
@@ -517,7 +526,7 @@ const ShiftBookingsTable = ({
         bookings={activeModalShift?.bookings || []}
       />
 
-      {/* ✅ NEW — Notification Logs Modal */}
+      {/* Notification Logs Modal */}
       <NotificationLogsModal
         isOpen={logsModal.isOpen}
         onClose={() => setLogsModal({ isOpen: false, shiftId: null, shiftCode: null })}
@@ -526,6 +535,17 @@ const ShiftBookingsTable = ({
         bookingDate={date}
         tenantId={tenantId ?? null}
       />
+
+      {/* Toast notifications */}
+      <Toast toasts={toasts} onDismiss={dismiss} />
+
+      <style>{`
+        @keyframes slide-up {
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-up { animation: slide-up 0.2s ease; }
+      `}</style>
     </>
   );
 };

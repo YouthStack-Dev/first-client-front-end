@@ -19,6 +19,7 @@ import {
   XCircle,
   Truck,
   FileText,
+  Trash2,
 } from "lucide-react";
 
 import { selectCurrentUser } from "../redux/features/auth/authSlice";
@@ -70,6 +71,9 @@ const VendorUserManagement = () => {
   const [currentPage, setCurrentPage] = useState(DEFAULT_PAGINATION.PAGE);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGINATION.PAGE_SIZE);
   const [totalItems, setTotalItems] = useState(0);
+
+  // ✅ Custom delete confirmation state (replaces window.confirm)
+  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, userId: null });
 
   const dispatch = useDispatch();
   const { vendorOptions, loading: vendorLoading } = useVendorOptions(null, true);
@@ -200,67 +204,71 @@ const VendorUserManagement = () => {
     setShowVendorUserModal(true);
   };
 
-  const handleDeleteVendorUser = async (id) => {
-    if (window.confirm("Are you sure you want to delete this vendor user?")) {
-      setIsLoading(true);
-      try {
-        await API_CLIENT.delete(`${endpoint.VendorUser}${id}`);
-        await fetchVendorUsers(
-          currentPage,
-          itemsPerPage,
-          searchTerm,
-          selectedCompanyId,
-          selectedVendorId
-        );
-        toast.success("Vendor user deleted successfully!");
-      } catch (error) {
-        toast.error(error.response?.data?.message || "Failed to delete vendor user");
-      } finally {
-        setIsLoading(false);
-      }
+  // ✅ Step 1: open the custom modal instead of window.confirm
+  const handleDeleteVendorUser = (id) => {
+    setDeleteConfirm({ open: true, userId: id });
+  };
+
+  // ✅ Step 2: actual delete runs only after user clicks "Delete" in the modal
+  const confirmDelete = async () => {
+    const id = deleteConfirm.userId;
+    setDeleteConfirm({ open: false, userId: null });
+    setIsLoading(true);
+    try {
+      await API_CLIENT.delete(`${endpoint.VendorUser}${id}`);
+      await fetchVendorUsers(
+        currentPage,
+        itemsPerPage,
+        searchTerm,
+        selectedCompanyId,
+        selectedVendorId
+      );
+      toast.success("Vendor user deleted successfully!");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete vendor user");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-const handleToggleVendorUser = async (user) => {
-  const userId = user.vendor_user_id || user.id;
+  const handleToggleVendorUser = async (user) => {
+    const userId = user.vendor_user_id || user.id;
 
-  // ✅ Optimistically update UI instantly — no refetch
-  const updateUsers = (users) =>
-    users.map((u) =>
-      (u.vendor_user_id || u.id) === userId
-        ? { ...u, is_active: !u.is_active }
-        : u
-    );
-
-  setVendorUsers((prev) => updateUsers(prev));
-  setFilteredVendorUsers((prev) => updateUsers(prev));
-
-  try {
-    const response = await API_CLIENT.patch(
-      `${endpoint.VendorUser}${userId}/toggle-status`
-    );
-    toast.success(
-      response.data?.message || "Vendor user status updated successfully!"
-    );
-    // ✅ No refetch needed — UI already updated
-
-  } catch (error) {
-    // ✅ Rollback on failure — revert the optimistic update
-    const revertUsers = (users) =>
+    // ✅ Optimistically update UI instantly — no refetch
+    const updateUsers = (users) =>
       users.map((u) =>
         (u.vendor_user_id || u.id) === userId
-          ? { ...u, is_active: user.is_active } // revert to original
+          ? { ...u, is_active: !u.is_active }
           : u
       );
 
-    setVendorUsers((prev) => revertUsers(prev));
-    setFilteredVendorUsers((prev) => revertUsers(prev));
+    setVendorUsers((prev) => updateUsers(prev));
+    setFilteredVendorUsers((prev) => updateUsers(prev));
 
-    toast.error(
-      error.response?.data?.message || "Failed to toggle vendor user status"
-    );
-  }
-};
+    try {
+      const response = await API_CLIENT.patch(
+        `${endpoint.VendorUser}${userId}/toggle-status`
+      );
+      toast.success(
+        response.data?.message || "Vendor user status updated successfully!"
+      );
+    } catch (error) {
+      // ✅ Rollback on failure — revert the optimistic update
+      const revertUsers = (users) =>
+        users.map((u) =>
+          (u.vendor_user_id || u.id) === userId
+            ? { ...u, is_active: user.is_active }
+            : u
+        );
+
+      setVendorUsers((prev) => revertUsers(prev));
+      setFilteredVendorUsers((prev) => revertUsers(prev));
+
+      toast.error(
+        error.response?.data?.message || "Failed to toggle vendor user status"
+      );
+    }
+  };
 
   const handlePageChange = (newPage, newPageSize) => {
     setCurrentPage(newPage);
@@ -456,7 +464,7 @@ const handleToggleVendorUser = async (user) => {
           onView={handleViewVendorUser}
           onEdit={handleEditVendorUser}
           onDelete={handleDeleteVendorUser}
-          onToggle={handleToggleVendorUser} // ✅ ADDED
+          onToggle={handleToggleVendorUser}
           isLoading={isLoading}
           totalItems={totalItems}
           itemsPerPage={itemsPerPage}
@@ -488,6 +496,37 @@ const handleToggleVendorUser = async (user) => {
         apimodule="vendor_user"
         selectedCompany={tenant_id}
       />
+
+      {/* ✅ Custom Delete Confirmation Modal */}
+      {deleteConfirm.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-6 w-80 text-center">
+            <div className="flex items-center justify-center w-11 h-11 rounded-full bg-red-100 mx-auto mb-3">
+              <Trash2 className="w-5 h-5 text-red-500" />
+            </div>
+            <p className="font-semibold text-gray-800 text-base mb-1">
+              Delete vendor user?
+            </p>
+            <p className="text-sm text-gray-500 mb-5">
+              This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => setDeleteConfirm({ open: false, userId: null })}
+                className="px-5 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-5 py-2 rounded-lg bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
