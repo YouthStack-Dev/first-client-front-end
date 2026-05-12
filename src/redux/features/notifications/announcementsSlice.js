@@ -15,6 +15,8 @@ const initialState = {
   announcements:        [],
   selectedAnnouncement: null,
   recipients:           [],
+  recipientsMeta:       null, // meta from the /recipients endpoint
+  recipientsPage:       1,    // current page cursor (UI-owned)
 
   // Pagination meta returned by the list endpoint.
   // Shape mirrors the API: { page, per_page, total, total_pages, has_next, has_prev }
@@ -55,6 +57,8 @@ const announcementSlice = createSlice({
     /** Clear the recipients list when closing the recipients panel */
     clearRecipients(state) {
       state.recipients      = [];
+      state.recipientsMeta  = null;
+      state.recipientsPage  = 1;
       state.recipientsError = null;
     },
 
@@ -65,6 +69,11 @@ const announcementSlice = createSlice({
     clearError(state, action) {
       const key = action.payload;
       if (key in state) state[key] = null;
+    },
+
+    /** Drive recipients pagination from the UI */
+    setRecipientsPage(state, action) {
+      state.recipientsPage = action.payload;
     },
   },
 
@@ -192,6 +201,7 @@ const announcementSlice = createSlice({
       .addCase(fetchAnnouncementRecipients.fulfilled, (state, action) => {
         state.loadingRecipients = false;
         state.recipients        = action.payload.data ?? [];
+        state.recipientsMeta    = action.payload.meta ?? null;
       })
       .addCase(fetchAnnouncementRecipients.rejected, (state, action) => {
         state.loadingRecipients = false;
@@ -205,6 +215,7 @@ export const {
   clearSelectedAnnouncement,
   clearRecipients,
   clearError,
+  setRecipientsPage,
 } = announcementSlice.actions;
 
 export default announcementSlice.reducer;
@@ -213,6 +224,8 @@ export default announcementSlice.reducer;
 export const selectAnnouncements        = (state) => state.announcements.announcements;
 export const selectSelectedAnnouncement = (state) => state.announcements.selectedAnnouncement;
 export const selectRecipients           = (state) => state.announcements.recipients;
+export const selectRecipientsMeta       = (state) => state.announcements.recipientsMeta;
+export const selectRecipientsPage       = (state) => state.announcements.recipientsPage;
 
 // Pagination — derived from the meta block the list endpoint returns
 export const selectMeta                 = (state) => state.announcements.meta;

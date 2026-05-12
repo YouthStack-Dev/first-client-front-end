@@ -15,8 +15,9 @@ const DynamicTable = React.memo(
     onEdit,
     onDelete,
     onHistory,
-    showActions    = true,  // set false to hide the Actions column entirely
-    showPagination = true,  // set false when the parent owns pagination (e.g. AnnouncementTable)
+    showActions    = true,
+    showPagination = true,
+    showCheckbox   = true,
     emptyMessage = "No records found",
     loading = false,
   }) => {
@@ -30,16 +31,18 @@ const DynamicTable = React.memo(
             {/* Head */}
             <thead className="bg-gray-50 border-b sticky top-0 z-1">
               <tr className="text-left text-gray-600 text-sm">
-                <th className="px-4 py-3 w-12">
-                  <input
-                    type="checkbox"
-                    onChange={(e) =>
-                      data.forEach((item) => onSelectItem?.(item, e.target.checked))
-                    }
-                    checked={data.length > 0 && selectedItems.length === data.length}
-                    className="accent-blue-600"
-                  />
-                </th>
+                {showCheckbox && (
+                  <th className="px-4 py-3 w-12">
+                    <input
+                      type="checkbox"
+                      onChange={(e) =>
+                        data.forEach((item) => onSelectItem?.(item, e.target.checked))
+                      }
+                      checked={data.length > 0 && selectedItems.length === data.length}
+                      className="accent-blue-600"
+                    />
+                  </th>
+                )}
                 {headers.map((header, index) => (
                   <th
                     key={index}
@@ -76,14 +79,16 @@ const DynamicTable = React.memo(
                     key={rowIndex}
                     className="border-b hover:bg-gray-50 transition min-h-[52px] align-middle"
                   >
-                    <td className="px-4 py-3 w-12 text-center">
-                      <input
-                        type="checkbox"
-                        checked={isSelected(item)}
-                        onChange={(e) => onSelectItem?.(item, e.target.checked)}
-                        className="accent-blue-600"
-                      />
-                    </td>
+                    {showCheckbox && (
+                      <td className="px-4 py-3 w-12 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected(item)}
+                          onChange={(e) => onSelectItem?.(item, e.target.checked)}
+                          className="accent-blue-600"
+                        />
+                      </td>
+                    )}
                     {headers.map((header, colIndex) => (
                       <td
                         key={colIndex}

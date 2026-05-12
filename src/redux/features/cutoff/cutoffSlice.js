@@ -9,7 +9,7 @@ import {
 const cutoffSlice = createSlice({
   name: "cutoff",
   initialState: {
-    data: null, // Single cutoff record
+    data: null,         // Single cutoff record
     escortConfig: null, // Escort configuration
     tenantConfig: null, // Tenant configuration (includes escort + OTP settings)
     formData: {
@@ -31,9 +31,10 @@ const cutoffSlice = createSlice({
       login_deboarding_otp: false,
       logout_boarding_otp: false,
       logout_deboarding_otp: false,
+      speed_limit_kmph: 0, // ← vehicle limit
     },
-    status: "idle", // idle | loading | succeeded | failed | saving | saved
-    tenantStatus: "idle", // idle | loading | succeeded | failed | saving | saved (for tenant config)
+    status: "idle",       // idle | loading | succeeded | failed | saving | saved
+    tenantStatus: "idle", // idle | loading | succeeded | failed | saving | saved
     error: null,
     tenantError: null,
   },
@@ -57,7 +58,7 @@ const cutoffSlice = createSlice({
 
   extraReducers: (builder) => {
     builder
-      // Fetch Cutoffs
+      // ── Fetch Cutoffs ──────────────────────────────────────────────────────
       .addCase(fetchCutoffsThunk.pending, (state) => {
         state.status = "loading";
         state.error = null;
@@ -80,7 +81,7 @@ const cutoffSlice = createSlice({
         state.error = action.payload || "Failed to load cutoff data";
       })
 
-      // Save Cutoffs
+      // ── Save Cutoffs ───────────────────────────────────────────────────────
       .addCase(saveCutoffThunk.pending, (state) => {
         state.status = "saving";
         state.error = null;
@@ -102,7 +103,7 @@ const cutoffSlice = createSlice({
         state.error = action.payload || "Failed to save cutoff data";
       })
 
-      // Fetch Tenant Config (replaces fetchEscortConfigThunk)
+      // ── Fetch Tenant Config ────────────────────────────────────────────────
       .addCase(fetchEscortConfigThunk.pending, (state) => {
         state.tenantStatus = "loading";
         state.tenantError = null;
@@ -125,7 +126,7 @@ const cutoffSlice = createSlice({
           action.payload || "Failed to load tenant configuration";
       })
 
-      // Save Tenant Config (replaces saveEscortConfigThunk)
+      // ── Save Tenant Config ─────────────────────────────────────────────────
       .addCase(saveEscortConfigThunk.pending, (state) => {
         state.tenantStatus = "saving";
         state.tenantError = null;
@@ -150,7 +151,7 @@ const cutoffSlice = createSlice({
   },
 });
 
-// Helper functions to map API data to form structure
+// ── Helper: map cutoff API response → formData ─────────────────────────────
 const mapCutoffApiDataToForm = (apiData) => {
   const defaults = {
     booking_login_cutoff: "4:00",
@@ -183,6 +184,7 @@ const mapCutoffApiDataToForm = (apiData) => {
   return formData;
 };
 
+// ── Helper: map tenant API response → formData ─────────────────────────────
 const mapTenantApiDataToForm = (apiData) => {
   const defaults = {
     escort_required_start_time: "20:00:00",
@@ -192,9 +194,9 @@ const mapTenantApiDataToForm = (apiData) => {
     login_deboarding_otp: false,
     logout_boarding_otp: false,
     logout_deboarding_otp: false,
+    speed_limit_kmph: 0, // ← added
   };
 
-  // Map different possible API field names
   const tenantData = apiData?.config || apiData;
 
   const fieldMapping = {
@@ -211,6 +213,9 @@ const mapTenantApiDataToForm = (apiData) => {
     login_deboarding_otp: tenantData?.login_deboarding_otp,
     logout_boarding_otp: tenantData?.logout_boarding_otp,
     logout_deboarding_otp: tenantData?.logout_deboarding_otp,
+
+    // Vehicle limits
+    speed_limit_kmph: tenantData?.speed_limit_kmph, // ← added
   };
 
   const formData = {};
@@ -234,7 +239,7 @@ const mapTenantApiDataToForm = (apiData) => {
   return formData;
 };
 
-// Helper to combine both mappings (optional, for backward compatibility)
+// ── Helper: combine both mappings (backward compatibility) ─────────────────
 const mapApiDataToForm = (cutoffData, tenantData) => {
   return {
     ...mapCutoffApiDataToForm(cutoffData || {}),
