@@ -1,5 +1,5 @@
 // sidebarConfig.js
-import { BarChart3, Building2, Truck } from "lucide-react";
+import { BarChart3, Building2, Truck ,ShieldCheck } from "lucide-react";
 
 // Base sidebar configuration
 export const baseSidebarConfig = [
@@ -35,6 +35,12 @@ export const baseSidebarConfig = [
         path: "/superadmin/role-management",
         permission: "role.read",
         icon: BarChart3,
+      },
+       {
+        title: "IAM Permissions",
+        path: "/superadmin/iam/permissions",
+        permission: "permissions.read",
+        icon: ShieldCheck,
       },
       ]
     },

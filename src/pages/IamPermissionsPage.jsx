@@ -17,12 +17,7 @@ import {
   DeletePermissionModal,
 } from "../components/IamPermission/IamPermissionModals";
 
-/**
- * IamPermissionsPage
- * Superadmin-only — manage IAM permissions (module + action pairs)
- * Route: /superadmin/iam/permissions
- * Protected by: ProtectedRouteAuth in App.jsx (type="admin")
- */
+
 const IamPermissionsPage = () => {
   const dispatch = useDispatch();
 
@@ -65,7 +60,7 @@ const IamPermissionsPage = () => {
   const uniqueModules = [...new Set(permissions.map((p) => p.module).filter(Boolean))].length;
 
   return (
-    <div style={{ fontFamily: "Inter,-apple-system,BlinkMacSystemFont,sans-serif", minHeight: "100vh", background: "#f1f5f9" }}>
+    <div style={{ fontFamily: "Inter,-apple-system,BlinkMacSystemFont,sans-serif", background: "#f1f5f9" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         * { box-sizing: border-box; }

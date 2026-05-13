@@ -36,7 +36,7 @@ const ACTION_STYLES = {
 const getGradient   = (m) => MODULE_GRADIENTS[m?.toLowerCase()] || "linear-gradient(135deg,#475569,#64748b)";
 const getActionStyle = (a) => ACTION_STYLES[a?.toLowerCase()] || { bg: "#f1f5f9", color: "#475569", border: "#e2e8f0" };
 
-const CARDS_PER_PAGE = 12;
+const CARDS_PER_PAGE = 16;
 
 // ─── Single Permission Card ───────────────────────────────────────────────────
 const PermissionCard = ({ p, index, onView, onEdit, onDelete }) => {
@@ -50,7 +50,7 @@ const PermissionCard = ({ p, index, onView, onEdit, onDelete }) => {
     >
       {/* Header */}
       <div style={{ background: grad, padding: "16px 18px" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 36, height: 36, borderRadius: 9, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <svg width="17" height="17" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
@@ -59,12 +59,12 @@ const PermissionCard = ({ p, index, onView, onEdit, onDelete }) => {
               </svg>
             </div>
             <div>
-              <div style={{ color: "white", fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>{p.module}</div>
+              <div style={{ color: "white", fontWeight: 700, fontSize: 13, lineHeight: 1.3, wordBreak: "break-word" }}>{p.module}</div>
               <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 11, marginTop: 2 }}>ID: {p.permission_id}</div>
             </div>
           </div>
           {/* Active badge */}
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: p.is_active ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)", border: `1px solid ${p.is_active ? "rgba(34,197,94,0.4)" : "rgba(239,68,68,0.4)"}`, color: p.is_active ? "#bbf7d0" : "#fecaca", fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, flexShrink: 0 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: p.is_active ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)", border: `1px solid ${p.is_active ? "rgba(34,197,94,0.4)" : "rgba(239,68,68,0.4)"}`, color: p.is_active ? "#bbf7d0" : "#fecaca", fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, alignSelf: "flex-start" }}>
             <span style={{ width: 5, height: 5, borderRadius: "50%", background: p.is_active ? "#4ade80" : "#f87171", display: "inline-block" }}/>
             {p.is_active ? "Active" : "Inactive"}
           </span>
@@ -192,7 +192,7 @@ const IamPermissionCards = ({ permissions, loading, page, onPageChange, onView, 
 
   return (
     <>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(270px,1fr))", gap: 18 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 18 }}>
         {paginated.map((p, i) => (
           <PermissionCard key={p.permission_id} p={p} index={i} onView={onView} onEdit={onEdit} onDelete={onDelete} />
         ))}
