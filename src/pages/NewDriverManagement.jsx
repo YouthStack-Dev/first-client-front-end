@@ -3,9 +3,6 @@ import { Download, History } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import Select from "react-select";
 import AuditLogsModal from "../components/modals/AuditLogsModal";
-import { useSearchParams } from "react-router-dom";
-
-// import toast from "react-hot-toast";
 
 import DriverFormModal from "../components/driver/NewDriverFrom";
 import ToolBar from "../components/ui/ToolBar";
@@ -26,6 +23,15 @@ import {
 import { toggleDriverStatusThunk } from "../redux/features/manageDriver/driverThunks";
 import { toast } from "react-toastify";
 
+// ----------------------------
+// Status → API param map
+// Add new statuses here without touching any other logic
+// ----------------------------
+const STATUS_PARAM_MAP = {
+  Active:   { active_only: true  },
+  Inactive: { active_only: false },
+};
+
 const NewDriverManagement = () => {
   const dispatch = useDispatch();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,6 +49,7 @@ const NewDriverManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [showAuditModal, setShowAuditModal] = useState(false);
+  const [selectedDriverName, setSelectedDriverName] = useState(null);
 
   // Refs for debounce timer
   const debounceTimerRef = useRef(null);
@@ -56,7 +63,6 @@ const NewDriverManagement = () => {
     user?.vendor_user?.tenant_id ||
     user?.tenant_id;
 
-
   // Get drivers data from Redux using selectors
   const drivers = useSelector(driversSelectors.selectAll);
   const loading = useSelector(selectDriversLoading);
@@ -66,34 +72,23 @@ const NewDriverManagement = () => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const skip = (currentPage - 1) * itemsPerPage;
 
-  // const vendors = useVendorOptions(null, !isVendorUser);
-
   const { vendorOptions } = useVendorOptions(null, !isVendorUser);
 
-  const [selectedDriverName, setSelectedDriverName] = useState(null);
-
-
-  // logDebug(" thi are the vendors in driver management ", vendors);
   // ----------------------------
   // Search Debouncing with Minimum Character Requirement
   // ----------------------------
   useEffect(() => {
-    // Clear existing timer
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
-    // Only set up debouncing if search input meets minimum character requirement
     if (searchInput.trim().length >= 4 || searchInput.trim() === "") {
-      // Set up new timer
       debounceTimerRef.current = setTimeout(() => {
         setDebouncedSearchTerm(searchInput.trim());
-        // Reset to first page when search term changes
         setCurrentPage(1);
-      }, 2000); // 2 second debounce
+      }, 2000);
     }
 
-    // Cleanup function
     return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
@@ -101,9 +96,7 @@ const NewDriverManagement = () => {
     };
   }, [searchInput]);
 
-  // Effect to handle search when debounced term changes
   useEffect(() => {
-    // Only trigger backend call if debounced search term meets criteria
     if (debouncedSearchTerm.length >= 4 || debouncedSearchTerm === "") {
       setSearchTerm(debouncedSearchTerm);
     }
@@ -114,7 +107,7 @@ const NewDriverManagement = () => {
   // ----------------------------
   const fetchParams = useMemo(() => {
     const params = {
-      skip: skip,
+      skip,
       limit: itemsPerPage,
     };
 
@@ -124,55 +117,44 @@ const NewDriverManagement = () => {
     } else if (selectedVendor?.value) {
       params.vendor_id = selectedVendor.value;
     } else {
-      // Non-vendor user without vendor selection - return null to skip fetch
       return null;
     }
 
-    // Add search term if provided and meets minimum length
-    if (searchTerm.trim() !== "" && searchTerm.trim().length >= 4) {
+    // Add search term if meets minimum length
+    if (searchTerm.trim().length >= 4) {
       params.search = searchTerm.trim();
     }
 
-    // Add status filter if not "All"
-    if (status !== "All") {
-      params.status = status;
+    // Apply status filter via map — no if/else chain needed
+    if (STATUS_PARAM_MAP[status]) {
+      Object.assign(params, STATUS_PARAM_MAP[status]);
     }
 
-    // Remove undefined/null values and return
+    // Strict filter — preserves false, 0, and empty string
     return Object.fromEntries(
-      Object.entries(params).filter(([_, value]) => value != null)
+      Object.entries(params).filter(([_, value]) => value !== null && value !== undefined)
     );
-  }, [
-    skip,
-    itemsPerPage,
-    isVendorUser,
-    user?.vendor_id,
-    selectedVendor,
-    searchTerm,
-    status,
-  ]);
+  }, [skip, itemsPerPage, isVendorUser, user?.vendor_id, selectedVendor, searchTerm, status]);
 
-  // Build export params (reusing the same logic)
+  // Build export params (same logic, no pagination)
   const exportParams = useMemo(() => {
     const params = {};
 
-    // Add vendor_id based on user type
     if (isVendorUser) {
       params.vendor_id = user.vendor_id;
     } else if (selectedVendor?.value) {
       params.vendor_id = selectedVendor.value;
     } else {
-      return null; // No vendor selected for non-vendor user
+      return null;
     }
 
-    // Add search term if provided and meets minimum length
-    if (searchTerm.trim() !== "" && searchTerm.trim().length >= 4) {
+    if (searchTerm.trim().length >= 4) {
       params.search = searchTerm.trim();
     }
 
-    // Add status filter if not "All"
-    if (status !== "All") {
-      params.status = status;
+    // Apply status filter via map
+    if (STATUS_PARAM_MAP[status]) {
+      Object.assign(params, STATUS_PARAM_MAP[status]);
     }
 
     return params;
@@ -182,23 +164,18 @@ const NewDriverManagement = () => {
   // Fetch Drivers Effect
   // ----------------------------
   useEffect(() => {
-    const fetchDrivers = () => {
-      // Only fetch if we have valid parameters
-      if (fetchParams) {
-        logDebug("Fetching drivers with params:", fetchParams);
-        dispatch(NewfetchDriversThunk(fetchParams));
-      } else {
-        console.log("Skipping fetch - no vendor selected");
-      }
-    };
-
-    fetchDrivers();
+    if (fetchParams) {
+      logDebug("Fetching drivers with params:", fetchParams);
+      dispatch(NewfetchDriversThunk(fetchParams));
+    } else {
+      console.log("Skipping fetch - no vendor selected");
+    }
   }, [fetchParams, dispatch]);
 
-  // Reset vendor selection when user changes (e.g., logout/login)
+  // Reset vendor selection when user type changes
   useEffect(() => {
     if (isVendorUser) {
-      setSelectedVendor(null); // Clear vendor selection for vendor users
+      setSelectedVendor(null);
     }
   }, [isVendorUser]);
 
@@ -206,21 +183,13 @@ const NewDriverManagement = () => {
   // Search Input Handler
   // ----------------------------
   const handleSearchInputChange = (e) => {
-    const value = e.target.value;
-    setSearchInput(value);
-
-    // Show hint if user types but doesn't meet minimum characters
-    if (value.trim().length > 0 && value.trim().length < 4) {
-    }
+    setSearchInput(e.target.value);
   };
 
-  // Clear search immediately
   const handleClearSearch = () => {
-    // Clear timer first
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
-
     setSearchInput("");
     setDebouncedSearchTerm("");
     setSearchTerm("");
@@ -231,12 +200,10 @@ const NewDriverManagement = () => {
   // Modal Handlers
   // ----------------------------
   const handleOpenCreateModal = () => {
-    // Don't allow creating drivers if no vendor is selected for non-vendor users
     if (!isVendorUser && !selectedVendor) {
       toast.error("Please select a vendor first to add drivers.");
       return;
     }
-
     setModalMode("create");
     setSelectedDriver(null);
     setIsModalOpen(true);
@@ -261,7 +228,6 @@ const NewDriverManagement = () => {
 
   const handleSubmitSuccess = (message) => {
     toast.success(message);
-    // Refresh the driver list by fetching with current filters
     if (fetchParams) {
       dispatch(NewfetchDriversThunk(fetchParams));
     }
@@ -276,7 +242,7 @@ const NewDriverManagement = () => {
 
   const handleItemsPerPageChange = (newLimit) => {
     setItemsPerPage(newLimit);
-    setCurrentPage(1); // Reset to first page when changing items per page
+    setCurrentPage(1);
   };
 
   // ----------------------------
@@ -284,7 +250,7 @@ const NewDriverManagement = () => {
   // ----------------------------
   const handleVendorSelect = (option) => {
     setSelectedVendor(option);
-    setCurrentPage(1); // Reset to first page when vendor filter changes
+    setCurrentPage(1);
   };
 
   // ----------------------------
@@ -296,9 +262,7 @@ const NewDriverManagement = () => {
       return;
     }
 
-    // Get vendor_id based on user type
     let vendorId;
-
     if (isVendorUser) {
       vendorId = user.vendor_id;
     } else if (selectedVendor?.value) {
@@ -308,11 +272,9 @@ const NewDriverManagement = () => {
       return;
     }
 
-    // Create a loading toast
     const toastId = toast.loading("Updating driver status...");
 
     try {
-      // Dispatch the thunk and unwrap to get the promise result
       await dispatch(
         toggleDriverStatusThunk({
           driver_id: driver.driver_id,
@@ -320,7 +282,6 @@ const NewDriverManagement = () => {
         })
       ).unwrap();
 
-      // Update the existing toast to success - use update method
       toast.update(toastId, {
         render: "Driver status updated successfully",
         type: "success",
@@ -329,12 +290,10 @@ const NewDriverManagement = () => {
         closeButton: true,
       });
 
-      // Only fetch drivers if the toggle was successful
       if (fetchParams) {
         dispatch(NewfetchDriversThunk(fetchParams));
       }
     } catch (error) {
-      // Update the existing toast to error
       const errorMessage = error?.message || "Failed to update driver status";
       toast.update(toastId, {
         render: errorMessage,
@@ -349,25 +308,19 @@ const NewDriverManagement = () => {
 
   const handleStatusFilter = (value) => {
     setStatus(value);
-    setCurrentPage(1); // Reset to first page when status filter changes
+    setCurrentPage(1);
   };
 
   // ----------------------------
   // Clear Filters
   // ----------------------------
   const handleClearFilters = () => {
-    // Clear search
     handleClearSearch();
-
-    // Clear other filters
     setStatus("All");
     setCurrentPage(1);
-
-    // For non-vendor users, also clear vendor selection
     if (!isVendorUser) {
       setSelectedVendor(null);
     }
-
     toast.success("Filters cleared");
   };
 
@@ -379,10 +332,8 @@ const NewDriverManagement = () => {
       toast.error("Please select a vendor to export drivers.");
       return;
     }
-
     logDebug("Exporting drivers with params:", exportParams);
     toast.success("Exporting drivers...");
-    // Implement actual export logic here
     // exportDriversCSV(exportParams);
   };
 
@@ -392,14 +343,11 @@ const NewDriverManagement = () => {
   const shouldShowNoVendorMessage = !isVendorUser && !selectedVendor;
   const hasDataToDisplay = drivers.length > 0;
   const isValidFetchState = isVendorUser || selectedVendor;
-
-  // Check if search input has less than 4 characters
   const isSearchBelowMinChars =
     searchInput.trim().length > 0 && searchInput.trim().length < 4;
-  const isSearchInProgress = searchInput.trim() !== debouncedSearchTerm;
 
   return (
-    <div className=" p-1">
+    <div className="p-1">
       {/* Toolbar */}
       <ToolBar
         onAddClick={handleOpenCreateModal}
@@ -407,7 +355,7 @@ const NewDriverManagement = () => {
         addButtonLabel="Driver"
         addButtonDisabled={shouldShowNoVendorMessage}
         searchBar={
-          <div className="flex flex-col sm:flex-row gap-3 w-full ">
+          <div className="flex flex-col sm:flex-row gap-3 w-full">
             <div className="flex-grow relative">
               <SearchInput
                 placeholder="Search drivers by name, license number, or phone... (min. 4 characters)"
@@ -416,11 +364,9 @@ const NewDriverManagement = () => {
                 className="flex-grow"
                 disabled={shouldShowNoVendorMessage}
               />
-              {/* Search status indicators */}
               {isSearchBelowMinChars && (
                 <div className="absolute top-full left-0 mt-1 text-xs text-amber-600">
-                  Type {4 - searchInput.trim().length} more character(s) to
-                  search
+                  Type {4 - searchInput.trim().length} more character(s) to search
                 </div>
               )}
             </div>
@@ -435,23 +381,18 @@ const NewDriverManagement = () => {
         }
         rightElements={
           <div className="flex flex-wrap items-center gap-3">
-
-           {!isVendorUser && (
-            <ReusableButton
-              module="driver"
-              action="read"
-              buttonName={"History"}
-              icon={History}
-              title="Audit History"
-              disabled={shouldShowNoVendorMessage}
-              onClick={() => {
-                setShowAuditModal(true);
-              }}
-              className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md"
-            />
-          )}
-
-
+            {!isVendorUser && (
+              <ReusableButton
+                module="driver"
+                action="read"
+                buttonName="History"
+                icon={History}
+                title="Audit History"
+                disabled={shouldShowNoVendorMessage}
+                onClick={() => setShowAuditModal(true)}
+                className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md"
+              />
+            )}
 
             <ReusableButton
               module="driver"
@@ -464,7 +405,6 @@ const NewDriverManagement = () => {
               disabled={shouldShowNoVendorMessage}
             />
 
-            {/* Vendor Dropdown - Only show if user is NOT a vendor */}
             {!isVendorUser && (
               <div className="min-w-[200px]">
                 <Select
@@ -480,14 +420,13 @@ const NewDriverManagement = () => {
               </div>
             )}
 
-            {/* Status Filter */}
             <SelectField
               value={status}
               onChange={handleStatusFilter}
               options={[
                 { label: "All Status", value: "All" },
-                { label: "Active", value: "Active" },
-                { label: "Inactive", value: "Inactive" },
+                { label: "Active",     value: "Active" },
+                { label: "Inactive",   value: "Inactive" },
               ]}
               className="min-w-[140px]"
               disabled={shouldShowNoVendorMessage}
@@ -496,7 +435,7 @@ const NewDriverManagement = () => {
         }
       />
 
-      {/* Vendor Selection Required Message for Non-Vendor Users */}
+      {/* Vendor Selection Required Message */}
       {shouldShowNoVendorMessage && (
         <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <div className="text-center">
@@ -513,12 +452,12 @@ const NewDriverManagement = () => {
       {/* Loading State */}
       {loading && isValidFetchState ? (
         <div className="mt-6 text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
           <p className="mt-2 text-gray-600">Loading drivers...</p>
         </div>
       ) : !loading && isValidFetchState ? (
         <>
-          {/* Results Count with Vendor Info */}
+          {/* Results Count */}
           <div className="mt-4 mb-2 text-sm text-gray-600">
             Showing {drivers?.length} of {totalItems} drivers
             {isVendorUser ? (
@@ -551,14 +490,13 @@ const NewDriverManagement = () => {
             </div>
           )}
 
-          {/* Driver List with Pagination - Only show if we have data */}
+          {/* Driver List */}
           {hasDataToDisplay && (
             <NewDriverList
               drivers={drivers}
               onEdit={handleOpenEditModal}
               onView={handleOpenViewModal}
               onStatusToggle={handleStatusToggle}
-              // Pagination Props
               showPagination={true}
               currentPage={currentPage}
               totalPages={totalPages}
@@ -580,7 +518,6 @@ const NewDriverManagement = () => {
         onSubmitSuccess={handleSubmitSuccess}
         userType={user?.type}
         vendors={vendorOptions}
-
       />
 
       {/* Audit History Modal */}
@@ -593,7 +530,7 @@ const NewDriverManagement = () => {
         apimodule="driver"
         moduleName={selectedDriverName || "Driver"}
         showUserColumn={true}
-        selectedCompany={tenantId}  
+        selectedCompany={tenantId}
       />
     </div>
   );
