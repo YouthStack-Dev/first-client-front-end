@@ -3,34 +3,35 @@ import { Spinner } from "./IamPermissionUIAtoms";
 
 const EMPTY_FORM = { module: "", action: "", description: "", is_active: true };
 
+// Label used above each field — uppercase tracking style
+const FieldLabel = ({ children }) => (
+  <label className="block text-slate-500 text-[11px] tracking-[0.08em] uppercase mb-[6px] font-semibold">
+    {children}
+  </label>
+);
+
+// Shared input/textarea base classes
+// Focus ring is handled via Tailwind focus: variants — no JS state needed
+const INPUT_BASE =
+  "w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-500 " +
+  "rounded-lg px-3 py-[10px] text-slate-900 text-[13px] outline-none " +
+  "transition-all duration-150 placeholder:text-slate-300";
+
+// ─── IamPermissionForm ────────────────────────────────────────────────────────
 const IamPermissionForm = ({ initial, onSubmit, onCancel, loading, mode }) => {
   const [form, setForm] = useState(
     initial
-      ? { module: initial.module || "", action: initial.action || "", description: initial.description || "", is_active: initial.is_active ?? true }
+      ? {
+          module:      initial.module      || "",
+          action:      initial.action      || "",
+          description: initial.description || "",
+          is_active:   initial.is_active   ?? true,
+        }
       : EMPTY_FORM
   );
 
-  const [foc, setFoc] = useState({});
   const set   = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const valid = form.module.trim() && form.action.trim();
-
-  const inputStyle = (key) => ({
-    width: "100%",
-    background: foc[key] ? "white" : "#f8fafc",
-    border: `1.5px solid ${foc[key] ? "#6366f1" : "#e2e8f0"}`,
-    borderRadius: 8,
-    padding: "10px 12px",
-    color: "#0f172a",
-    fontSize: 13,
-    outline: "none",
-    transition: "all 0.15s",
-    boxSizing: "border-box",
-  });
-
-  const focusProps = (key) => ({
-    onFocus: () => setFoc((f) => ({ ...f, [key]: true })),
-    onBlur:  () => setFoc((f) => ({ ...f, [key]: false })),
-  });
 
   const handleSubmit = () => {
     if (!valid || loading) return;
@@ -43,59 +44,87 @@ const IamPermissionForm = ({ initial, onSubmit, onCancel, loading, mode }) => {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div className="flex flex-col gap-4">
 
-      {/* Live payload preview */}
-      <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "12px 14px" }}>
-        <div style={{ color: "#94a3b8", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8, fontWeight: 600 }}>
-          {mode === "edit" ? "PUT" : "POST"} /api/v1/iam/permissions/{mode === "edit" && initial ? initial.permission_id : ""}
-        </div>
-        <pre style={{ margin: 0, fontSize: 12, fontFamily: "monospace", lineHeight: 1.9 }}>
-          <span style={{ color: "#94a3b8" }}>{"{\n"}</span>
-          <span style={{ color: "#94a3b8" }}>{"  "}</span><span style={{ color: "#6366f1" }}>"module"</span><span style={{ color: "#94a3b8" }}>:      </span><span style={{ color: form.module ? "#16a34a" : "#cbd5e1" }}>"{form.module || "…"}"</span><span style={{ color: "#94a3b8" }}>,{"\n"}</span>
-          <span style={{ color: "#94a3b8" }}>{"  "}</span><span style={{ color: "#6366f1" }}>"action"</span><span style={{ color: "#94a3b8" }}>:      </span><span style={{ color: form.action ? "#0369a1" : "#cbd5e1" }}>"{form.action || "…"}"</span><span style={{ color: "#94a3b8" }}>,{"\n"}</span>
-          <span style={{ color: "#94a3b8" }}>{"  "}</span><span style={{ color: "#6366f1" }}>"description"</span><span style={{ color: "#94a3b8" }}>: </span><span style={{ color: form.description ? "#7c3aed" : "#cbd5e1" }}>{form.description ? `"${form.description}"` : "null"}</span><span style={{ color: "#94a3b8" }}>,{"\n"}</span>
-          <span style={{ color: "#94a3b8" }}>{"  "}</span><span style={{ color: "#6366f1" }}>"is_active"</span><span style={{ color: "#94a3b8" }}>:   </span><span style={{ color: form.is_active ? "#16a34a" : "#dc2626" }}>{String(form.is_active)}</span><span style={{ color: "#94a3b8" }}>{"\n}"}</span>
+      {/* ── Live payload preview ── */}
+      <div className="bg-slate-50 border border-slate-200 rounded-xl px-[14px] py-3">
+        <p className="text-slate-400 text-[10px] tracking-[0.12em] uppercase font-semibold mb-2">
+          {mode === "edit" ? "PUT" : "POST"} /api/v1/iam/permissions/
+          {mode === "edit" && initial ? initial.permission_id : ""}
+        </p>
+        {/*
+          Inline colours are intentional here — each token colour is driven
+          by live form state (filled vs empty) and cannot be expressed as
+          static Tailwind classes.
+        */}
+        <pre className="m-0 text-[12px] font-mono leading-[1.9]">
+          <span className="text-slate-400">{"{\n"}</span>
+          <span className="text-slate-400">{"  "}</span>
+          <span className="text-indigo-500">"module"</span>
+          <span className="text-slate-400">:      </span>
+          <span style={{ color: form.module      ? "#16a34a" : "#cbd5e1" }}>"{form.module      || "…"}"</span>
+          <span className="text-slate-400">,{"\n"}</span>
+
+          <span className="text-slate-400">{"  "}</span>
+          <span className="text-indigo-500">"action"</span>
+          <span className="text-slate-400">:      </span>
+          <span style={{ color: form.action      ? "#0369a1" : "#cbd5e1" }}>"{form.action      || "…"}"</span>
+          <span className="text-slate-400">,{"\n"}</span>
+
+          <span className="text-slate-400">{"  "}</span>
+          <span className="text-indigo-500">"description"</span>
+          <span className="text-slate-400">: </span>
+          <span style={{ color: form.description ? "#7c3aed" : "#cbd5e1" }}>
+            {form.description ? `"${form.description}"` : "null"}
+          </span>
+          <span className="text-slate-400">,{"\n"}</span>
+
+          <span className="text-slate-400">{"  "}</span>
+          <span className="text-indigo-500">"is_active"</span>
+          <span className="text-slate-400">:   </span>
+          <span style={{ color: form.is_active   ? "#16a34a" : "#dc2626" }}>
+            {String(form.is_active)}
+          </span>
+          <span className="text-slate-400">{"\n}"}</span>
         </pre>
       </div>
 
-      {/* Module */}
+      {/* ── Module ── */}
       <div>
-        <label style={{ display: "block", color: "#64748b", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6, fontWeight: 600 }}>
-          Module <span style={{ color: "#ef4444" }}>*</span>
-        </label>
+        <FieldLabel>
+          Module <span className="text-red-400">*</span>
+        </FieldLabel>
         <input
-          style={inputStyle("module")}
-          {...focusProps("module")}
+          className={INPUT_BASE}
           placeholder="e.g. booking, driver, vehicle…"
           value={form.module}
           onChange={(e) => set("module", e.target.value)}
         />
       </div>
 
-      {/* Action */}
+      {/* ── Action ── */}
       <div>
-        <label style={{ display: "block", color: "#64748b", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6, fontWeight: 600 }}>
-          Action <span style={{ color: "#ef4444" }}>*</span>
-        </label>
+        <FieldLabel>
+          Action <span className="text-red-400">*</span>
+        </FieldLabel>
         <input
-          style={inputStyle("action")}
-          {...focusProps("action")}
+          className={INPUT_BASE}
           placeholder="e.g. create, read, update, delete…"
           value={form.action}
-          onChange={(e) => set("action", e.target.value)}
+          onChange={(e) => set("action", e.target.value.toLowerCase())}
         />
       </div>
 
-      {/* Description */}
+      {/* ── Description ── */}
       <div>
-        <label style={{ display: "block", color: "#64748b", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6, fontWeight: 600 }}>
+        <FieldLabel>
           Description{" "}
-          <span style={{ color: "#94a3b8", textTransform: "none", letterSpacing: 0, fontSize: 11, fontWeight: 400 }}>(optional · null if empty)</span>
-        </label>
+          <span className="normal-case tracking-normal text-[11px] text-slate-400 font-normal">
+            (optional · null if empty)
+          </span>
+        </FieldLabel>
         <textarea
-          style={{ ...inputStyle("desc"), resize: "none" }}
-          {...focusProps("desc")}
+          className={`${INPUT_BASE} resize-none`}
           placeholder="What does this permission allow?"
           rows={2}
           value={form.description}
@@ -103,52 +132,81 @@ const IamPermissionForm = ({ initial, onSubmit, onCancel, loading, mode }) => {
         />
       </div>
 
-      {/* is_active toggle */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "12px 14px" }}>
+      {/* ── is_active toggle ── */}
+      <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-[14px] py-3">
         <div>
-          <div style={{ color: "#0f172a", fontSize: 13, fontWeight: 600 }}>is_active</div>
-          <div style={{ color: "#94a3b8", fontSize: 12, marginTop: 2 }}>Enable or disable this permission system-wide</div>
+          <p className="text-slate-900 text-[13px] font-semibold">is_active</p>
+          <p className="text-slate-400 text-[12px] mt-[2px]">
+            Enable or disable this permission system-wide
+          </p>
         </div>
+
+        {/*
+          Toggle thumb position (left: 23px vs 3px) is driven by runtime state —
+          kept as inline style intentionally since Tailwind can't safely generate
+          arbitrary dynamic left values without safelisting.
+        */}
         <button
+          type="button"
           onClick={() => set("is_active", !form.is_active)}
-          style={{ width: 46, height: 26, borderRadius: 13, border: "none", cursor: "pointer", position: "relative", transition: "background 0.2s", background: form.is_active ? "#22c55e" : "#e2e8f0", flexShrink: 0 }}
+          className={`relative w-[46px] h-[26px] rounded-full border-none cursor-pointer
+            transition-colors duration-200 shrink-0
+            ${form.is_active ? "bg-green-500" : "bg-slate-200"}`}
         >
-          <span style={{ position: "absolute", top: 3, left: form.is_active ? 23 : 3, width: 20, height: 20, borderRadius: "50%", background: "white", transition: "left 0.2s", display: "block", boxShadow: "0 1px 4px rgba(0,0,0,0.15)" }} />
+          <span
+            className="absolute top-[3px] w-5 h-5 rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.15)] block transition-all duration-200"
+            style={{ left: form.is_active ? 23 : 3 }}
+          />
         </button>
       </div>
 
-      {/* Permission key preview */}
+      {/* ── Permission key preview ── */}
       {form.module && form.action && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#64748b", fontSize: 12, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "8px 12px" }}>
+        <div className="flex items-center gap-2 text-[12px] text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
           <span>Permission key →</span>
-          <code style={{ color: "#6366f1", background: "#eef2ff", border: "1px solid #e0e7ff", borderRadius: 6, padding: "2px 8px", fontWeight: 600 }}>
+          <code className="text-indigo-500 bg-indigo-50 border border-indigo-100 rounded-md px-2 py-[2px] font-semibold">
             {form.module.toLowerCase()}:{form.action.toLowerCase()}
           </code>
         </div>
       )}
 
-      {/* Buttons */}
-      <div style={{ display: "flex", gap: 10, paddingTop: 4 }}>
+      {/* ── Action buttons ── */}
+      <div className="flex gap-[10px] pt-1">
         <button
+          type="button"
           onClick={handleSubmit}
           disabled={loading || !valid}
-          style={{ flex: 1, padding: "11px", borderRadius: 8, border: "none", cursor: valid && !loading ? "pointer" : "not-allowed", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-            background: valid && !loading ? "linear-gradient(135deg,#6366f1,#8b5cf6)" : "#f1f5f9",
-            color: valid && !loading ? "white" : "#94a3b8",
-            boxShadow: valid && !loading ? "0 2px 10px rgba(99,102,241,0.3)" : "none",
-            opacity: loading ? 0.7 : 1 }}
+          className={`flex-1 flex items-center justify-center gap-2 py-[11px] rounded-lg
+            border-none text-[13px] font-bold transition-all duration-150
+            ${valid && !loading
+              ? "text-white cursor-pointer shadow-[0_2px_10px_rgba(99,102,241,0.3)] hover:opacity-90"
+              : "bg-slate-100 text-slate-400 cursor-not-allowed"
+            }`}
+          style={
+            valid && !loading
+              ? { background: "linear-gradient(135deg,#6366f1,#8b5cf6)", opacity: loading ? 0.7 : 1 }
+              : undefined
+          }
         >
-          {loading ? <><Spinner /> Saving…</> : mode === "edit" ? "Update Permission" : "Create Permission"}
+          {loading
+            ? <><Spinner /> Saving…</>
+            : mode === "edit"
+              ? "Update Permission"
+              : "Create Permission"
+          }
         </button>
+
         <button
+          type="button"
           onClick={onCancel}
-          style={{ padding: "11px 20px", borderRadius: 8, border: "1px solid #e2e8f0", background: "white", color: "#64748b", fontSize: 13, fontWeight: 500, cursor: "pointer" }}
-          onMouseOver={e => e.currentTarget.style.background = "#f8fafc"}
-          onMouseOut={e  => e.currentTarget.style.background = "white"}
+          className="px-5 py-[11px] rounded-lg border border-slate-200 bg-white
+            hover:bg-slate-50 text-slate-500 text-[13px] font-medium
+            cursor-pointer transition-colors duration-150"
         >
           Cancel
         </button>
       </div>
+
     </div>
   );
 };
