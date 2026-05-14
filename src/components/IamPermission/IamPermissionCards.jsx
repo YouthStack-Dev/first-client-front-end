@@ -4,8 +4,7 @@ import { Spinner } from "./IamPermissionUIAtoms";
 
 const CARDS_PER_PAGE = 16;
 
-// ─── NavBtn ───────────────────────────────────────────────────────────────────
-// Hoisted outside Pagination so it is not re-created on every render.
+
 const NavBtn = ({ dir, page, totalPages, onPageChange }) => {
   const isPrev   = dir === "prev";
   const disabled = isPrev ? page === 1 : page === totalPages;
@@ -233,17 +232,7 @@ const EmptyState = () => (
   </div>
 );
 
-// ─── IamPermissionCards (main export) ────────────────────────────────────────
-/**
- * Props:
- *  permissions  — filtered array passed in by parent (no slicing done outside)
- *  loading      — bool
- *  page         — current page number (controlled by parent)
- *  onPageChange — (n: number) => void
- *  onView       — (p) => void
- *  onEdit       — (p) => void
- *  onDelete     — (p) => void
- */
+
 const IamPermissionCards = ({
   permissions,
   loading,

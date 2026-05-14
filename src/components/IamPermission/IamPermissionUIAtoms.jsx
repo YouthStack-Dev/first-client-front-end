@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { getModuleColors } from "../../constants/Moduleconstants";
 
 // ─── ModuleBadge ──────────────────────────────────────────────────────────────
@@ -56,10 +56,16 @@ const TOAST_STYLES = {
 };
 
 export const Toast = ({ msg, type, onClose }) => {
+  // Keep the latest onClose in a ref so the timer is NEVER reset when the
+  // parent re-renders and passes a new inline function reference.
+  // The timeout fires exactly once, 3.5s after Toast first mounts.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+
   useEffect(() => {
-    const t = setTimeout(onClose, 3500);
+    const t = setTimeout(() => onCloseRef.current?.(), 3500);
     return () => clearTimeout(t);
-  }, [onClose]);
+  }, []); // empty — intentional: run once on mount only
 
   const { className, icon } = TOAST_STYLES[type] ?? TOAST_STYLES.default;
 

@@ -27,9 +27,29 @@ import {
 } from "../../redux/features/iampermissions/Iampermissionsslice";
 
 // ─── ErrorBox ─────────────────────────────────────────────────────────────────
+// Handles three error shapes:
+//   1. Plain string
+//   2. { message: "..." }          — our own API wrapper
+//   3. { detail: [...] }           — FastAPI / Pydantic validation errors (422)
+const parseError = (error) => {
+  if (typeof error === "string") return error;
+
+  // Pydantic validation errors: { detail: [{ msg, loc, ctx }] }
+  if (Array.isArray(error?.detail)) {
+    return error.detail
+      .map((e) => {
+        const field = e.loc?.slice(1).join(" → ") || "field";
+        return `${field}: ${e.msg}`;
+      })
+      .join("\n");
+  }
+
+  return error?.message || error?.detail || "Something went wrong";
+};
+
 const ErrorBox = ({ error }) => (
-  <div className="bg-red-50 border border-red-200 rounded-lg px-[14px] py-[10px] mb-4 text-red-600 text-[13px]">
-    {typeof error === "string" ? error : error?.message || "Something went wrong"}
+  <div className="bg-red-50 border border-red-200 rounded-lg px-[14px] py-[10px] mb-4 text-red-600 text-[13px] whitespace-pre-line">
+    {parseError(error)}
   </div>
 );
 

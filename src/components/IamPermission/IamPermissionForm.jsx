@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Spinner } from "./IamPermissionUIAtoms";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
 const EMPTY_FORM = { module: "", action: "", description: "", is_active: true };
 
 // Label used above each field — uppercase tracking style
@@ -112,7 +111,7 @@ const IamPermissionForm = ({ initial, onSubmit, onCancel, loading, mode }) => {
           className={INPUT_BASE}
           placeholder="e.g. create, read, update, delete…"
           value={form.action}
-          onChange={(e) => set("action", e.target.value)}
+          onChange={(e) => set("action", e.target.value.toLowerCase())}
         />
       </div>
 
