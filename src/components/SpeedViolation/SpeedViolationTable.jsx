@@ -1,12 +1,3 @@
-/**
- * SpeedViolationTable
- * Props:
- *  - violations: array
- *  - loading: bool
- *  - onViewRoute(routeId)  — opens route summary modal
- *  - onViewDriver(driverId) — switches to driver tab
- */
-
 const SEVERITY_STYLE = (overspeedBy) => {
   if (overspeedBy >= 30) return { bg: "#fef2f2", color: "#dc2626", border: "#fecaca", label: "Critical" };
   if (overspeedBy >= 15) return { bg: "#fff7ed", color: "#c2410c", border: "#fed7aa", label: "High"     };
