@@ -19,7 +19,7 @@ import employeeBulkReducer from "./features/bulkEmployee/employeeBulkSlice";
 import announcementReducer from "./features/notifications/announcementsSlice";
 import reviewReducer from "./features/reviews/Reviewslice";
 import iamPermissionsReducer from "./features/iampermissions/Iampermissionsslice";
-import speedViolationsReducer from "./features/speedviolations/speedViolationsSlice";
+import speedViolationsReducer from "./features/speedviolations/speedviolationsSlice";
 
 const store = configureStore({
   reducer: {
