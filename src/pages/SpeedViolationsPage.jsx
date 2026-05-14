@@ -16,21 +16,14 @@ import {
   selectDriverViolationsError,
   selectDriverViolationsTotalPages,
   clearDriverViolations,
-} from "../redux/features/speedviolations/speedViolationsSlice";
+} from "../redux/features/speedviolations/speedviolationsSlice";
 import { selectCurrentUser } from "../redux/features/auth/authSlice";
 import { fetchCompaniesThunk } from "../redux/features/company/companyThunks";
 
 import SpeedViolationTable from "../components/SpeedViolation/SpeedViolationTable";
 import { RouteSummaryModal } from "../components/SpeedViolation/SpeedViolationModals";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Constants
-// ─────────────────────────────────────────────────────────────────────────────
 const LIMIT = 20;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
 
 /** Returns the canonical ID of a company/tenant object. */
 const getTenantId = (company) =>

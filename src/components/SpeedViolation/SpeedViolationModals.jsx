@@ -8,7 +8,7 @@ import {
   selectRouteSummaryLoading,
   selectRouteSummaryError,
   clearRouteSummary,
-} from "../../redux/features/speedviolations/speedViolationsSlice";
+} from "../../redux/features/speedviolations/speedviolationsSlice";
 
 // ─── Shared atoms ─────────────────────────────────────────────────────────────
 const Spinner = () => (
