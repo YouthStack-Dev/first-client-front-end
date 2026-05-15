@@ -21,7 +21,7 @@ const Spinner = () => (
   </svg>
 );
 
-const SpeedViolationTable = ({ violations, loading, onViewRoute, onViewDriver }) => {
+const SpeedViolationTable = ({ violations, loading, onViewRoute, onViewDriver, currentPage = 1, limit = 20 }) => {
 
   const Btn = ({ label, bg, color, hoverBg, onClick }) => (
     <button
@@ -32,13 +32,17 @@ const SpeedViolationTable = ({ violations, loading, onViewRoute, onViewDriver })
     >{label}</button>
   );
 
+  // Row number offset so pagination shows correct numbers:
+  // page 1 → 1,2,3…  page 2 → 21,22,23… etc.
+  const rowOffset = (currentPage - 1) * limit;
+
   return (
     <div style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
           <thead>
             <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
-              {["#", "Driver", "Vehicle RC", "Speed", "Limit", "Overspeed By", "Severity", "Recorded At", "Actions"].map((h) => (
+              {["ID", "Driver", "Vehicle RC", "Speed", "Limit", "Overspeed By", "Severity", "Recorded At", "Actions"].map((h) => (
                 <th key={h} style={{ padding: "11px 14px", textAlign: "left", color: "#64748b", fontSize: 11, fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
                   {h}
                 </th>
@@ -66,19 +70,28 @@ const SpeedViolationTable = ({ violations, loading, onViewRoute, onViewDriver })
               </tr>
             ) : (
               violations.map((v, i) => {
-                const sev = SEVERITY_STYLE(v.overspeed_by ?? (v.speed_recorded - v.speed_limit));
+                const overspeedBy = v.overspeed_by ?? (v.speed_recorded - v.speed_limit);
+                const sev         = SEVERITY_STYLE(overspeedBy);
+                const rowNumber   = rowOffset + i + 1;
+
                 return (
-                  <tr key={v.violation_id}
+                  <tr
+                    key={v.violation_id}
                     style={{ borderBottom: i < violations.length - 1 ? "1px solid #f1f5f9" : "none", transition: "background 0.1s" }}
                     onMouseOver={e => e.currentTarget.style.background = "#fafafa"}
                     onMouseOut={e  => e.currentTarget.style.background = "transparent"}
                   >
-                    {/* ID */}
-                    <td style={{ padding: "13px 14px", color: "#94a3b8", fontSize: 12, fontWeight: 500 }}>
-                      #{v.violation_id}
+                    {/* # — row number + violation ID subtitle */}
+                    <td style={{ padding: "13px 14px" }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>
+                        {rowNumber}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 1 }}>
+                        #{v.violation_id}
+                      </div>
                     </td>
 
-                    {/* Driver */}
+                    {/* Driver — name + ID subtitle */}
                     <td style={{ padding: "13px 14px" }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{v.driver_name || "—"}</div>
                       <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 1 }}>ID: {v.driver_id}</div>
@@ -110,7 +123,7 @@ const SpeedViolationTable = ({ violations, loading, onViewRoute, onViewDriver })
                     {/* Overspeed by */}
                     <td style={{ padding: "13px 14px" }}>
                       <span style={{ fontSize: 13, fontWeight: 700, color: sev.color }}>
-                        +{(v.overspeed_by ?? (v.speed_recorded - v.speed_limit)).toFixed(1)} km/h
+                        +{overspeedBy.toFixed(1)} km/h
                       </span>
                     </td>
 
@@ -130,7 +143,7 @@ const SpeedViolationTable = ({ violations, loading, onViewRoute, onViewDriver })
                     <td style={{ padding: "13px 14px" }}>
                       <div style={{ display: "flex", gap: 6 }}>
                         {v.route_id && (
-                          <Btn label="Route" bg="#eef2ff" color="#4f46e5" hoverBg="#e0e7ff" onClick={() => onViewRoute(v.route_id)} />
+                          <Btn label="Route"  bg="#eef2ff" color="#4f46e5" hoverBg="#e0e7ff" onClick={() => onViewRoute(v.route_id)}  />
                         )}
                         <Btn label="Driver" bg="#f0f9ff" color="#0369a1" hoverBg="#bae6fd" onClick={() => onViewDriver(v.driver_id)} />
                       </div>

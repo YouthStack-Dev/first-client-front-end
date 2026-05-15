@@ -89,10 +89,10 @@ export const RouteSummaryModal = ({ routeId, tenantId = null, onClose }) => {
           {/* Stats row */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 }}>
             {[
-              { l: "Total Violations", v: summary.total_violations, c: "#dc2626", bg: "#fef2f2", border: "#fecaca" },
-              { l: "Max Speed",        v: `${summary.max_speed_recorded} km/h`, c: "#c2410c", bg: "#fff7ed", border: "#fed7aa" },
-              { l: "Avg Speed",        v: `${summary.avg_speed_recorded?.toFixed(1)} km/h`, c: "#b45309", bg: "#fffbeb", border: "#fde68a" },
-              { l: "Speed Limit",      v: `${summary.speed_limit} km/h`, c: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0" },
+              { l: "Total Violations", v: summary.total_violations,                          c: "#dc2626", bg: "#fef2f2", border: "#fecaca" },
+              { l: "Max Speed",        v: `${summary.max_speed_recorded} km/h`,              c: "#c2410c", bg: "#fff7ed", border: "#fed7aa" },
+              { l: "Avg Speed",        v: `${summary.avg_speed_recorded?.toFixed(1)} km/h`,  c: "#b45309", bg: "#fffbeb", border: "#fde68a" },
+              { l: "Speed Limit",      v: `${summary.speed_limit} km/h`,                     c: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0" },
             ].map((s) => (
               <div key={s.l} style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: 10, padding: "14px 16px" }}>
                 <div style={{ color: s.c, fontSize: 20, fontWeight: 800, lineHeight: 1 }}>{s.v}</div>
@@ -128,22 +128,29 @@ export const RouteSummaryModal = ({ routeId, tenantId = null, onClose }) => {
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
                     <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
-                      {["#", "Speed", "Limit", "Overspeed", "Severity", "Recorded At"].map(h => (
+                      {/* ← "ID" instead of "#" */}
+                      {["ID", "Speed", "Limit", "Overspeed", "Severity", "Recorded At"].map(h => (
                         <th key={h} style={{ padding: "9px 12px", textAlign: "left", color: "#64748b", fontSize: 11, fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase" }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {summary.violations.map((v, i) => {
-                      const sev = SEVERITY_STYLE(v.overspeed_by ?? (v.speed_recorded - v.speed_limit));
+                      const overspeedBy = v.overspeed_by ?? (v.speed_recorded - v.speed_limit);
+                      const sev         = SEVERITY_STYLE(overspeedBy);
                       return (
                         <tr key={v.violation_id} style={{ borderBottom: i < summary.violations.length - 1 ? "1px solid #f1f5f9" : "none" }}>
-                          <td style={{ padding: "10px 12px", color: "#94a3b8", fontSize: 12 }}>#{v.violation_id}</td>
+                          {/* ID cell — plain number, no # prefix */}
+                          <td style={{ padding: "10px 12px", color: "#64748b", fontSize: 12, fontWeight: 500 }}>
+                            {v.violation_id}
+                          </td>
                           <td style={{ padding: "10px 12px", color: "#dc2626", fontWeight: 700, fontSize: 13 }}>{v.speed_recorded} km/h</td>
                           <td style={{ padding: "10px 12px", color: "#16a34a", fontWeight: 600, fontSize: 13 }}>{v.speed_limit} km/h</td>
-                          <td style={{ padding: "10px 12px", color: sev.color, fontWeight: 700, fontSize: 13 }}>+{(v.overspeed_by ?? (v.speed_recorded - v.speed_limit)).toFixed(1)} km/h</td>
+                          <td style={{ padding: "10px 12px", color: sev.color, fontWeight: 700, fontSize: 13 }}>+{overspeedBy.toFixed(1)} km/h</td>
                           <td style={{ padding: "10px 12px" }}>
-                            <span style={{ background: sev.bg, border: `1px solid ${sev.border}`, color: sev.color, fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 20 }}>{sev.label}</span>
+                            <span style={{ background: sev.bg, border: `1px solid ${sev.border}`, color: sev.color, fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 20 }}>
+                              {sev.label}
+                            </span>
                           </td>
                           <td style={{ padding: "10px 12px", color: "#64748b", fontSize: 12 }}>{formatDateTime(v.recorded_at)}</td>
                         </tr>

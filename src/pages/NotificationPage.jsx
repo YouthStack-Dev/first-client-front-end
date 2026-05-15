@@ -164,7 +164,7 @@ const NotificationsPage = () => {
       setHistoryLoading(true);
       const statFilter = STAT_TO_FILTER[statKey] || {};
       const params = {
-        page,                        // ✅ API uses page/page_size, not limit/offset
+        page,
         page_size: HISTORY_PAGE_SIZE,
         ...statFilter,
         ...(dateFilters.start_date && { start_date: dateFilters.start_date }),
@@ -175,7 +175,6 @@ const NotificationsPage = () => {
       setHistoryAlerts(response.data.data?.alerts || []);
       setHistoryTotal(total);
       setHistoryPage(page);
-      // ✅ Update stat box count from this same response — no extra API call needed
       if (statKey) {
         setHistoricalCounts((prev) => ({ ...prev, [statKey]: total }));
       }
@@ -193,7 +192,6 @@ const NotificationsPage = () => {
     setHistoryAlerts([]);
     setHistoryTotal(0);
     setShowHistoryModal(true);
-    // ✅ Single API call — fetchHistory updates both the table AND the stat box count
     fetchHistory(1, key, { start_date: "", end_date: "" });
   };
 
@@ -226,7 +224,7 @@ const NotificationsPage = () => {
   };
 
   useEffect(() => {
-    fetchAlerts(); // Only fetch active alerts on load
+    fetchAlerts();
   }, []);
 
   const activeStatusCounts = {
@@ -258,11 +256,9 @@ const NotificationsPage = () => {
       setAckForm({ acknowledged_by: String(currentUserId), notes: "" });
       setShowAckModal(true);
     } else if (action === "escalate") {
-      // ✅ FIX: String() added — API expects escalated_by as string, not number
       setEscalateForm({ escalated_by: String(currentUserId), escalation_level: 1, escalated_to: "", reason: "" });
       setShowEscalateModal(true);
     } else if (action === "closealert") {
-      // ✅ FIX: String() added — API expects closed_by as string, not number
       setCloseForm({ closed_by: String(currentUserId), resolution_notes: "", is_false_alarm: false });
       setShowCloseModal(true);
     } else if (action === "timeline") {
@@ -288,7 +284,6 @@ const NotificationsPage = () => {
 
   const handleEscalateSubmit = async () => {
     if (!currentAlert) return;
-    // Basic validation before dispatch
     if (!escalateForm.escalated_to || !escalateForm.reason) {
       toast.error("Please fill in all required fields");
       return;
@@ -307,7 +302,6 @@ const NotificationsPage = () => {
 
   const handleCloseAlert = async () => {
     if (!currentAlert) return;
-    // Basic validation before dispatch
     if (!closeForm.resolution_notes?.trim()) {
       toast.error("Resolution notes are required");
       return;
@@ -316,7 +310,6 @@ const NotificationsPage = () => {
       setActionLoading(true);
       const result = await dispatch(closeAlertThunk({
         alertId: currentAlert.alert_id,
-        // ✅ FIX: String() added as safety net in case form state was set before fix
         closed_by: String(closeForm.closed_by),
         resolution_notes: closeForm.resolution_notes,
         is_false_alarm: closeForm.is_false_alarm,
@@ -341,47 +334,32 @@ const NotificationsPage = () => {
       <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
         <div className="px-6 py-4">
 
-          {/* Top row */}
+          {/* Top row — search on left, refresh on right */}
           <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-blue-600 rounded-xl shadow">
-                <BellRing className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 leading-tight">Alert Notifications</h1>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Real-time security monitoring &nbsp;·&nbsp;
-                  {timestamp && `Updated ${new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
-                </p>
-              </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search alerts..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 pr-4 py-2 w-64 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search alerts..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 pr-4 py-2 w-56 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <button
-                onClick={() => { fetchAlerts(); }}
-                disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-2 disabled:opacity-50 transition-colors"
-              >
-                <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-                Refresh
-              </button>
-            </div>
+            <button
+              onClick={() => { fetchAlerts(); }}
+              disabled={loading}
+              className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-2 disabled:opacity-50 transition-colors"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
           </div>
 
           {/* ── 3 Stat Boxes — all-time counts ── */}
           <div className="grid grid-cols-3 gap-4 mb-4">
             {Object.entries(STAT_CONFIG).map(([key, config]) => {
               const isActive = activeStatKey === key;
-              const count = historicalCounts[key] ?? 0;
               const Icon = config.icon;
               return (
                 <button
@@ -447,8 +425,6 @@ const NotificationsPage = () => {
       {showHistoryModal && activeStatKey && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
-
-            {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${
@@ -469,8 +445,6 @@ const NotificationsPage = () => {
                   )}
                 </div>
               </div>
-
-              {/* Date filters */}
               <div className="flex items-center gap-2">
                 <label className="text-xs text-gray-400">From</label>
                 <input type="date" value={historyDateFilters.start_date}
@@ -492,7 +466,6 @@ const NotificationsPage = () => {
               </div>
             </div>
 
-            {/* Table */}
             <div className="flex-1 overflow-y-auto">
               {historyLoading ? (
                 <div className="text-center py-16 text-gray-400">
@@ -508,7 +481,6 @@ const NotificationsPage = () => {
                       <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Severity</th>
                       <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                       <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Employee ID</th>
-                      
                       <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Booking ID</th>
                       <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Triggered At</th>
                     </tr>
@@ -550,7 +522,6 @@ const NotificationsPage = () => {
               )}
             </div>
 
-            {/* Pagination */}
             {totalHistoryPages > 1 && (
               <div className="px-6 py-3 border-t border-gray-100 flex items-center justify-between bg-gray-50 shrink-0 rounded-b-xl">
                 <span className="text-xs text-gray-500">
