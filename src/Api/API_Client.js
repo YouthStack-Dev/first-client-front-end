@@ -100,7 +100,9 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { logDebug } from "../utils/logger";
 
-const API_BASE_URL = "https://api.mltcorporate.com/api/v1";
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
+  "https://api.mltcorporate.com/api/v1";
 
 // ───────────────────────────────────
 // Store injection to avoid circular deps
