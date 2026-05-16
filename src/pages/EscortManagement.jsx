@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { X, Eye, EyeOff, Trash2, Truck } from "lucide-react";
 import { toast } from "react-toastify";
@@ -46,11 +46,11 @@ const EscortManagement = () => {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
 
-  // ✅ Custom delete confirmation state (replaces window.confirm)
   const [deleteConfirm, setDeleteConfirm] = useState({ open: false, escortId: null });
-
-  // ✅ Vendor filter state
   const [selectedVendorId, setSelectedVendorId] = useState("");
+
+  // ✅ Track the last fetched vendor filter so we don't re-fetch on every visit
+  const lastFetchedVendorId = useRef(undefined); // undefined = never fetched
 
   const { vendorOptions } = useVendorOptions(null, true);
 
@@ -68,11 +68,20 @@ const EscortManagement = () => {
     };
   }
 
-  // ✅ Re-fetch whenever vendor filter changes
+  // ✅ Only fetch when:
+  //    1. First visit with no data in store (lastFetchedVendorId is undefined AND escorts is empty)
+  //    2. Vendor filter actually changes
   useEffect(() => {
-    dispatch(
-      fetchEscortsThunk(selectedVendorId ? { vendor_id: selectedVendorId } : {})
-    );
+    const filterChanged = lastFetchedVendorId.current !== selectedVendorId;
+    const isFirstVisit = lastFetchedVendorId.current === undefined;
+    const hasNoData = escorts.length === 0;
+
+    if (filterChanged || (isFirstVisit && hasNoData)) {
+      lastFetchedVendorId.current = selectedVendorId;
+      dispatch(
+        fetchEscortsThunk(selectedVendorId ? { vendor_id: selectedVendorId } : {})
+      );
+    }
   }, [dispatch, selectedVendorId]);
 
   const handleCreate = () => {
@@ -98,12 +107,10 @@ const EscortManagement = () => {
     setIsModalOpen(true);
   };
 
-  // ✅ Step 1: open custom modal instead of window.confirm
   const handleDelete = (escortId) => {
     setDeleteConfirm({ open: true, escortId });
   };
 
-  // ✅ Step 2: actual delete runs only after user clicks "Delete" in the modal
   const confirmDelete = async () => {
     const id = deleteConfirm.escortId;
     setDeleteConfirm({ open: false, escortId: null });
@@ -265,7 +272,6 @@ const EscortManagement = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ✅ Toolbar with inline count + vendor filter + active badge */}
       <ToolBar
         module="escort"
         onAddClick={handleCreate}
@@ -300,7 +306,7 @@ const EscortManagement = () => {
               </div>
             </div>
 
-            {/* ✅ Active filter clear badge — inline next to dropdown */}
+            {/* Active filter clear badge */}
             {selectedVendorId && (
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
                 <Truck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
@@ -462,7 +468,7 @@ const EscortManagement = () => {
         </div>
       )}
 
-      {/* ✅ Custom Delete Confirmation Modal */}
+      {/* Custom Delete Confirmation Modal */}
       {deleteConfirm.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-6 w-80 text-center">

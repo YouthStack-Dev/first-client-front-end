@@ -24,6 +24,7 @@ export const pathTitleMap = {
   "/policy-rules": "Policy Rules",
   "/services": "Service Management",
   "/tenants": "Tenant Management",
+  "/speed-violations": "Speed Violations",
 
   // Fleet Management
   "/vehicles-management": "Manage Vehicles",
