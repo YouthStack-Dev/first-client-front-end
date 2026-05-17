@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Megaphone, Star, Menu, User, LogOut, ChevronDown } from "lucide-react";
-import { useNavigate }                                       from "react-router-dom";
-import { useDispatch, useSelector }                          from "react-redux";
-import { jwtDecode }                                         from "jwt-decode";
-import Cookies                                               from "js-cookie";
-import { logout, selectCurrentUser }                         from "../../redux/features/auth/authSlice";
+import { Megaphone, Star, User, LogOut, ChevronDown } from "lucide-react";
+import { useNavigate }                                 from "react-router-dom";
+import { useDispatch, useSelector }                    from "react-redux";
+import { jwtDecode }                                   from "jwt-decode";
+import Cookies                                         from "js-cookie";
+import { logout, selectCurrentUser }                   from "../../redux/features/auth/authSlice";
 
-const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
+const Header = ({ isSidebarOpen, title = "Dashboard" }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user     = useSelector(selectCurrentUser);
@@ -60,14 +60,12 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
   }, []);
 
   const handleAvatarClick       = useCallback(() => setIsProfileOpen(prev => !prev), []);
-  const handleProfileNavigation = useCallback(() => { navigate("/companies/profile");      setIsProfileOpen(false); }, [navigate]);
+  const handleProfileNavigation = useCallback(() => { navigate("/companies/profile"); setIsProfileOpen(false); }, [navigate]);
   const handleAnnouncementClick = useCallback(() =>   navigate("/companies/announcements"), [navigate]);
   const handleReviewsClick      = useCallback(() =>   navigate("/companies/reviews"),       [navigate]);
   const handleLogout            = useCallback(() => { dispatch(logout()); setIsProfileOpen(false); }, [dispatch]);
 
   return (
-    // ✅ z-40 so dropdown (z-50) always renders above main content
-    // ✅ left-0 on mobile, lg:left-[256px/64px] on desktop
     <header className={`
       bg-white border-b border-gray-100 fixed top-0 right-0 z-40
       transition-all duration-300 shadow-sm
@@ -77,16 +75,8 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
-          {/* Left — toggle + title */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              data-sidebar-toggle
-              onClick={toggleSidebar}
-              className="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
+          {/* Left — title only */}
+          <div className="flex items-center">
             <span className="text-blue-600 font-bold text-xl">{title}</span>
           </div>
 
@@ -99,7 +89,8 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
               onClick={handleAnnouncementClick}
               className="group relative flex items-center gap-2 px-3 py-2 rounded-xl
                 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50
-                transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-300" >
+                transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            >
               <div className="relative p-1.5 rounded-lg bg-gray-100 group-hover:bg-indigo-100 transition-colors">
                 <Megaphone className="h-4 w-4" />
               </div>
@@ -157,7 +148,6 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
                 />
               </button>
 
-              {/* ✅ Dropdown z-50 — always above header and main content */}
               {isProfileOpen && (
                 <div className="absolute right-0 mt-2 w-52 rounded-xl shadow-lg bg-white
                   ring-1 ring-black ring-opacity-5 z-50 overflow-hidden">
@@ -171,7 +161,6 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-gray-800 truncate">{displayName}</p>
-                        {/* ✅ Real email from JWT */}
                         {displayEmail && (
                           <p className="text-xs text-gray-500 truncate">{displayEmail}</p>
                         )}
