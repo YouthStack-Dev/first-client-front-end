@@ -23,8 +23,8 @@ import NotificationsPage from "../pages/NotificationPage";
 import TeamManagement from "../pages/TeamManagement";
 import TeamEmployeesManagement from "../components/TeamEmployees/TeamEmployeesManagemnt.jsx";
 import ReviewManagement from "../pages/ReviewManagement";
-
 import ManageAnnouncements from "../pages/ManageAnnouncements";
+import SpeedViolationsPage from "../pages/SpeedViolationsPage";
 
 
 export const CompanyRoutes = () => (
@@ -62,7 +62,7 @@ export const CompanyRoutes = () => (
     <Route path="notification" element={<NotificationsPage />} />
     <Route path="announcements" element={<ManageAnnouncements />} />
     <Route path="reviews" element={<ReviewManagement />} />
-
+    <Route path="speed-violations" element={<SpeedViolationsPage />} />
 
 
     <Route path="tracking" element={<TrackingManagement />} />

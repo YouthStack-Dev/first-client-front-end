@@ -39,6 +39,32 @@ function normalizeError(error) {
   return { message: error?.message ?? "Network error. Please try again." };
 }
 
+// ─── FormData builder ─────────────────────────────────────────────────────────
+/**
+ * Converts a plain payload object to FormData when a media_file is present.
+ * Arrays are appended as repeated keys so the server receives them correctly.
+ * Null / undefined values are skipped — the server should treat absence as
+ * "no change" rather than receiving an explicit null.
+ *
+ * Axios detects FormData automatically and sets multipart/form-data;
+ * no manual Content-Type header is needed.
+ *
+ * @param {Object} data
+ * @returns {FormData}
+ */
+function toFormData(data) {
+  const fd = new FormData();
+  Object.entries(data).forEach(([key, val]) => {
+    if (val == null) return;
+    if (Array.isArray(val)) {
+      val.forEach((v) => fd.append(key, v));
+    } else {
+      fd.append(key, val);
+    }
+  });
+  return fd;
+}
+
 // ─── Typedefs ─────────────────────────────────────────────────────────────────
 /**
  * @typedef {Object} CreateAnnouncementPayload
@@ -48,8 +74,7 @@ function normalizeError(error) {
  * @property {number[]}  [target_ids]
  * @property {string}    [content_type]     default: "text"
  * @property {string}    [media_url]
- * @property {string}    [media_filename]
- * @property {number}    [media_size_bytes]
+ * @property {File}      [media_file]       – if present, payload is sent as multipart
  * @property {string[]}  [channels]         default: ["push", "in_app"]
  */
 
@@ -84,7 +109,11 @@ export const createAnnouncement = createAsyncThunk(
   "announcements/create",
   async (/** @type {CreateAnnouncementPayload} */ data, { rejectWithValue }) => {
     try {
-      const response = await createAnnouncementApi(data);
+      // Fix: if a File is attached, serialize as multipart so the upload
+      // reaches the server correctly. Passing a raw File in a JSON body
+      // silently sends "[object Object]".
+      const payload  = data.media_file ? toFormData(data) : data;
+      const response = await createAnnouncementApi(payload);
       return response.data; // { status, message, data: Announcement }
     } catch (error) {
       return rejectWithValue(normalizeError(error));
@@ -101,7 +130,9 @@ export const updateAnnouncement = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await updateAnnouncementApi(id, data);
+      // Fix: same multipart handling as createAnnouncement
+      const payload  = data.media_file ? toFormData(data) : data;
+      const response = await updateAnnouncementApi(id, payload);
       return response.data; // { status, message, data: Announcement }
     } catch (error) {
       return rejectWithValue(normalizeError(error));

@@ -27,11 +27,28 @@ const LiveTracking = ({
   const API_KEY = import.meta.env.VITE_GOOGLE_API || "";
 
   const companyLocation = useMemo(() => {
-    if (!selectedCompany?.location) return DEFAULT_LOCATION;
-    return (
-      extractLocation(selectedCompany.location, ["latitude", "lat"], ["longitude", "lng"]) ||
-      DEFAULT_LOCATION
-    );
+    // console.log("=== companyLocation DEBUG ===");
+    // console.log("selectedCompany:", selectedCompany);
+
+    if (!selectedCompany) {
+      console.warn("⚠️ No company → using hardcoded default");
+      return DEFAULT_LOCATION;
+    }
+
+    // Try nested location object first (admin shape),
+    // then flat top-level keys (Redux/employee shape)
+    const extracted =
+      extractLocation(selectedCompany?.location, ["latitude", "lat"], ["longitude", "lng"]) ||
+      extractLocation(selectedCompany, ["latitude", "lat"], ["longitude", "lng"]);
+
+    if (!extracted) {
+      console.warn("⚠️ Could not extract location → using hardcoded default");
+      return DEFAULT_LOCATION;
+    }
+
+    // console.log("✅ Using REAL company location:", extracted);
+    return extracted;
+
   }, [selectedCompany]);
 
   const allRoutes = useMemo(() => {
@@ -169,8 +186,6 @@ const LiveTracking = ({
   const liveCount = Object.keys(driverLocations).length;
 
   return (
-    // ── FIX: use calc(100vh - 160px) so map fills the screen ─────────────────
-    // 160px accounts for top navbar + page padding
     <div className="mb-4">
       <div
         className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
@@ -269,7 +284,9 @@ const LiveTracking = ({
 
             <APIProvider apiKey={API_KEY}>
               <Map
-                defaultCenter={companyLocation}
+                // ── FIX: use `center` (reactive) instead of `defaultCenter` (mount-only)
+                // so map re-centers when Redux company data loads after initial render
+                center={companyLocation}
                 defaultZoom={13}
                 mapId="company-route-map"
                 gestureHandling="greedy"

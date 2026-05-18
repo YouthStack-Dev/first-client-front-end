@@ -1,6 +1,6 @@
+import { useState } from "react";
 import {
   ArrowLeft,
-  Filter,
   Calendar,
   Clock,
   CheckCircle,
@@ -23,6 +23,10 @@ const BookingHistory = ({
   showLocationInfo = true,
   onUpdateBooking,
 }) => {
+  // ✅ NEW: state to track which booking is pending cancel confirmation
+  const [confirmCancel, setConfirmCancel] = useState(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       confirmed: {
@@ -93,47 +97,37 @@ const BookingHistory = ({
 
   const hasActiveFilters = filters.date || filters.status || filters.shiftType;
 
-  const handleCancelBooking = async (bookingId) => {
+  // ✅ Step 1: Just open the modal (no window.confirm)
+  const handleCancelClick = (bookingId) => {
+    setConfirmCancel(bookingId);
+  };
+
+  // ✅ Step 2: Actual API call after user confirms in modal
+  const handleConfirmCancel = async () => {
+    setIsCancelling(true);
     try {
-      // Show confirmation dialog
-      const isConfirmed = window.confirm(
-        "Are you sure you want to cancel this booking? This action cannot be undone."
-      );
-
-      if (!isConfirmed) {
-        return;
-      }
-
-      // Make API call to cancel booking
-      const response = await API_CLIENT.patch(`/bookings/cancel/${bookingId}`);
+      const response = await API_CLIENT.patch(`/bookings/cancel/${confirmCancel}`);
 
       if (response.status === 200 || response.status === 204) {
-        // Success handling
         console.log("Booking cancelled successfully:", response.data);
-
-        // Show success message
-        alert("Booking cancelled successfully!");
+        setConfirmCancel(null);
+        // ✅ Refresh the list — booking stays but status updates to Cancelled
+        onFilterChange("date", filters.date);
       } else {
         throw new Error("Failed to cancel booking");
       }
     } catch (error) {
       console.error("Error cancelling booking:", error);
-
-      // Error handling
-      if (error.response) {
-        // Server responded with error status
-        const errorMessage =
-          error.response.data?.message || "Failed to cancel booking";
-        alert(`Error: ${errorMessage}`);
-      } else if (error.request) {
-        // Network error
-        alert("Network error: Please check your internet connection");
-      } else {
-        // Other errors
-        alert("An unexpected error occurred");
-      }
+      setConfirmCancel(null);
+      const msg =
+        error.response?.data?.message ||
+        (error.request ? "Network error: Please check your connection" : "An unexpected error occurred");
+      alert(`Error: ${msg}`);
+    } finally {
+      setIsCancelling(false);
     }
   };
+
   // Loading State
   if (isLoading) {
     return (
@@ -166,7 +160,6 @@ const BookingHistory = ({
         <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
         <p className="text-red-600 font-medium">Failed to load bookings</p>
         <p className="text-gray-500 text-sm mb-4">{errorMessage}</p>
-
         <button
           onClick={() => window.location.reload()}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -179,6 +172,52 @@ const BookingHistory = ({
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6">
+
+      {/* ✅ Custom Cancel Confirmation Modal */}
+      {confirmCancel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => !isCancelling && setConfirmCancel(null)}
+          />
+
+          {/* Modal Card */}
+          <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 z-10">
+            {/* Icon */}
+            <div className="flex items-center justify-center w-14 h-14 bg-red-100 rounded-full mx-auto mb-4">
+              <XCircle className="w-7 h-7 text-red-600" />
+            </div>
+
+            {/* Text */}
+            <h3 className="text-lg font-bold text-gray-900 text-center mb-2">
+              Cancel Booking?
+            </h3>
+            <p className="text-sm text-gray-500 text-center mb-6">
+              Are you sure you want to cancel this booking? This action cannot be undone.
+            </p>
+
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmCancel(null)}
+                disabled={isCancelling}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-medium text-sm hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Keep Booking
+              </button>
+              <button
+                onClick={handleConfirmCancel}
+                disabled={isCancelling}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 text-white font-medium text-sm hover:bg-red-700 transition-colors disabled:opacity-75"
+              >
+                {isCancelling ? "Cancelling..." : "Yes, Cancel"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <button
@@ -191,10 +230,7 @@ const BookingHistory = ({
 
         <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
 
-        <div className="flex items-center gap-2 text-gray-600">
-          {/* <Filter className="w-4 h-4" />
-          <span className="text-sm font-medium">Filters</span> */}
-        </div>
+        <div className="flex items-center gap-2 text-gray-600" />
       </div>
 
       {/* Filters */}
@@ -231,22 +267,6 @@ const BookingHistory = ({
           </select>
         </div>
 
-        {/* Shift */}
-        {/* <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Shift Type
-          </label>
-          <select
-            value={filters.shiftType || ""}
-            onChange={(e) => onFilterChange("shiftType", e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-          >
-            <option value="">All Types</option>
-            <option value="1">IN</option>
-            <option value="2">OUT</option>
-          </select>
-        </div> */}
-
         {/* Clear Filters */}
         <div className="flex items-end">
           <button
@@ -274,9 +294,7 @@ const BookingHistory = ({
         {bookings.length === 0 ? (
           <div className="text-center py-12">
             <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg font-medium">
-              No bookings found
-            </p>
+            <p className="text-gray-500 text-lg font-medium">No bookings found</p>
             <p className="text-gray-400 text-sm mt-1">{emptyMessage}</p>
           </div>
         ) : (
@@ -287,9 +305,9 @@ const BookingHistory = ({
               getStatusBadge={getStatusBadge}
               getShiftType={getShiftType}
               showLocationInfo={showLocationInfo}
-              onCancelBooking={handleCancelBooking}
+              onCancelBooking={handleCancelClick} 
               onUpdateBooking={onUpdateBooking}
-              cancellationCutoffWindow={60} // 60 minutes cutoff window
+              cancellationCutoffWindow={60}
             />
           ))
         )}

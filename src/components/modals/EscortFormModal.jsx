@@ -1,10 +1,9 @@
 // components/EscortFormModal.jsx
-import React from "react";
-import { X, Check } from "lucide-react";
+import React, { useState } from "react";
+import { X, Check, Eye, EyeOff } from "lucide-react";
 import Select from "react-select";
 import { logDebug } from "../../utils/logger";
 
-// components/EscortFormModal.jsx - Update the component
 const EscortFormModal = ({
   isOpen,
   onClose,
@@ -15,13 +14,12 @@ const EscortFormModal = ({
   genderOptions,
   onChange,
   onSubmit,
-  isSubmitting, // Add this prop
+  isSubmitting,
 }) => {
   if (!isOpen) return null;
 
-  // logDebug(" this is the error in model ,", errors);
+  const [showPassword, setShowPassword] = useState(false);
 
-  // Custom Select styles to match theme
   const customSelectStyles = {
     control: (base, state) => ({
       ...base,
@@ -79,7 +77,7 @@ const EscortFormModal = ({
           </h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-app-secondary rounded transition-colors   text-white"
+            className="p-1 hover:bg-app-secondary rounded transition-colors text-white"
             aria-label="Close modal"
           >
             <X size={20} />
@@ -88,7 +86,6 @@ const EscortFormModal = ({
 
         {/* Modal Body */}
         <div className="px-6 py-4">
-          {/* Display server error at the top */}
           {errors.server && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-600 text-sm">
@@ -188,23 +185,33 @@ const EscortFormModal = ({
             {mode === "create" && (
               <div>
                 <FormField label="Password (Optional)" error={errors.password}>
-                  <input
-                    type="password"
-                    value={formData.password || ""}
-                    onChange={(e) => onChange("password", e.target.value)}
-                    disabled={mode === "view"}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-app-primary focus:border-app-primary transition-colors ${
-                      mode === "view"
-                        ? "bg-app-tertiary text-app-text-muted"
-                        : "bg-app-surface text-app-text-primary"
-                    } ${
-                      errors.password
-                        ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                        : "border-app-border"
-                    }`}
-                    placeholder="Leave blank to use phone number"
-                    autoComplete="new-password"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password || ""}
+                      onChange={(e) => onChange("password", e.target.value)}
+                      disabled={mode === "view"}
+                      className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-app-primary focus:border-app-primary transition-colors ${
+                        mode === "view"
+                          ? "bg-app-tertiary text-app-text-muted"
+                          : "bg-app-surface text-app-text-primary"
+                      } ${
+                        errors.password
+                          ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                          : "border-app-border"
+                      }`}
+                      placeholder="Leave blank to use phone number"
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-app-text-secondary hover:text-app-text-primary"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </FormField>
               </div>
             )}

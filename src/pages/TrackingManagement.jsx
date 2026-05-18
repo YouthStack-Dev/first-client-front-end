@@ -45,7 +45,7 @@ const TrackingManagement = () => {
       }
 
       const response = await API_CLIENT.get(url);
-      logDebug("Ongoing Routes Response:", response.data);
+      // logDebug("Ongoing Routes Response:", response.data);
 
       // Extract routes from API response structure
       if (
@@ -98,13 +98,22 @@ const TrackingManagement = () => {
   }, [userType]);
 
   // Get selected company object for display
-  const getSelectedCompany = () => {
-    if (!selectedCompanyId) return null;
-    return (
-      companies.find((company) => company.tenant_id === selectedCompanyId) ||
-      null
-    );
-  };
+const getSelectedCompany = () => {
+  if (userType !== "admin") {
+    // Read tenant from localStorage
+    const tenant = JSON.parse(localStorage.getItem("tenant") || "null");
+    logDebug("Tenant stored in localStorage:", tenant);
+    return {
+      name: tenant?.name || null,
+      location: {
+        latitude: tenant?.latitude || null,
+        longitude: tenant?.longitude || null,
+      },
+    };
+  }
+  if (!selectedCompanyId) return null;
+  return companies.find((c) => c.tenant_id === selectedCompanyId) || null;
+};
 
   // Prepare company options for select field - show loading or empty if companies not loaded
   const companyOptions = [

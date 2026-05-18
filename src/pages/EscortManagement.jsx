@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { X, Eye, EyeOff } from "lucide-react";
-import { toast } from "react-toastify"; // ✅ added
+import { X, Eye, EyeOff, Trash2, Truck } from "lucide-react";
+import { toast } from "react-toastify";
 
 import {
   fetchEscortsThunk,
@@ -46,6 +46,12 @@ const EscortManagement = () => {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
 
+  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, escortId: null });
+  const [selectedVendorId, setSelectedVendorId] = useState("");
+
+  // ✅ Track the last fetched vendor filter so we don't re-fetch on every visit
+  const lastFetchedVendorId = useRef(undefined); // undefined = never fetched
+
   const { vendorOptions } = useVendorOptions(null, true);
 
   function getInitialFormData() {
@@ -62,9 +68,21 @@ const EscortManagement = () => {
     };
   }
 
+  // ✅ Only fetch when:
+  //    1. First visit with no data in store (lastFetchedVendorId is undefined AND escorts is empty)
+  //    2. Vendor filter actually changes
   useEffect(() => {
-    dispatch(fetchEscortsThunk());
-  }, [dispatch]);
+    const filterChanged = lastFetchedVendorId.current !== selectedVendorId;
+    const isFirstVisit = lastFetchedVendorId.current === undefined;
+    const hasNoData = escorts.length === 0;
+
+    if (filterChanged || (isFirstVisit && hasNoData)) {
+      lastFetchedVendorId.current = selectedVendorId;
+      dispatch(
+        fetchEscortsThunk(selectedVendorId ? { vendor_id: selectedVendorId } : {})
+      );
+    }
+  }, [dispatch, selectedVendorId]);
 
   const handleCreate = () => {
     setModalMode("create");
@@ -89,11 +107,15 @@ const EscortManagement = () => {
     setIsModalOpen(true);
   };
 
-  // ✅ alert → toast
-  const handleDelete = async (escortId) => {
-    if (!window.confirm("Delete this escort?")) return;
+  const handleDelete = (escortId) => {
+    setDeleteConfirm({ open: true, escortId });
+  };
+
+  const confirmDelete = async () => {
+    const id = deleteConfirm.escortId;
+    setDeleteConfirm({ open: false, escortId: null });
     try {
-      await dispatch(deleteEscortThunk(escortId)).unwrap();
+      await dispatch(deleteEscortThunk(id)).unwrap();
       toast.success("Escort deleted successfully!");
     } catch (err) {
       if (err?.errorCode === "ESCORT_NOT_FOUND") {
@@ -104,7 +126,6 @@ const EscortManagement = () => {
     }
   };
 
-  // ✅ alert + console.error → toast
   const handleOnToggleActive = async (escort) => {
     try {
       await dispatch(
@@ -121,7 +142,6 @@ const EscortManagement = () => {
     }
   };
 
-  // ✅ alert + console.error → toast
   const handleOnToggleAvailable = async (escort) => {
     try {
       await dispatch(
@@ -154,7 +174,6 @@ const EscortManagement = () => {
     return !Object.keys(newErrors).length;
   };
 
-  // ✅ added success toasts + error toast
   const handleSubmit = async () => {
     if (!validateForm()) return;
     setIsSubmitting(true);
@@ -176,7 +195,7 @@ const EscortManagement = () => {
           createPayload.password = formData.password.trim();
         }
         await dispatch(createEscortThunk(createPayload)).unwrap();
-        toast.success("Escort created successfully!"); // ✅
+        toast.success("Escort created successfully!");
       } else {
         await dispatch(
           updateEscortThunk({
@@ -184,12 +203,12 @@ const EscortManagement = () => {
             data: basePayload,
           })
         ).unwrap();
-        toast.success("Escort updated successfully!"); // ✅
+        toast.success("Escort updated successfully!");
       }
 
       setIsModalOpen(false);
     } catch (error) {
-      toast.error(error?.message || "Failed to save escort"); // ✅
+      toast.error(error?.message || "Failed to save escort");
     } finally {
       setIsSubmitting(false);
     }
@@ -211,7 +230,6 @@ const EscortManagement = () => {
     setResetPasswordError("");
   };
 
-  // ✅ alert → toast
   const submitResetPassword = async () => {
     const value = resetPassword.trim();
     const confirmValue = confirmResetPassword.trim();
@@ -230,10 +248,10 @@ const EscortManagement = () => {
         })
       ).unwrap();
       closeResetPasswordModal();
-      toast.success("Password updated successfully!"); // ✅
+      toast.success("Password updated successfully!");
     } catch (err) {
       setResetPasswordError(err?.message || "Failed to reset password.");
-      toast.error(err?.message || "Failed to reset password."); // ✅
+      toast.error(err?.message || "Failed to reset password.");
     } finally {
       setIsResettingPassword(false);
     }
@@ -254,14 +272,56 @@ const EscortManagement = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Toolbar */}
       <ToolBar
         module="escort"
         onAddClick={handleCreate}
         addButtonLabel="Escort"
         leftElements={
-          <div className="text-sm text-gray-600">
-            Total Escorts: <span className="font-semibold">{escorts.length}</span>
+          <div className="flex items-center gap-3">
+            {/* Count badge */}
+            <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 rounded-lg border border-gray-200">
+              <span className="text-xs text-gray-500 font-medium">Total</span>
+              <span className="text-sm font-bold text-gray-800">{escorts.length}</span>
+            </div>
+
+            {/* Vendor filter dropdown */}
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10">
+                <Truck className="w-4 h-4 text-gray-400" />
+              </div>
+              <select
+                value={selectedVendorId}
+                onChange={(e) => setSelectedVendorId(e.target.value)}
+                className="appearance-none pl-9 pr-8 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer min-w-[170px]"
+              >
+                <option value="">All Vendors</option>
+                {vendorOptions.map((v) => (
+                  <option key={v.value} value={v.value}>{v.label}</option>
+                ))}
+              </select>
+              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Active filter clear badge */}
+            {selectedVendorId && (
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
+                <Truck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                <span className="text-xs text-blue-700 font-medium max-w-[120px] truncate">
+                  {vendorOptions.find((v) => v.value === selectedVendorId)?.label}
+                </span>
+                <button
+                  onClick={() => setSelectedVendorId("")}
+                  className="text-blue-400 hover:text-blue-600 transition-colors flex-shrink-0"
+                  aria-label="Clear vendor filter"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+            )}
           </div>
         }
         className="bg-white rounded-lg shadow-sm mb-4"
@@ -277,9 +337,10 @@ const EscortManagement = () => {
         onToggleActive={handleOnToggleActive}
         onToggleAvailable={handleOnToggleAvailable}
         onResetPassword={handleResetPassword}
+        isLoading={loading}
       />
 
-      {/* Modal */}
+      {/* Escort Form Modal */}
       <EscortFormModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
@@ -325,7 +386,7 @@ const EscortManagement = () => {
               </p>
 
               {/* New Password */}
-              <div className="relative">
+              <div>
                 <label className="mb-1 block text-sm font-medium text-app-text-secondary">
                   New Password
                 </label>
@@ -352,7 +413,7 @@ const EscortManagement = () => {
               </div>
 
               {/* Confirm Password */}
-              <div className="relative">
+              <div>
                 <label className="mb-1 block text-sm font-medium text-app-text-secondary">
                   Confirm Password
                 </label>
@@ -401,6 +462,37 @@ const EscortManagement = () => {
                 className="rounded-lg bg-gradient-to-r from-sidebar-primary to-sidebar-secondary px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 {isResettingPassword ? "Updating..." : "Update Password"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Delete Confirmation Modal */}
+      {deleteConfirm.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-6 w-80 text-center">
+            <div className="flex items-center justify-center w-11 h-11 rounded-full bg-red-100 mx-auto mb-3">
+              <Trash2 className="w-5 h-5 text-red-500" />
+            </div>
+            <p className="font-semibold text-gray-800 text-base mb-1">
+              Delete escort?
+            </p>
+            <p className="text-sm text-gray-500 mb-5">
+              This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => setDeleteConfirm({ open: false, escortId: null })}
+                className="px-5 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-5 py-2 rounded-lg bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-colors"
+              >
+                Delete
               </button>
             </div>
           </div>

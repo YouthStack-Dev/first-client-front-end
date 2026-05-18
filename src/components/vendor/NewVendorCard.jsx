@@ -289,13 +289,13 @@ const isActive = vendor.is_active;
         </button>
 
         {/* Delete Button */}
-        <button
+        {/* <button
           onClick={() => onDeleteVendor?.(vendor)}
           className="p-2.5 bg-red-100 hover:bg-red-200 text-red-600 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg"
           title="Delete Vendor"
         >
           <Trash2 className="w-4 h-4" />
-        </button>
+        </button> */}
       </div>
 
       {/* Inactive Overlay */}

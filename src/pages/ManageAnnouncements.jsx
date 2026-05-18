@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector }                 from "react-redux";
+import { AlertCircle, X }                           from "lucide-react";
 
 import { fetchAnnouncements }  from "../redux/features/notifications/announcementThunks";
 import {
   selectAnnouncements,
   selectLoadingList,
   selectListError,
+  selectTotalPages,
   clearError,
 }                              from "../redux/features/notifications/announcementsSlice";
 
@@ -27,6 +29,7 @@ const ManageAnnouncements = () => {
   const announcements = useSelector(selectAnnouncements);
   const loading       = useSelector(selectLoadingList);
   const listError     = useSelector(selectListError);
+  const totalPages    = useSelector(selectTotalPages); // driven by meta.total_pages from the API
 
   const [activePanel,          setActivePanel]          = useState(PANEL.NONE);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
@@ -64,7 +67,7 @@ const ManageAnnouncements = () => {
   const handleMutationSuccess = useCallback(() => {
     closePanel();
     if (page !== 1) {
-      setPage(1);
+      setPage(1); // triggers loadAnnouncements via the page dep
     } else {
       loadAnnouncements();
     }
@@ -76,15 +79,18 @@ const ManageAnnouncements = () => {
       {listError && (
         <div
           role="alert"
-          className="mb-4 flex items-center justify-between rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          className="mb-4 flex items-start justify-between rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
         >
-          <span>⚠ {listError.message}</span>
+          <div className="flex items-start gap-2">
+            <AlertCircle size={14} className="text-red-500 mt-0.5 flex-shrink-0" />
+            <span>{listError.message}</span>
+          </div>
           <button
             onClick={() => dispatch(clearError("listError"))}
             aria-label="Dismiss error"
-            className="ml-4 text-red-500 hover:text-red-700 font-bold"
+            className="ml-4 text-red-400 hover:text-red-600 flex-shrink-0"
           >
-            ×
+            <X size={14} />
           </button>
         </div>
       )}
@@ -94,6 +100,7 @@ const ManageAnnouncements = () => {
         loading={loading}
         page={page}
         pageSize={PAGE_SIZE}
+        totalPages={totalPages}
         onPageChange={setPage}
         onCreate={openCreateForm}
         onEdit={openEditForm}

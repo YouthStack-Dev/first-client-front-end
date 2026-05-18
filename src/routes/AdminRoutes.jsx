@@ -8,6 +8,7 @@ import RoleManagement from "../components/RoleManagement/RoleManagement";
 import IamPermissionsPage from "../pages/IamPermissionsPage";
 import TeamManagement from "../pages/TeamManagement";
 import TeamEmployeesManagement from "../components/TeamEmployees/TeamEmployeesManagemnt.jsx";
+import SpeedViolationsPage from "../pages/SpeedViolationsPage";
 
 export const AdminRoutes = () => (
   <Route element={<AdminLayout />}>
@@ -18,6 +19,7 @@ export const AdminRoutes = () => (
     <Route path="new-vendor-management" element={<NewVendorManagement />} />
     <Route path="role-management"       element={<RoleManagement />} />
     <Route path="iam/permissions"       element={<IamPermissionsPage />} />
+     <Route path="speed-violations" element={<SpeedViolationsPage />} />
 
     {/* No PermissionCheck here — superadmin bypasses all permission gates */}
     <Route path="teams"                  element={<TeamManagement />} />

@@ -24,6 +24,7 @@ export const pathTitleMap = {
   "/policy-rules": "Policy Rules",
   "/services": "Service Management",
   "/tenants": "Tenant Management",
+  "/speed-violations": "Speed Violations",
 
   // Fleet Management
   "/vehicles-management": "Manage Vehicles",
@@ -66,7 +67,7 @@ export const pathTitleMap = {
   // ✅ Add these missing ones
 "/teams":                "Team Management",
 "/announcements":        "Announcements",
-"/reviews":              "Reviews",
+"/reviews":              "Review Management",
 "/profile":              "Profile",
 "/reports":              "Reports Management",
 "/alert-config":          "Alert Configuration",
