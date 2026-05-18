@@ -26,5 +26,15 @@ const endpoint = {
 
   routesuggestion: "/grouping/bookings/routesuggestion",
   savedRoutes: "/routes/",
+
+  //  Nodal Points
+  nodalPoints: "/nodal-points/",
+  nodalPointById: (id) => `/nodal-points/${id}`,
+  nodalPointNearest: "/nodal-points/nearest",
+  nodalPointEmployeeAssign: (employeeId) =>
+    `/nodal-points/employees/${employeeId}/assign`,
+  nodalPointEmployeeAssignment: (employeeId) =>
+    `/nodal-points/employees/${employeeId}`,
+  nodalPointBulkAssignNearest: "/nodal-points/employees/bulk-assign-nearest",
 };
 export default endpoint;

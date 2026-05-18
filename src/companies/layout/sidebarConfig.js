@@ -12,7 +12,8 @@ import {
   FileText,
   Settings,
    Truck,
-   Bell, 
+   Bell,
+   Navigation,
 } from "lucide-react";
 
 // Base sidebar configuration
@@ -140,6 +141,12 @@ export const baseSidebarConfig = [
         icon: Users2,
         path: "/companies/teams",
         permission: "team.read",
+      },
+      {
+        title: "Nodal Points",
+        icon: Navigation,
+        path: "/companies/nodal-points",
+        permission: "nodal_point.read",
       },
       {
         title: "Tracking Management",
