@@ -184,7 +184,10 @@ const ShiftForm = ({ initialData = {}, onCancel, onSubmit }) => {
                 className="w-full border border-gray-300 rounded-md p-2.5 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               >
                 <option value="">Use Tenant Config (Default)</option>
+                <option value="First/Last Female">First/Last Female</option>
+                <option value="Second/Second Last Female">Second/Second Last Female</option>
                 <option value="Any Female">Any Female</option>
+                <option value="Disable">Disable</option>
               </select>
             </div>
           )}
