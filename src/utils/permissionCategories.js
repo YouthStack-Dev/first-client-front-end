@@ -308,36 +308,36 @@ export const  permissionModules = [
       "updated_at": "2025-09-23T14:28:51.098110"
   },
   {
-      "module": "vehicle-type",
+      "module": "vehicle_type",
       "action": "create",
-      "description": "Create vehicle-type",
+      "description": "Create vehicle_type",
       "is_active": true,
       "permission_id": 37,
       "created_at": "2025-09-23T14:28:51.098110",
       "updated_at": "2025-09-23T14:28:51.098110"
   },
   {
-      "module": "vehicle-type",
+      "module": "vehicle_type",
       "action": "read",
-      "description": "Read vehicle-type",
+      "description": "Read vehicle_type",
       "is_active": true,
       "permission_id": 38,
       "created_at": "2025-09-23T14:28:51.098110",
       "updated_at": "2025-09-23T14:28:51.098110"
   },
   {
-      "module": "vehicle-type",
+      "module": "vehicle_type",
       "action": "update",
-      "description": "Update vehicle-type",
+      "description": "Update vehicle_type",
       "is_active": true,
       "permission_id": 39,
       "created_at": "2025-09-23T14:28:51.098110",
       "updated_at": "2025-09-23T14:28:51.098110"
   },
   {
-      "module": "vehicle-type",
+      "module": "vehicle_type",
       "action": "delete",
-      "description": "Delete vehicle-type",
+      "description": "Delete vehicle_type",
       "is_active": true,
       "permission_id": 40,
       "created_at": "2025-09-23T14:28:51.098110",
@@ -380,72 +380,72 @@ export const  permissionModules = [
       "updated_at": "2025-09-23T14:28:51.098110"
   },
   {
-      "module": "vendor-user",
+      "module": "vendor_user",
       "action": "create",
-      "description": "Create vendor-user",
+      "description": "Create vendor_user",
       "is_active": true,
       "permission_id": 45,
       "created_at": "2025-09-23T14:28:51.098110",
       "updated_at": "2025-09-23T14:28:51.098110"
   },
   {
-      "module": "vendor-user",
+      "module": "vendor_user",
       "action": "read",
-      "description": "Read vendor-user",
+      "description": "Read vendor_user",
       "is_active": true,
       "permission_id": 46,
       "created_at": "2025-09-23T14:28:51.098110",
       "updated_at": "2025-09-23T14:28:51.098110"
   },
   {
-      "module": "vendor-user",
+      "module": "vendor_user",
       "action": "update",
-      "description": "Update vendor-user",
+      "description": "Update vendor_user",
       "is_active": true,
       "permission_id": 47,
       "created_at": "2025-09-23T14:28:51.098110",
       "updated_at": "2025-09-23T14:28:51.098110"
   },
   {
-      "module": "vendor-user",
+      "module": "vendor_user",
       "action": "delete",
-      "description": "Delete vendor-user",
+      "description": "Delete vendor_user",
       "is_active": true,
       "permission_id": 48,
       "created_at": "2025-09-23T14:28:51.098110",
       "updated_at": "2025-09-23T14:28:51.098110"
   },
   {
-      "module": "weekoff-config",
+      "module": "weekoff_config",
       "action": "create",
-      "description": "Create weekoff-config",
+      "description": "Create weekoff_config",
       "is_active": true,
       "permission_id": 49,
       "created_at": "2025-09-23T14:28:51.098110",
       "updated_at": "2025-09-23T14:28:51.098110"
   },
   {
-      "module": "weekoff-config",
+      "module": "weekoff_config",
       "action": "read",
-      "description": "Read weekoff-config",
+      "description": "Read weekoff_config",
       "is_active": true,
       "permission_id": 50,
       "created_at": "2025-09-23T14:28:51.098110",
       "updated_at": "2025-09-23T14:28:51.098110"
   },
   {
-      "module": "weekoff-config",
+      "module": "weekoff_config",
       "action": "update",
-      "description": "Update weekoff-config",
+      "description": "Update weekoff_config",
       "is_active": true,
       "permission_id": 51,
       "created_at": "2025-09-23T14:28:51.098110",
       "updated_at": "2025-09-23T14:28:51.098110"
   },
   {
-      "module": "weekoff-config",
+      "module": "weekoff_config",
       "action": "delete",
-      "description": "Delete weekoff-config",
+      "description": "Delete weekoff_config",
       "is_active": true,
       "permission_id": 52,
       "created_at": "2025-09-23T14:28:51.098110",
@@ -573,21 +573,21 @@ export const categorizePermissions = (permissions=permissionModules) => {
       people: {
         name: "People Management", 
         icon: "👥",
-        modules: ["employee", "driver", "team", "vendor", "vendor-user"]
+        modules: ["employee", "driver", "team", "vendor", "vendor_user"]
       },
       
       // Fleet Management
       fleet: {
         name: "Fleet Management",
         icon: "🚛",
-        modules: ["vehicle", "vehicle-type"]
+        modules: ["vehicle", "vehicle_type"]
       },
       
       // Administration
       administration: {
         name: "Administration",
         icon: "⚙️",
-        modules: ["admin.tenant", "weekoff-config", "permissions", "policy", "role"]
+        modules: ["admin.tenant", "weekoff_config", "permissions", "policy", "role"]
       }
     };
   
@@ -709,10 +709,10 @@ export const categorizePermissions = (permissions=permissionModules) => {
           {
             name: "Vehicle Types",
             path: "/vehicle-types",
-            requiredPermissions: ["vehicle-type.read"],
+            requiredPermissions: ["vehicle_type.read"],
             subItems: [
-              { name: "Types List", path: "/vehicle-types", permission: "vehicle-type.read" },
-              { name: "Add Type", path: "/vehicle-types/create", permission: "vehicle-type.create" },
+              { name: "Types List", path: "/vehicle-types", permission: "vehicle_type.read" },
+              { name: "Add Type", path: "/vehicle-types/create", permission: "vehicle_type.create" },
             ]
           }
         ]
@@ -733,10 +733,10 @@ export const categorizePermissions = (permissions=permissionModules) => {
           {
             name: "Week-off Config",
             path: "/weekoff-config",
-            requiredPermissions: ["weekoff-config.read"],
+            requiredPermissions: ["weekoff_config.read"],
             subItems: [
-              { name: "Configuration", path: "/weekoff-config", permission: "weekoff-config.read" },
-              { name: "Update Config", path: "/weekoff-config/update", permission: "weekoff-config.update" },
+              { name: "Configuration", path: "/weekoff-config", permission: "weekoff_config.read" },
+              { name: "Update Config", path: "/weekoff-config/update", permission: "weekoff_config.update" },
             ]
           },
           {

@@ -363,7 +363,7 @@ const VendorUserManagement = () => {
 
             {/* Audit Log Button */}
             <ReusableButton
-              module="vendor-user"
+              module="vendor_user"
               action="read"
               buttonName={"History"}
               icon={History}
@@ -375,7 +375,7 @@ const VendorUserManagement = () => {
 
             {/* Create Vendor User Button */}
             <ReusableButton
-              module="vendor-user"
+              module="vendor_user"
               action="create"
               icon={UserPlus}
               title="Create Vendor User"

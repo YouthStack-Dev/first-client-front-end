@@ -139,6 +139,7 @@ export const PermissionPanel = ({
     const icons = {
       booking: "📅",
       driver: "👨‍💼",
+      driver_app: "📱",
       employee: "👥",
       "route-booking": "🛣️",
       route: "🗺️",
@@ -147,9 +148,12 @@ export const PermissionPanel = ({
       "admin.tenant": "🏢",
       vehicle: "🚗",
       "vehicle-type": "🔧",
+      vehicle_type: "🔧",
       vendor: "🏪",
       "vendor-user": "👤",
+      vendor_user: "👤",
       "weekoff-config": "📅",
+      weekoff_config: "📅",
       permissions: "🔐",
       policy: "📜",
       role: "🎭"

@@ -297,7 +297,7 @@ const WeekOffModal = ({
             </button>
 
             <ReusableButton
-              module="weekoff-config"
+              module="weekoff_config"
               action="update"
               buttonName={isProcessing ? 'Updating...' : 'Update Week Off'}
               onClick={handleSubmit}

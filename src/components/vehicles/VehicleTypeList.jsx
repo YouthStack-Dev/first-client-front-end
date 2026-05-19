@@ -3,7 +3,7 @@ import ReusableButton from "../ui/ReusableButton";
 import ReusableToggleButton from "../ui/ReusableToggleButton";
 import { ReusablePagination } from "../ui/ReusablePagination";
 
-const MODULE = "vehicle-type";
+const MODULE = "vehicle_type";
 
 const VehicleTypeList = ({
   vehicleTypes = [],
