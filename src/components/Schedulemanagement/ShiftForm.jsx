@@ -8,6 +8,7 @@ const ShiftForm = ({ initialData = {}, onCancel, onSubmit }) => {
     shift_time: "",
     pickup_type: "",
     gender: "",
+    female_constraint: "",
     waiting_time_minutes: 0,
     is_active: true,
     ...initialData,
@@ -33,9 +34,6 @@ const ShiftForm = ({ initialData = {}, onCancel, onSubmit }) => {
     )
       newErrors.waiting_time_minutes = "Waiting time is required";
     if (!formData.pickup_type) newErrors.pickup_type = "Pickup type is required";
-    if (!formData.gender && formData.pickup_type === "Pickup")
-      newErrors.gender = "Gender is required";
-
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
@@ -125,6 +123,7 @@ const ShiftForm = ({ initialData = {}, onCancel, onSubmit }) => {
               updateField("pickup_type", e.target.value);
               if (e.target.value === "Nodal") {
                 updateField("gender", "");
+                updateField("female_constraint", "");
               }
             }}
             className="w-full border border-gray-300 rounded-md p-2.5 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
@@ -141,30 +140,59 @@ const ShiftForm = ({ initialData = {}, onCancel, onSubmit }) => {
         </div>
       </div>
 
-      {/* Third Row: Gender (only for Pickup) and Waiting Time */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        {formData.pickup_type === "Pickup" && (
+      {/* Third Row: Gender and Female Constraint (Pickup only) */}
+      {formData.pickup_type === "Pickup" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Gender <span className="text-red-500">*</span>
+              Gender{" "}
+              <span className="text-gray-400 font-normal text-xs">
+                (optional — blank = no filter)
+              </span>
             </label>
             <select
               value={formData.gender}
-              onChange={(e) => updateField("gender", e.target.value)}
+              onChange={(e) => {
+                updateField("gender", e.target.value);
+                // Clear female_constraint if switching to Male-only
+                if (e.target.value === "Male") {
+                  updateField("female_constraint", "");
+                }
+              }}
               className="w-full border border-gray-300 rounded-md p-2.5 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             >
-              <option value="" disabled hidden>
-                Select Gender
-              </option>
+              <option value="">Any (no filter)</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
             </select>
-            {errors.gender && (
-              <p className="text-red-500 text-xs mt-1">{errors.gender}</p>
-            )}
           </div>
-        )}
 
+          {/* female_constraint — show when gender is "" (any) or "Female" */}
+          {formData.gender !== "Male" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Female Constraint{" "}
+                <span className="text-gray-400 font-normal text-xs">
+                  (blank = use tenant config)
+                </span>
+              </label>
+              <select
+                value={formData.female_constraint}
+                onChange={(e) =>
+                  updateField("female_constraint", e.target.value)
+                }
+                className="w-full border border-gray-300 rounded-md p-2.5 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              >
+                <option value="">Use Tenant Config (Default)</option>
+                <option value="Any Female">Any Female</option>
+              </select>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Fourth Row: Waiting Time */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Waiting Time (0–10 minutes) <span className="text-red-500">*</span>

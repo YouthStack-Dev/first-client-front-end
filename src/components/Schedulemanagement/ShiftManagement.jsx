@@ -214,6 +214,12 @@ const handleStatusToggle = async (shift) => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Pickup Type
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Gender
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Female Constraint
+                  </th>
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Active
                   </th>
@@ -226,7 +232,7 @@ const handleStatusToggle = async (shift) => {
                 {filteredShifts.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="7"
+                      colSpan="9"
                       className="px-6 py-8 text-center text-gray-500"
                     >
                       {searchTerm ? "No shifts found." : "No shifts available."}
@@ -249,6 +255,12 @@ const handleStatusToggle = async (shift) => {
                         {formatTime(shift.shift_time)}
                       </td>
                       <td className="px-6 py-4">{shift.pickup_type}</td>
+                      <td className="px-6 py-4 text-gray-500">
+                        {shift.gender || <span className="italic text-gray-400">Any</span>}
+                      </td>
+                      <td className="px-6 py-4 text-gray-500">
+                        {shift.female_constraint || <span className="italic text-gray-400">Tenant Default</span>}
+                      </td>
                       <td className="px-6 py-4 text-center">
                         <ReusableToggleButton
                           module="shift"
@@ -296,6 +308,7 @@ const handleStatusToggle = async (shift) => {
               shift_time: "",
               pickup_type: "",
               gender: "",
+              female_constraint: "",
               waiting_time_minutes: 0,
               is_active: true,
             }
