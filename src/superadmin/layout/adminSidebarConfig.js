@@ -1,5 +1,5 @@
 // sidebarConfig.js
-import { BarChart3, Building2, Truck ,ShieldCheck } from "lucide-react";
+import { BarChart3, Building2, Truck, ShieldCheck, ScrollText } from "lucide-react";
 
 // Base sidebar configuration
 export const baseSidebarConfig = [
@@ -27,37 +27,44 @@ export const baseSidebarConfig = [
     ],
   },
 
-    {
+  {
     title: "Role & Permission",
-      items: [
-         {
+    items: [
+      {
         title: "Role & Permission",
         path: "/superadmin/role-management",
         permission: "role.read",
         icon: BarChart3,
       },
-       {
+      {
         title: "IAM Permissions",
         path: "/superadmin/iam/permissions",
         permission: "permissions.read",
         icon: ShieldCheck,
       },
-      ]
-    },
+    ],
+  },
+
   {
     title: "Vendors",
     items: [
-      // {
-      //   title: "Manage Vendors",
-      //   path: "/superadmin/manage-vendors",
-      //   permission: "vendor.read",
-      //   icon: Truck,
-      // },
       {
         title: "Manage Vendors",
         path: "/superadmin/new-vendor-management",
         permission: "vendor.read",
         icon: BarChart3,
+      },
+    ],
+  },
+
+  {
+    title: "System",
+    items: [
+      {
+        title: "Logs Viewer",
+        path: "/superadmin/logs",
+        permission: null, // superadmin-only page — no IAM gate needed
+        icon: ScrollText,
       },
     ],
   },

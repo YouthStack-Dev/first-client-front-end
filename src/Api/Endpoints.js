@@ -36,5 +36,9 @@ const endpoint = {
   nodalPointEmployeeAssignment: (employeeId) =>
     `/nodal-points/employees/${employeeId}`,
   nodalPointBulkAssignNearest: "/nodal-points/employees/bulk-assign-nearest",
+
+  //  Logs (superadmin)
+  logsStream: "/logs/stream",
+  logsRecent: "/logs/recent",
 };
 export default endpoint;
