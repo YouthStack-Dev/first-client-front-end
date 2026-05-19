@@ -156,7 +156,8 @@ export const PermissionPanel = ({
       weekoff_config: "📅",
       permissions: "🔐",
       policy: "📜",
-      role: "🎭"
+      role: "🎭",
+      report: "📊"
     };
     return icons[module] || "📁";
   };

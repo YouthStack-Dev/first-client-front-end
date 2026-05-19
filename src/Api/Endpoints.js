@@ -40,5 +40,9 @@ const endpoint = {
   //  Logs (superadmin)
   logsStream: "/logs/stream",
   logsRecent: "/logs/recent",
+
+  //  Delay Reports (Feature 6 — OTA/OTD)
+  delayReport: "/reports/delays",
+  delayReportByRoute: (routeId) => `/reports/delays/${routeId}`,
 };
 export default endpoint;

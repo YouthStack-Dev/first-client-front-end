@@ -20,6 +20,7 @@ import {
   UserCheck,
   Building,
   Gauge,
+  Route,
 } from "lucide-react";
 import { logDebug } from "../../utils/logger";
 import ReusableButton from "../ui/ReusableButton";
@@ -50,6 +51,8 @@ const CutoffManagement = () => {
     logout_boarding_otp,
     logout_deboarding_otp,
     speed_limit_kmph,
+    one_trip_per_shift_enabled,
+    auto_move_on_conflict,
   } = formData || {};
 
   useEffect(() => {
@@ -75,6 +78,8 @@ const CutoffManagement = () => {
         logout_boarding_otp,
         logout_deboarding_otp,
         speed_limit_kmph,
+        one_trip_per_shift_enabled,
+        auto_move_on_conflict,
       };
       tenantData[fieldName] = newValue;
       dispatch(saveEscortConfigThunk(tenantData));
@@ -117,6 +122,8 @@ const CutoffManagement = () => {
       logout_boarding_otp,
       logout_deboarding_otp,
       speed_limit_kmph,
+      one_trip_per_shift_enabled,
+      auto_move_on_conflict,
     };
     dispatch(saveEscortConfigThunk(tenantData));
   };
@@ -163,6 +170,8 @@ const CutoffManagement = () => {
       "logout_boarding_otp",
       "logout_deboarding_otp",
       "speed_limit_kmph",
+      "one_trip_per_shift_enabled",
+      "auto_move_on_conflict",
     ];
     return tenantFields.some((key) => formData[key] !== tenantConfig[key]);
   };
@@ -642,6 +651,30 @@ const CutoffManagement = () => {
                   min={0}
                   max={200}
                 />
+              </div>
+            </div>
+
+            {/* Routing Policy */}
+            <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
+                <Route className="w-4 h-4 text-violet-600" />
+                <h2 className="text-sm font-semibold text-app-text-primary">Routing Policy</h2>
+              </div>
+              <div className="space-y-1">
+                <CompactToggle
+                  label="Enforce one booking per shift per route"
+                  enabled={!!one_trip_per_shift_enabled}
+                  onChange={() => handleToggle("one_trip_per_shift_enabled")}
+                  description="When ON, a booking can only ride on one route at a time."
+                />
+                <div className={one_trip_per_shift_enabled ? "" : "opacity-40 pointer-events-none"}>
+                  <CompactToggle
+                    label="Auto-move booking to new route on conflict"
+                    enabled={!!auto_move_on_conflict}
+                    onChange={() => handleToggle("auto_move_on_conflict")}
+                    description="When OFF, the add operation is rejected instead of silently moving the booking."
+                  />
+                </div>
               </div>
             </div>
 

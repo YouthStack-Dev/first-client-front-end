@@ -11,9 +11,10 @@ import {
   Shield,
   FileText,
   Settings,
-   Truck,
-   Bell,
-   Navigation,
+  Truck,
+  Bell,
+  Navigation,
+  BarChart2,
 } from "lucide-react";
 
 // Base sidebar configuration
@@ -182,6 +183,17 @@ export const baseSidebarConfig = [
       //   path: "/companies/announcements",
       //   icon: Bell
       // },
+    ],
+  },
+  {
+    title: "Reports",
+    items: [
+      {
+        title: "Delay Report",
+        icon: BarChart2,
+        path: "/companies/reports/delays",
+        permission: "report.read",
+      },
     ],
   },
   // {

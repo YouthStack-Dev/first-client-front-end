@@ -32,6 +32,10 @@ const cutoffSlice = createSlice({
       logout_boarding_otp: false,
       logout_deboarding_otp: false,
       speed_limit_kmph: 0, // ← vehicle limit
+
+      // Routing policy (Feature 5 — one-trip-per-shift)
+      one_trip_per_shift_enabled: true,
+      auto_move_on_conflict: true,
     },
     status: "idle",       // idle | loading | succeeded | failed | saving | saved
     tenantStatus: "idle", // idle | loading | succeeded | failed | saving | saved
@@ -195,6 +199,10 @@ const mapTenantApiDataToForm = (apiData) => {
     logout_boarding_otp: false,
     logout_deboarding_otp: false,
     speed_limit_kmph: 0, // ← added
+
+    // Routing policy defaults
+    one_trip_per_shift_enabled: true,
+    auto_move_on_conflict: true,
   };
 
   const tenantData = apiData?.config || apiData;
@@ -216,6 +224,10 @@ const mapTenantApiDataToForm = (apiData) => {
 
     // Vehicle limits
     speed_limit_kmph: tenantData?.speed_limit_kmph, // ← added
+
+    // Routing policy
+    one_trip_per_shift_enabled: tenantData?.one_trip_per_shift_enabled,
+    auto_move_on_conflict: tenantData?.auto_move_on_conflict,
   };
 
   const formData = {};

@@ -90,7 +90,11 @@ export const saveEscortConfigThunk = createAsyncThunk(
         login_deboarding_otp: formData.login_deboarding_otp || false,
         logout_boarding_otp: formData.logout_boarding_otp || false,
         logout_deboarding_otp: formData.logout_deboarding_otp || false,
-        speed_limit_kmph: formData.speed_limit_kmph ?? 0, 
+        speed_limit_kmph: formData.speed_limit_kmph ?? 0,
+
+        // Routing policy (Feature 5)
+        one_trip_per_shift_enabled: formData.one_trip_per_shift_enabled ?? true,
+        auto_move_on_conflict: formData.auto_move_on_conflict ?? true,
       };
 
       console.log("Saving tenant config payload:", payload);

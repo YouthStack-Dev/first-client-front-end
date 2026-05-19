@@ -26,6 +26,7 @@ import ReviewManagement from "../pages/ReviewManagement";
 import ManageAnnouncements from "../pages/ManageAnnouncements";
 import SpeedViolationsPage from "../pages/SpeedViolationsPage";
 import NodalPointManagement from "../pages/NodalPointManagement";
+import DelayReport from "../pages/DelayReport";
 
 
 export const CompanyRoutes = () => (
@@ -64,7 +65,8 @@ export const CompanyRoutes = () => (
     <Route path="announcements" element={<ManageAnnouncements />} />
     <Route path="reviews" element={<ReviewManagement />} />
     <Route path="speed-violations" element={<SpeedViolationsPage />} />
-    <Route path="nodal-points" element={<NodalPointManagement />} />
+    <Route path="nodal-points"           element={<NodalPointManagement />} />
+    <Route path="reports/delays"          element={<DelayReport />} />
 
 
     <Route path="tracking" element={<TrackingManagement />} />
