@@ -32,7 +32,7 @@ const MODULE_META = {
     gradient: "linear-gradient(135deg,#059669,#10b981)",
     badge: { bg: "#f0fdf4", border: "#bbf7d0", text: "#15803d" },
   },
-  "app-driver": {
+  "driver_app": {
     gradient: "linear-gradient(135deg,#0891b2,#06b6d4)",
     badge: { bg: "#f0fdfa", border: "#99f6e4", text: "#0f766e" },
   },
@@ -60,7 +60,7 @@ const MODULE_META = {
     gradient: "linear-gradient(135deg,#065f46,#059669)",
     badge: { bg: "#f0fdf4", border: "#bbf7d0", text: "#166534" },
   },
-  "vehicle-type": {
+  "vehicle_type": {
     gradient: "linear-gradient(135deg,#047857,#10b981)",
     badge: { bg: "#dcfce7", border: "#86efac", text: "#15803d" },
   },
@@ -68,7 +68,7 @@ const MODULE_META = {
     gradient: "linear-gradient(135deg,#b45309,#f59e0b)",
     badge: { bg: "#fffbeb", border: "#fde68a", text: "#92400e" },
   },
-  "vendor-user": {
+  "vendor_user": {
     gradient: "linear-gradient(135deg,#92400e,#d97706)",
     badge: { bg: "#fff7ed", border: "#fed7aa", text: "#9a3412" },
   },
@@ -120,7 +120,7 @@ const MODULE_META = {
     gradient: "linear-gradient(135deg,#065f46,#34d399)",
     badge: { bg: "#f0fdfa", border: "#99f6e4", text: "#0e7490" },
   },
-  "weekoff-config": {
+  "weekoff_config": {
     gradient: "linear-gradient(135deg,#1d4ed8,#60a5fa)",
     badge: { bg: "#f5f3ff", border: "#ddd6fe", text: "#6d28d9" },
   },

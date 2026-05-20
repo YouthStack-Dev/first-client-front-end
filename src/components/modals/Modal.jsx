@@ -12,7 +12,7 @@ const Modal = ({ isOpen, onClose, title, size = "md", children }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div
-        className={`bg-white rounded-lg shadow-lg overflow-auto max-h-[100vh] w-full ${sizeClass}`}
+        className={`bg-white rounded-lg shadow-lg overflow-auto max-h-[80vh] w-full ${sizeClass}`}
       >
         <div className="flex bg-app-primary justify-between items-center border-b px-6 py-4">
           <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
