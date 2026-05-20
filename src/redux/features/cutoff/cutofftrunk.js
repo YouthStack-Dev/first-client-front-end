@@ -35,6 +35,7 @@ export const saveCutoffThunk = createAsyncThunk(
         allow_adhoc_booking: formData.allow_adhoc_booking,
         allow_medical_emergency_booking:
           formData.allow_medical_emergency_booking,
+        
       };
 
       console.log("Saving cutoff payload:", payload);
@@ -91,6 +92,11 @@ export const saveEscortConfigThunk = createAsyncThunk(
         logout_boarding_otp: formData.logout_boarding_otp || false,
         logout_deboarding_otp: formData.logout_deboarding_otp || false,
         speed_limit_kmph: formData.speed_limit_kmph ?? 0, 
+        schedule_reminder_enabled: formData.schedule_reminder_enabled ?? false,
+        schedule_reminder_minutes: formData.schedule_reminder_minutes ?? 30,
+        one_trip_per_shift_enabled: formData.one_trip_per_shift_enabled ?? false,  // ADD
+        auto_move_on_conflict: formData.auto_move_on_conflict ?? false, 
+        
       };
 
       console.log("Saving tenant config payload:", payload);
