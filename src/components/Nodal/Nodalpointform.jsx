@@ -4,7 +4,7 @@ import {
   selectNodalPointsLoading,
   selectNodalPointsError,
 } from "../../redux/features/nodalPoints/Nodalpointsselectors";
-import NodalPointMap from "./NodalPointMap";
+import NodalPointMap from "../Nodal/Nodalpointmap";
 
 const inputCls =
   "w-full h-9 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all";
