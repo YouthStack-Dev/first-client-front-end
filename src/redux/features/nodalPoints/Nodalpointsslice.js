@@ -6,7 +6,7 @@ import {
   updateNodalPointThunk,
   deleteNodalPointThunk,
   fetchNearestNodalPointsThunk,
-} from "./NodalPointsThunk";
+} from "../nodalPoints/Nodalpointsthunk";
 
 // ── Entity Adapter ────────────────────────────────────────────────────────────
 const nodalPointsAdapter = createEntityAdapter({
