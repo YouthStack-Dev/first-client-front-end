@@ -87,4 +87,4 @@ export const selectNearestNodalPointsSorted = createSelector(
 );
 
 // ── Re-exports from slice ─────────────────────────────────────────────────────
-export { selectNodalPointById } from "./NodalPointsSlice";
+export { selectNodalPointById } from "../nodalPoints/Nodalpointsslice";
