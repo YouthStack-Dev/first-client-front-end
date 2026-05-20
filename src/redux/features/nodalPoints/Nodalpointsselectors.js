@@ -2,7 +2,7 @@ import { createSelector } from "@reduxjs/toolkit";
 import {
   selectNodalPointEntities,
   selectAllNodalPoints,
-} from "./NodalPointsSlice";
+} from "../nodalPoints/Nodalpointsslice";
 
 // ── Primitive selectors ───────────────────────────────────────────────────────
 
