@@ -25,7 +25,7 @@ import TeamEmployeesManagement from "../components/TeamEmployees/TeamEmployeesMa
 import ReviewManagement from "../pages/ReviewManagement";
 import ManageAnnouncements from "../pages/ManageAnnouncements";
 import SpeedViolationsPage from "../pages/SpeedViolationsPage";
-import NodalPointsPage from "../pages/Nodalpointspage";
+import NodalPointsPage from "../pages/NodalpointsPage";
 
 
 export const CompanyRoutes = () => (
