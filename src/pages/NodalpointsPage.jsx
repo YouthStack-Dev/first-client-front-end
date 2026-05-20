@@ -5,7 +5,7 @@ import {
   createNodalPointThunk,
   updateNodalPointThunk,
   deleteNodalPointThunk,
-} from "../redux/features/nodalPoints/NodalPointsThunk";
+} from "../redux/features/nodalPoints/Nodalpointsthunk";
 
 import {
   selectNodalPointsLoading,
@@ -20,7 +20,7 @@ import {
 import {
   selectAllNodalPoints,
   clearError,
-} from "../redux/features/nodalPoints/NodalPointsSlice";
+} from "../redux/features/nodalPoints/Nodalpointsslice";
 
 import { selectCurrentUser } from "../redux/features/auth/authSlice";
 
