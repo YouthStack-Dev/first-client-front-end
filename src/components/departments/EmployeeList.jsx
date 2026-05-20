@@ -323,7 +323,7 @@ const EmployeeList = ({
 
                       {/* Week Off Button */}
                       <ReusableButton
-                        module="weekoff-config"
+                        module="weekoff_config"
                         action="read"
                         icon={Calendar}
                         title="Set Week Off"

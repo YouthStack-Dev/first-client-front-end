@@ -50,8 +50,8 @@ export const vendorSidebarConfig = [
   //     //   title: 'Weekoff Config',
   //     //   icon: CalendarOff,
   //     //   subItems: [
-  //     //     { title: 'Configuration', path: '/vendor/weekoff-config', permission: 'weekoff-config.read', icon: CalendarOff },
-  //     //     { title: 'Manage Config', path: '/vendor/weekoff-config/manage', permission: 'weekoff-config.create', icon: CalendarOff }
+  //     //     { title: 'Configuration', path: '/vendor/weekoff_config', permission: 'weekoff_config.read', icon: CalendarOff },
+  //     //     { title: 'Manage Config', path: '/vendor/weekoff_config/manage', permission: 'weekoff_config.create', icon: CalendarOff }
   //     //   ]
   //     // },
   //     {

@@ -31,7 +31,13 @@ const cutoffSlice = createSlice({
       login_deboarding_otp: false,
       logout_boarding_otp: false,
       logout_deboarding_otp: false,
-      speed_limit_kmph: 0, // ← vehicle limit
+      speed_limit_kmph: 0,
+      schedule_reminder_enabled: false,  
+      schedule_reminder_minutes: 30, 
+      one_trip_per_shift_enabled: false,   // ADD
+      auto_move_on_conflict: false,  
+
+
     },
     status: "idle",       // idle | loading | succeeded | failed | saving | saved
     tenantStatus: "idle", // idle | loading | succeeded | failed | saving | saved
@@ -173,6 +179,7 @@ const mapCutoffApiDataToForm = (apiData) => {
     adhoc_booking_cutoff: apiData.adhoc_booking_cutoff,
     allow_adhoc_booking: apiData.allow_adhoc_booking,
     allow_medical_emergency_booking: apiData.allow_medical_emergency_booking,
+
   };
 
   const formData = {};
@@ -195,6 +202,10 @@ const mapTenantApiDataToForm = (apiData) => {
     logout_boarding_otp: false,
     logout_deboarding_otp: false,
     speed_limit_kmph: 0, // ← added
+    schedule_reminder_enabled: false,   // ADD THIS
+    schedule_reminder_minutes: 30,
+    one_trip_per_shift_enabled: false,   // ADD
+    auto_move_on_conflict: false,
   };
 
   const tenantData = apiData?.config || apiData;
@@ -216,6 +227,10 @@ const mapTenantApiDataToForm = (apiData) => {
 
     // Vehicle limits
     speed_limit_kmph: tenantData?.speed_limit_kmph, // ← added
+    schedule_reminder_enabled: tenantData?.schedule_reminder_enabled,   // ADD
+    schedule_reminder_minutes: tenantData?.schedule_reminder_minutes,
+    one_trip_per_shift_enabled: tenantData?.one_trip_per_shift_enabled,  // ADD
+    auto_move_on_conflict: tenantData?.auto_move_on_conflict,  
   };
 
   const formData = {};

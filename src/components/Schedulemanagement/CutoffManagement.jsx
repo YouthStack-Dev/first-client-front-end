@@ -20,6 +20,7 @@ import {
   UserCheck,
   Building,
   Gauge,
+  Bell,
 } from "lucide-react";
 import { logDebug } from "../../utils/logger";
 import ReusableButton from "../ui/ReusableButton";
@@ -29,7 +30,6 @@ const CutoffManagement = () => {
   const [activeTab, setActiveTab] = useState("cutoff");
   const [activeCutoffTab, setActiveCutoffTab] = useState("standard");
 
-  // ✅ Fixed: use tenantConfig, tenantStatus, tenantError (not escortStatus/escortError)
   const { formData, status, error, data, tenantConfig, tenantStatus, tenantError } =
     useSelector((state) => state.cutoff);
 
@@ -50,6 +50,10 @@ const CutoffManagement = () => {
     logout_boarding_otp,
     logout_deboarding_otp,
     speed_limit_kmph,
+    schedule_reminder_enabled,
+    schedule_reminder_minutes,
+    one_trip_per_shift_enabled,
+    auto_move_on_conflict,
   } = formData || {};
 
   useEffect(() => {
@@ -61,7 +65,6 @@ const CutoffManagement = () => {
 
   const handleToggle = (fieldName) => {
     logDebug(" the toggle form data ", fieldName);
-
     const newValue = !formData[fieldName];
     dispatch(updateFormField({ name: fieldName, value: newValue }));
 
@@ -75,8 +78,12 @@ const CutoffManagement = () => {
         logout_boarding_otp,
         logout_deboarding_otp,
         speed_limit_kmph,
+        schedule_reminder_enabled,
+        schedule_reminder_minutes,
+        one_trip_per_shift_enabled,
+        auto_move_on_conflict,
+        [fieldName]: newValue,
       };
-      tenantData[fieldName] = newValue;
       dispatch(saveEscortConfigThunk(tenantData));
     }
   };
@@ -117,6 +124,10 @@ const CutoffManagement = () => {
       logout_boarding_otp,
       logout_deboarding_otp,
       speed_limit_kmph,
+      schedule_reminder_enabled,
+      schedule_reminder_minutes,
+      one_trip_per_shift_enabled,
+      auto_move_on_conflict,
     };
     dispatch(saveEscortConfigThunk(tenantData));
   };
@@ -151,7 +162,6 @@ const CutoffManagement = () => {
     return cutoffFields.some((key) => formData[key] !== data[key]);
   };
 
-  // ✅ Fixed: compare against tenantConfig (not data)
   const hasTenantChanges = () => {
     if (!tenantConfig) return false;
     const tenantFields = [
@@ -163,23 +173,24 @@ const CutoffManagement = () => {
       "logout_boarding_otp",
       "logout_deboarding_otp",
       "speed_limit_kmph",
+      "schedule_reminder_enabled",
+      "schedule_reminder_minutes",
+      "one_trip_per_shift_enabled",
+      "auto_move_on_conflict",
     ];
-    return tenantFields.some((key) => formData[key] !== tenantConfig[key]);
+    return tenantFields.some((key) => String(formData[key]) !== String(tenantConfig[key]));
   };
 
-  // ✅ Fixed: use tenantStatus (not escortStatus)
   const isSaving = (tab) => {
     if (tab === "tenant") return tenantStatus === "saving";
     return status === "saving";
   };
 
-  // ✅ Fixed: use tenantStatus (not escortStatus)
   const getCurrentStatus = (tab) => {
     if (tab === "tenant") return tenantStatus;
     return status;
   };
 
-  // ✅ Fixed: use tenantError (not escortError)
   const getCurrentError = (tab) => {
     if (tab === "tenant") return tenantError;
     return error;
@@ -197,43 +208,32 @@ const CutoffManagement = () => {
         </div>
       );
     }
-
     if (currentStatus === "failed") {
       return (
         <div className="bg-red-50 border border-red-200 px-3 py-2 rounded text-xs mb-4">
           <div className="flex items-center gap-2">
             <XCircle className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
-            <div>
-              <p className="text-red-900 font-medium">Error: {currentError}</p>
-            </div>
+            <p className="text-red-900 font-medium">Error: {currentError}</p>
           </div>
         </div>
       );
     }
-
     if (currentStatus === "saved") {
       return (
         <div className="bg-green-50 border border-green-200 px-3 py-2 rounded text-xs flex items-center gap-2 mb-4">
           <CheckCircle className="w-3.5 h-3.5 text-green-600" />
           <p className="text-green-900 font-medium">
-            {tab === "tenant" ? "Tenant config" : "Cutoff config"} saved
-            successfully
+            {tab === "tenant" ? "Tenant config" : "Cutoff config"} saved successfully
           </p>
         </div>
       );
     }
-
     return null;
   };
 
-  // ✅ Fixed: use tenantStatus (not escortStatus)
   useEffect(() => {
-    if (status === "saved") {
-      setTimeout(() => {}, 3000);
-    }
-    if (tenantStatus === "saved") {
-      setTimeout(() => {}, 3000);
-    }
+    if (status === "saved") setTimeout(() => {}, 3000);
+    if (tenantStatus === "saved") setTimeout(() => {}, 3000);
   }, [status, tenantStatus, dispatch]);
 
   // ── Sub-components ──────────────────────────────────────────────────────────
@@ -243,15 +243,11 @@ const CutoffManagement = () => {
     return (
       <div className="flex items-center gap-2 py-2 border-b border-app-border hover:bg-app-tertiary px-2 -mx-2 rounded transition-colors">
         <Icon className="w-3.5 h-3.5 text-app-text-muted flex-shrink-0" />
-        <label className="text-xs font-medium text-app-text-secondary min-w-[140px]">
-          {label}
-        </label>
+        <label className="text-xs font-medium text-app-text-secondary min-w-[140px]">{label}</label>
         <div className="flex gap-2 ml-auto">
           <select
             value={hours}
-            onChange={(e) =>
-              handleTimeChange(fieldName, parseInt(e.target.value), minutes)
-            }
+            onChange={(e) => handleTimeChange(fieldName, parseInt(e.target.value), minutes)}
             className="w-16 px-2 py-1 text-xs border border-app-border rounded focus:border-app-primary focus:outline-none bg-app-surface focus:ring-1 focus:ring-app-primary transition-colors"
           >
             {Array.from({ length: 25 }, (_, i) => (
@@ -260,9 +256,7 @@ const CutoffManagement = () => {
           </select>
           <select
             value={minutes}
-            onChange={(e) =>
-              handleTimeChange(fieldName, hours, parseInt(e.target.value))
-            }
+            onChange={(e) => handleTimeChange(fieldName, hours, parseInt(e.target.value))}
             className="w-16 px-2 py-1 text-xs border border-app-border rounded focus:border-app-primary focus:outline-none bg-app-surface focus:ring-1 focus:ring-app-primary transition-colors"
           >
             {[0, 15, 30, 45].map((min) => (
@@ -279,15 +273,11 @@ const CutoffManagement = () => {
     return (
       <div className="flex items-center gap-2 py-2 border-b border-app-border hover:bg-app-tertiary px-2 -mx-2 rounded transition-colors">
         <Icon className="w-3.5 h-3.5 text-app-text-muted flex-shrink-0" />
-        <label className="text-xs font-medium text-app-text-secondary min-w-[140px]">
-          {label}
-        </label>
+        <label className="text-xs font-medium text-app-text-secondary min-w-[140px]">{label}</label>
         <div className="flex gap-2 ml-auto">
           <select
             value={hours}
-            onChange={(e) =>
-              handleFullTimeChange(fieldName, parseInt(e.target.value), minutes)
-            }
+            onChange={(e) => handleFullTimeChange(fieldName, parseInt(e.target.value), minutes)}
             className="w-16 px-2 py-1 text-xs border border-app-border rounded focus:border-app-primary focus:outline-none bg-app-surface focus:ring-1 focus:ring-app-primary transition-colors"
           >
             {Array.from({ length: 24 }, (_, i) => (
@@ -296,9 +286,7 @@ const CutoffManagement = () => {
           </select>
           <select
             value={minutes}
-            onChange={(e) =>
-              handleFullTimeChange(fieldName, hours, parseInt(e.target.value))
-            }
+            onChange={(e) => handleFullTimeChange(fieldName, hours, parseInt(e.target.value))}
             className="w-16 px-2 py-1 text-xs border border-app-border rounded focus:border-app-primary focus:outline-none bg-app-surface focus:ring-1 focus:ring-app-primary transition-colors"
           >
             {Array.from({ length: 60 }, (_, i) => (
@@ -314,9 +302,7 @@ const CutoffManagement = () => {
     <div className="flex items-center justify-between py-2 border-b border-app-border hover:bg-app-tertiary px-2 -mx-2 rounded transition-colors">
       <div className="flex-1">
         <p className="text-xs font-medium text-app-text-secondary">{label}</p>
-        {description && (
-          <p className="text-xs text-app-text-muted mt-0.5">{description}</p>
-        )}
+        {description && <p className="text-xs text-app-text-muted mt-0.5">{description}</p>}
       </div>
       <button
         onClick={onChange}
@@ -333,31 +319,45 @@ const CutoffManagement = () => {
     </div>
   );
 
-  const CompactNumberInput = ({ label, fieldName, currentValue, icon: Icon, unit, min = 0, max }) => (
-    <div className="flex items-center gap-2 py-2 border-b border-app-border hover:bg-app-tertiary px-2 -mx-2 rounded transition-colors">
-      <Icon className="w-3.5 h-3.5 text-app-text-muted flex-shrink-0" />
-      <label className="text-xs font-medium text-app-text-secondary min-w-[140px]">
-        {label}
-      </label>
-      <div className="flex items-center gap-1.5 ml-auto">
-        <input
-          type="number"
-          value={currentValue ?? ""}
-          min={min}
-          max={max}
-          onChange={(e) =>
-            dispatch(
-              updateFormField({ name: fieldName, value: Number(e.target.value) })
-            )
-          }
-          className="w-20 px-2 py-1 text-xs border border-app-border rounded focus:border-app-primary focus:outline-none bg-app-surface focus:ring-1 focus:ring-app-primary transition-colors text-right"
-        />
-        {unit && (
-          <span className="text-xs text-app-text-muted w-8">{unit}</span>
-        )}
+  // ✅ Fixed: use local string state so user can type multi-digit numbers freely
+  const CompactNumberInput = ({ label, fieldName, currentValue, icon: Icon, unit, min = 0, max }) => {
+    const [localValue, setLocalValue] = useState(currentValue != null ? String(currentValue) : "");
+
+    useEffect(() => {
+      setLocalValue(currentValue != null ? String(currentValue) : "");
+    }, [currentValue]);
+
+    const handleChange = (e) => {
+      setLocalValue(e.target.value);
+    };
+
+    const handleBlur = () => {
+      const parsed = parseInt(localValue, 10);
+      if (isNaN(parsed)) return;
+      const clamped = max !== undefined ? Math.min(Math.max(parsed, min), max) : Math.max(parsed, min);
+      setLocalValue(String(clamped));
+      dispatch(updateFormField({ name: fieldName, value: clamped }));
+    };
+
+    return (
+      <div className="flex items-center gap-2 py-2 border-b border-app-border hover:bg-app-tertiary px-2 -mx-2 rounded transition-colors">
+        <Icon className="w-3.5 h-3.5 text-app-text-muted flex-shrink-0" />
+        <label className="text-xs font-medium text-app-text-secondary min-w-[140px]">{label}</label>
+        <div className="flex items-center gap-1.5 ml-auto">
+          <input
+            type="number"
+            value={localValue}
+            min={min}
+            max={max}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            className="w-20 px-2 py-1 text-xs border border-app-border rounded focus:border-app-primary focus:outline-none bg-app-surface focus:ring-1 focus:ring-app-primary transition-colors text-right"
+          />
+          {unit && <span className="text-xs text-app-text-muted w-8">{unit}</span>}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   if (!data && status !== "loading") {
     return (
@@ -392,17 +392,13 @@ const CutoffManagement = () => {
             {activeTab === "tenant" && (
               <ReusableButton
                 module="tenant_config"
-                action="read"
+                action="update"
                 buttonName={isSaving("tenant") ? "Saving..." : "Save Tenant Changes"}
                 icon={isSaving("tenant") ? null : Save}
                 onClick={handleSaveTenant}
                 disabled={!hasTenantChanges() || isSaving("tenant")}
                 className="px-4 py-1.5 bg-app-primary text-white text-xs rounded hover:bg-sidebar-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2"
-              >
-                {isSaving("tenant") && (
-                  <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent mr-1.5"></div>
-                )}
-              </ReusableButton>
+              />
             )}
           </div>
         </div>
@@ -416,27 +412,21 @@ const CutoffManagement = () => {
           <button
             onClick={() => setActiveTab("cutoff")}
             className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2 ${
-              activeTab === "cutoff"
-                ? "bg-app-primary text-white shadow-sidebar-item"
-                : "text-app-text-secondary hover:bg-app-tertiary"
+              activeTab === "cutoff" ? "bg-app-primary text-white shadow-sidebar-item" : "text-app-text-secondary hover:bg-app-tertiary"
             }`}
           >
             <div className="flex items-center justify-center gap-1.5">
-              <Clock className="w-3 h-3" />
-              Cutoff Management
+              <Clock className="w-3 h-3" /> Cutoff Management
             </div>
           </button>
           <button
             onClick={() => setActiveTab("tenant")}
             className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2 ${
-              activeTab === "tenant"
-                ? "bg-app-primary text-white shadow-sidebar-item"
-                : "text-app-text-secondary hover:bg-app-tertiary"
+              activeTab === "tenant" ? "bg-app-primary text-white shadow-sidebar-item" : "text-app-text-secondary hover:bg-app-tertiary"
             }`}
           >
             <div className="flex items-center justify-center gap-1.5">
-              <Building className="w-3 h-3" />
-              Tenant Management
+              <Building className="w-3 h-3" /> Tenant Management
             </div>
           </button>
         </div>
@@ -448,40 +438,31 @@ const CutoffManagement = () => {
               <button
                 onClick={() => setActiveCutoffTab("standard")}
                 className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2 ${
-                  activeCutoffTab === "standard"
-                    ? "bg-app-primary text-white shadow-sidebar-item"
-                    : "text-app-text-secondary hover:bg-app-tertiary"
+                  activeCutoffTab === "standard" ? "bg-app-primary text-white shadow-sidebar-item" : "text-app-text-secondary hover:bg-app-tertiary"
                 }`}
               >
                 <div className="flex items-center justify-center gap-1.5">
-                  <Calendar className="w-3 h-3" />
-                  Standard
+                  <Calendar className="w-3 h-3" /> Standard
                 </div>
               </button>
               <button
                 onClick={() => setActiveCutoffTab("special")}
                 className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2 ${
-                  activeCutoffTab === "special"
-                    ? "bg-app-primary text-white shadow-sidebar-item"
-                    : "text-app-text-secondary hover:bg-app-tertiary"
+                  activeCutoffTab === "special" ? "bg-app-primary text-white shadow-sidebar-item" : "text-app-text-secondary hover:bg-app-tertiary"
                 }`}
               >
                 <div className="flex items-center justify-center gap-1.5">
-                  <AlertTriangle className="w-3 h-3" />
-                  Special
+                  <AlertTriangle className="w-3 h-3" /> Special
                 </div>
               </button>
               <button
                 onClick={() => setActiveCutoffTab("overview")}
                 className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2 ${
-                  activeCutoffTab === "overview"
-                    ? "bg-app-primary text-white shadow-sidebar-item"
-                    : "text-app-text-secondary hover:bg-app-tertiary"
+                  activeCutoffTab === "overview" ? "bg-app-primary text-white shadow-sidebar-item" : "text-app-text-secondary hover:bg-app-tertiary"
                 }`}
               >
                 <div className="flex items-center justify-center gap-1.5">
-                  <Activity className="w-3 h-3" />
-                  Overview
+                  <Activity className="w-3 h-3" /> Overview
                 </div>
               </button>
             </div>
@@ -498,7 +479,6 @@ const CutoffManagement = () => {
                     <CompactTimeInput label="Logout Booking" fieldName="booking_logout_cutoff" currentValue={booking_logout_cutoff} icon={Clock} />
                   </div>
                 </div>
-
                 <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
                     <XCircle className="w-4 h-4 text-red-600" />
@@ -524,7 +504,6 @@ const CutoffManagement = () => {
                     <CompactToggle label="Enable Medical Emergency" enabled={allow_medical_emergency_booking} onChange={() => handleToggle("allow_medical_emergency_booking")} />
                   </div>
                 </div>
-
                 <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
                     <Zap className="w-4 h-4 text-purple-600" />
@@ -594,6 +573,7 @@ const CutoffManagement = () => {
         {/* ── Tenant Management Tab ─────────────────────────────────────────── */}
         {activeTab === "tenant" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
             {/* Escort Requirements */}
             <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
@@ -645,6 +625,55 @@ const CutoffManagement = () => {
               </div>
             </div>
 
+            {/* Reminder Notifications */}
+            <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
+                <Bell className="w-4 h-4 text-blue-500" />
+                <h2 className="text-sm font-semibold text-app-text-primary">Reminder Notifications</h2>
+              </div>
+              <div className="space-y-1">
+                <CompactToggle
+                  label="Enable Pre-trip Reminders"
+                  enabled={schedule_reminder_enabled}
+                  onChange={() => handleToggle("schedule_reminder_enabled")}
+                  description="Send push notification before cab pickup"
+                />
+                {schedule_reminder_enabled && (
+                  <CompactNumberInput
+                    label="Remind Before"
+                    fieldName="schedule_reminder_minutes"
+                    currentValue={schedule_reminder_minutes}
+                    icon={Clock}
+                    unit="min"
+                    min={1}
+                    max={240}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Trip & Conflict Settings */}
+            <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
+                <Zap className="w-4 h-4 text-purple-500" />
+                <h2 className="text-sm font-semibold text-app-text-primary">Trip & Conflict Settings</h2>
+              </div>
+              <div className="space-y-1">
+                <CompactToggle
+                  label="One Trip Per Shift"
+                  enabled={one_trip_per_shift_enabled}
+                  onChange={() => handleToggle("one_trip_per_shift_enabled")}
+                  description="Allow only one trip per shift per employee"
+                />
+                <CompactToggle
+                  label="Auto Move on Conflict"
+                  enabled={auto_move_on_conflict}
+                  onChange={() => handleToggle("auto_move_on_conflict")}
+                  description="Automatically resolve booking conflicts"
+                />
+              </div>
+            </div>
+
             {/* Configuration Summary — spans full width */}
             <div className="lg:col-span-2 bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
@@ -655,21 +684,45 @@ const CutoffManagement = () => {
                 <div className="space-y-2">
                   <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
                     <p className="font-medium text-app-text-secondary mb-1 text-xs">Escort Active Period</p>
-                    <p className="text-sm font-semibold text-app-text-primary">
-                      {escort_required_start_time} - {escort_required_end_time}
-                    </p>
+                    <p className="text-sm font-semibold text-app-text-primary">{escort_required_start_time} - {escort_required_end_time}</p>
                   </div>
                   <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
                     <p className="font-medium text-app-text-secondary mb-1 text-xs">Escort Status</p>
-                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium transition-colors ${escort_required_for_women ? "bg-green-100 text-green-700" : "bg-gray-200 text-app-text-muted"}`}>
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${escort_required_for_women ? "bg-green-100 text-green-700" : "bg-gray-200 text-app-text-muted"}`}>
                       {escort_required_for_women ? "Active" : "Inactive"}
                     </span>
                   </div>
                   <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
                     <p className="font-medium text-app-text-secondary mb-1 text-xs">Speed Limit</p>
-                    <p className="text-sm font-semibold text-app-text-primary">
-                      {speed_limit_kmph != null ? `${speed_limit_kmph} km/h` : "—"}
-                    </p>
+                    <p className="text-sm font-semibold text-app-text-primary">{speed_limit_kmph != null ? `${speed_limit_kmph} km/h` : "—"}</p>
+                  </div>
+                  <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
+                    <p className="font-medium text-app-text-secondary mb-1 text-xs">Pre-trip Reminder</p>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${schedule_reminder_enabled ? "bg-green-100 text-green-700" : "bg-gray-200 text-app-text-muted"}`}>
+                        {schedule_reminder_enabled ? "Enabled" : "Disabled"}
+                      </span>
+                      {schedule_reminder_enabled && schedule_reminder_minutes != null && (
+                        <span className="text-xs text-app-text-muted">{schedule_reminder_minutes} min before pickup</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
+                    <p className="font-medium text-app-text-secondary mb-1 text-xs">Trip & Conflict</p>
+                    <div className="space-y-1 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-app-text-muted">One Trip Per Shift:</span>
+                        <span className={one_trip_per_shift_enabled ? "text-green-600 font-medium" : "text-app-text-muted"}>
+                          {one_trip_per_shift_enabled ? "Enabled" : "Disabled"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-app-text-muted">Auto Move on Conflict:</span>
+                        <span className={auto_move_on_conflict ? "text-green-600 font-medium" : "text-app-text-muted"}>
+                          {auto_move_on_conflict ? "Enabled" : "Disabled"}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -678,27 +731,19 @@ const CutoffManagement = () => {
                     <div className="space-y-1 text-xs">
                       <div className="flex justify-between">
                         <span className="text-app-text-muted">Login Boarding:</span>
-                        <span className={login_boarding_otp ? "text-green-600 font-medium" : "text-app-text-muted"}>
-                          {login_boarding_otp ? "Enabled" : "Disabled"}
-                        </span>
+                        <span className={login_boarding_otp ? "text-green-600 font-medium" : "text-app-text-muted"}>{login_boarding_otp ? "Enabled" : "Disabled"}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-app-text-muted">Login Deboarding:</span>
-                        <span className={login_deboarding_otp ? "text-green-600 font-medium" : "text-app-text-muted"}>
-                          {login_deboarding_otp ? "Enabled" : "Disabled"}
-                        </span>
+                        <span className={login_deboarding_otp ? "text-green-600 font-medium" : "text-app-text-muted"}>{login_deboarding_otp ? "Enabled" : "Disabled"}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-app-text-muted">Logout Boarding:</span>
-                        <span className={logout_boarding_otp ? "text-green-600 font-medium" : "text-app-text-muted"}>
-                          {logout_boarding_otp ? "Enabled" : "Disabled"}
-                        </span>
+                        <span className={logout_boarding_otp ? "text-green-600 font-medium" : "text-app-text-muted"}>{logout_boarding_otp ? "Enabled" : "Disabled"}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-app-text-muted">Logout Deboarding:</span>
-                        <span className={logout_deboarding_otp ? "text-green-600 font-medium" : "text-app-text-muted"}>
-                          {logout_deboarding_otp ? "Enabled" : "Disabled"}
-                        </span>
+                        <span className={logout_deboarding_otp ? "text-green-600 font-medium" : "text-app-text-muted"}>{logout_deboarding_otp ? "Enabled" : "Disabled"}</span>
                       </div>
                     </div>
                   </div>

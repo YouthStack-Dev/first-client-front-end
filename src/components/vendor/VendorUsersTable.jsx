@@ -278,7 +278,7 @@ export const VendorUsersTable = ({
                       </div>
                     ) : (
                       <ReusableToggle
-                        module="vendor-user"
+                        module="vendor_user"
                         action="update"
                         isActive={user.is_active}
                         onToggle={() => handleToggle(user)}

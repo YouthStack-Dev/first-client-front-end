@@ -68,35 +68,40 @@ const handleStatusToggle = async (shift) => {
   }
 };
 
-  const handleFormSubmit = async (data) => {
-    try {
-      const formattedData = {
-        ...data,
-        shift_time: data.shift_time.includes(":")
-          ? data.shift_time.split(":").slice(0, 2).join(":")
-          : data.shift_time,
-      };
+const handleFormSubmit = async (data) => {
+  try {
+    const formattedData = {
+      ...data,
+      shift_time: data.shift_time.includes(":")
+        ? data.shift_time.split(":").slice(0, 2).join(":")
+        : data.shift_time,
+    };
 
-      if (editingShift && editingShift.shift_id) {
-        await dispatch(
-          updateShiftTrunk({
-            shift_id: editingShift.shift_id,
-            data: formattedData,
-          })
-        ).unwrap();
-        toast.success("Shift updated successfully!");
-      } else {
-        await dispatch(createShiftTrunk(formattedData)).unwrap();
-        toast.success("Shift created successfully!");
-      }
-
-      setIsModalOpen(false);
-      setEditingShift(null);
-      dispatch(fetchShiftTrunk());
-    } catch {
-      toast.error("Failed to save shift");
+    if (editingShift && editingShift.shift_id) {
+      await dispatch(
+        updateShiftTrunk({
+          shift_id: editingShift.shift_id,
+          data: formattedData,
+        })
+      ).unwrap();
+      toast.success("Shift updated successfully!");
+    } else {
+      await dispatch(createShiftTrunk(formattedData)).unwrap();
+      toast.success("Shift created successfully!");
     }
-  };
+
+    setIsModalOpen(false);
+    setEditingShift(null);
+    dispatch(fetchShiftTrunk());
+  } catch (error) {
+    const message =
+      error?.detail?.message ||
+      error?.message         ||
+      error                  ||
+      "Failed to save shift";
+    toast.error(message);
+  }
+};
 
   const handleSearchChange = (e) => setSearchTerm(e.target.value);
   const formatTime = (t) => t?.slice(0, 5) || "N/A";
