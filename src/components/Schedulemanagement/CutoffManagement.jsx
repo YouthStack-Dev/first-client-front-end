@@ -21,10 +21,36 @@ import {
   Building,
   Gauge,
   Bell,
+  Timer,
+  ChevronRight,
+  BarChart2,
+  Sliders,
 } from "lucide-react";
 import { logDebug } from "../../utils/logger";
 import ReusableButton from "../ui/ReusableButton";
 
+/* ─── tiny helpers ──────────────────────────────────────────────────────────── */
+const StatusPill = ({ active, activeLabel = "Active", inactiveLabel = "Inactive" }) => (
+  <span
+    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase ${
+      active ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"
+    }`}
+  >
+    <span className={`w-1.5 h-1.5 rounded-full ${active ? "bg-emerald-500" : "bg-slate-400"}`} />
+    {active ? activeLabel : inactiveLabel}
+  </span>
+);
+
+const SectionHeader = ({ icon: Icon, title, color = "text-slate-600" }) => (
+  <div className="flex items-center gap-2.5 mb-4 pb-3 border-b border-app-border">
+    <div className={`p-1.5 rounded-md bg-app-tertiary ${color}`}>
+      <Icon className="w-3.5 h-3.5" />
+    </div>
+    <h2 className="text-sm font-semibold text-app-text-primary tracking-tight">{title}</h2>
+  </div>
+);
+
+/* ─── main component ────────────────────────────────────────────────────────── */
 const CutoffManagement = () => {
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState("cutoff");
@@ -54,702 +80,587 @@ const CutoffManagement = () => {
     schedule_reminder_minutes,
     one_trip_per_shift_enabled,
     auto_move_on_conflict,
+    driver_max_duty_minutes,
+    driver_rest_enforcement,
   } = formData || {};
 
   useEffect(() => {
-    if (!data) {
-      dispatch(fetchCutoffsThunk());
-    }
+    if (!data) dispatch(fetchCutoffsThunk());
     dispatch(fetchEscortConfigThunk());
   }, [dispatch, data]);
 
   const handleToggle = (fieldName) => {
-    logDebug(" the toggle form data ", fieldName);
+    logDebug("toggle", fieldName);
     const newValue = !formData[fieldName];
     dispatch(updateFormField({ name: fieldName, value: newValue }));
-
     if (activeTab === "tenant") {
-      const tenantData = {
-        escort_required_start_time,
-        escort_required_end_time,
-        escort_required_for_women,
-        login_boarding_otp,
-        login_deboarding_otp,
-        logout_boarding_otp,
-        logout_deboarding_otp,
-        speed_limit_kmph,
-        schedule_reminder_enabled,
-        schedule_reminder_minutes,
-        one_trip_per_shift_enabled,
-        auto_move_on_conflict,
+      dispatch(saveEscortConfigThunk({
+        escort_required_start_time, escort_required_end_time, escort_required_for_women,
+        login_boarding_otp, login_deboarding_otp, logout_boarding_otp, logout_deboarding_otp,
+        speed_limit_kmph, schedule_reminder_enabled, schedule_reminder_minutes,
+        one_trip_per_shift_enabled, auto_move_on_conflict,
+        driver_max_duty_minutes, driver_rest_enforcement,
         [fieldName]: newValue,
-      };
-      dispatch(saveEscortConfigThunk(tenantData));
+      }));
     }
   };
 
   const handleTimeChange = (fieldName, hours, minutes) => {
-    const formattedTime = `${hours}:${minutes.toString().padStart(2, "0")}`;
-    dispatch(updateFormField({ name: fieldName, value: formattedTime }));
+    dispatch(updateFormField({ name: fieldName, value: `${hours}:${minutes.toString().padStart(2, "0")}` }));
   };
 
   const handleFullTimeChange = (fieldName, hours, minutes, seconds = "00") => {
-    const formattedTime = `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}:${seconds}`;
-    dispatch(updateFormField({ name: fieldName, value: formattedTime }));
+    dispatch(updateFormField({
+      name: fieldName,
+      value: `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds}`,
+    }));
   };
 
   const handleSaveCutoff = () => {
-    const cutoffData = {
-      booking_login_cutoff,
-      cancel_login_cutoff,
-      booking_logout_cutoff,
-      cancel_logout_cutoff,
-      medical_emergency_booking_cutoff,
-      adhoc_booking_cutoff,
-      allow_adhoc_booking,
-      allow_medical_emergency_booking,
-    };
-    dispatch(saveCutoffThunk(cutoffData));
+    dispatch(saveCutoffThunk({
+      booking_login_cutoff, cancel_login_cutoff, booking_logout_cutoff, cancel_logout_cutoff,
+      medical_emergency_booking_cutoff, adhoc_booking_cutoff, allow_adhoc_booking, allow_medical_emergency_booking,
+    }));
   };
 
   const handleSaveTenant = () => {
-    const tenantData = {
-      escort_required_start_time,
-      escort_required_end_time,
-      escort_required_for_women,
-      login_boarding_otp,
-      login_deboarding_otp,
-      logout_boarding_otp,
-      logout_deboarding_otp,
-      speed_limit_kmph,
-      schedule_reminder_enabled,
-      schedule_reminder_minutes,
-      one_trip_per_shift_enabled,
-      auto_move_on_conflict,
-    };
-    dispatch(saveEscortConfigThunk(tenantData));
+    dispatch(saveEscortConfigThunk({
+      escort_required_start_time, escort_required_end_time, escort_required_for_women,
+      login_boarding_otp, login_deboarding_otp, logout_boarding_otp, logout_deboarding_otp,
+      speed_limit_kmph, schedule_reminder_enabled, schedule_reminder_minutes,
+      one_trip_per_shift_enabled, auto_move_on_conflict,
+      driver_max_duty_minutes, driver_rest_enforcement,
+    }));
   };
 
-  const parseTime = (timeString) => {
-    if (!timeString) return { hours: 0, minutes: 0 };
-    const [hours, minutes] = timeString.split(":").map(Number);
-    return { hours: hours || 0, minutes: minutes || 0 };
+  const parseTime = (t) => {
+    if (!t) return { hours: 0, minutes: 0 };
+    const [h, m] = t.split(":").map(Number);
+    return { hours: h || 0, minutes: m || 0 };
   };
 
-  const parseFullTime = (timeString) => {
-    if (!timeString) return { hours: 0, minutes: 0 };
-    const parts = timeString.split(":");
-    return {
-      hours: parseInt(parts[0]) || 0,
-      minutes: parseInt(parts[1]) || 0,
-    };
+  const parseFullTime = (t) => {
+    if (!t) return { hours: 0, minutes: 0 };
+    const p = t.split(":");
+    return { hours: parseInt(p[0]) || 0, minutes: parseInt(p[1]) || 0 };
   };
 
   const hasCutoffChanges = () => {
     if (!data) return false;
-    const cutoffFields = [
-      "booking_login_cutoff",
-      "cancel_login_cutoff",
-      "booking_logout_cutoff",
-      "cancel_logout_cutoff",
-      "medical_emergency_booking_cutoff",
-      "adhoc_booking_cutoff",
-      "allow_adhoc_booking",
-      "allow_medical_emergency_booking",
-    ];
-    return cutoffFields.some((key) => formData[key] !== data[key]);
+    return ["booking_login_cutoff","cancel_login_cutoff","booking_logout_cutoff","cancel_logout_cutoff",
+      "medical_emergency_booking_cutoff","adhoc_booking_cutoff","allow_adhoc_booking","allow_medical_emergency_booking",
+    ].some((k) => formData[k] !== data[k]);
   };
 
   const hasTenantChanges = () => {
     if (!tenantConfig) return false;
-    const tenantFields = [
-      "escort_required_start_time",
-      "escort_required_end_time",
-      "escort_required_for_women",
-      "login_boarding_otp",
-      "login_deboarding_otp",
-      "logout_boarding_otp",
-      "logout_deboarding_otp",
-      "speed_limit_kmph",
-      "schedule_reminder_enabled",
-      "schedule_reminder_minutes",
-      "one_trip_per_shift_enabled",
-      "auto_move_on_conflict",
-    ];
-    return tenantFields.some((key) => String(formData[key]) !== String(tenantConfig[key]));
+    return ["escort_required_start_time","escort_required_end_time","escort_required_for_women",
+      "login_boarding_otp","login_deboarding_otp","logout_boarding_otp","logout_deboarding_otp",
+      "speed_limit_kmph","schedule_reminder_enabled","schedule_reminder_minutes",
+      "one_trip_per_shift_enabled","auto_move_on_conflict","driver_max_duty_minutes","driver_rest_enforcement",
+    ].some((k) => String(formData[k]) !== String(tenantConfig[k]));
   };
 
-  const isSaving = (tab) => {
-    if (tab === "tenant") return tenantStatus === "saving";
-    return status === "saving";
-  };
+  const isSaving = (tab) => (tab === "tenant" ? tenantStatus : status) === "saving";
+  const getStatus = (tab) => tab === "tenant" ? tenantStatus : status;
+  const getError  = (tab) => tab === "tenant" ? tenantError  : error;
 
-  const getCurrentStatus = (tab) => {
-    if (tab === "tenant") return tenantStatus;
-    return status;
-  };
-
-  const getCurrentError = (tab) => {
-    if (tab === "tenant") return tenantError;
-    return error;
-  };
-
+  /* ── status banner ── */
   const StatusBanner = ({ tab }) => {
-    const currentStatus = getCurrentStatus(tab);
-    const currentError = getCurrentError(tab);
-
-    if (currentStatus === "loading") {
-      return (
-        <div className="bg-app-tertiary border border-app-secondary px-3 py-2 rounded text-xs flex items-center gap-2 mb-4">
-          <div className="animate-spin rounded-full h-3 w-3 border-2 border-app-primary border-t-transparent"></div>
-          <span className="text-app-text-primary font-medium">Loading...</span>
-        </div>
-      );
-    }
-    if (currentStatus === "failed") {
-      return (
-        <div className="bg-red-50 border border-red-200 px-3 py-2 rounded text-xs mb-4">
-          <div className="flex items-center gap-2">
-            <XCircle className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
-            <p className="text-red-900 font-medium">Error: {currentError}</p>
-          </div>
-        </div>
-      );
-    }
-    if (currentStatus === "saved") {
-      return (
-        <div className="bg-green-50 border border-green-200 px-3 py-2 rounded text-xs flex items-center gap-2 mb-4">
-          <CheckCircle className="w-3.5 h-3.5 text-green-600" />
-          <p className="text-green-900 font-medium">
-            {tab === "tenant" ? "Tenant config" : "Cutoff config"} saved successfully
-          </p>
-        </div>
-      );
-    }
+    const s = getStatus(tab), e = getError(tab);
+    if (s === "loading") return (
+      <div className="flex items-center gap-2.5 px-4 py-2.5 mb-4 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-800">
+        <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-blue-600 border-t-transparent flex-shrink-0" />
+        Loading configuration…
+      </div>
+    );
+    if (s === "failed") return (
+      <div className="flex items-center gap-2.5 px-4 py-2.5 mb-4 rounded-lg bg-red-50 border border-red-200 text-xs text-red-800">
+        <XCircle className="w-3.5 h-3.5 flex-shrink-0 text-red-500" />
+        <span><strong>Error:</strong> {e}</span>
+      </div>
+    );
+    if (s === "saved") return (
+      <div className="flex items-center gap-2.5 px-4 py-2.5 mb-4 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800">
+        <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 text-emerald-500" />
+        {tab === "tenant" ? "Tenant config" : "Cutoff config"} saved successfully.
+      </div>
+    );
     return null;
   };
 
   useEffect(() => {
     if (status === "saved") setTimeout(() => {}, 3000);
     if (tenantStatus === "saved") setTimeout(() => {}, 3000);
-  }, [status, tenantStatus, dispatch]);
+  }, [status, tenantStatus]);
 
-  // ── Sub-components ──────────────────────────────────────────────────────────
+  /* ── sub-components ── */
+
+  /** Inline label + two selects for h / min */
+  const FieldRow = ({ icon: Icon, label, children }) => (
+    <div className="group flex items-center gap-3 py-2.5 px-3 -mx-3 rounded-lg hover:bg-app-tertiary transition-colors">
+      <Icon className="w-3.5 h-3.5 text-app-text-muted flex-shrink-0" />
+      <span className="text-xs font-medium text-app-text-secondary flex-1 min-w-0">{label}</span>
+      {children}
+    </div>
+  );
+
+  const selectCls = "px-2 py-1 text-xs border border-app-border rounded-md bg-app-surface text-app-text-primary focus:border-app-primary focus:ring-1 focus:ring-app-primary focus:outline-none transition-colors";
 
   const CompactTimeInput = ({ label, fieldName, currentValue, icon: Icon }) => {
     const { hours, minutes } = parseTime(currentValue);
     return (
-      <div className="flex items-center gap-2 py-2 border-b border-app-border hover:bg-app-tertiary px-2 -mx-2 rounded transition-colors">
-        <Icon className="w-3.5 h-3.5 text-app-text-muted flex-shrink-0" />
-        <label className="text-xs font-medium text-app-text-secondary min-w-[140px]">{label}</label>
-        <div className="flex gap-2 ml-auto">
-          <select
-            value={hours}
-            onChange={(e) => handleTimeChange(fieldName, parseInt(e.target.value), minutes)}
-            className="w-16 px-2 py-1 text-xs border border-app-border rounded focus:border-app-primary focus:outline-none bg-app-surface focus:ring-1 focus:ring-app-primary transition-colors"
-          >
-            {Array.from({ length: 25 }, (_, i) => (
-              <option key={i} value={i}>{i}h</option>
-            ))}
+      <FieldRow icon={Icon} label={label}>
+        <div className="flex items-center gap-1.5">
+          <select value={hours} onChange={(e) => handleTimeChange(fieldName, +e.target.value, minutes)} className={`${selectCls} w-16`}>
+            {Array.from({ length: 25 }, (_, i) => <option key={i} value={i}>{i}h</option>)}
           </select>
-          <select
-            value={minutes}
-            onChange={(e) => handleTimeChange(fieldName, hours, parseInt(e.target.value))}
-            className="w-16 px-2 py-1 text-xs border border-app-border rounded focus:border-app-primary focus:outline-none bg-app-surface focus:ring-1 focus:ring-app-primary transition-colors"
-          >
-            {[0, 15, 30, 45].map((min) => (
-              <option key={min} value={min}>{min}m</option>
-            ))}
+          <span className="text-app-text-muted text-xs">:</span>
+          <select value={minutes} onChange={(e) => handleTimeChange(fieldName, hours, +e.target.value)} className={`${selectCls} w-16`}>
+            {[0,15,30,45].map((m) => <option key={m} value={m}>{m}m</option>)}
           </select>
+          <span className="text-[10px] font-mono font-semibold text-app-primary bg-app-tertiary px-1.5 py-0.5 rounded w-12 text-center tabular-nums">
+            {hours}:{minutes.toString().padStart(2,"0")}
+          </span>
         </div>
-      </div>
+      </FieldRow>
     );
   };
 
   const CompactFullTimeInput = ({ label, fieldName, currentValue, icon: Icon }) => {
     const { hours, minutes } = parseFullTime(currentValue);
     return (
-      <div className="flex items-center gap-2 py-2 border-b border-app-border hover:bg-app-tertiary px-2 -mx-2 rounded transition-colors">
-        <Icon className="w-3.5 h-3.5 text-app-text-muted flex-shrink-0" />
-        <label className="text-xs font-medium text-app-text-secondary min-w-[140px]">{label}</label>
-        <div className="flex gap-2 ml-auto">
-          <select
-            value={hours}
-            onChange={(e) => handleFullTimeChange(fieldName, parseInt(e.target.value), minutes)}
-            className="w-16 px-2 py-1 text-xs border border-app-border rounded focus:border-app-primary focus:outline-none bg-app-surface focus:ring-1 focus:ring-app-primary transition-colors"
-          >
-            {Array.from({ length: 24 }, (_, i) => (
-              <option key={i} value={i}>{i.toString().padStart(2, "0")}h</option>
-            ))}
+      <FieldRow icon={Icon} label={label}>
+        <div className="flex items-center gap-1.5">
+          <select value={hours} onChange={(e) => handleFullTimeChange(fieldName, +e.target.value, minutes)} className={`${selectCls} w-16`}>
+            {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{i.toString().padStart(2,"0")}h</option>)}
           </select>
-          <select
-            value={minutes}
-            onChange={(e) => handleFullTimeChange(fieldName, hours, parseInt(e.target.value))}
-            className="w-16 px-2 py-1 text-xs border border-app-border rounded focus:border-app-primary focus:outline-none bg-app-surface focus:ring-1 focus:ring-app-primary transition-colors"
-          >
-            {Array.from({ length: 60 }, (_, i) => (
-              <option key={i} value={i}>{i.toString().padStart(2, "0")}m</option>
-            ))}
+          <span className="text-app-text-muted text-xs">:</span>
+          <select value={minutes} onChange={(e) => handleFullTimeChange(fieldName, hours, +e.target.value)} className={`${selectCls} w-16`}>
+            {Array.from({ length: 60 }, (_, i) => <option key={i} value={i}>{i.toString().padStart(2,"0")}m</option>)}
           </select>
+          <span className="text-[10px] font-mono font-semibold text-app-primary bg-app-tertiary px-1.5 py-0.5 rounded w-12 text-center tabular-nums">
+            {hours.toString().padStart(2,"0")}:{minutes.toString().padStart(2,"0")}
+          </span>
         </div>
-      </div>
+      </FieldRow>
     );
   };
 
   const CompactToggle = ({ label, enabled, onChange, description }) => (
-    <div className="flex items-center justify-between py-2 border-b border-app-border hover:bg-app-tertiary px-2 -mx-2 rounded transition-colors">
-      <div className="flex-1">
+    <div className="group flex items-center justify-between gap-3 py-2.5 px-3 -mx-3 rounded-lg hover:bg-app-tertiary transition-colors cursor-pointer" onClick={onChange}>
+      <div className="flex-1 min-w-0">
         <p className="text-xs font-medium text-app-text-secondary">{label}</p>
-        {description && <p className="text-xs text-app-text-muted mt-0.5">{description}</p>}
+        {description && <p className="text-[11px] text-app-text-muted mt-0.5 leading-snug">{description}</p>}
       </div>
-      <button
-        onClick={onChange}
-        className={`relative w-10 h-5 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2 ${
-          enabled ? "bg-app-primary" : "bg-gray-300"
-        }`}
-      >
-        <span
-          className={`absolute top-0.5 left-0.5 w-4 h-4 bg-app-surface rounded-full shadow transition-transform duration-300 ${
-            enabled ? "translate-x-5" : "translate-x-0"
-          }`}
-        />
-      </button>
+      <div className={`relative flex-shrink-0 w-9 h-5 rounded-full transition-all duration-300 ${enabled ? "bg-app-primary" : "bg-slate-300"}`}>
+        <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 ${enabled ? "translate-x-4" : "translate-x-0"}`} />
+      </div>
     </div>
   );
 
-  // ✅ Fixed: use local string state so user can type multi-digit numbers freely
   const CompactNumberInput = ({ label, fieldName, currentValue, icon: Icon, unit, min = 0, max }) => {
-    const [localValue, setLocalValue] = useState(currentValue != null ? String(currentValue) : "");
-
-    useEffect(() => {
-      setLocalValue(currentValue != null ? String(currentValue) : "");
-    }, [currentValue]);
-
-    const handleChange = (e) => {
-      setLocalValue(e.target.value);
+    const [local, setLocal] = useState(currentValue != null ? String(currentValue) : "");
+    useEffect(() => { setLocal(currentValue != null ? String(currentValue) : ""); }, [currentValue]);
+    const onBlur = () => {
+      const p = parseInt(local, 10);
+      if (isNaN(p)) return;
+      const v = max !== undefined ? Math.min(Math.max(p, min), max) : Math.max(p, min);
+      setLocal(String(v));
+      dispatch(updateFormField({ name: fieldName, value: v }));
     };
-
-    const handleBlur = () => {
-      const parsed = parseInt(localValue, 10);
-      if (isNaN(parsed)) return;
-      const clamped = max !== undefined ? Math.min(Math.max(parsed, min), max) : Math.max(parsed, min);
-      setLocalValue(String(clamped));
-      dispatch(updateFormField({ name: fieldName, value: clamped }));
-    };
-
     return (
-      <div className="flex items-center gap-2 py-2 border-b border-app-border hover:bg-app-tertiary px-2 -mx-2 rounded transition-colors">
-        <Icon className="w-3.5 h-3.5 text-app-text-muted flex-shrink-0" />
-        <label className="text-xs font-medium text-app-text-secondary min-w-[140px]">{label}</label>
-        <div className="flex items-center gap-1.5 ml-auto">
-          <input
-            type="number"
-            value={localValue}
-            min={min}
-            max={max}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className="w-20 px-2 py-1 text-xs border border-app-border rounded focus:border-app-primary focus:outline-none bg-app-surface focus:ring-1 focus:ring-app-primary transition-colors text-right"
+      <FieldRow icon={Icon} label={label}>
+        <div className="flex items-center gap-1.5">
+          <input type="number" value={local} min={min} max={max}
+            onChange={(e) => setLocal(e.target.value)} onBlur={onBlur}
+            className={`${selectCls} w-20 text-right`}
           />
-          {unit && <span className="text-xs text-app-text-muted w-8">{unit}</span>}
+          {unit && <span className="text-[11px] text-app-text-muted font-medium w-10">{unit}</span>}
         </div>
-      </div>
+      </FieldRow>
     );
   };
+
+  /* enforcement radio */
+  const EnforcementModeInput = () => (
+    <div className="pt-1 pb-0.5">
+      <p className="text-xs font-medium text-app-text-secondary px-3 -mx-3 mb-2">Enforcement mode</p>
+      <div className="flex gap-2">
+        {[
+          { value: "warn",  label: "Warn",  desc: "Proceed with amber banner", color: "border-amber-400 bg-amber-50 text-amber-800" },
+          { value: "block", label: "Block", desc: "Reject if rest insufficient", color: "border-red-400 bg-red-50 text-red-800"   },
+        ].map((opt) => {
+          const active = driver_rest_enforcement === opt.value;
+          return (
+            <label key={opt.value}
+              className={`flex-1 flex flex-col gap-1 p-2.5 rounded-lg border-2 cursor-pointer transition-all ${
+                active ? opt.color + " shadow-sm" : "border-app-border bg-app-surface hover:bg-app-tertiary"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <input type="radio" name="driver_rest_enforcement" value={opt.value}
+                  checked={active}
+                  onChange={() => dispatch(updateFormField({ name: "driver_rest_enforcement", value: opt.value }))}
+                  className="accent-app-primary"
+                />
+                <span className={`text-xs font-semibold ${active ? "" : "text-app-text-primary"}`}>{opt.label}</span>
+              </div>
+              <p className={`text-[11px] leading-snug pl-5 ${active ? "" : "text-app-text-muted"}`}>{opt.desc}</p>
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  /* ── Card wrapper ── */
+  const Card = ({ children, className = "", span2 = false }) => (
+    <div className={`bg-app-surface rounded-xl border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow ${span2 ? "lg:col-span-2" : ""} ${className}`}>
+      {children}
+    </div>
+  );
+
+  /* ── Tab bar ── */
+  const TabBar = ({ tabs, active, onChange, size = "md" }) => (
+    <div className={`flex gap-1 bg-app-tertiary p-1 rounded-xl border border-app-border mb-4 ${size === "sm" ? "text-[11px]" : ""}`}>
+      {tabs.map(({ id, label, icon: Icon }) => (
+        <button key={id} onClick={() => onChange(id)}
+          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all duration-200 focus:outline-none
+            ${active === id
+              ? "bg-app-surface text-app-text-primary shadow-sm border border-app-border"
+              : "text-app-text-muted hover:text-app-text-secondary"
+            } ${size === "sm" ? "text-[11px]" : "text-xs"}`}
+        >
+          {Icon && <Icon className={size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5"} />}
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+
+  /* ── overview stat box ── */
+  const StatBox = ({ label, value, accent = false, warning = false }) => (
+    <div className={`p-3 rounded-xl border ${
+      warning ? "bg-amber-50 border-amber-200" :
+      accent  ? "bg-app-primary/5 border-app-primary/20" :
+                "bg-app-tertiary border-app-border"
+    }`}>
+      <p className={`text-[10px] font-semibold uppercase tracking-wider mb-1 ${
+        warning ? "text-amber-600" : accent ? "text-app-primary" : "text-app-text-muted"
+      }`}>{label}</p>
+      <p className="text-base font-bold text-app-text-primary tabular-nums">{value}</p>
+    </div>
+  );
+
+  /* ── summary row ── */
+  const SummaryRow = ({ label, value, pill }) => (
+    <div className="flex items-center justify-between py-2 border-b border-app-border last:border-0">
+      <span className="text-xs text-app-text-muted">{label}</span>
+      {pill !== undefined ? <StatusPill active={pill} /> : <span className="text-xs font-semibold text-app-text-primary tabular-nums">{value}</span>}
+    </div>
+  );
 
   if (!data && status !== "loading") {
     return (
       <div className="min-h-screen bg-app-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-app-primary border-t-transparent mx-auto mb-2"></div>
-          <p className="text-xs text-app-text-muted">Loading configuration...</p>
+        <div className="text-center space-y-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-app-primary border-t-transparent mx-auto" />
+          <p className="text-xs text-app-text-muted">Loading configuration…</p>
         </div>
       </div>
     );
   }
 
+  /* ── main tabs config ── */
+  const mainTabs = [
+    { id: "cutoff", label: "Cutoff Management", icon: Clock },
+    { id: "tenant", label: "Tenant Management", icon: Building },
+  ];
+
+  const cutoffSubTabs = [
+    { id: "standard", label: "Standard", icon: Calendar },
+    { id: "special",  label: "Special",  icon: AlertTriangle },
+    { id: "overview", label: "Overview",  icon: BarChart2 },
+  ];
+
   return (
     <div className="min-h-screen bg-app-background">
-      {/* Compact Header */}
-      <div className="bg-app-surface border-b border-app-border sticky top-0 z-10">
-        <div className="w-full px-4 py-2.5 flex items-center justify-between">
-          <div className="flex items-center gap-2" />
+
+      {/* ── Sticky header ── */}
+      <div className="bg-app-surface border-b border-app-border sticky top-0 z-20 backdrop-blur-sm bg-app-surface/95">
+        <div className="px-5 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 rounded-lg bg-app-tertiary border border-app-border">
+              <Sliders className="w-4 h-4 text-app-text-secondary" />
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold text-app-text-primary leading-none">System Configuration</h1>
+              <p className="text-[11px] text-app-text-muted mt-0.5 leading-none">
+                {activeTab === "cutoff" ? "Booking & cancellation time limits" : "Tenant-wide operational settings"}
+              </p>
+            </div>
+          </div>
+
           <div className="flex items-center gap-2">
+            {/* unsaved indicator */}
+            {activeTab === "cutoff" && hasCutoffChanges() && (
+              <span className="text-[10px] font-medium text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full">
+                Unsaved changes
+              </span>
+            )}
+            {activeTab === "tenant" && hasTenantChanges() && (
+              <span className="text-[10px] font-medium text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full">
+                Unsaved changes
+              </span>
+            )}
+
             {activeTab === "cutoff" && (
-              <ReusableButton
-                module="cutoff"
-                action="update"
-                buttonName={isSaving("cutoff") ? "Saving..." : "Save Cutoff Changes"}
+              <ReusableButton module="cutoff" action="update"
+                buttonName={isSaving("cutoff") ? "Saving…" : "Save changes"}
                 icon={isSaving("cutoff") ? null : Save}
                 onClick={handleSaveCutoff}
                 disabled={!hasCutoffChanges() || isSaving("cutoff")}
                 isLoading={isSaving("cutoff")}
-                className="px-4 py-1.5 bg-app-primary text-white text-xs rounded hover:bg-sidebar-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2"
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-app-primary text-white text-xs font-medium rounded-lg hover:bg-sidebar-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2"
               />
             )}
             {activeTab === "tenant" && (
-              <ReusableButton
-                module="tenant_config"
-                action="update"
-                buttonName={isSaving("tenant") ? "Saving..." : "Save Tenant Changes"}
+              <ReusableButton module="tenant_config" action="update"
+                buttonName={isSaving("tenant") ? "Saving…" : "Save changes"}
                 icon={isSaving("tenant") ? null : Save}
                 onClick={handleSaveTenant}
                 disabled={!hasTenantChanges() || isSaving("tenant")}
-                className="px-4 py-1.5 bg-app-primary text-white text-xs rounded hover:bg-sidebar-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2"
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-app-primary text-white text-xs font-medium rounded-lg hover:bg-sidebar-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2"
               />
             )}
           </div>
         </div>
       </div>
 
-      <div className="mx-auto px-4 py-4">
+      {/* ── Body ── */}
+      <div className="px-5 py-5 w-full">
         <StatusBanner tab={activeTab} />
 
-        {/* Main Tabs */}
-        <div className="flex gap-1 mb-4 bg-app-surface p-1 rounded-lg border border-app-border shadow-sm">
-          <button
-            onClick={() => setActiveTab("cutoff")}
-            className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2 ${
-              activeTab === "cutoff" ? "bg-app-primary text-white shadow-sidebar-item" : "text-app-text-secondary hover:bg-app-tertiary"
-            }`}
-          >
-            <div className="flex items-center justify-center gap-1.5">
-              <Clock className="w-3 h-3" /> Cutoff Management
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab("tenant")}
-            className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2 ${
-              activeTab === "tenant" ? "bg-app-primary text-white shadow-sidebar-item" : "text-app-text-secondary hover:bg-app-tertiary"
-            }`}
-          >
-            <div className="flex items-center justify-center gap-1.5">
-              <Building className="w-3 h-3" /> Tenant Management
-            </div>
-          </button>
-        </div>
+        <TabBar tabs={mainTabs} active={activeTab} onChange={setActiveTab} />
 
-        {/* ── Cutoff Management Tab ─────────────────────────────────────────── */}
+        {/* ════════ CUTOFF TAB ════════ */}
         {activeTab === "cutoff" && (
           <>
-            <div className="flex gap-1 mb-4 bg-app-surface p-1 rounded-lg border border-app-border shadow-sm">
-              <button
-                onClick={() => setActiveCutoffTab("standard")}
-                className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2 ${
-                  activeCutoffTab === "standard" ? "bg-app-primary text-white shadow-sidebar-item" : "text-app-text-secondary hover:bg-app-tertiary"
-                }`}
-              >
-                <div className="flex items-center justify-center gap-1.5">
-                  <Calendar className="w-3 h-3" /> Standard
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveCutoffTab("special")}
-                className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2 ${
-                  activeCutoffTab === "special" ? "bg-app-primary text-white shadow-sidebar-item" : "text-app-text-secondary hover:bg-app-tertiary"
-                }`}
-              >
-                <div className="flex items-center justify-center gap-1.5">
-                  <AlertTriangle className="w-3 h-3" /> Special
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveCutoffTab("overview")}
-                className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-app-primary focus:ring-offset-2 ${
-                  activeCutoffTab === "overview" ? "bg-app-primary text-white shadow-sidebar-item" : "text-app-text-secondary hover:bg-app-tertiary"
-                }`}
-              >
-                <div className="flex items-center justify-center gap-1.5">
-                  <Activity className="w-3 h-3" /> Overview
-                </div>
-              </button>
-            </div>
+            <TabBar tabs={cutoffSubTabs} active={activeCutoffTab} onChange={setActiveCutoffTab} size="sm" />
 
+            {/* Standard */}
             {activeCutoffTab === "standard" && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
-                    <Clock className="w-4 h-4 text-app-primary" />
-                    <h2 className="text-sm font-semibold text-app-text-primary">Booking Cutoffs</h2>
+                <Card>
+                  <SectionHeader icon={Clock} title="Booking cutoffs" color="text-app-primary" />
+                  <div className="space-y-0.5">
+                    <CompactTimeInput label="Login booking" fieldName="booking_login_cutoff" currentValue={booking_login_cutoff} icon={Clock} />
+                    <CompactTimeInput label="Logout booking" fieldName="booking_logout_cutoff" currentValue={booking_logout_cutoff} icon={Clock} />
                   </div>
-                  <div className="space-y-1">
-                    <CompactTimeInput label="Login Booking" fieldName="booking_login_cutoff" currentValue={booking_login_cutoff} icon={Clock} />
-                    <CompactTimeInput label="Logout Booking" fieldName="booking_logout_cutoff" currentValue={booking_logout_cutoff} icon={Clock} />
+                </Card>
+                <Card>
+                  <SectionHeader icon={XCircle} title="Cancellation cutoffs" color="text-red-500" />
+                  <div className="space-y-0.5">
+                    <CompactTimeInput label="Login cancellation" fieldName="cancel_login_cutoff" currentValue={cancel_login_cutoff} icon={XCircle} />
+                    <CompactTimeInput label="Logout cancellation" fieldName="cancel_logout_cutoff" currentValue={cancel_logout_cutoff} icon={XCircle} />
                   </div>
-                </div>
-                <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
-                    <XCircle className="w-4 h-4 text-red-600" />
-                    <h2 className="text-sm font-semibold text-app-text-primary">Cancellation Cutoffs</h2>
-                  </div>
-                  <div className="space-y-1">
-                    <CompactTimeInput label="Login Cancellation" fieldName="cancel_login_cutoff" currentValue={cancel_login_cutoff} icon={XCircle} />
-                    <CompactTimeInput label="Logout Cancellation" fieldName="cancel_logout_cutoff" currentValue={cancel_logout_cutoff} icon={XCircle} />
-                  </div>
-                </div>
+                </Card>
               </div>
             )}
 
+            {/* Special */}
             {activeCutoffTab === "special" && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
-                    <Shield className="w-4 h-4 text-red-600" />
-                    <h2 className="text-sm font-semibold text-app-text-primary">Medical Emergency</h2>
+                <Card>
+                  <SectionHeader icon={Shield} title="Medical emergency" color="text-red-500" />
+                  <div className="space-y-0.5">
+                    <CompactTimeInput label="Emergency cutoff" fieldName="medical_emergency_booking_cutoff" currentValue={medical_emergency_booking_cutoff} icon={Shield} />
+                    <CompactToggle label="Enable medical emergency" enabled={allow_medical_emergency_booking} onChange={() => handleToggle("allow_medical_emergency_booking")} />
                   </div>
-                  <div className="space-y-1">
-                    <CompactTimeInput label="Emergency Cutoff" fieldName="medical_emergency_booking_cutoff" currentValue={medical_emergency_booking_cutoff} icon={Shield} />
-                    <CompactToggle label="Enable Medical Emergency" enabled={allow_medical_emergency_booking} onChange={() => handleToggle("allow_medical_emergency_booking")} />
+                </Card>
+                <Card>
+                  <SectionHeader icon={Zap} title="Adhoc shifts" color="text-purple-500" />
+                  <div className="space-y-0.5">
+                    <CompactTimeInput label="Adhoc cutoff" fieldName="adhoc_booking_cutoff" currentValue={adhoc_booking_cutoff} icon={Zap} />
+                    <CompactToggle label="Enable adhoc booking" enabled={allow_adhoc_booking} onChange={() => handleToggle("allow_adhoc_booking")} />
                   </div>
-                </div>
-                <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
-                    <Zap className="w-4 h-4 text-purple-600" />
-                    <h2 className="text-sm font-semibold text-app-text-primary">Adhoc Shifts</h2>
-                  </div>
-                  <div className="space-y-1">
-                    <CompactTimeInput label="Adhoc Cutoff" fieldName="adhoc_booking_cutoff" currentValue={adhoc_booking_cutoff} icon={Zap} />
-                    <CompactToggle label="Enable Adhoc Booking" enabled={allow_adhoc_booking} onChange={() => handleToggle("allow_adhoc_booking")} />
-                  </div>
-                </div>
+                </Card>
               </div>
             )}
 
+            {/* Overview */}
             {activeCutoffTab === "overview" && (
-              <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
-                <h2 className="text-sm font-semibold text-app-text-primary mb-3">Configuration Summary</h2>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                  <div className="p-3 bg-app-tertiary rounded-lg border border-app-secondary">
-                    <p className="text-xs font-medium text-app-text-primary mb-1">Login Book</p>
-                    <p className="text-lg font-bold text-app-text-primary">{booking_login_cutoff}</p>
-                  </div>
-                  <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-                    <p className="text-xs font-medium text-red-700 mb-1">Login Cancel</p>
-                    <p className="text-lg font-bold text-app-text-primary">{cancel_login_cutoff}</p>
-                  </div>
-                  <div className="p-3 bg-app-tertiary rounded-lg border border-app-secondary">
-                    <p className="text-xs font-medium text-app-text-primary mb-1">Logout Book</p>
-                    <p className="text-lg font-bold text-app-text-primary">{booking_logout_cutoff}</p>
-                  </div>
-                  <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-                    <p className="text-xs font-medium text-red-700 mb-1">Logout Cancel</p>
-                    <p className="text-lg font-bold text-app-text-primary">{cancel_logout_cutoff}</p>
-                  </div>
+              <div className="space-y-4">
+                {/* stat row */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <StatBox label="Login book"     value={booking_login_cutoff}  accent />
+                  <StatBox label="Login cancel"   value={cancel_login_cutoff}   warning />
+                  <StatBox label="Logout book"    value={booking_logout_cutoff} accent />
+                  <StatBox label="Logout cancel"  value={cancel_logout_cutoff}  warning />
                 </div>
-                <div className="space-y-2">
-                  <h3 className="text-xs font-semibold text-app-text-primary mb-2">Special Configurations</h3>
-                  <div className="flex items-center justify-between p-2 bg-app-tertiary rounded-lg text-xs transition-all hover:bg-app-secondary">
-                    <div className="flex items-center gap-2">
-                      <Shield className="w-3.5 h-3.5 text-red-600" />
-                      <div>
-                        <p className="font-medium text-app-text-primary">Medical Emergency</p>
-                        <p className="text-app-text-muted">{medical_emergency_booking_cutoff}</p>
+
+                {/* special config cards */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                  {[
+                    { icon: Shield, label: "Medical emergency", cutoff: medical_emergency_booking_cutoff, active: allow_medical_emergency_booking, color: "text-red-500" },
+                    { icon: Zap,    label: "Adhoc booking",     cutoff: adhoc_booking_cutoff,             active: allow_adhoc_booking,             color: "text-purple-500" },
+                  ].map(({ icon: Icon, label, cutoff, active, color }) => (
+                    <div key={label} className="flex items-center gap-3 p-3 rounded-xl border border-app-border bg-app-surface">
+                      <div className={`p-2 rounded-lg bg-app-tertiary ${color}`}>
+                        <Icon className="w-4 h-4" />
                       </div>
-                    </div>
-                    <span className={`px-2 py-0.5 rounded font-medium transition-colors ${allow_medical_emergency_booking ? "bg-green-100 text-green-700" : "bg-gray-200 text-app-text-muted"}`}>
-                      {allow_medical_emergency_booking ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-2 bg-app-tertiary rounded-lg text-xs transition-all hover:bg-app-secondary">
-                    <div className="flex items-center gap-2">
-                      <Zap className="w-3.5 h-3.5 text-purple-600" />
-                      <div>
-                        <p className="font-medium text-app-text-primary">Adhoc Booking</p>
-                        <p className="text-app-text-muted">{adhoc_booking_cutoff}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-app-text-primary">{label}</p>
+                        <p className="text-[11px] text-app-text-muted font-mono mt-0.5">{cutoff}</p>
                       </div>
+                      <StatusPill active={active} />
                     </div>
-                    <span className={`px-2 py-0.5 rounded font-medium transition-colors ${allow_adhoc_booking ? "bg-green-100 text-green-700" : "bg-gray-200 text-app-text-muted"}`}>
-                      {allow_adhoc_booking ? "Active" : "Inactive"}
-                    </span>
-                  </div>
+                  ))}
                 </div>
               </div>
             )}
           </>
         )}
 
-        {/* ── Tenant Management Tab ─────────────────────────────────────────── */}
+        {/* ════════ TENANT TAB ════════ */}
         {activeTab === "tenant" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-            {/* Escort Requirements */}
-            <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
-                <UserCheck className="w-4 h-4 text-indigo-600" />
-                <h2 className="text-sm font-semibold text-app-text-primary">Escort Requirements</h2>
-              </div>
-              <div className="space-y-1">
-                <CompactFullTimeInput label="Start Time" fieldName="escort_required_start_time" currentValue={escort_required_start_time} icon={Clock} />
-                <CompactFullTimeInput label="End Time" fieldName="escort_required_end_time" currentValue={escort_required_end_time} icon={Clock} />
-                <CompactToggle
-                  label="Required for Women"
-                  enabled={escort_required_for_women}
+            {/* Escort */}
+            <Card>
+              <SectionHeader icon={UserCheck} title="Escort requirements" color="text-indigo-500" />
+              <div className="space-y-0.5">
+                <CompactFullTimeInput label="Start time" fieldName="escort_required_start_time" currentValue={escort_required_start_time} icon={Clock} />
+                <CompactFullTimeInput label="End time"   fieldName="escort_required_end_time"   currentValue={escort_required_end_time}   icon={Clock} />
+                <CompactToggle label="Required for women" enabled={escort_required_for_women}
                   onChange={() => handleToggle("escort_required_for_women")}
-                  description="Mandatory escort during specified hours"
-                />
+                  description="Mandatory escort during specified window" />
               </div>
-            </div>
+            </Card>
 
-            {/* OTP Requirements */}
-            <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
-                <Shield className="w-4 h-4 text-green-600" />
-                <h2 className="text-sm font-semibold text-app-text-primary">OTP Requirements</h2>
+            {/* OTP */}
+            <Card>
+              <SectionHeader icon={Shield} title="OTP requirements" color="text-emerald-600" />
+              <div className="space-y-0.5">
+                <CompactToggle label="Login boarding OTP"   enabled={login_boarding_otp}   onChange={() => handleToggle("login_boarding_otp")}   description="Require OTP for boarding during login" />
+                <CompactToggle label="Login deboarding OTP" enabled={login_deboarding_otp} onChange={() => handleToggle("login_deboarding_otp")} description="Require OTP for deboarding during login" />
+                <CompactToggle label="Logout boarding OTP"  enabled={logout_boarding_otp}  onChange={() => handleToggle("logout_boarding_otp")}  description="Require OTP for boarding during logout" />
+                <CompactToggle label="Logout deboarding OTP" enabled={logout_deboarding_otp} onChange={() => handleToggle("logout_deboarding_otp")} description="Require OTP for deboarding during logout" />
               </div>
-              <div className="space-y-1">
-                <CompactToggle label="Login Boarding OTP" enabled={login_boarding_otp} onChange={() => handleToggle("login_boarding_otp")} description="Require OTP for boarding during login" />
-                <CompactToggle label="Login Deboarding OTP" enabled={login_deboarding_otp} onChange={() => handleToggle("login_deboarding_otp")} description="Require OTP for deboarding during login" />
-                <CompactToggle label="Logout Boarding OTP" enabled={logout_boarding_otp} onChange={() => handleToggle("logout_boarding_otp")} description="Require OTP for boarding during logout" />
-                <CompactToggle label="Logout Deboarding OTP" enabled={logout_deboarding_otp} onChange={() => handleToggle("logout_deboarding_otp")} description="Require OTP for deboarding during logout" />
-              </div>
-            </div>
+            </Card>
 
-            {/* Vehicle Limits */}
-            <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
-                <Gauge className="w-4 h-4 text-orange-500" />
-                <h2 className="text-sm font-semibold text-app-text-primary">Vehicle Limits</h2>
+            {/* Vehicle limits */}
+            <Card>
+              <SectionHeader icon={Gauge} title="Vehicle limits" color="text-orange-500" />
+              <div className="space-y-0.5">
+                <CompactNumberInput label="Speed limit" fieldName="speed_limit_kmph" currentValue={speed_limit_kmph} icon={Gauge} unit="km/h" min={0} max={200} />
               </div>
-              <div className="space-y-1">
-                <CompactNumberInput
-                  label="Speed Limit"
-                  fieldName="speed_limit_kmph"
-                  currentValue={speed_limit_kmph}
-                  icon={Gauge}
-                  unit="km/h"
-                  min={0}
-                  max={200}
-                />
-              </div>
-            </div>
+            </Card>
 
-            {/* Reminder Notifications */}
-            <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
-                <Bell className="w-4 h-4 text-blue-500" />
-                <h2 className="text-sm font-semibold text-app-text-primary">Reminder Notifications</h2>
-              </div>
-              <div className="space-y-1">
-                <CompactToggle
-                  label="Enable Pre-trip Reminders"
-                  enabled={schedule_reminder_enabled}
+            {/* Reminders */}
+            <Card>
+              <SectionHeader icon={Bell} title="Reminder notifications" color="text-blue-500" />
+              <div className="space-y-0.5">
+                <CompactToggle label="Enable pre-trip reminders" enabled={schedule_reminder_enabled}
                   onChange={() => handleToggle("schedule_reminder_enabled")}
-                  description="Send push notification before cab pickup"
-                />
+                  description="Send push notification before cab pickup" />
                 {schedule_reminder_enabled && (
-                  <CompactNumberInput
-                    label="Remind Before"
-                    fieldName="schedule_reminder_minutes"
-                    currentValue={schedule_reminder_minutes}
-                    icon={Clock}
-                    unit="min"
-                    min={1}
-                    max={240}
-                  />
+                  <CompactNumberInput label="Remind before" fieldName="schedule_reminder_minutes" currentValue={schedule_reminder_minutes} icon={Clock} unit="min" min={1} max={240} />
                 )}
               </div>
-            </div>
+            </Card>
 
-            {/* Trip & Conflict Settings */}
-            <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
-                <Zap className="w-4 h-4 text-purple-500" />
-                <h2 className="text-sm font-semibold text-app-text-primary">Trip & Conflict Settings</h2>
+            {/* Trip & conflict */}
+            <Card>
+              <SectionHeader icon={Zap} title="Trip & conflict settings" color="text-purple-500" />
+              <div className="space-y-0.5">
+                <CompactToggle label="One trip per shift"    enabled={one_trip_per_shift_enabled} onChange={() => handleToggle("one_trip_per_shift_enabled")} description="Allow only one trip per shift per employee" />
+                <CompactToggle label="Auto move on conflict" enabled={auto_move_on_conflict}      onChange={() => handleToggle("auto_move_on_conflict")}      description="Automatically resolve booking conflicts" />
               </div>
-              <div className="space-y-1">
-                <CompactToggle
-                  label="One Trip Per Shift"
-                  enabled={one_trip_per_shift_enabled}
-                  onChange={() => handleToggle("one_trip_per_shift_enabled")}
-                  description="Allow only one trip per shift per employee"
-                />
-                <CompactToggle
-                  label="Auto Move on Conflict"
-                  enabled={auto_move_on_conflict}
-                  onChange={() => handleToggle("auto_move_on_conflict")}
-                  description="Automatically resolve booking conflicts"
-                />
-              </div>
-            </div>
+            </Card>
 
-            {/* Configuration Summary — spans full width */}
-            <div className="lg:col-span-2 bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
-                <Activity className="w-4 h-4 text-app-text-muted" />
-                <h2 className="text-sm font-semibold text-app-text-primary">Configuration Summary</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
-                    <p className="font-medium text-app-text-secondary mb-1 text-xs">Escort Active Period</p>
-                    <p className="text-sm font-semibold text-app-text-primary">{escort_required_start_time} - {escort_required_end_time}</p>
-                  </div>
-                  <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
-                    <p className="font-medium text-app-text-secondary mb-1 text-xs">Escort Status</p>
-                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${escort_required_for_women ? "bg-green-100 text-green-700" : "bg-gray-200 text-app-text-muted"}`}>
-                      {escort_required_for_women ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-                  <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
-                    <p className="font-medium text-app-text-secondary mb-1 text-xs">Speed Limit</p>
-                    <p className="text-sm font-semibold text-app-text-primary">{speed_limit_kmph != null ? `${speed_limit_kmph} km/h` : "—"}</p>
-                  </div>
-                  <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
-                    <p className="font-medium text-app-text-secondary mb-1 text-xs">Pre-trip Reminder</p>
-                    <div className="flex items-center gap-2">
-                      <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${schedule_reminder_enabled ? "bg-green-100 text-green-700" : "bg-gray-200 text-app-text-muted"}`}>
-                        {schedule_reminder_enabled ? "Enabled" : "Disabled"}
+            {/* Driver duty hours — NEW */}
+            <Card>
+              <SectionHeader icon={Timer} title="Driver duty hours" color="text-teal-600" />
+              <div className="space-y-2">
+                <CompactNumberInput label="Max duty limit" fieldName="driver_max_duty_minutes" currentValue={driver_max_duty_minutes} icon={Clock} unit="min" min={60} max={1440} />
+
+                {/* derived rest hint */}
+                {driver_max_duty_minutes != null && (
+                  <div className="flex items-center gap-2 px-3 -mx-3 py-2 bg-app-tertiary rounded-lg">
+                    <Clock className="w-3 h-3 text-app-text-muted flex-shrink-0" />
+                    <p className="text-[11px] text-app-text-muted">
+                      Required rest window:{" "}
+                      <span className="font-semibold text-app-text-primary tabular-nums">
+                        {1440 - driver_max_duty_minutes} min
                       </span>
-                      {schedule_reminder_enabled && schedule_reminder_minutes != null && (
-                        <span className="text-xs text-app-text-muted">{schedule_reminder_minutes} min before pickup</span>
-                      )}
-                    </div>
+                      {" "}({Math.floor((1440 - driver_max_duty_minutes) / 60)}h {(1440 - driver_max_duty_minutes) % 60}m)
+                    </p>
                   </div>
-                  <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
-                    <p className="font-medium text-app-text-secondary mb-1 text-xs">Trip & Conflict</p>
-                    <div className="space-y-1 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-app-text-muted">One Trip Per Shift:</span>
-                        <span className={one_trip_per_shift_enabled ? "text-green-600 font-medium" : "text-app-text-muted"}>
-                          {one_trip_per_shift_enabled ? "Enabled" : "Disabled"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-app-text-muted">Auto Move on Conflict:</span>
-                        <span className={auto_move_on_conflict ? "text-green-600 font-medium" : "text-app-text-muted"}>
-                          {auto_move_on_conflict ? "Enabled" : "Disabled"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
-                    <p className="font-medium text-app-text-secondary mb-1 text-xs">OTP Status Summary</p>
-                    <div className="space-y-1 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-app-text-muted">Login Boarding:</span>
-                        <span className={login_boarding_otp ? "text-green-600 font-medium" : "text-app-text-muted"}>{login_boarding_otp ? "Enabled" : "Disabled"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-app-text-muted">Login Deboarding:</span>
-                        <span className={login_deboarding_otp ? "text-green-600 font-medium" : "text-app-text-muted"}>{login_deboarding_otp ? "Enabled" : "Disabled"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-app-text-muted">Logout Boarding:</span>
-                        <span className={logout_boarding_otp ? "text-green-600 font-medium" : "text-app-text-muted"}>{logout_boarding_otp ? "Enabled" : "Disabled"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-app-text-muted">Logout Deboarding:</span>
-                        <span className={logout_deboarding_otp ? "text-green-600 font-medium" : "text-app-text-muted"}>{logout_deboarding_otp ? "Enabled" : "Disabled"}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                )}
+
+                <EnforcementModeInput />
               </div>
-            </div>
+            </Card>
+
+            {/* ── Configuration summary — full width ── */}
+            <Card span2>
+              <SectionHeader icon={Activity} title="Configuration summary" color="text-slate-500" />
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                {/* col 1 — operational */}
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-app-text-muted mb-2">Operational</p>
+                  <div className="space-y-0.5">
+                    <SummaryRow label="Escort window" value={`${escort_required_start_time} – ${escort_required_end_time}`} />
+                    <SummaryRow label="Escort for women" pill={escort_required_for_women} />
+                    <SummaryRow label="Speed limit" value={speed_limit_kmph != null ? `${speed_limit_kmph} km/h` : "—"} />
+                    <SummaryRow label="One trip per shift" pill={one_trip_per_shift_enabled} />
+                    <SummaryRow label="Auto move on conflict" pill={auto_move_on_conflict} />
+                    <SummaryRow label="Pre-trip reminder" pill={schedule_reminder_enabled} />
+                    {schedule_reminder_enabled && schedule_reminder_minutes != null && (
+                      <SummaryRow label="Remind before" value={`${schedule_reminder_minutes} min`} />
+                    )}
+                  </div>
+                </div>
+
+                {/* col 2 — OTP */}
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-app-text-muted mb-2">OTP settings</p>
+                  <div className="space-y-0.5">
+                    <SummaryRow label="Login boarding"    pill={login_boarding_otp} />
+                    <SummaryRow label="Login deboarding"  pill={login_deboarding_otp} />
+                    <SummaryRow label="Logout boarding"   pill={logout_boarding_otp} />
+                    <SummaryRow label="Logout deboarding" pill={logout_deboarding_otp} />
+                  </div>
+                </div>
+
+                {/* col 3 — driver duty */}
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-app-text-muted mb-2">Driver duty hours</p>
+                  <div className="space-y-0.5">
+                    <SummaryRow label="Max duty limit"
+                      value={driver_max_duty_minutes != null ? `${driver_max_duty_minutes} min` : "—"} />
+                    <SummaryRow label="Required rest"
+                      value={driver_max_duty_minutes != null ? `${1440 - driver_max_duty_minutes} min` : "—"} />
+                    <div className="flex items-center justify-between py-2 border-b border-app-border last:border-0">
+                      <span className="text-xs text-app-text-muted">Enforcement</span>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide ${
+                        driver_rest_enforcement === "block"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-amber-100 text-amber-700"
+                      }`}>
+                        {driver_rest_enforcement === "block" ? "Block" : "Warn"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </Card>
+
           </div>
         )}
       </div>
