@@ -35,7 +35,6 @@ export const saveCutoffThunk = createAsyncThunk(
         allow_adhoc_booking: formData.allow_adhoc_booking,
         allow_medical_emergency_booking:
           formData.allow_medical_emergency_booking,
-        
       };
 
       console.log("Saving cutoff payload:", payload);
@@ -54,7 +53,7 @@ export const saveCutoffThunk = createAsyncThunk(
   }
 );
 
-// Tenant Config endpoints (renamed from Escort Config)
+// Tenant Config endpoints
 export const fetchEscortConfigThunk = createAsyncThunk(
   "cutoff/fetchTenantConfig",
   async (_, { rejectWithValue }) => {
@@ -91,12 +90,17 @@ export const saveEscortConfigThunk = createAsyncThunk(
         login_deboarding_otp: formData.login_deboarding_otp || false,
         logout_boarding_otp: formData.logout_boarding_otp || false,
         logout_deboarding_otp: formData.logout_deboarding_otp || false,
-        speed_limit_kmph: formData.speed_limit_kmph ?? 0, 
+
+        // Vehicle & operational
+        speed_limit_kmph: formData.speed_limit_kmph ?? 0,
         schedule_reminder_enabled: formData.schedule_reminder_enabled ?? false,
         schedule_reminder_minutes: formData.schedule_reminder_minutes ?? 30,
-        one_trip_per_shift_enabled: formData.one_trip_per_shift_enabled ?? false,  // ADD
-        auto_move_on_conflict: formData.auto_move_on_conflict ?? false, 
-        
+        one_trip_per_shift_enabled: formData.one_trip_per_shift_enabled ?? false,
+        auto_move_on_conflict: formData.auto_move_on_conflict ?? false,
+
+        // ── NEW: driver duty hours ──────────────────────────────────────────
+        driver_max_duty_minutes: formData.driver_max_duty_minutes ?? 600,
+        driver_rest_enforcement: formData.driver_rest_enforcement ?? "warn",
       };
 
       console.log("Saving tenant config payload:", payload);

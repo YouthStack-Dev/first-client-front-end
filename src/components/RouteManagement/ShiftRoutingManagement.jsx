@@ -4,7 +4,7 @@ import { API_CLIENT } from "@Api/API_Client";
 import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
-import { AlertCircle, CheckCircle2, X, Info } from "lucide-react";
+import { AlertCircle, CheckCircle2, X, Info, AlertTriangle, Ban } from "lucide-react";
 import {
   CompanyMarker,
   RouteDirections,
@@ -32,7 +32,7 @@ const logDebug = (message, data = null) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Toast — lightweight in-app notification (replaces all alert() calls)
+// Toast — lightweight in-app notification
 // ─────────────────────────────────────────────────────────────────────────────
 const Toast = ({ toasts, onDismiss }) => {
   if (!toasts.length) return null;
@@ -46,6 +46,7 @@ const Toast = ({ toasts, onDismiss }) => {
           success: { bg: "#f0fdf4", border: "#bbf7d0", text: "#15803d", icon: <CheckCircle2 size={15} /> },
           error:   { bg: "#fef2f2", border: "#fecaca", text: "#b91c1c", icon: <AlertCircle  size={15} /> },
           info:    { bg: "#eff6ff", border: "#bfdbfe", text: "#1d4ed8", icon: <Info          size={15} /> },
+          warning: { bg: "#fffbeb", border: "#fde68a", text: "#b45309", icon: <AlertTriangle size={15} /> },
         }[t.type] ?? { bg: "#f8fafc", border: "#e2e8f0", text: "#334155", icon: <Info size={15} /> };
         return (
           <div key={t.id} style={{
@@ -73,6 +74,116 @@ const Toast = ({ toasts, onDismiss }) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// DriverRestBlockModal — shown on 409 DRIVER_INSUFFICIENT_REST
+// ─────────────────────────────────────────────────────────────────────────────
+const DriverRestBlockModal = ({ data, onClose }) => {
+  if (!data) return null;
+  const { rest_gap_minutes, required_rest_minutes, last_trip_end, driver_id } = data;
+
+  const formatDateTime = (iso) => {
+    if (!iso) return "—";
+    try {
+      return new Date(iso).toLocaleString(undefined, {
+        dateStyle: "medium", timeStyle: "short",
+      });
+    } catch {
+      return iso;
+    }
+  };
+
+  const restShortfall = required_rest_minutes - rest_gap_minutes;
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 99998,
+      background: "rgba(0,0,0,0.45)", display: "flex",
+      alignItems: "center", justifyContent: "center", padding: 24,
+    }}>
+      <div style={{
+        background: "#fff", borderRadius: 14, width: "100%", maxWidth: 420,
+        boxShadow: "0 20px 60px rgba(0,0,0,0.18)", overflow: "hidden",
+      }}>
+        {/* header */}
+        <div style={{
+          background: "#fef2f2", borderBottom: "1px solid #fecaca",
+          padding: "16px 20px", display: "flex", alignItems: "center", gap: 12,
+        }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 8,
+            background: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
+          }}>
+            <Ban size={18} color="#dc2626" />
+          </div>
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 700, color: "#991b1b", margin: 0 }}>
+              Assignment blocked
+            </p>
+            <p style={{ fontSize: 12, color: "#b91c1c", margin: "2px 0 0", opacity: 0.8 }}>
+              Driver has insufficient rest
+            </p>
+          </div>
+          <button onClick={onClose} style={{
+            marginLeft: "auto", background: "none", border: "none",
+            cursor: "pointer", color: "#b91c1c", opacity: 0.6, padding: 4,
+          }}>
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* body */}
+        <div style={{ padding: "20px 20px 8px" }}>
+          <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.6, marginBottom: 16 }}>
+            Cannot assign this driver — they have not had enough rest since their last trip.
+          </p>
+
+          {/* stat row */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+            {[
+              { label: "Rest available",  value: `${rest_gap_minutes} min`,      accent: false, bad: true  },
+              { label: "Rest required",   value: `${required_rest_minutes} min`, accent: true,  bad: false },
+              { label: "Shortfall",       value: `${restShortfall} min`,         accent: false, bad: true  },
+              { label: "Last trip ended", value: formatDateTime(last_trip_end),  accent: false, bad: false },
+            ].map(({ label, value, accent, bad }) => (
+              <div key={label} style={{
+                padding: "10px 12px", borderRadius: 8,
+                background: bad ? "#fef2f2" : accent ? "#eff6ff" : "#f8fafc",
+                border: `1px solid ${bad ? "#fecaca" : accent ? "#bfdbfe" : "#e5e7eb"}`,
+              }}>
+                <p style={{ fontSize: 11, fontWeight: 600, color: bad ? "#b91c1c" : accent ? "#1d4ed8" : "#6b7280", textTransform: "uppercase", letterSpacing: "0.04em", margin: "0 0 3px" }}>
+                  {label}
+                </p>
+                <p style={{ fontSize: 13, fontWeight: 700, color: bad ? "#991b1b" : accent ? "#1e40af" : "#111827", margin: 0 }}>
+                  {value}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <p style={{ fontSize: 12, color: "#6b7280", marginBottom: 20, lineHeight: 1.5 }}>
+            To proceed, either wait until the driver has had{" "}
+            <strong style={{ color: "#374151" }}>{required_rest_minutes} minutes</strong> of rest,
+            or assign a different driver to this route.
+          </p>
+        </div>
+
+        {/* footer */}
+        <div style={{
+          padding: "12px 20px 16px", display: "flex", justifyContent: "flex-end",
+        }}>
+          <button onClick={onClose} style={{
+            padding: "8px 20px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+            background: "#111827", color: "#fff", border: "none", cursor: "pointer",
+          }}>
+            Dismiss
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // useToast hook
 // ─────────────────────────────────────────────────────────────────────────────
 const useToast = () => {
@@ -84,11 +195,25 @@ const useToast = () => {
     setTimeout(() => dismiss(id), duration);
   }, [dismiss]);
   const toast = useMemo(() => ({
-    success: (msg) => push(msg, "success"),
-    error:   (msg) => push(msg, "error"),
-    info:    (msg) => push(msg, "info"),
+    success: (msg)            => push(msg, "success"),
+    error:   (msg)            => push(msg, "error"),
+    info:    (msg)            => push(msg, "info"),
+    warning: (msg, dur = 6000) => push(msg, "warning", dur),
   }), [push]);
   return { toasts, toast, dismiss };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper — parse driver_rest_insufficient warning string
+// e.g. "driver_rest_insufficient: gap=45m (required 840m)"
+// ─────────────────────────────────────────────────────────────────────────────
+const parseRestWarning = (warningStr) => {
+  const gapMatch      = warningStr.match(/gap=(\d+)m/);
+  const requiredMatch = warningStr.match(/required\s+(\d+)m/);
+  return {
+    gap:      gapMatch      ? parseInt(gapMatch[1])      : null,
+    required: requiredMatch ? parseInt(requiredMatch[1]) : null,
+  };
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -102,8 +227,7 @@ const ShiftRoutingManagement = () => {
   const [unroutedLoading,      setUnroutedLoading]      = useState(true);
   const [error,                setError]                = useState(null);
   const [isMerging,            setIsMerging]            = useState(false);
-  const [isAssigningVehicle,   setIsAssigningVehicle]   = useState(false); // ✅ NEW loading state
-  const { shiftId, shiftType, date } = useParams();
+  const [isAssigningVehicle,   setIsAssigningVehicle]   = useState(false);
   const [isVendorModalOpen,    setIsVendorModalOpen]    = useState(false);
   const [isAssigningVendor,    setIsAssigningVendor]    = useState(false);
   const [isCreatingRoute,      setIsCreatingRoute]      = useState(false);
@@ -112,6 +236,10 @@ const ShiftRoutingManagement = () => {
   const [escortRouteId,        setEscortRouteId]        = useState(null);
   const [isDispatchModalOpen,  setIsDispatchModalOpen]  = useState(false);
 
+  // ── NEW: driver rest block modal state ─────────────────────────────────────
+  const [restBlockData, setRestBlockData] = useState(null); // null = closed
+
+  const { shiftId, shiftType, date } = useParams();
   const { toasts, toast, dismiss } = useToast();
 
   const currentUser = useSelector(selectCurrentUser);
@@ -255,26 +383,62 @@ const ShiftRoutingManagement = () => {
     setIsAssignDriverModalOpen(true);
   }, [selectedRoutes, toast]);
 
-  // ✅ FIXED: now shows real API error, passes tenantId, handles loading state
   const handleVehicleAssignment = async (vehicleId) => {
     if (selectedRoutes.size > 1) {
       toast.info("Bulk vehicle assignment is not supported yet. Please select only one route.");
       return;
     }
     if (selectedRoutes.size === 0) { toast.info("Please select at least one route."); return; }
+
     const routeId = Array.from(selectedRoutes)[0];
     try {
       setIsAssigningVehicle(true);
       const params = new URLSearchParams({ route_id: routeId, vehicle_id: vehicleId });
-      if (tenantId) params.append("tenant_id", tenantId); // ✅ FIXED: tenantId now sent
-      await API_CLIENT.put(`/routes/assign-vehicle?${params}`);
-      toast.success("Vehicle assigned successfully. Notifications will be sent automatically.");
+      if (tenantId) params.append("tenant_id", tenantId);
+
+      const response = await API_CLIENT.put(`/routes/assign-vehicle?${params}`);
+      const resData   = response.data?.data ?? response.data;
+      const warnings  = resData?.warnings ?? [];
+
+      // ── Case A: success, no warnings ──────────────────────────────────────
+      if (!warnings.length) {
+        toast.success("Vehicle assigned successfully. Notifications will be sent automatically.");
+      }
+
+      // ── Case B: success but driver rest warning ───────────────────────────
+      const restWarning = warnings.find((w) => w.includes("driver_rest_insufficient"));
+      if (restWarning) {
+        const { gap, required } = parseRestWarning(restWarning);
+        const gapStr      = gap      != null ? `${gap} minutes`      : "an unknown duration";
+        const reqStr      = required != null ? `${required} minutes` : "the required amount";
+        toast.warning(
+          `Warning: Driver has only ${gapStr} of rest. Required rest is ${reqStr}. Assignment was saved.`,
+          7000
+        );
+      }
+
       await fetchRouteData();
       setIsAssignDriverModalOpen(false);
       clearAllSelections();
+
     } catch (err) {
-      // ✅ FIXED: shows real error message instead of generic alert
-      toast.error(err.response?.data?.message || err.response?.data?.detail || "Failed to assign vehicle. Please try again.");
+      const status    = err.response?.status;
+      const detail    = err.response?.data?.detail;
+      const errorCode = detail?.error_code;
+
+      // ── Case C: 409 driver rest block ─────────────────────────────────────
+      if (status === 409 && errorCode === "DRIVER_INSUFFICIENT_REST") {
+        setRestBlockData(detail?.details ?? {});
+        // do NOT close the assign modal — let the user dismiss the block modal first
+        return;
+      }
+
+      // ── All other errors ──────────────────────────────────────────────────
+      toast.error(
+        detail?.message ||
+        err.response?.data?.message ||
+        "Failed to assign vehicle. Please try again."
+      );
     } finally {
       setIsAssigningVehicle(false);
     }
@@ -335,7 +499,6 @@ const ShiftRoutingManagement = () => {
     clearAllSelections();
   }, [fetchRouteData, fetchUnroutedBookings, clearAllSelections]);
 
-  // Selected route objects for BulkDispatchModal
   const selectedRouteObjects = useMemo(() =>
     Array.from(selectedRoutes)
       .map((id) => routeData.find((r) => r.route_id === id))
@@ -478,7 +641,7 @@ const ShiftRoutingManagement = () => {
                     onRouteUpdate={() => logDebug("Route updated", route.route_id)}
                     showEscortButton={false}
                     tenantId={tenantId}
-                    onToast={toast}   // ✅ pass toast down so SavedRouteCard can use it
+                    onToast={toast}
                   />
                 ))}
               </div>
@@ -511,7 +674,6 @@ const ShiftRoutingManagement = () => {
         isAssigning={isAssigningVendor}
       />
 
-      {/* ✅ FIXED: tenantId now passed, isAssigning loading state passed */}
       <AssignDriverModal
         isOpen={isAssignDriverModalOpen}
         onClose={() => setIsAssignDriverModalOpen(false)}
@@ -542,12 +704,20 @@ const ShiftRoutingManagement = () => {
         routes={selectedRouteObjects}
         tenantId={tenantId}
         onSuccess={handleRefreshData}
-         shiftId={shiftId}        // ✅ already in scope from useParams()
-          shiftCode={shiftId}      // no shiftCode in this component, use shiftId as fallback
-          bookingDate={date} 
+        shiftId={shiftId}
+        shiftCode={shiftId}
+        bookingDate={date}
       />
 
-      {/* ✅ Toast notification system — replaces all alert() calls */}
+      {/* ── NEW: driver rest block modal (409) ── */}
+      {restBlockData && (
+        <DriverRestBlockModal
+          data={restBlockData}
+          onClose={() => setRestBlockData(null)}
+        />
+      )}
+
+      {/* Toast notification system */}
       <Toast toasts={toasts} onDismiss={dismiss} />
     </div>
   );
