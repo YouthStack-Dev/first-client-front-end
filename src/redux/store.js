@@ -21,7 +21,7 @@ import reviewReducer from "./features/reviews/Reviewslice";
 import iamPermissionsReducer from "./features/iampermissions/Iampermissionsslice";
 import speedViolationsReducer from "./features/speedviolations/speedviolationsSlice";
 import nodalPointsReducer from "./features/nodalPoints/Nodalpointsslice";
-import nodalAssignmentReducer from "./features/nodalAssignments/NodalAssignmentSlice";
+import nodalAssignmentReducer from "./features/nodalAssignments/Nodalassignmentslice";
 
 const store = configureStore({
   reducer: {
