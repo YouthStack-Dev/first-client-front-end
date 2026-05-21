@@ -3,7 +3,7 @@ import {
   assignNodalPoint,
   removeNodalAssignment,
   bulkAssignNearest,
-} from "./nodalAssignmentThunks";
+} from "../../features/nodalAssignments/Nodalassignmentthunks";
 
 /* =========================================================
    ENTITY ADAPTER
