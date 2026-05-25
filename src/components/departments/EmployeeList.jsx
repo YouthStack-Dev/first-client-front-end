@@ -4,7 +4,7 @@ import { Edit, Eye, HistoryIcon, Calendar, BookOpen } from "lucide-react";
 import { logDebug } from "../../utils/logger";
 import ConfirmationModal from "../modals/ConfirmationModal";
 import WeekOffModal from "./WeekOffModal";
-import ReusableButton from "../ui/ReusableButton"; // Import the reusable button component
+import ReusableButton from "../ui/ReusableButton";
 import ReusableToggleButton from "../ui/ReusableToggleButton";
 import { useNavigate } from "react-router-dom";
 
@@ -26,7 +26,6 @@ const EmployeeList = ({
   const [pendingStatusChange, setPendingStatusChange] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Week off modal states
   const [showWeekOffModal, setShowWeekOffModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const navigate = useNavigate();
@@ -47,7 +46,6 @@ const EmployeeList = ({
 
   const handleConfirmStatusChange = async () => {
     if (!pendingStatusChange) return;
-
     setIsProcessing(true);
     try {
       await onStatusChange?.(
@@ -68,7 +66,6 @@ const EmployeeList = ({
     setPendingStatusChange(null);
   };
 
-  // Week off handlers
   const handleWeekOffClick = (employee) => {
     logDebug("Opening week off modal for employee:", employee);
     setSelectedEmployee(employee);
@@ -78,11 +75,9 @@ const EmployeeList = ({
   const handleWeekOffUpdate = async (updateData) => {
     setIsProcessing(true);
     try {
-      // Call the parent component's handler if provided
       if (onWeekOffUpdate) {
         await onWeekOffUpdate(updateData);
       } else {
-        // Fallback simulation
         logDebug("Week off update data:", updateData);
         await new Promise((resolve) => setTimeout(resolve, 1000));
         console.log(
@@ -90,12 +85,11 @@ const EmployeeList = ({
           updateData.weekOffData
         );
       }
-
       setShowWeekOffModal(false);
       setSelectedEmployee(null);
     } catch (error) {
       console.error("Failed to update week off:", error);
-      throw error; // Re-throw to let the modal handle the error state
+      throw error;
     } finally {
       setIsProcessing(false);
     }
@@ -106,18 +100,17 @@ const EmployeeList = ({
     setSelectedEmployee(null);
   };
 
-  // Booking handler
   const handleBookingClick = (employee) => {
     navigate(`/companies/employee/${employee.employee_id}/bookings`, {
       state: { employee },
     });
   };
 
-  // logDebug("pendingStatusChange is ", pendingStatusChange);
+  // Shared clickable cell style — only these cells trigger row navigation
+  const clickableCellCls = "p-3 border-r border-gray-100 cursor-pointer";
 
   return (
     <div className="space-y-4">
-      {/* Status Change Confirmation Modal */}
       <ConfirmationModal
         show={showConfirmation}
         title="Confirm Status Change"
@@ -132,7 +125,6 @@ const EmployeeList = ({
         onCancel={handleCancelStatusChange}
       />
 
-      {/* Reusable Week Off Modal */}
       <WeekOffModal
         show={showWeekOffModal}
         employee={selectedEmployee}
@@ -141,7 +133,6 @@ const EmployeeList = ({
         isLoading={isProcessing}
       />
 
-      {/* Employee Table */}
       <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm bg-white">
         <table className="w-full text-left border-collapse min-w-[900px] text-sm">
           <thead className="bg-gray-50 text-gray-700 uppercase font-semibold">
@@ -150,13 +141,9 @@ const EmployeeList = ({
                 <input type="checkbox" disabled className="w-3.5 h-3.5" />
               </th>
               <th className="p-3 border-b border-r border-gray-200">Name</th>
-              <th className="p-3 border-b border-r border-gray-200">
-                Employee Code
-              </th>
+              <th className="p-3 border-b border-r border-gray-200">Employee Code</th>
               <th className="p-3 border-b border-r border-gray-200">Email</th>
-              <th className="p-3 border-b border-r border-gray-200">
-                Mobile Number
-              </th>
+              <th className="p-3 border-b border-r border-gray-200">Mobile Number</th>
               <th className="p-3 border-b border-r border-gray-200">Gender</th>
               <th className="p-3 border-b border-r border-gray-200">Status</th>
               <th className="p-3 border-b text-center">Actions</th>
@@ -167,7 +154,7 @@ const EmployeeList = ({
               <tr>
                 <td colSpan="8" className="text-center py-8 text-gray-500">
                   <div className="flex flex-col items-center justify-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500 mb-2"></div>
+                    <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500 mb-2" />
                     <span className="text-xs">Loading employees...</span>
                   </div>
                 </td>
@@ -176,22 +163,10 @@ const EmployeeList = ({
               <tr>
                 <td colSpan="8" className="text-center py-8 text-red-500">
                   <div className="flex flex-col items-center justify-center">
-                    <svg
-                      className="w-8 h-8 text-red-400 mb-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
+                    <svg className="w-8 h-8 text-red-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span className="text-xs">
-                      Failed to load employees: {error}
-                    </span>
+                    <span className="text-xs">Failed to load employees: {error}</span>
                   </div>
                 </td>
               </tr>
@@ -199,68 +174,64 @@ const EmployeeList = ({
               <tr>
                 <td colSpan="8" className="text-center py-8 text-gray-500">
                   <div className="flex flex-col items-center justify-center">
-                    <svg
-                      className="w-8 h-8 text-gray-400 mb-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                      />
+                    <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                     <span className="text-xs">
-                      {hasActiveSearch
-                        ? "No employees match your search."
-                        : "No employees found."}
+                      {hasActiveSearch ? "No employees match your search." : "No employees found."}
                     </span>
                   </div>
                 </td>
               </tr>
             ) : (
               employees.map((employee) => (
+                // ── NO onClick on <tr> anymore ──
                 <tr
                   key={employee.employee_id}
-                  className="hover:bg-gray-50 cursor-pointer transition-colors duration-150"
-                  onClick={(e) => onRowClick?.(employee, e)}
+                  className="hover:bg-gray-50 transition-colors duration-150"
                 >
-                  <td
-                    className="p-3 border-r border-gray-100"
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  {/* Checkbox — no row nav */}
+                  <td className="p-3 border-r border-gray-100">
                     <input
                       type="checkbox"
-                      checked={selectedEmployeeIds.includes(
-                        employee.employee_id
-                      )}
+                      checked={selectedEmployeeIds.includes(employee.employee_id)}
                       onChange={(e) => {
-                        logDebug(
-                          " this is the employee code and id ",
-                          employee.employee_code,
-                          employee.employee_id
-                        );
-                        e.stopPropagation();
+                        logDebug(" this is the employee code and id ", employee.employee_code, employee.employee_id);
                         onCheckboxChange?.(employee.employee_id);
                       }}
                       className="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
                   </td>
-                  <td className="p-3 border-r border-gray-100 font-medium text-gray-900">
+
+                  {/* Data cells — clicking these navigates to employee detail */}
+                  <td
+                    className={`${clickableCellCls} font-medium text-gray-900`}
+                    onClick={() => onRowClick?.(employee)}
+                  >
                     {employee.name}
                   </td>
-                  <td className="p-3 border-r border-gray-100 text-gray-600">
+                  <td
+                    className={`${clickableCellCls} text-gray-600`}
+                    onClick={() => onRowClick?.(employee)}
+                  >
                     {employee.employee_code}
                   </td>
-                  <td className="p-3 border-r border-gray-100 text-gray-600">
+                  <td
+                    className={`${clickableCellCls} text-gray-600`}
+                    onClick={() => onRowClick?.(employee)}
+                  >
                     {employee.email}
                   </td>
-                  <td className="p-3 border-r border-gray-100 text-gray-600">
+                  <td
+                    className={`${clickableCellCls} text-gray-600`}
+                    onClick={() => onRowClick?.(employee)}
+                  >
                     {employee.phone}
                   </td>
-                  <td className="p-3 border-r border-gray-100">
+                  <td
+                    className={`${clickableCellCls}`}
+                    onClick={() => onRowClick?.(employee)}
+                  >
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
                         employee.gender?.toLowerCase() === "female"
@@ -273,10 +244,9 @@ const EmployeeList = ({
                       {employee.gender || "Not specified"}
                     </span>
                   </td>
-                  <td
-                    className="p-3 border-r border-gray-100"
-                    onClick={(e) => e.stopPropagation()}
-                  >
+
+                  {/* Status toggle — no row nav */}
+                  <td className="p-3 border-r border-gray-100">
                     <ReusableToggleButton
                       module="employee"
                       action="update"
@@ -293,56 +263,46 @@ const EmployeeList = ({
                       size="default"
                     />
                   </td>
-                  <td className="p-3" onClick={(e) => e.stopPropagation()}>
+
+                  {/* Action buttons — no row nav */}
+                  <td className="p-3">
                     <div className="flex justify-center space-x-1">
-                      {/* Edit Button */}
                       <ReusableButton
                         module="employee"
                         action="update"
                         icon={Edit}
                         title="Edit Employee"
-                        onClick={() => {
-                          onEdit?.(employee);
-                        }}
+                         onClick={() => {
+                            console.log("🟢 Edit button clicked", employee);
+                            onEdit?.(employee);
+                          }}
                         className="text-sidebar-primary-600 hover:text-sidebar-primary-700 transition-colors"
                         iconSize={14}
                       />
-
-                      {/* History Button */}
                       <ReusableButton
                         module="employee"
                         action="read"
                         icon={HistoryIcon}
                         title="View History"
-                        onClick={() => {
-                          onHistory?.(employee);
-                        }}
+                        onClick={() => onHistory?.(employee)}
                         className="text-sidebar-primary-600 hover:text-sidebar-primary-700 transition-colors"
                         iconSize={14}
                       />
-
-                      {/* Week Off Button */}
                       <ReusableButton
                         module="weekoff_config"
                         action="read"
                         icon={Calendar}
                         title="Set Week Off"
-                        onClick={() => {
-                          handleWeekOffClick(employee);
-                        }}
+                        onClick={() => handleWeekOffClick(employee)}
                         className="text-sidebar-primary-600 hover:text-sidebar-primary-700 transition-colors"
                         iconSize={14}
                       />
-
-                      {/* Booking Button - New */}
                       <ReusableButton
                         module="booking"
                         action="create"
                         icon={BookOpen}
                         title="Create Booking"
-                        onClick={() => {
-                          handleBookingClick(employee);
-                        }}
+                        onClick={() => handleBookingClick(employee)}
                         className="text-sidebar-primary-600 hover:text-sidebar-primary-700 transition-colors"
                         iconSize={14}
                       />
