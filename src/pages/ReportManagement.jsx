@@ -1,147 +1,122 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { ReportCard } from "../components/Reports/ReportCard";
-import { AnalyticsDisplay } from "../components/Reports/AnalyticsDisplay";
-import { reportModules } from "../staticData/StaticReport";
+import { reportModules, REPORT_TYPES } from "../staticData/StaticReport";
 import ConfigModal from "../components/Reports/ConfigModal";
-import { reportService } from "../utils/reportService";
+import BookingAnalyticsView from "../components/Reports/views/BookingAnalyticsView";
+import DelayReportView from "../components/Reports/views/DelayReportView";
+import DriverDutyView from "../components/Reports/views/DriverDutyView";
 import { logDebug } from "../utils/logger";
+import { useReportsModal } from "../hooks/useReportsModal";
 
-// Main Reports Container
+import {
+  fetchBookingAnalytics,
+  fetchDelayReport,
+  fetchDriverDutyHours,
+  downloadBookingsReport,
+} from "../redux/features/reports/reportsTrunk";
+
+import {
+  selectBookingAnalytics,
+  selectDelays,
+  selectDriverDutyHours,
+  selectDownload,
+  clearBookingAnalytics,
+  clearDelays,
+  clearDriverDutyHours,
+  clearDownloadStatus,
+} from "../redux/features/reports/reportsSlice";
+
 const ReportsManagement = () => {
-  const [configModal, setConfigModal] = useState({
-    isOpen: false,
-    type: null,
-    config: null,
-  });
-  const [analyticsData, setAnalyticsData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [downloadStatus, setDownloadStatus] = useState({
-    isDownloading: false,
-    success: false,
-    message: "",
-  });
+  const dispatch = useDispatch();
 
-  const handleAnalyticsClick = (moduleId) => {
-    logDebug("Analytics button clicked for module:", moduleId);
-    setConfigModal({ isOpen: true, type: moduleId, config: "analytics" });
-    setError(null);
-  };
+  // ─── Modal state (custom hook) ────────────────────────────────────────────
+  const { configModal, openAnalytics, openDownload, closeModal } =
+    useReportsModal();
 
-  const handleDownloadClick = (moduleId) => {
-    setConfigModal({ isOpen: true, type: moduleId, config: "download" });
-    setError(null);
-  };
+  // ─── Redux state ──────────────────────────────────────────────────────────
+  const bookingAnalytics = useSelector(selectBookingAnalytics);
+  const delays = useSelector(selectDelays);
+  const driverDutyHours = useSelector(selectDriverDutyHours);
+  const download = useSelector(selectDownload);
 
-  const handleConfigSubmit = async (formData) => {
-    setLoading(true);
-    setError(null);
-    setDownloadStatus({ isDownloading: false, success: false, message: "" });
-
-    try {
-      if (configModal.config === "analytics") {
-        const analyticsParams = {
-          ...formData,
-          report_type: configModal.type,
-          // Include module information if available
-          ...(formData.module && { module: formData.module }),
-        };
-        const response = await reportService.getAnalytics(analyticsParams);
-        if (response.success) {
-          setAnalyticsData(response);
-          setConfigModal({ isOpen: false, type: null, config: null });
-        } else {
-          throw new Error(response.message || "Failed to fetch analytics");
-        }
-      } else {
-        setDownloadStatus({
-          isDownloading: true,
-          success: false,
-          message: "Preparing download...",
-        });
-
-        const downloadParams = {
-          ...formData,
-          report_type: configModal.type,
-          // Include all module-specific parameters
-          module: formData.module,
-          driver_id: formData.driver_id,
-          vehicle_type: formData.vehicle_type,
-        };
-
-        const result = await reportService.downloadReport(downloadParams);
-
-        setDownloadStatus({
-          isDownloading: false,
-          success: true,
-          message: `Report "${result.filename}" downloaded successfully!`,
-        });
-
-        setTimeout(() => {
-          setConfigModal({ isOpen: false, type: null, config: null });
-          setDownloadStatus({
-            isDownloading: false,
-            success: false,
-            message: "",
-          });
-        }, 2000);
-      }
-    } catch (error) {
-      console.error("Error in handleConfigSubmit:", error);
-
-      // Use the actual backend error message directly
-      // No more custom filtering for specific error types
-      setError(error.message);
-      setDownloadStatus({
-        isDownloading: false,
-        success: false,
-        message: "",
-      });
-
-      // Only close modal for non-validation errors (422 is validation error)
-      // Keep modal open for validation errors so user can adjust parameters
-      if (error.message && !error.message.includes("422")) {
-        setConfigModal({ isOpen: false, type: null, config: null });
-      }
-    } finally {
-      setLoading(false);
+  // ─── Clear download status after 3s on success ────────────────────────────
+  useEffect(() => {
+    if (download.success) {
+      const timer = setTimeout(() => {
+        dispatch(clearDownloadStatus());
+      }, 3000);
+      return () => clearTimeout(timer);
     }
+  }, [download.success, dispatch]);
+
+  // ─── Submit handler ───────────────────────────────────────────────────────
+  const handleConfigSubmit = (formData) => {
+    const { type, config } = configModal;
+    const isDownload = config === "download";
+
+    logDebug("Config submit:", { type, config, formData });
+
+    if (isDownload) {
+      dispatch(downloadBookingsReport(formData));
+      return;
+    }
+
+    // Analytics / view
+    if (type === REPORT_TYPES.BOOKINGS) {
+      dispatch(fetchBookingAnalytics(formData));
+    } else if (type === REPORT_TYPES.DELAYS) {
+      dispatch(fetchDelayReport(formData));
+    } else if (type === REPORT_TYPES.DRIVER_DUTY) {
+      dispatch(fetchDriverDutyHours(formData));
+    }
+
+    closeModal();
   };
 
-  const handleCloseModal = () => {
-    setConfigModal({ isOpen: false, type: null, config: null });
-    setError(null);
-    setDownloadStatus({ isDownloading: false, success: false, message: "" });
+  // ─── Derive loading/error for the active modal ────────────────────────────
+  const getActiveState = () => {
+    if (configModal.config === "download") return download;
+    if (configModal.type === REPORT_TYPES.BOOKINGS) return bookingAnalytics;
+    if (configModal.type === REPORT_TYPES.DELAYS) return delays;
+    if (configModal.type === REPORT_TYPES.DRIVER_DUTY) return driverDutyHours;
+    return { loading: false, error: null };
   };
+
+  const activeState = getActiveState();
+
+  // ─── Keep modal open on 400/403/404/422, close otherwise ─────────────────
+  useEffect(() => {
+    if (!activeState.error) return;
+    const keepOpen = ["400", "403", "404", "422"].some((code) =>
+      activeState.error?.includes(code)
+    );
+    if (!keepOpen) closeModal();
+  }, [activeState.error]);
+
+  // ─── Close modal and clear data on download success ───────────────────────
+  useEffect(() => {
+    if (download.success) closeModal();
+  }, [download.success]);
 
   return (
     <div className="bg-gradient-to-br p-6">
       <div className="mx-auto">
-        {/* Loading Overlay */}
-        {loading && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-              <div className="flex items-center gap-3">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
-                <span className="text-gray-700">
-                  {configModal.config === "analytics"
-                    ? "Loading analytics..."
-                    : "Preparing download..."}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Error Display */}
-        {error && (
+        {activeState.error && !configModal.isOpen && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
             <div className="flex items-center gap-2 text-red-700">
               <span>⚠️</span>
-              <span className="whitespace-pre-line">{error}</span>
+              <span className="whitespace-pre-line">{activeState.error}</span>
             </div>
             <button
-              onClick={() => setError(null)}
+              onClick={() => {
+                dispatch(clearBookingAnalytics());
+                dispatch(clearDelays());
+                dispatch(clearDriverDutyHours());
+                dispatch(clearDownloadStatus());
+              }}
               className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
             >
               Dismiss
@@ -158,35 +133,59 @@ const ReportsManagement = () => {
               description={module.description}
               icon={module.icon}
               color={module.color}
-              onAnalytics={() => handleAnalyticsClick(module.id)}
-              onDownload={() => handleDownloadClick(module.id)}
+              onAnalytics={
+                module.hasAnalytics
+                  ? () => openAnalytics(module.id)
+                  : undefined
+              }
+              onDownload={
+                module.hasDownload
+                  ? () => openDownload(module.id)
+                  : undefined
+              }
             />
           ))}
         </div>
+
+        {/* Report Views */}
+        {bookingAnalytics.data && (
+          <BookingAnalyticsView
+            data={bookingAnalytics.data}
+            loading={bookingAnalytics.loading}
+            onClose={() => dispatch(clearBookingAnalytics())}
+          />
+        )}
+
+        {delays.data && (
+          <DelayReportView
+            data={delays.data}
+            loading={delays.loading}
+            onClose={() => dispatch(clearDelays())}
+          />
+        )}
+
+        {driverDutyHours.data && (
+          <DriverDutyView
+            data={driverDutyHours.data}
+            loading={driverDutyHours.loading}
+            onClose={() => dispatch(clearDriverDutyHours())}
+          />
+        )}
       </div>
 
-      {/* Configuration Modal */}
+      {/* Config Modal */}
       <ConfigModal
         isOpen={configModal.isOpen}
-        onClose={handleCloseModal}
+        onClose={closeModal}
         config={configModal.config}
         type={configModal.type}
         onSubmit={handleConfigSubmit}
-        loading={loading}
-        error={error}
+        loading={activeState.loading}
+        error={activeState.error}
       />
 
-      {/* Analytics Display */}
-      {analyticsData && (
-        <AnalyticsDisplay
-          data={analyticsData}
-          onClose={() => setAnalyticsData(null)}
-          reportType={configModal.type}
-        />
-      )}
-
       {/* Download Success Toast */}
-      {downloadStatus.success && (
+      {download.success && (
         <div className="fixed bottom-4 right-4 bg-green-50 border border-green-200 rounded-lg p-4 shadow-lg z-50">
           <div className="flex items-center gap-3">
             <div className="text-green-500">✓</div>
@@ -194,7 +193,9 @@ const ReportsManagement = () => {
               <p className="text-green-700 font-medium text-sm">
                 Download Complete
               </p>
-              <p className="text-green-600 text-xs">{downloadStatus.message}</p>
+              <p className="text-green-600 text-xs">
+                {download.filename} downloaded successfully
+              </p>
             </div>
           </div>
         </div>

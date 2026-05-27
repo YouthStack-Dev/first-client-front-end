@@ -336,9 +336,18 @@ export const buildDriverUpdateData = (
 
 
 // Get vendor name by ID
-export const getVendorNameById = (vendorId) => {
-  const vendor = staticVendors.find((v) => v.id === vendorId.toString());
-  return vendor ? vendor.name : "Unknown Vendor";
+export const getVendorNameById = (vendorId, vendorsArray = []) => {
+  if (!vendorId) return "No vendor assigned";
+  
+  // First, check in the dynamic vendors array (from API)
+  if (vendorsArray && vendorsArray.length > 0) {
+    const vendor = vendorsArray.find((v) => v.value === vendorId || v.value === vendorId.toString());
+    if (vendor) return vendor.label;
+  }
+  
+  // Fallback to static vendors
+  const staticVendor = staticVendors.find((v) => v.id === vendorId.toString());
+  return staticVendor ? staticVendor.name : "Unknown Vendor";
 };
 
 export const validateField = (name, value, formData) => {

@@ -78,6 +78,9 @@ const CutoffManagement = () => {
     auto_move_on_conflict,
     driver_max_duty_minutes,
     driver_rest_enforcement,
+    dark_hour_boarding_mode,
+    delay_driver_grace_minutes,
+    delay_employee_grace_minutes,
   } = formData || {};
 
   useEffect(() => {
@@ -96,6 +99,7 @@ const CutoffManagement = () => {
         speed_limit_kmph, schedule_reminder_enabled, schedule_reminder_minutes,
         one_trip_per_shift_enabled, auto_move_on_conflict,
         driver_max_duty_minutes, driver_rest_enforcement,
+        dark_hour_boarding_mode, delay_driver_grace_minutes, delay_employee_grace_minutes,
         [fieldName]: newValue,
       }));
     }
@@ -126,6 +130,7 @@ const CutoffManagement = () => {
       speed_limit_kmph, schedule_reminder_enabled, schedule_reminder_minutes,
       one_trip_per_shift_enabled, auto_move_on_conflict,
       driver_max_duty_minutes, driver_rest_enforcement,
+      dark_hour_boarding_mode, delay_driver_grace_minutes, delay_employee_grace_minutes,
     }));
   };
 
@@ -154,6 +159,7 @@ const CutoffManagement = () => {
       "login_boarding_otp","login_deboarding_otp","logout_boarding_otp","logout_deboarding_otp",
       "speed_limit_kmph","schedule_reminder_enabled","schedule_reminder_minutes",
       "one_trip_per_shift_enabled","auto_move_on_conflict","driver_max_duty_minutes","driver_rest_enforcement",
+      "dark_hour_boarding_mode","delay_driver_grace_minutes","delay_employee_grace_minutes",
     ].some((k) => String(formData[k]) !== String(tenantConfig[k]));
   };
 
@@ -564,6 +570,15 @@ const CutoffManagement = () => {
                   </div>
                 </div>
 
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-app-text-muted mb-2">Grace & Dark Hours</p>
+                  <div className="space-y-0.5">
+                    <SummaryRow label="Driver grace time" value={delay_driver_grace_minutes != null ? `${delay_driver_grace_minutes} min` : "—"} />
+                    <SummaryRow label="Employee grace time" value={delay_employee_grace_minutes != null ? `${delay_employee_grace_minutes} min` : "—"} />
+                    <SummaryRow label="Dark hour mode" value={dark_hour_boarding_mode || "off"} />
+                  </div>
+                </div>
+
               </div>
             </div>
 
@@ -648,6 +663,43 @@ const CutoffManagement = () => {
                     </div>
                   )}
                   <EnforcementModeInput />
+                </div>
+              </Card>
+
+              {/* Grace & Dark Hour settings */}
+              <Card>
+                <SectionHeader icon={Activity} title="Grace & dark hour settings" color="text-rose-500" />
+                <div className="space-y-0.5">
+                  <CompactNumberInput label="Driver grace time" fieldName="delay_driver_grace_minutes" currentValue={delay_driver_grace_minutes} icon={Clock} unit="min" min={0} max={120} />
+                  <CompactNumberInput label="Employee grace time" fieldName="delay_employee_grace_minutes" currentValue={delay_employee_grace_minutes} icon={Clock} unit="min" min={0} max={120} />
+                  <div className="pt-1 pb-0.5">
+                    <p className="text-xs font-medium text-app-text-secondary px-3 -mx-3 mb-2">Dark hour boarding</p>
+                    <div className="flex gap-2">
+                      {[
+                        { value: "off",  label: "Off",  desc: "No restrictions", color: "border-slate-400 bg-slate-50 text-slate-800" },
+                        { value: "on",   label: "On",   desc: "Restrict boarding", color: "border-rose-400 bg-rose-50 text-rose-800"   },
+                      ].map((opt) => {
+                        const active = dark_hour_boarding_mode === opt.value;
+                        return (
+                          <label key={opt.value}
+                            className={`flex-1 flex flex-col gap-1 p-2.5 rounded-lg border-2 cursor-pointer transition-all ${
+                              active ? opt.color + " shadow-sm" : "border-app-border bg-app-surface hover:bg-app-tertiary"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <input type="radio" name="dark_hour_boarding_mode" value={opt.value}
+                                checked={active}
+                                onChange={() => dispatch(updateFormField({ name: "dark_hour_boarding_mode", value: opt.value }))}
+                                className="accent-app-primary"
+                              />
+                              <span className={`text-xs font-semibold ${active ? "" : "text-app-text-primary"}`}>{opt.label}</span>
+                            </div>
+                            <p className={`text-[11px] leading-snug pl-5 ${active ? "" : "text-app-text-muted"}`}>{opt.desc}</p>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
               </Card>
 

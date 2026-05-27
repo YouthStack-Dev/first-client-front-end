@@ -1,9 +1,8 @@
-import { Eye, Edit } from "lucide-react";
+import { Eye, Edit, History } from "lucide-react";
 import ReusableButton from "../ui/ReusableButton";
 import ReusableToggleButton from "../ui/ReusableToggleButton";
 import { ReusablePagination } from "../ui/ReusablePagination";
 
-// ── Moved outside component — no recreation on every render ──
 const DRIVER_TABLE_HEADERS = [
   { key: "s_no",            label: "S No."          },
   { key: "name",            label: "Name"            },
@@ -27,6 +26,7 @@ export const NewDriverList = ({
   error = "",
   onEdit,
   onView,
+  onHistory,          // ← NEW: opens the history tab/modal for this driver
   onStatusToggle,
   currentPage,
   totalPages,
@@ -80,6 +80,7 @@ export const NewDriverList = ({
       case "actions":
         return (
           <div className="flex justify-center items-center gap-2">
+            {/* View */}
             <ReusableButton
               module="driver"
               action="read"
@@ -88,12 +89,22 @@ export const NewDriverList = ({
               onClick={() => onView?.(driver)}
               className="p-1 flex-shrink-0"
             />
+            {/* Edit */}
             <ReusableButton
               module="driver"
               action="update"
               icon={Edit}
               title="Edit Driver"
               onClick={() => onEdit?.(driver)}
+              className="p-1 flex-shrink-0"
+            />
+            {/* History ← NEW */}
+            <ReusableButton
+              module="driver"
+              action="read"
+              icon={History}
+              title="View Driver History"
+              onClick={() => onHistory?.(driver)}
               className="p-1 flex-shrink-0"
             />
           </div>

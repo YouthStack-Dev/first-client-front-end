@@ -4,7 +4,7 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { ModuleCard } from "../RoleManagement/ModuleCard";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchPolicyPackagesThunk } from "../../redux/features/Permissions/permissionsThunk";
+import { fetchPolicyPackagesThunk, fetchPermissionsThunk } from "../../redux/features/Permissions/permissionsThunk";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
 
 // ─────────────────────────────────────────────────────────────
@@ -65,16 +65,30 @@ export const PolicyForm = ({
     isActive:    true,
   });
 
-  // ── Fetch policy package (tenant's permission boundary) ──────────────────
-  const loadPackage = useCallback(async (tid) => {
-    if (!tid) {
-      console.warn("⚠️ PolicyForm: Cannot load package - no tenantId provided", { tid });
+  // ── Fetch policy package ────────────────────────────────────────────────
+  // For system policies: fetch ALL permissions from /iam/permissions/
+  // For tenant policies: fetch tenant's permission boundary from /iam/policy-packages/
+  const loadPackage = useCallback(async (tid, isSystem) => {
+    if (!isSystem && !tid) {
+      console.warn("⚠️ PolicyForm: Cannot load package - no tenantId provided for tenant policy", { tid });
       return null;
     }
     try {
-      console.log("📦 PolicyForm: Loading package for tenant:", tid);
-      const result = await dispatch(fetchPolicyPackagesThunk(tid)).unwrap();
-      console.log("✅ PolicyForm: Package loaded successfully:", result);
+      const policyType = isSystem ? "system" : "tenant";
+      console.log(`📦 PolicyForm: Loading ${policyType} policy package...`);
+      
+      let result;
+      if (isSystem) {
+        // Fetch ALL permissions for system policies
+        result = await dispatch(fetchPermissionsThunk()).unwrap();
+        // fetchPermissionsThunk returns array of permissions directly
+        result = { permissions: result };
+      } else {
+        // Fetch tenant's permission boundary for tenant policies
+        result = await dispatch(fetchPolicyPackagesThunk(tid)).unwrap();
+      }
+      
+      console.log(`✅ PolicyForm: ${policyType} policy package loaded successfully:`, result);
       return result;
     } catch (err) {
       console.error("❌ PolicyForm: Failed to fetch policy package:", err);
@@ -88,6 +102,7 @@ export const PolicyForm = ({
 
       console.log("PolicyForm opened:", {
     resolvedTenantId,
+    isSystemPolicy,
     tenantIdProp: tenantId,
     currentUserTenantId: currentUser?.tenant_id,
     currentUser,
@@ -107,8 +122,10 @@ export const PolicyForm = ({
       });
     }
 
-    // Fetch package to get tenant's permission boundary
-    loadPackage(resolvedTenantId).then((pkg) => {
+    // Fetch package:
+    // - System policy: fetch all permissions (pass isSystemPolicy = true)
+    // - Tenant policy: fetch tenant's permission boundary (pass isSystemPolicy = false)
+    loadPackage(resolvedTenantId, isSystemPolicy).then((pkg) => {
       setPackageData(pkg);
 
       const boundaryPermissions = pkg?.permissions || [];
@@ -122,7 +139,7 @@ export const PolicyForm = ({
       setPermissions(buildPermissionGrid(boundaryPermissions, existingIds));
       setIsLoading(false);
     });
-  }, [isOpen, mode, policy, resolvedTenantId]);
+  }, [isOpen, mode, policy, resolvedTenantId, isSystemPolicy]);
 
   // ── Reset on close ───────────────────────────────────────────────────────
   useEffect(() => {

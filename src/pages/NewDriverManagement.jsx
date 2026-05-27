@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Download, History } from "lucide-react";
+import { Download, History, X } from "lucide-react";   // ← added X
 import { useSelector, useDispatch } from "react-redux";
 import AuditLogsModal from "../components/modals/AuditLogsModal";
 import DriverFormModal from "../components/driver/NewDriverFrom";
+import DriverHistoryTab from "../components/driver/Driverhistorytab";   // ← NEW
 import ToolBar from "../components/ui/ToolBar";
 import SearchInput from "@components/ui/SearchInput";
 import ReusableButton from "../components/ui/ReusableButton";
@@ -37,7 +38,6 @@ const NewDriverManagement = () => {
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [status, setStatus] = useState("All");
 
-  // Single search state — raw input + debounced committed value
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -45,6 +45,10 @@ const NewDriverManagement = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [showAuditModal, setShowAuditModal] = useState(false);
   const [selectedDriverName, setSelectedDriverName] = useState(null);
+
+  // ── History modal state ── NEW
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historyDriver, setHistoryDriver] = useState(null);
 
   const debounceTimerRef = useRef(null);
 
@@ -110,39 +114,26 @@ const NewDriverManagement = () => {
     return params;
   };
 
-  // ----------------------------
-  // Fetch params (with pagination)
-  // ----------------------------
   const fetchParams = useMemo(() => {
     const base = buildBaseParams();
     if (!base) return null;
     const params = { ...base, skip, limit: itemsPerPage };
-    // Strip null/undefined but preserve false and 0
     return Object.fromEntries(
       Object.entries(params).filter(([_, v]) => v !== null && v !== undefined)
     );
   }, [skip, itemsPerPage, isVendorUser, user?.vendor_id, selectedVendor, searchTerm, status]);
 
-  // ----------------------------
-  // Export params (no pagination)
-  // ----------------------------
   const exportParams = useMemo(() => buildBaseParams(), [
     isVendorUser, user?.vendor_id, selectedVendor, searchTerm, status,
   ]);
 
-  // ----------------------------
-  // Fetch drivers
-  // ----------------------------
   useEffect(() => {
     if (fetchParams) {
       logDebug("Fetching drivers with params:", fetchParams);
       dispatch(NewfetchDriversThunk(fetchParams));
-    } else {
-      logDebug("Skipping fetch — no vendor selected");
     }
   }, [fetchParams, dispatch]);
 
-  // Reset vendor when user type changes
   useEffect(() => {
     if (isVendorUser) setSelectedVendor(null);
   }, [isVendorUser]);
@@ -150,9 +141,7 @@ const NewDriverManagement = () => {
   // ----------------------------
   // Search handlers
   // ----------------------------
-  const handleSearchInputChange = (e) => {
-    setSearchInput(e.target.value);
-  };
+  const handleSearchInputChange = (e) => setSearchInput(e.target.value);
 
   const handleClearSearch = () => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -194,6 +183,17 @@ const NewDriverManagement = () => {
   const handleSubmitSuccess = (message) => {
     toast.success(message);
     if (fetchParams) dispatch(NewfetchDriversThunk(fetchParams));
+  };
+
+  // ── History modal handlers ── NEW
+  const handleOpenHistory = (driver) => {
+    setHistoryDriver(driver);
+    setShowHistoryModal(true);
+  };
+
+  const handleCloseHistory = () => {
+    setShowHistoryModal(false);
+    setHistoryDriver(null);
   };
 
   // ----------------------------
@@ -277,16 +277,14 @@ const NewDriverManagement = () => {
     }
     logDebug("Exporting drivers with params:", exportParams);
     toast.info("Export feature coming soon.");
-    // exportDriversCSV(exportParams);
   };
 
   // ----------------------------
   // Derived flags
   // ----------------------------
   const shouldShowNoVendorMessage = !isVendorUser && !selectedVendor;
-  const isValidFetchState        = isVendorUser || !!selectedVendor;
-  const isSearchBelowMinChars    = searchInput.trim().length === 1;
-  const hasDataToDisplay         = drivers.length > 0;
+  const isValidFetchState         = isVendorUser || !!selectedVendor;
+  const isSearchBelowMinChars     = searchInput.trim().length === 1;
 
   return (
     <div className="p-1">
@@ -348,17 +346,13 @@ const NewDriverManagement = () => {
               disabled={shouldShowNoVendorMessage}
             />
 
-            {/* ── Vendor dropdown — plain select, no react-select overlay bug ── */}
             {!isVendorUser && (
               <div className="min-w-[200px]">
                 <select
                   value={selectedVendor?.value ?? ""}
                   onChange={(e) => {
                     const val = e.target.value;
-                    if (!val) {
-                      handleVendorSelect(null);
-                      return;
-                    }
+                    if (!val) { handleVendorSelect(null); return; }
                     const opt = vendorOptions.find(
                       (o) => String(o.value) === String(val)
                     );
@@ -394,7 +388,9 @@ const NewDriverManagement = () => {
       {/* ── No vendor selected ── */}
       {shouldShowNoVendorMessage && (
         <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
-          <p className="text-yellow-800 font-medium">Please select a vendor to view drivers</p>
+          <p className="text-yellow-800 font-medium">
+            Please select a vendor to view drivers
+          </p>
           <p className="text-yellow-600 text-sm mt-1">
             Choose a vendor from the dropdown above to see their drivers
           </p>
@@ -404,7 +400,6 @@ const NewDriverManagement = () => {
       {/* ── Main content ── */}
       {isValidFetchState && (
         <>
-          {/* Results count */}
           {!loading && (
             <div className="mt-4 mb-2 text-sm text-gray-600">
               Showing {drivers.length} of {totalItems} drivers
@@ -418,17 +413,20 @@ const NewDriverManagement = () => {
                 </span>
               ) : null}
               {searchTerm.length >= 2 && (
-                <span className="ml-2 text-green-600">| Search: "{searchTerm}"</span>
+                <span className="ml-2 text-green-600">
+                  | Search: "{searchTerm}"
+                </span>
               )}
             </div>
           )}
 
-          {/* Driver list — handles loading, error and empty states internally */}
+          {/* ← onHistory wired up here */}
           <NewDriverList
             drivers={drivers}
             loading={loading}
             onEdit={handleOpenEditModal}
             onView={handleOpenViewModal}
+            onHistory={handleOpenHistory}
             onStatusToggle={handleStatusToggle}
             showPagination={true}
             currentPage={currentPage}
@@ -464,6 +462,46 @@ const NewDriverManagement = () => {
         showUserColumn={true}
         selectedCompany={tenantId}
       />
+
+      {/* ── Driver History Modal ── NEW */}
+      {showHistoryModal && historyDriver && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={handleCloseHistory}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 sticky top-0 bg-white z-10">
+              <div>
+                <h2 className="text-base font-semibold text-gray-800">
+                  Driver History
+                </h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {historyDriver.name ?? `Driver #${historyDriver.driver_id}`}
+                  {historyDriver.code && (
+                    <span className="ml-2 text-blue-500">· {historyDriver.code}</span>
+                  )}
+                </p>
+              </div>
+              <button
+                onClick={handleCloseHistory}
+                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* History tab content */}
+            <div className="px-6">
+              <DriverHistoryTab driverId={historyDriver.driver_id} />
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
