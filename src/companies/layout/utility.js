@@ -74,6 +74,9 @@ export const pathTitleMap = {
 "/notification":          "Alert Notifications",
 "/role-permission":      "User Role & Permission",
 "/escort-management":    "Escort Management",
+"/nodal-points":         "Nodal Points",
+"/reports-management":   "Reports Management",
+"/chats":              "Chat Management",
 
 };
 

@@ -29,8 +29,7 @@ const WeekOffModal = ({
 
   // Fetch week off data when modal opens OR updateLevel changes
   useEffect(() => {
-    logDebug("WeekOffModal - useEffect triggered. show:", show, "employee:", employee);
-
+    // logDebug("WeekOffModal - useEffect triggered. show:", show, "employee:", employee);
     const fetchWeekOffData = async () => {
       if (!show || !employee?.employee_id) return;
 
@@ -297,7 +296,7 @@ const WeekOffModal = ({
             </button>
 
             <ReusableButton
-              module="weekoff-config"
+              module="weekoff_config"
               action="update"
               buttonName={isProcessing ? 'Updating...' : 'Update Week Off'}
               onClick={handleSubmit}

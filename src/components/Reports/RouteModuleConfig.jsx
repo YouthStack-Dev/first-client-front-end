@@ -1,5 +1,6 @@
-// RouteModuleConfig.jsx
+import { useState, useEffect } from "react";
 import { ROUTE_STATUS_OPTIONS } from "../../staticData/StaticReport";
+import { API_CLIENT } from "../../Api/API_Client";
 
 const RouteModuleConfig = ({
   formData,
@@ -9,6 +10,41 @@ const RouteModuleConfig = ({
   errors,
   loading,
 }) => {
+  const [vehicleTypes, setVehicleTypes] = useState([]);
+  const [vehicleTypesLoading, setVehicleTypesLoading] = useState(false);
+
+  useEffect(() => {
+    // Clear selected vehicle type whenever vendor changes
+    handleChange("vehicle_type", "");
+
+    if (!formData.vendor_id) {
+      setVehicleTypes([]);
+      return;
+    }
+
+    const fetchVehicleTypes = async () => {
+      try {
+        setVehicleTypesLoading(true);
+        const response = await API_CLIENT.get(
+          `/vehicle-types/?vendor_id=${formData.vendor_id}`
+        );
+        setVehicleTypes(
+          response.data?.data?.items?.map((v) => ({
+            value: v.vehicle_type_id,
+            label: v.name,
+          })) || []
+        );
+      } catch (error) {
+        console.error("Error fetching vehicle types:", error);
+        setVehicleTypes([]);
+      } finally {
+        setVehicleTypesLoading(false);
+      }
+    };
+
+    fetchVehicleTypes();
+  }, [formData.vendor_id]);
+
   return (
     <>
       {/* Route Status */}
@@ -75,22 +111,31 @@ const RouteModuleConfig = ({
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             Vehicle Type
           </label>
-          <select
-            value={formData.vehicle_type || ""}
-            onChange={(e) => handleChange("vehicle_type", e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-            disabled={loading}
-          >
-            <option value="">All Types</option>
-            <option value="suv">SUV</option>
-            <option value="sedan">Sedan</option>
-            <option value="van">Van</option>
-            <option value="truck">Truck</option>
-          </select>
+          {!formData.vendor_id ? (
+            <div className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-400 text-sm">
+              Select a vendor first
+            </div>
+          ) : (
+            <select
+              value={formData.vehicle_type || ""}
+              onChange={(e) => handleChange("vehicle_type", e.target.value)}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              disabled={loading || vehicleTypesLoading}
+            >
+              <option value="">
+                {vehicleTypesLoading ? "Loading..." : "All Types"}
+              </option>
+              {vehicleTypes.map((v) => (
+                <option key={v.value} value={v.value}>
+                  {v.label}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 
-      {/* Include Unrouted Bookings - Added for route module */}
+      {/* Include Unrouted Bookings */}
       <div className="flex items-center gap-3">
         <label className="flex items-center gap-3 cursor-pointer">
           <input

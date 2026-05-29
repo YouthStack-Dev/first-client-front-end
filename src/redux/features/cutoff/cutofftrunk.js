@@ -53,7 +53,7 @@ export const saveCutoffThunk = createAsyncThunk(
   }
 );
 
-// Tenant Config endpoints (renamed from Escort Config)
+// Tenant Config endpoints
 export const fetchEscortConfigThunk = createAsyncThunk(
   "cutoff/fetchTenantConfig",
   async (_, { rejectWithValue }) => {
@@ -90,7 +90,22 @@ export const saveEscortConfigThunk = createAsyncThunk(
         login_deboarding_otp: formData.login_deboarding_otp || false,
         logout_boarding_otp: formData.logout_boarding_otp || false,
         logout_deboarding_otp: formData.logout_deboarding_otp || false,
-        speed_limit_kmph: formData.speed_limit_kmph ?? 0, 
+
+        // Vehicle & operational
+        speed_limit_kmph: formData.speed_limit_kmph ?? 0,
+        schedule_reminder_enabled: formData.schedule_reminder_enabled ?? false,
+        schedule_reminder_minutes: formData.schedule_reminder_minutes ?? 30,
+        one_trip_per_shift_enabled: formData.one_trip_per_shift_enabled ?? false,
+        auto_move_on_conflict: formData.auto_move_on_conflict ?? false,
+
+        // ── NEW: driver duty hours ──────────────────────────────────────────
+        driver_max_duty_minutes: formData.driver_max_duty_minutes ?? 600,
+        driver_rest_enforcement: formData.driver_rest_enforcement ?? "warn",
+
+        // ── NEW: delay & dark hour settings ─────────────────────────────────
+        dark_hour_boarding_mode: formData.dark_hour_boarding_mode ?? "off",
+        delay_driver_grace_minutes: formData.delay_driver_grace_minutes ?? 10,
+        delay_employee_grace_minutes: formData.delay_employee_grace_minutes ?? 5,
       };
 
       console.log("Saving tenant config payload:", payload);

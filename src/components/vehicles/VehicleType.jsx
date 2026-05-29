@@ -10,7 +10,6 @@ import ReusableButton from "../ui/ReusableButton";
 import { Modal } from "../../components/SmallComponents";
 import InputField from "../InputField";
 import AuditLogsModal from "../modals/AuditLogsModal";
-import { useSearchParams } from "react-router-dom";
 import VehicleTypeList from "../vehicles/VehicleTypeList";
 
 import {
@@ -29,48 +28,45 @@ import {
 
 import { toast } from "react-toastify";
 
-const MODULE = "vehicle-type";
+// ─── constants ────────────────────────────────────────────────────────────────
 
-const useDebounce = (value, delay) => {
+const MODULE = "vehicle_type";
+
+// ─── debounce hook ────────────────────────────────────────────────────────────
+
+const useDebounce = (value, delay = 500) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
-
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
   }, [value, delay]);
-
   return debouncedValue;
 };
+
+// ─── component ────────────────────────────────────────────────────────────────
 
 const ManageVehicleTypes = () => {
   const dispatch = useDispatch();
 
-  /* ================= USER ================= */
+  /* ── user ── */
   const user = useSelector(selectCurrentUser);
   const isVendorUser = user?.type === "vendor";
-
-  /* ================= DATA ================= */
-  const vehicleTypes = useSelector(vehicleTypeSelectors.selectAll);
-  const loading = useSelector(selectVehicleTypesLoading);
-
-  const { vendorOptions } = useVendorOptions(null, !isVendorUser);
-
   const tenantId =
     user?.employee?.tenant_id ||
     user?.vendor_user?.tenant_id ||
     user?.tenant_id;
+
+  /* ── data ── */
+  const vehicleTypes = useSelector(vehicleTypeSelectors.selectAll);
+  const loading = useSelector(selectVehicleTypesLoading);
+  const { vendorOptions } = useVendorOptions(null, !isVendorUser);
 
   const getVendorLabelById = useCallback(
     (id) => vendorOptions.find((v) => v.value === id)?.label || "—",
     [vendorOptions]
   );
 
-  /* ================= STATE ================= */
+  /* ── state ── */
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");
   const [selectedVehicleType, setSelectedVehicleType] = useState(null);
@@ -87,7 +83,7 @@ const ManageVehicleTypes = () => {
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  /* ================= PARAM BUILDER ================= */
+  /* ── fetch ── */
   const buildFetchParams = useCallback(() => {
     const params = {};
 
@@ -99,45 +95,47 @@ const ManageVehicleTypes = () => {
       return null;
     }
 
-    if (debouncedSearchTerm.trim()) {
-      params.name = debouncedSearchTerm.trim();
-    }
-
+    if (debouncedSearchTerm.trim()) params.name = debouncedSearchTerm.trim();
     if (status === "Active") params.active_only = 1;
     if (status === "Inactive") params.active_only = 0;
 
     return params;
-  }, [
-    isVendorUser,
-    user?.vendor_id,
-    selectedVendor,
-    debouncedSearchTerm,
-    status,
-  ]);
+  }, [isVendorUser, user?.vendor_id, selectedVendor, debouncedSearchTerm, status]);
 
-  /* ================= FETCH ================= */
   useEffect(() => {
     const params = buildFetchParams();
-    if (params) {
-      dispatch(fetchVehicleTypesThunk(params));
-    }
+    if (params) dispatch(fetchVehicleTypesThunk(params));
   }, [buildFetchParams, dispatch]);
 
+  /* ── client-side pagination (vehicle types are fetched all at once) ── */
+  const totalItems = vehicleTypes.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+
+  // clamp currentPage if data shrinks
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(1);
+  }, [totalPages, currentPage]);
+
+  const paginatedVehicleTypes = vehicleTypes.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  /* ── derived ── */
   const shouldShowNoVendorMessage = !isVendorUser && !selectedVendor;
 
-  /* ================= FILTERS ================= */
+  /* ── handlers ── */
   const handleClearFilters = () => {
     setSearchTerm("");
     setStatus("All");
+    setCurrentPage(1);
   };
 
-  /* ================= MODAL ================= */
   const handleOpenCreateModal = () => {
     if (!isVendorUser && !selectedVendor) {
       toast.warning("Please select a vendor first");
       return;
     }
-
     setModalMode("create");
     setSelectedVehicleType({
       name: "",
@@ -149,11 +147,8 @@ const ManageVehicleTypes = () => {
     setIsModalOpen(true);
   };
 
-  // ✅ UPDATED: handleSubmit now shows API response message instead of hardcoded text
-  /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       const payload = {
         name: selectedVehicleType.name,
@@ -162,12 +157,9 @@ const ManageVehicleTypes = () => {
         is_active: selectedVehicleType.is_active,
       };
 
-      if (!isVendorUser) {
-        payload.vendor_id = selectedVehicleType.vendor_id;
-      }
+      if (!isVendorUser) payload.vendor_id = selectedVehicleType.vendor_id;
 
       if (modalMode === "edit") {
-        // ✅ UPDATED: capture result and show API message
         const result = await dispatch(
           updateVehicleType({
             id: selectedVehicleType.vehicle_type_id,
@@ -176,9 +168,7 @@ const ManageVehicleTypes = () => {
           })
         ).unwrap();
         toast.success(result?.message || "Vehicle type updated");
-
       } else {
-        // ✅ UPDATED: capture result and show API message
         const result = await dispatch(
           createVehicleType({
             payload,
@@ -190,7 +180,6 @@ const ManageVehicleTypes = () => {
 
       const params = buildFetchParams();
       if (params) dispatch(fetchVehicleTypesThunk(params));
-
       setIsModalOpen(false);
     } catch (err) {
       console.error(err);
@@ -198,7 +187,22 @@ const ManageVehicleTypes = () => {
     }
   };
 
-  /* ================= UI ================= */
+  const handleStatusToggle = async (row) => {
+    try {
+      const result = await dispatch(
+        toggleVehicleTypeStatus({
+          id: row.vehicle_type_id,
+          vendor_id: row.vendor_id,
+          is_active: !row.is_active,
+        })
+      ).unwrap();
+      toast.success(result?.message || "Status updated successfully");
+    } catch (error) {
+      toast.error(typeof error === "string" ? error : "Failed to update status");
+    }
+  };
+
+  /* ── render ── */
   return (
     <div className="p-4 md:p-6">
       <ToolBar
@@ -209,7 +213,6 @@ const ManageVehicleTypes = () => {
         searchBar={
           <div className="flex gap-3 w-full">
             <SearchInput
-              key="search"
               placeholder="Search vehicle types..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -230,7 +233,7 @@ const ManageVehicleTypes = () => {
               <ReusableButton
                 module="vehicle"
                 action="read"
-                buttonName={"History"}
+                buttonName="History"
                 icon={History}
                 title="Audit History"
                 disabled={shouldShowNoVendorMessage}
@@ -248,11 +251,11 @@ const ManageVehicleTypes = () => {
                   options={vendorOptions}
                   value={selectedVendor}
                   onChange={setSelectedVendor}
-                  isSearchable={true}
+                  isSearchable
+                  isClearable
                   placeholder="Select vendor..."
                   className="react-select-container"
                   classNamePrefix="react-select"
-                  isClearable={true}
                   menuPortalTarget={document.body}
                   styles={{
                     menuPortal: (base) => ({ ...base, zIndex: 9999 }),
@@ -263,7 +266,7 @@ const ManageVehicleTypes = () => {
 
             <SelectField
               value={status}
-              onChange={(newStatus) => setStatus(newStatus)}
+              onChange={setStatus}
               options={[
                 { label: "All Status", value: "All" },
                 { label: "Active", value: "Active" },
@@ -275,6 +278,7 @@ const ManageVehicleTypes = () => {
         }
       />
 
+      {/* no vendor selected */}
       {shouldShowNoVendorMessage && (
         <div className="mt-6 p-4 bg-yellow-50 border border-yellow-300 rounded-lg text-center">
           <p className="text-yellow-800 font-medium">
@@ -283,17 +287,18 @@ const ManageVehicleTypes = () => {
         </div>
       )}
 
+      {/* list — isLoading passed down, skeleton handled inside VehicleTypeList */}
       {!shouldShowNoVendorMessage && (
         <VehicleTypeList
-          vehicleTypes={vehicleTypes}
-          loading={loading}
+          vehicleTypes={paginatedVehicleTypes}
+          isLoading={loading}
           currentPage={currentPage}
-          totalPages={Math.ceil(vehicleTypes.length / itemsPerPage)}
-          totalItems={vehicleTypes.length}
+          totalPages={totalPages}
+          totalItems={totalItems}
           itemsPerPage={itemsPerPage}
           onPageChange={setCurrentPage}
-          onItemsPerPageChange={setItemsPerPage}
-          showPagination={true}
+          onItemsPerPageChange={(n) => { setItemsPerPage(n); setCurrentPage(1); }}
+          showPagination
           onView={(row) => {
             setSelectedVehicleType(row);
             setModalMode("view");
@@ -304,24 +309,11 @@ const ManageVehicleTypes = () => {
             setModalMode("edit");
             setIsModalOpen(true);
           }}
-          // ✅ UPDATED: added async/await + toast on success and failure
-          onStatusToggle={async (row) => {
-            try {
-              const result = await dispatch(
-                toggleVehicleTypeStatus({
-                  id: row.vehicle_type_id,
-                  vendor_id: row.vendor_id,
-                  is_active: !row.is_active,
-                })
-              ).unwrap();
-              toast.success(result?.message || "Status updated successfully");
-            } catch (error) {
-              toast.error(typeof error === "string" ? error : "Failed to update status");
-            }
-          }}
+          onStatusToggle={handleStatusToggle}
         />
       )}
 
+      {/* modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -351,10 +343,7 @@ const ManageVehicleTypes = () => {
                   (v) => v.value === selectedVehicleType?.vendor_id
                 )}
                 onChange={(opt) =>
-                  setSelectedVehicleType((p) => ({
-                    ...p,
-                    vendor_id: opt?.value,
-                  }))
+                  setSelectedVehicleType((p) => ({ ...p, vendor_id: opt?.value }))
                 }
               />
             )}
@@ -388,23 +377,17 @@ const ManageVehicleTypes = () => {
           value={selectedVehicleType?.description || ""}
           readOnly={modalMode === "view"}
           onChange={(e) =>
-            setSelectedVehicleType((p) => ({
-              ...p,
-              description: e.target.value,
-            }))
+            setSelectedVehicleType((p) => ({ ...p, description: e.target.value }))
           }
         />
 
         <div className="flex gap-2 mt-3">
           <input
             type="checkbox"
-            checked={selectedVehicleType?.is_active}
+            checked={selectedVehicleType?.is_active ?? true}
             disabled={modalMode === "view"}
             onChange={(e) =>
-              setSelectedVehicleType((p) => ({
-                ...p,
-                is_active: e.target.checked,
-              }))
+              setSelectedVehicleType((p) => ({ ...p, is_active: e.target.checked }))
             }
           />
           <label>Is Active</label>

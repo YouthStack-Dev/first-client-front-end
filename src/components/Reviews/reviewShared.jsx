@@ -1,7 +1,3 @@
-// reviewShared.jsx
-// All shared atoms, layout shells, and reusable components.
-// Import from this file in every tab component.
-
 import React from "react";
 import Select from "react-select";
 import { Star } from "lucide-react";

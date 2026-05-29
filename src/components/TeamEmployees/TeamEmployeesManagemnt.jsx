@@ -206,11 +206,6 @@ const TeamEmployeesManagement = () => {
     navigate(`/companies/booking?employeeId=${employee.employee_id}&teamId=${teamId}`);
   };
 
-  // Handle search input change from Select component
-  const handleSearchInputChange = (inputValue) => {
-    setSearchTerm(inputValue || "");
-  };
-
   // Filter employees based on search term and status filter
   const filteredEmployees = useMemo(() => {
     if (!allEmployees || allEmployees.length === 0) return [];
@@ -332,24 +327,23 @@ const TeamEmployeesManagement = () => {
         className="p-4 bg-white border-b rounded-t-lg shadow-sm"
         searchBar={
           <div className="flex flex-col sm:flex-row gap-3 w-full">
-            {/* Search Select */}
-            <div className="flex-1">
-              <Select
-                isSearchable={true}
-                isClearable={true}
+            {/* Search Input */}
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by name, mobile, email, or code..."
-                onInputChange={handleSearchInputChange}
-                styles={selectStyles}
-                value={
-                  searchTerm ? { value: searchTerm, label: searchTerm } : null
-                }
-                onChange={() => {
-                  // Clear search when selection is cleared
-                  setSearchTerm("");
-                }}
-                options={[]}
-                menuIsOpen={false}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-400 hover:border-gray-400"
               />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              )}
             </div>
 
             {/* Status Filter */}
@@ -490,10 +484,7 @@ const TeamEmployeesManagement = () => {
                     key={employee.employee_id}
                     className="hover:bg-gray-50 transition-colors"
                   >
-                    <td
-                      className="px-6 py-4 whitespace-nowrap"
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <input
                         type="checkbox"
                         checked={selectedEmployeeIds.includes(
@@ -572,10 +563,8 @@ const TeamEmployeesManagement = () => {
                         )}
                       </div>
                     </td>
-                    <td
-                      className="px-6 py-4 whitespace-nowrap text-sm font-medium"
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    {/* ── FIX: removed onClick={(e) => e.stopPropagation()} from this td ── */}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center gap-2">
                         <ReusableButton
                           module="employee"
@@ -584,7 +573,7 @@ const TeamEmployeesManagement = () => {
                           title="View Employee"
                           onClick={() => handleView(employee)}
                           className="text-gray-600 hover:text-blue-600 transition-colors"
-                          iconSize={16}
+                          size={16}
                         />
                         <ReusableButton
                           module="employee"
@@ -593,7 +582,7 @@ const TeamEmployeesManagement = () => {
                           title="Week Off"
                           onClick={() => handleWeekOffOpen(employee)}
                           className="text-gray-600 hover:text-green-600 transition-colors"
-                          iconSize={16}
+                          size={16}
                         />
                         <ReusableButton
                           module="employee"
@@ -602,7 +591,7 @@ const TeamEmployeesManagement = () => {
                           title="Book"
                           onClick={() => handleBook(employee)}
                           className="text-gray-600 hover:text-purple-600 transition-colors"
-                          iconSize={16}
+                          size={16}
                         />
                       </div>
                     </td>

@@ -31,7 +31,20 @@ const cutoffSlice = createSlice({
       login_deboarding_otp: false,
       logout_boarding_otp: false,
       logout_deboarding_otp: false,
-      speed_limit_kmph: 0, // ← vehicle limit
+      speed_limit_kmph: 0,
+      schedule_reminder_enabled: false,
+      schedule_reminder_minutes: 30,
+      one_trip_per_shift_enabled: false,
+      auto_move_on_conflict: false,
+
+      // ── NEW: driver duty hours ────────────────────────────────────────────
+      driver_max_duty_minutes: 600,
+      driver_rest_enforcement: "warn",
+
+      // ── NEW: delay & dark hour settings ─────────────────────────────────
+      dark_hour_boarding_mode: "off",
+      delay_driver_grace_minutes: 10,
+      delay_employee_grace_minutes: 5,
     },
     status: "idle",       // idle | loading | succeeded | failed | saving | saved
     tenantStatus: "idle", // idle | loading | succeeded | failed | saving | saved
@@ -194,7 +207,17 @@ const mapTenantApiDataToForm = (apiData) => {
     login_deboarding_otp: false,
     logout_boarding_otp: false,
     logout_deboarding_otp: false,
-    speed_limit_kmph: 0, // ← added
+    speed_limit_kmph: 0,
+    schedule_reminder_enabled: false,
+    schedule_reminder_minutes: 30,
+    one_trip_per_shift_enabled: false,
+    auto_move_on_conflict: false,
+    // ── NEW ────────────────────────────────────────────────────────────────
+    driver_max_duty_minutes: 600,
+    driver_rest_enforcement: "warn",
+    dark_hour_boarding_mode: "off",
+    delay_driver_grace_minutes: 10,
+    delay_employee_grace_minutes: 5,
   };
 
   const tenantData = apiData?.config || apiData;
@@ -215,7 +238,18 @@ const mapTenantApiDataToForm = (apiData) => {
     logout_deboarding_otp: tenantData?.logout_deboarding_otp,
 
     // Vehicle limits
-    speed_limit_kmph: tenantData?.speed_limit_kmph, // ← added
+    speed_limit_kmph: tenantData?.speed_limit_kmph,
+    schedule_reminder_enabled: tenantData?.schedule_reminder_enabled,
+    schedule_reminder_minutes: tenantData?.schedule_reminder_minutes,
+    one_trip_per_shift_enabled: tenantData?.one_trip_per_shift_enabled,
+    auto_move_on_conflict: tenantData?.auto_move_on_conflict,
+
+    // ── NEW ────────────────────────────────────────────────────────────────
+    driver_max_duty_minutes: tenantData?.driver_max_duty_minutes,
+    driver_rest_enforcement: tenantData?.driver_rest_enforcement,
+    dark_hour_boarding_mode: tenantData?.dark_hour_boarding_mode,
+    delay_driver_grace_minutes: tenantData?.delay_driver_grace_minutes,
+    delay_employee_grace_minutes: tenantData?.delay_employee_grace_minutes,
   };
 
   const formData = {};
@@ -240,6 +274,7 @@ const mapTenantApiDataToForm = (apiData) => {
 };
 
 // ── Helper: combine both mappings (backward compatibility) ─────────────────
+
 const mapApiDataToForm = (cutoffData, tenantData) => {
   return {
     ...mapCutoffApiDataToForm(cutoffData || {}),

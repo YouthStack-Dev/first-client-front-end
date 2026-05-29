@@ -146,10 +146,10 @@ export const PermissionPanel = ({
       team: "👨‍👩‍👧‍👦",
       "admin.tenant": "🏢",
       vehicle: "🚗",
-      "vehicle-type": "🔧",
+      "vehicle_type": "🔧",
       vendor: "🏪",
-      "vendor-user": "👤",
-      "weekoff-config": "📅",
+      "vendor_user": "👤",
+      "weekoff_config": "📅",
       permissions: "🔐",
       policy: "📜",
       role: "🎭"

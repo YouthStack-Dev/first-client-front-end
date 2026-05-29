@@ -284,9 +284,9 @@ const BookingHistory = ({
         <p className="text-sm text-gray-600">
           Showing {bookings.length} booking{bookings.length !== 1 ? "s" : ""}
         </p>
-        {hasActiveFilters && (
+        {/* {hasActiveFilters && (
           <p className="text-sm text-blue-600 font-medium">Filters Active</p>
-        )}
+        )} */}
       </div>
 
       {/* List */}
