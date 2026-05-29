@@ -1,74 +1,35 @@
 import React from "react";
 import SearchableSelect from "./SearchableSelect";
-import { logDebug } from "../../utils/logger";
 
-const CommonConfig = ({
+const CommonFilters = ({
   formData,
   handleChange,
   errors,
   loading,
-  userType = "admin",
-  currentTenant = "",
-  onTenantChange,
+  showTenant = true,
+  showShift = false,
+  showVendor = false,
   tenants = [],
+  tenantsLoading = false,
   shifts = [],
   vendors = [],
   fetchShiftsLoading = false,
   fetchVendorsLoading = false,
+  isSuperAdmin = false,
+  currentUserTenant = "",
 }) => {
-  const isSuperAdmin = userType === "admin";
-  const showTenantField = isSuperAdmin;
-
-  // Handle tenant selection with immediate API call
   const handleTenantSelect = (value) => {
-    // Update the form data
     handleChange("tenant_id", value);
-
-    // Clear dependent fields when tenant changes
     handleChange("shift_id", "");
     handleChange("vendor_id", "");
-
-    // Immediately trigger the API call for shifts and vendors
-    if (onTenantChange && value) {
-      onTenantChange(value);
-    }
   };
 
-  // Set initial tenant for non-superadmin users on component mount
-  React.useEffect(() => {
-    if (!isSuperAdmin && currentTenant && !formData.tenant_id) {
-      logDebug("Setting initial tenant for non-superadmin:", currentTenant);
-      handleChange("tenant_id", currentTenant);
-    }
-  }, [isSuperAdmin, currentTenant, formData.tenant_id, handleChange]);
-
-  // Static options as fallback
-  const staticShiftOptions = [
-    { value: "", label: "All Shifts" },
-    { value: "1", label: "Shift 1 - Morning (6 AM - 2 PM)" },
-    { value: "2", label: "Shift 2 - Afternoon (2 PM - 10 PM)" },
-    { value: "3", label: "Shift 3 - Night (10 PM - 6 AM)" },
-  ];
-
-  const staticVendorOptions = [
-    { value: "", label: "All Vendors" },
-    { value: "1", label: "Vendor 1 - Quick Transport Co." },
-    { value: "2", label: "Vendor 2 - Safe Rides Inc." },
-    { value: "3", label: "Vendor 3 - City Movers Ltd." },
-  ];
-
-  // Use dynamic data if available, otherwise static data
-  const shiftOptions = shifts.length > 0 ? shifts : staticShiftOptions;
-  const vendorOptions = vendors.length > 0 ? vendors : staticVendorOptions;
-
-  // Determine if shift/vendor dropdowns should be disabled
-  const isShiftsDisabled =
-    loading || fetchShiftsLoading || (isSuperAdmin && !formData.tenant_id);
-  const isVendorsDisabled =
-    loading || fetchVendorsLoading || (isSuperAdmin && !formData.tenant_id);
+  const isShiftsDisabled = loading || fetchShiftsLoading;
+  const isVendorsDisabled = loading || fetchVendorsLoading;
 
   return (
     <div className="space-y-4">
+
       {/* Date Range */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -109,8 +70,8 @@ const CommonConfig = ({
         </div>
       </div>
 
-      {/* Tenant Field - Only for Super Admin */}
-      {showTenantField && (
+      {/* Tenant — super admin only */}
+      {showTenant && isSuperAdmin && (
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             Tenant{" "}
@@ -122,91 +83,25 @@ const CommonConfig = ({
             options={tenants}
             value={formData.tenant_id}
             onChange={handleTenantSelect}
-            disabled={loading}
-            placeholder="Select Tenant"
+            disabled={loading || tenantsLoading}
+            placeholder={
+              tenantsLoading ? "Loading tenants..." : "Select Tenant"
+            }
             className={errors.tenant_id ? "border-red-300 bg-red-50" : ""}
           />
-
-          {/* Loading indicator */}
-          {formData.tenant_id &&
-            (fetchShiftsLoading || fetchVendorsLoading) && (
-              <div className="flex items-center gap-2 mt-2">
-                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-indigo-600"></div>
-                <p className="text-indigo-600 text-xs">
-                  Loading shifts and vendors...
-                </p>
-              </div>
-            )}
-
-          {/* Helper text */}
-          {!formData.tenant_id && (
+          {!formData.tenant_id && !tenantsLoading && (
             <p className="text-gray-500 text-xs mt-1">
-              Select a tenant to load available shifts and vendors
+              Select a tenant to filter data
             </p>
           )}
-
           {errors.tenant_id && (
             <p className="text-red-500 text-xs mt-1">{errors.tenant_id}</p>
           )}
         </div>
       )}
 
-      {/* Shift Field */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Shift
-        </label>
-        <SearchableSelect
-          options={shiftOptions}
-          value={formData.shift_id}
-          onChange={(value) => handleChange("shift_id", value)}
-          disabled={isShiftsDisabled}
-          placeholder={
-            isShiftsDisabled ? "Select tenant first..." : "Select Shift"
-          }
-          className={errors.shift_id ? "border-red-300 bg-red-50" : ""}
-        />
-        {isShiftsDisabled && !fetchShiftsLoading && (
-          <p className="text-gray-500 text-xs mt-1">
-            {isSuperAdmin && !formData.tenant_id
-              ? "Select a tenant to enable shifts"
-              : "Loading shifts..."}
-          </p>
-        )}
-        {errors.shift_id && (
-          <p className="text-red-500 text-xs mt-1">{errors.shift_id}</p>
-        )}
-      </div>
-
-      {/* Vendor Field */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Vendor
-        </label>
-        <SearchableSelect
-          options={vendorOptions}
-          value={formData.vendor_id}
-          onChange={(value) => handleChange("vendor_id", value)}
-          disabled={isVendorsDisabled}
-          placeholder={
-            isVendorsDisabled ? "Select tenant first..." : "Select Vendor"
-          }
-          className={errors.vendor_id ? "border-red-300 bg-red-50" : ""}
-        />
-        {isVendorsDisabled && !fetchVendorsLoading && (
-          <p className="text-gray-500 text-xs mt-1">
-            {isSuperAdmin && !formData.tenant_id
-              ? "Select a tenant to enable vendors"
-              : "Loading vendors..."}
-          </p>
-        )}
-        {errors.vendor_id && (
-          <p className="text-red-500 text-xs mt-1">{errors.vendor_id}</p>
-        )}
-      </div>
-
-      {/* Display current tenant info for non-superadmin users */}
-      {!isSuperAdmin && currentTenant && (
+      {/* Current tenant info — non-superadmin */}
+      {showTenant && !isSuperAdmin && currentUserTenant && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <div className="flex items-start gap-2">
             <svg
@@ -222,18 +117,18 @@ const CommonConfig = ({
             </svg>
             <div>
               <p className="text-sm text-blue-800 font-medium">
-                <strong>Current Tenant:</strong> {currentTenant}
+                <strong>Tenant:</strong> {currentUserTenant}
               </p>
               <p className="text-xs text-blue-600 mt-1">
-                Shifts and vendors are automatically filtered for your tenant.
+                Data is automatically filtered for your tenant.
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Empty state when no tenant selected for super admin */}
-      {isSuperAdmin && !formData.tenant_id && (
+      {/* Warning — super admin no tenant selected */}
+      {showTenant && isSuperAdmin && !formData.tenant_id && !tenantsLoading && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
           <div className="flex items-start gap-2">
             <svg
@@ -252,14 +147,58 @@ const CommonConfig = ({
                 Select a Tenant
               </p>
               <p className="text-xs text-yellow-600 mt-1">
-                Please select a tenant to view available shifts and vendors.
+                Please select a tenant to filter available data.
               </p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Shift */}
+      {showShift && (
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Shift
+          </label>
+          <SearchableSelect
+            options={shifts}
+            value={formData.shift_id}
+            onChange={(value) => handleChange("shift_id", value)}
+            disabled={isShiftsDisabled}
+            placeholder={
+              fetchShiftsLoading ? "Loading shifts..." : "Select Shift"
+            }
+            className={errors.shift_id ? "border-red-300 bg-red-50" : ""}
+          />
+          {errors.shift_id && (
+            <p className="text-red-500 text-xs mt-1">{errors.shift_id}</p>
+          )}
+        </div>
+      )}
+
+      {/* Vendor */}
+      {showVendor && (
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Vendor
+          </label>
+          <SearchableSelect
+            options={vendors}
+            value={formData.vendor_id}
+            onChange={(value) => handleChange("vendor_id", value)}
+            disabled={isVendorsDisabled}
+            placeholder={
+              fetchVendorsLoading ? "Loading vendors..." : "Select Vendor"
+            }
+            className={errors.vendor_id ? "border-red-300 bg-red-50" : ""}
+          />
+          {errors.vendor_id && (
+            <p className="text-red-500 text-xs mt-1">{errors.vendor_id}</p>
+          )}
         </div>
       )}
     </div>
   );
 };
 
-export default CommonConfig;
+export default CommonFilters;

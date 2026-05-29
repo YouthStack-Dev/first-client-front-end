@@ -639,7 +639,7 @@ const DriverFormModal = ({
                               <Building className="w-4 h-4 text-gray-500" />
                               <span className="text-sm">
                                 {formData.vendor_id
-                                  ? getVendorNameById(formData.vendor_id)
+                                  ? getVendorNameById(formData.vendor_id, vendors)
                                   : "No vendor assigned"}
                               </span>
                             </div>

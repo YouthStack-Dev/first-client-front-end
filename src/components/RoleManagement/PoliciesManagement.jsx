@@ -432,7 +432,7 @@ const PoliciesManagement = () => {
         {isSuperAdmin && !selectedTenant && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 text-blue-800 text-sm">
             <p className="font-semibold mb-1">📌 Select a tenant to proceed</p>
-            <p>Please select a tenant ID from the dropdown above to view and manage policies for that organization.</p>
+            <p>Please select a tenant ID from the dropdown above to view and manage tenant policies for that organization.</p>
           </div>
         )}
 

@@ -69,7 +69,7 @@ export const reportService = {
       }
 
       // Include unrouted parameter (default to false)
-      const includeUnrouted = params.include_unrouted ?? false;
+      const includeUnrouted = params.include_unrouted ?? true;
       queryParams.append("include_unrouted", includeUnrouted.toString());
 
       // Module-specific parameters

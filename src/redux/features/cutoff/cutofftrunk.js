@@ -101,6 +101,11 @@ export const saveEscortConfigThunk = createAsyncThunk(
         // ── NEW: driver duty hours ──────────────────────────────────────────
         driver_max_duty_minutes: formData.driver_max_duty_minutes ?? 600,
         driver_rest_enforcement: formData.driver_rest_enforcement ?? "warn",
+
+        // ── NEW: delay & dark hour settings ─────────────────────────────────
+        dark_hour_boarding_mode: formData.dark_hour_boarding_mode ?? "off",
+        delay_driver_grace_minutes: formData.delay_driver_grace_minutes ?? 10,
+        delay_employee_grace_minutes: formData.delay_employee_grace_minutes ?? 5,
       };
 
       console.log("Saving tenant config payload:", payload);

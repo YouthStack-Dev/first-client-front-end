@@ -10,7 +10,6 @@ import {
 import {
   Save,
   Clock,
-  Calendar,
   AlertTriangle,
   XCircle,
   CheckCircle,
@@ -22,8 +21,6 @@ import {
   Gauge,
   Bell,
   Timer,
-  ChevronRight,
-  BarChart2,
   Sliders,
 } from "lucide-react";
 import { logDebug } from "../../utils/logger";
@@ -54,7 +51,6 @@ const SectionHeader = ({ icon: Icon, title, color = "text-slate-600" }) => (
 const CutoffManagement = () => {
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState("cutoff");
-  const [activeCutoffTab, setActiveCutoffTab] = useState("standard");
 
   const { formData, status, error, data, tenantConfig, tenantStatus, tenantError } =
     useSelector((state) => state.cutoff);
@@ -82,6 +78,9 @@ const CutoffManagement = () => {
     auto_move_on_conflict,
     driver_max_duty_minutes,
     driver_rest_enforcement,
+    dark_hour_boarding_mode,
+    delay_driver_grace_minutes,
+    delay_employee_grace_minutes,
   } = formData || {};
 
   useEffect(() => {
@@ -100,6 +99,7 @@ const CutoffManagement = () => {
         speed_limit_kmph, schedule_reminder_enabled, schedule_reminder_minutes,
         one_trip_per_shift_enabled, auto_move_on_conflict,
         driver_max_duty_minutes, driver_rest_enforcement,
+        dark_hour_boarding_mode, delay_driver_grace_minutes, delay_employee_grace_minutes,
         [fieldName]: newValue,
       }));
     }
@@ -130,6 +130,7 @@ const CutoffManagement = () => {
       speed_limit_kmph, schedule_reminder_enabled, schedule_reminder_minutes,
       one_trip_per_shift_enabled, auto_move_on_conflict,
       driver_max_duty_minutes, driver_rest_enforcement,
+      dark_hour_boarding_mode, delay_driver_grace_minutes, delay_employee_grace_minutes,
     }));
   };
 
@@ -158,6 +159,7 @@ const CutoffManagement = () => {
       "login_boarding_otp","login_deboarding_otp","logout_boarding_otp","logout_deboarding_otp",
       "speed_limit_kmph","schedule_reminder_enabled","schedule_reminder_minutes",
       "one_trip_per_shift_enabled","auto_move_on_conflict","driver_max_duty_minutes","driver_rest_enforcement",
+      "dark_hour_boarding_mode","delay_driver_grace_minutes","delay_employee_grace_minutes",
     ].some((k) => String(formData[k]) !== String(tenantConfig[k]));
   };
 
@@ -195,8 +197,6 @@ const CutoffManagement = () => {
   }, [status, tenantStatus]);
 
   /* ── sub-components ── */
-
-  /** Inline label + two selects for h / min */
   const FieldRow = ({ icon: Icon, label, children }) => (
     <div className="group flex items-center gap-3 py-2.5 px-3 -mx-3 rounded-lg hover:bg-app-tertiary transition-colors">
       <Icon className="w-3.5 h-3.5 text-app-text-muted flex-shrink-0" />
@@ -282,7 +282,6 @@ const CutoffManagement = () => {
     );
   };
 
-  /* enforcement radio */
   const EnforcementModeInput = () => (
     <div className="pt-1 pb-0.5">
       <p className="text-xs font-medium text-app-text-secondary px-3 -mx-3 mb-2">Enforcement mode</p>
@@ -314,32 +313,29 @@ const CutoffManagement = () => {
     </div>
   );
 
-  /* ── Card wrapper ── */
   const Card = ({ children, className = "", span2 = false }) => (
     <div className={`bg-app-surface rounded-xl border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow ${span2 ? "lg:col-span-2" : ""} ${className}`}>
       {children}
     </div>
   );
 
-  /* ── Tab bar ── */
-  const TabBar = ({ tabs, active, onChange, size = "md" }) => (
-    <div className={`flex gap-1 bg-app-tertiary p-1 rounded-xl border border-app-border mb-4 ${size === "sm" ? "text-[11px]" : ""}`}>
+  const TabBar = ({ tabs, active, onChange }) => (
+    <div className="flex gap-1 bg-app-tertiary p-1 rounded-xl border border-app-border mb-4">
       {tabs.map(({ id, label, icon: Icon }) => (
         <button key={id} onClick={() => onChange(id)}
-          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all duration-200 focus:outline-none
+          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 focus:outline-none
             ${active === id
               ? "bg-app-surface text-app-text-primary shadow-sm border border-app-border"
               : "text-app-text-muted hover:text-app-text-secondary"
-            } ${size === "sm" ? "text-[11px]" : "text-xs"}`}
+            }`}
         >
-          {Icon && <Icon className={size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5"} />}
+          {Icon && <Icon className="w-3.5 h-3.5" />}
           {label}
         </button>
       ))}
     </div>
   );
 
-  /* ── overview stat box ── */
   const StatBox = ({ label, value, accent = false, warning = false }) => (
     <div className={`p-3 rounded-xl border ${
       warning ? "bg-amber-50 border-amber-200" :
@@ -353,7 +349,6 @@ const CutoffManagement = () => {
     </div>
   );
 
-  /* ── summary row ── */
   const SummaryRow = ({ label, value, pill }) => (
     <div className="flex items-center justify-between py-2 border-b border-app-border last:border-0">
       <span className="text-xs text-app-text-muted">{label}</span>
@@ -372,16 +367,9 @@ const CutoffManagement = () => {
     );
   }
 
-  /* ── main tabs config ── */
   const mainTabs = [
     { id: "cutoff", label: "Cutoff Management", icon: Clock },
     { id: "tenant", label: "Tenant Management", icon: Building },
-  ];
-
-  const cutoffSubTabs = [
-    { id: "standard", label: "Standard", icon: Calendar },
-    { id: "special",  label: "Special",  icon: AlertTriangle },
-    { id: "overview", label: "Overview",  icon: BarChart2 },
   ];
 
   return (
@@ -403,7 +391,6 @@ const CutoffManagement = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* unsaved indicator */}
             {activeTab === "cutoff" && hasCutoffChanges() && (
               <span className="text-[10px] font-medium text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full">
                 Unsaved changes
@@ -446,171 +433,102 @@ const CutoffManagement = () => {
 
         {/* ════════ CUTOFF TAB ════════ */}
         {activeTab === "cutoff" && (
-          <>
-            <TabBar tabs={cutoffSubTabs} active={activeCutoffTab} onChange={setActiveCutoffTab} size="sm" />
+          <div className="space-y-4">
 
-            {/* Standard */}
-            {activeCutoffTab === "standard" && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <Card>
-                  <SectionHeader icon={Clock} title="Booking cutoffs" color="text-app-primary" />
-                  <div className="space-y-0.5">
-                    <CompactTimeInput label="Login booking" fieldName="booking_login_cutoff" currentValue={booking_login_cutoff} icon={Clock} />
-                    <CompactTimeInput label="Logout booking" fieldName="booking_logout_cutoff" currentValue={booking_logout_cutoff} icon={Clock} />
-                  </div>
-                </Card>
-                <Card>
-                  <SectionHeader icon={XCircle} title="Cancellation cutoffs" color="text-red-500" />
-                  <div className="space-y-0.5">
-                    <CompactTimeInput label="Login cancellation" fieldName="cancel_login_cutoff" currentValue={cancel_login_cutoff} icon={XCircle} />
-                    <CompactTimeInput label="Logout cancellation" fieldName="cancel_logout_cutoff" currentValue={cancel_logout_cutoff} icon={XCircle} />
-                  </div>
-                </Card>
+            {/* ── Overview ── */}
+            <div className="rounded-xl border border-app-border bg-app-tertiary/50 p-4 space-y-3">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-1 h-4 rounded-full bg-app-primary" />
+                <p className="text-xs font-semibold text-app-text-primary tracking-tight">Overview</p>
+                <span className="text-[10px] text-app-text-muted">— current cutoff values at a glance</span>
               </div>
-            )}
 
-            {/* Special */}
-            {activeCutoffTab === "special" && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <Card>
-                  <SectionHeader icon={Shield} title="Medical emergency" color="text-red-500" />
-                  <div className="space-y-0.5">
-                    <CompactTimeInput label="Emergency cutoff" fieldName="medical_emergency_booking_cutoff" currentValue={medical_emergency_booking_cutoff} icon={Shield} />
-                    <CompactToggle label="Enable medical emergency" enabled={allow_medical_emergency_booking} onChange={() => handleToggle("allow_medical_emergency_booking")} />
-                  </div>
-                </Card>
-                <Card>
-                  <SectionHeader icon={Zap} title="Adhoc shifts" color="text-purple-500" />
-                  <div className="space-y-0.5">
-                    <CompactTimeInput label="Adhoc cutoff" fieldName="adhoc_booking_cutoff" currentValue={adhoc_booking_cutoff} icon={Zap} />
-                    <CompactToggle label="Enable adhoc booking" enabled={allow_adhoc_booking} onChange={() => handleToggle("allow_adhoc_booking")} />
-                  </div>
-                </Card>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <StatBox label="Login book"    value={booking_login_cutoff}  accent />
+                <StatBox label="Login cancel"  value={cancel_login_cutoff}   warning />
+                <StatBox label="Logout book"   value={booking_logout_cutoff} accent />
+                <StatBox label="Logout cancel" value={cancel_logout_cutoff}  warning />
               </div>
-            )}
 
-            {/* Overview */}
-            {activeCutoffTab === "overview" && (
-              <div className="space-y-4">
-                {/* stat row */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                  <StatBox label="Login book"     value={booking_login_cutoff}  accent />
-                  <StatBox label="Login cancel"   value={cancel_login_cutoff}   warning />
-                  <StatBox label="Logout book"    value={booking_logout_cutoff} accent />
-                  <StatBox label="Logout cancel"  value={cancel_logout_cutoff}  warning />
-                </div>
-
-                {/* special config cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                  {[
-                    { icon: Shield, label: "Medical emergency", cutoff: medical_emergency_booking_cutoff, active: allow_medical_emergency_booking, color: "text-red-500" },
-                    { icon: Zap,    label: "Adhoc booking",     cutoff: adhoc_booking_cutoff,             active: allow_adhoc_booking,             color: "text-purple-500" },
-                  ].map(({ icon: Icon, label, cutoff, active, color }) => (
-                    <div key={label} className="flex items-center gap-3 p-3 rounded-xl border border-app-border bg-app-surface">
-                      <div className={`p-2 rounded-lg bg-app-tertiary ${color}`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-app-text-primary">{label}</p>
-                        <p className="text-[11px] text-app-text-muted font-mono mt-0.5">{cutoff}</p>
-                      </div>
-                      <StatusPill active={active} />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                {[
+                  { icon: Shield, label: "Medical emergency", cutoff: medical_emergency_booking_cutoff, active: allow_medical_emergency_booking, color: "text-red-500" },
+                  { icon: Zap,    label: "Adhoc booking",     cutoff: adhoc_booking_cutoff,             active: allow_adhoc_booking,             color: "text-purple-500" },
+                ].map(({ icon: Icon, label, cutoff, active, color }) => (
+                  <div key={label} className="flex items-center gap-3 p-3 rounded-xl border border-app-border bg-app-surface">
+                    <div className={`p-2 rounded-lg bg-app-tertiary ${color}`}>
+                      <Icon className="w-4 h-4" />
                     </div>
-                  ))}
-                </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-app-text-primary">{label}</p>
+                      <p className="text-[11px] text-app-text-muted font-mono mt-0.5">{cutoff}</p>
+                    </div>
+                    <StatusPill active={active} />
+                  </div>
+                ))}
               </div>
-            )}
-          </>
+            </div>
+
+            {/* ── divider ── */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-app-border" />
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-app-text-muted px-1">Configuration</span>
+              <div className="flex-1 h-px bg-app-border" />
+            </div>
+
+            {/* Standard cutoffs */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card>
+                <SectionHeader icon={Clock} title="Booking cutoffs" color="text-app-primary" />
+                <div className="space-y-0.5">
+                  <CompactTimeInput label="Login booking" fieldName="booking_login_cutoff" currentValue={booking_login_cutoff} icon={Clock} />
+                  <CompactTimeInput label="Logout booking" fieldName="booking_logout_cutoff" currentValue={booking_logout_cutoff} icon={Clock} />
+                </div>
+              </Card>
+              <Card>
+                <SectionHeader icon={XCircle} title="Cancellation cutoffs" color="text-red-500" />
+                <div className="space-y-0.5">
+                  <CompactTimeInput label="Login cancellation" fieldName="cancel_login_cutoff" currentValue={cancel_login_cutoff} icon={XCircle} />
+                  <CompactTimeInput label="Logout cancellation" fieldName="cancel_logout_cutoff" currentValue={cancel_logout_cutoff} icon={XCircle} />
+                </div>
+              </Card>
+            </div>
+
+            {/* Special cutoffs */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card>
+                <SectionHeader icon={Shield} title="Medical emergency" color="text-red-500" />
+                <div className="space-y-0.5">
+                  <CompactTimeInput label="Emergency cutoff" fieldName="medical_emergency_booking_cutoff" currentValue={medical_emergency_booking_cutoff} icon={Shield} />
+                  <CompactToggle label="Enable medical emergency" enabled={allow_medical_emergency_booking} onChange={() => handleToggle("allow_medical_emergency_booking")} />
+                </div>
+              </Card>
+              <Card>
+                <SectionHeader icon={Zap} title="Adhoc shifts" color="text-purple-500" />
+                <div className="space-y-0.5">
+                  <CompactTimeInput label="Adhoc cutoff" fieldName="adhoc_booking_cutoff" currentValue={adhoc_booking_cutoff} icon={Zap} />
+                  <CompactToggle label="Enable adhoc booking" enabled={allow_adhoc_booking} onChange={() => handleToggle("allow_adhoc_booking")} />
+                </div>
+              </Card>
+            </div>
+
+          </div>
         )}
+
 
         {/* ════════ TENANT TAB ════════ */}
         {activeTab === "tenant" && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="space-y-4">
 
-            {/* Escort */}
-            <Card>
-              <SectionHeader icon={UserCheck} title="Escort requirements" color="text-indigo-500" />
-              <div className="space-y-0.5">
-                <CompactFullTimeInput label="Start time" fieldName="escort_required_start_time" currentValue={escort_required_start_time} icon={Clock} />
-                <CompactFullTimeInput label="End time"   fieldName="escort_required_end_time"   currentValue={escort_required_end_time}   icon={Clock} />
-                <CompactToggle label="Required for women" enabled={escort_required_for_women}
-                  onChange={() => handleToggle("escort_required_for_women")}
-                  description="Mandatory escort during specified window" />
+            {/* ── Overview ── */}
+            <div className="rounded-xl border border-app-border bg-app-tertiary/50 p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-1 h-4 rounded-full bg-app-primary" />
+                <p className="text-xs font-semibold text-app-text-primary tracking-tight">Overview</p>
+                <span className="text-[10px] text-app-text-muted">— current tenant settings at a glance</span>
               </div>
-            </Card>
-
-            {/* OTP */}
-            <Card>
-              <SectionHeader icon={Shield} title="OTP requirements" color="text-emerald-600" />
-              <div className="space-y-0.5">
-                <CompactToggle label="Login boarding OTP"   enabled={login_boarding_otp}   onChange={() => handleToggle("login_boarding_otp")}   description="Require OTP for boarding during login" />
-                <CompactToggle label="Login deboarding OTP" enabled={login_deboarding_otp} onChange={() => handleToggle("login_deboarding_otp")} description="Require OTP for deboarding during login" />
-                <CompactToggle label="Logout boarding OTP"  enabled={logout_boarding_otp}  onChange={() => handleToggle("logout_boarding_otp")}  description="Require OTP for boarding during logout" />
-                <CompactToggle label="Logout deboarding OTP" enabled={logout_deboarding_otp} onChange={() => handleToggle("logout_deboarding_otp")} description="Require OTP for deboarding during logout" />
-              </div>
-            </Card>
-
-            {/* Vehicle limits */}
-            <Card>
-              <SectionHeader icon={Gauge} title="Vehicle limits" color="text-orange-500" />
-              <div className="space-y-0.5">
-                <CompactNumberInput label="Speed limit" fieldName="speed_limit_kmph" currentValue={speed_limit_kmph} icon={Gauge} unit="km/h" min={0} max={200} />
-              </div>
-            </Card>
-
-            {/* Reminders */}
-            <Card>
-              <SectionHeader icon={Bell} title="Reminder notifications" color="text-blue-500" />
-              <div className="space-y-0.5">
-                <CompactToggle label="Enable pre-trip reminders" enabled={schedule_reminder_enabled}
-                  onChange={() => handleToggle("schedule_reminder_enabled")}
-                  description="Send push notification before cab pickup" />
-                {schedule_reminder_enabled && (
-                  <CompactNumberInput label="Remind before" fieldName="schedule_reminder_minutes" currentValue={schedule_reminder_minutes} icon={Clock} unit="min" min={1} max={240} />
-                )}
-              </div>
-            </Card>
-
-            {/* Trip & conflict */}
-            <Card>
-              <SectionHeader icon={Zap} title="Trip & conflict settings" color="text-purple-500" />
-              <div className="space-y-0.5">
-                <CompactToggle label="One trip per shift"    enabled={one_trip_per_shift_enabled} onChange={() => handleToggle("one_trip_per_shift_enabled")} description="Allow only one trip per shift per employee" />
-                <CompactToggle label="Auto move on conflict" enabled={auto_move_on_conflict}      onChange={() => handleToggle("auto_move_on_conflict")}      description="Automatically resolve booking conflicts" />
-              </div>
-            </Card>
-
-            {/* Driver duty hours — NEW */}
-            <Card>
-              <SectionHeader icon={Timer} title="Driver duty hours" color="text-teal-600" />
-              <div className="space-y-2">
-                <CompactNumberInput label="Max duty limit" fieldName="driver_max_duty_minutes" currentValue={driver_max_duty_minutes} icon={Clock} unit="min" min={60} max={1440} />
-
-                {/* derived rest hint */}
-                {driver_max_duty_minutes != null && (
-                  <div className="flex items-center gap-2 px-3 -mx-3 py-2 bg-app-tertiary rounded-lg">
-                    <Clock className="w-3 h-3 text-app-text-muted flex-shrink-0" />
-                    <p className="text-[11px] text-app-text-muted">
-                      Required rest window:{" "}
-                      <span className="font-semibold text-app-text-primary tabular-nums">
-                        {1440 - driver_max_duty_minutes} min
-                      </span>
-                      {" "}({Math.floor((1440 - driver_max_duty_minutes) / 60)}h {(1440 - driver_max_duty_minutes) % 60}m)
-                    </p>
-                  </div>
-                )}
-
-                <EnforcementModeInput />
-              </div>
-            </Card>
-
-            {/* ── Configuration summary — full width ── */}
-            <Card span2>
-              <SectionHeader icon={Activity} title="Configuration summary" color="text-slate-500" />
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                {/* col 1 — operational */}
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-app-text-muted mb-2">Operational</p>
                   <div className="space-y-0.5">
@@ -626,7 +544,6 @@ const CutoffManagement = () => {
                   </div>
                 </div>
 
-                {/* col 2 — OTP */}
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-app-text-muted mb-2">OTP settings</p>
                   <div className="space-y-0.5">
@@ -637,20 +554,15 @@ const CutoffManagement = () => {
                   </div>
                 </div>
 
-                {/* col 3 — driver duty */}
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-app-text-muted mb-2">Driver duty hours</p>
                   <div className="space-y-0.5">
-                    <SummaryRow label="Max duty limit"
-                      value={driver_max_duty_minutes != null ? `${driver_max_duty_minutes} min` : "—"} />
-                    <SummaryRow label="Required rest"
-                      value={driver_max_duty_minutes != null ? `${1440 - driver_max_duty_minutes} min` : "—"} />
+                    <SummaryRow label="Max duty limit" value={driver_max_duty_minutes != null ? `${driver_max_duty_minutes} min` : "—"} />
+                    <SummaryRow label="Required rest"  value={driver_max_duty_minutes != null ? `${1440 - driver_max_duty_minutes} min` : "—"} />
                     <div className="flex items-center justify-between py-2 border-b border-app-border last:border-0">
                       <span className="text-xs text-app-text-muted">Enforcement</span>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide ${
-                        driver_rest_enforcement === "block"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-amber-100 text-amber-700"
+                        driver_rest_enforcement === "block" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
                       }`}>
                         {driver_rest_enforcement === "block" ? "Block" : "Warn"}
                       </span>
@@ -658,11 +570,143 @@ const CutoffManagement = () => {
                   </div>
                 </div>
 
-              </div>
-            </Card>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-app-text-muted mb-2">Grace & Dark Hours</p>
+                  <div className="space-y-0.5">
+                    <SummaryRow label="Driver grace time" value={delay_driver_grace_minutes != null ? `${delay_driver_grace_minutes} min` : "—"} />
+                    <SummaryRow label="Employee grace time" value={delay_employee_grace_minutes != null ? `${delay_employee_grace_minutes} min` : "—"} />
+                    <SummaryRow label="Dark hour mode" value={dark_hour_boarding_mode || "off"} />
+                  </div>
+                </div>
 
+              </div>
+            </div>
+
+            {/* ── divider ── */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-app-border" />
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-app-text-muted px-1">Configuration</span>
+              <div className="flex-1 h-px bg-app-border" />
+            </div>
+
+            {/* ── Config cards ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+              {/* Escort */}
+              <Card>
+                <SectionHeader icon={UserCheck} title="Escort requirements" color="text-indigo-500" />
+                <div className="space-y-0.5">
+                  <CompactFullTimeInput label="Start time" fieldName="escort_required_start_time" currentValue={escort_required_start_time} icon={Clock} />
+                  <CompactFullTimeInput label="End time"   fieldName="escort_required_end_time"   currentValue={escort_required_end_time}   icon={Clock} />
+                  <CompactToggle label="Required for women" enabled={escort_required_for_women}
+                    onChange={() => handleToggle("escort_required_for_women")}
+                    description="Mandatory escort during specified window" />
+                </div>
+              </Card>
+
+              {/* OTP */}
+              <Card>
+                <SectionHeader icon={Shield} title="OTP requirements" color="text-emerald-600" />
+                <div className="space-y-0.5">
+                  <CompactToggle label="Login boarding OTP"    enabled={login_boarding_otp}    onChange={() => handleToggle("login_boarding_otp")}    description="Require OTP for boarding during login" />
+                  <CompactToggle label="Login deboarding OTP"  enabled={login_deboarding_otp}  onChange={() => handleToggle("login_deboarding_otp")}  description="Require OTP for deboarding during login" />
+                  <CompactToggle label="Logout boarding OTP"   enabled={logout_boarding_otp}   onChange={() => handleToggle("logout_boarding_otp")}   description="Require OTP for boarding during logout" />
+                  <CompactToggle label="Logout deboarding OTP" enabled={logout_deboarding_otp} onChange={() => handleToggle("logout_deboarding_otp")} description="Require OTP for deboarding during logout" />
+                </div>
+              </Card>
+
+              {/* Vehicle limits */}
+              <Card>
+                <SectionHeader icon={Gauge} title="Vehicle limits" color="text-orange-500" />
+                <div className="space-y-0.5">
+                  <CompactNumberInput label="Speed limit" fieldName="speed_limit_kmph" currentValue={speed_limit_kmph} icon={Gauge} unit="km/h" min={0} max={200} />
+                </div>
+              </Card>
+
+              {/* Reminders */}
+              <Card>
+                <SectionHeader icon={Bell} title="Reminder notifications" color="text-blue-500" />
+                <div className="space-y-0.5">
+                  <CompactToggle label="Enable pre-trip reminders" enabled={schedule_reminder_enabled}
+                    onChange={() => handleToggle("schedule_reminder_enabled")}
+                    description="Send push notification before cab pickup" />
+                  {schedule_reminder_enabled && (
+                    <CompactNumberInput label="Remind before" fieldName="schedule_reminder_minutes" currentValue={schedule_reminder_minutes} icon={Clock} unit="min" min={1} max={240} />
+                  )}
+                </div>
+              </Card>
+
+              {/* Trip & conflict */}
+              <Card>
+                <SectionHeader icon={Zap} title="Trip & conflict settings" color="text-purple-500" />
+                <div className="space-y-0.5">
+                  <CompactToggle label="One trip per shift"    enabled={one_trip_per_shift_enabled} onChange={() => handleToggle("one_trip_per_shift_enabled")} description="Allow only one trip per shift per employee" />
+                  <CompactToggle label="Auto move on conflict" enabled={auto_move_on_conflict}      onChange={() => handleToggle("auto_move_on_conflict")}      description="Automatically resolve booking conflicts" />
+                </div>
+              </Card>
+
+              {/* Driver duty hours */}
+              <Card>
+                <SectionHeader icon={Timer} title="Driver duty hours" color="text-teal-600" />
+                <div className="space-y-2">
+                  <CompactNumberInput label="Max duty limit" fieldName="driver_max_duty_minutes" currentValue={driver_max_duty_minutes} icon={Clock} unit="min" min={60} max={1440} />
+                  {driver_max_duty_minutes != null && (
+                    <div className="flex items-center gap-2 px-3 -mx-3 py-2 bg-app-tertiary rounded-lg">
+                      <Clock className="w-3 h-3 text-app-text-muted flex-shrink-0" />
+                      <p className="text-[11px] text-app-text-muted">
+                        Required rest window:{" "}
+                        <span className="font-semibold text-app-text-primary tabular-nums">
+                          {1440 - driver_max_duty_minutes} min
+                        </span>
+                        {" "}({Math.floor((1440 - driver_max_duty_minutes) / 60)}h {(1440 - driver_max_duty_minutes) % 60}m)
+                      </p>
+                    </div>
+                  )}
+                  <EnforcementModeInput />
+                </div>
+              </Card>
+
+              {/* Grace & Dark Hour settings */}
+              <Card>
+                <SectionHeader icon={Activity} title="Grace & dark hour settings" color="text-rose-500" />
+                <div className="space-y-0.5">
+                  <CompactNumberInput label="Driver grace time" fieldName="delay_driver_grace_minutes" currentValue={delay_driver_grace_minutes} icon={Clock} unit="min" min={0} max={120} />
+                  <CompactNumberInput label="Employee grace time" fieldName="delay_employee_grace_minutes" currentValue={delay_employee_grace_minutes} icon={Clock} unit="min" min={0} max={120} />
+                  <div className="pt-1 pb-0.5">
+                    <p className="text-xs font-medium text-app-text-secondary px-3 -mx-3 mb-2">Dark hour boarding</p>
+                    <div className="flex gap-2">
+                      {[
+                        { value: "off",  label: "Off",  desc: "No restrictions", color: "border-slate-400 bg-slate-50 text-slate-800" },
+                        { value: "on",   label: "On",   desc: "Restrict boarding", color: "border-rose-400 bg-rose-50 text-rose-800"   },
+                      ].map((opt) => {
+                        const active = dark_hour_boarding_mode === opt.value;
+                        return (
+                          <label key={opt.value}
+                            className={`flex-1 flex flex-col gap-1 p-2.5 rounded-lg border-2 cursor-pointer transition-all ${
+                              active ? opt.color + " shadow-sm" : "border-app-border bg-app-surface hover:bg-app-tertiary"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <input type="radio" name="dark_hour_boarding_mode" value={opt.value}
+                                checked={active}
+                                onChange={() => dispatch(updateFormField({ name: "dark_hour_boarding_mode", value: opt.value }))}
+                                className="accent-app-primary"
+                              />
+                              <span className={`text-xs font-semibold ${active ? "" : "text-app-text-primary"}`}>{opt.label}</span>
+                            </div>
+                            <p className={`text-[11px] leading-snug pl-5 ${active ? "" : "text-app-text-muted"}`}>{opt.desc}</p>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+            </div>
           </div>
         )}
+
       </div>
     </div>
   );
