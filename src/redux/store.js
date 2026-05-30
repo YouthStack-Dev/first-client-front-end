@@ -24,7 +24,7 @@ import nodalPointsReducer from "./features/nodalPoints/Nodalpointsslice";
 import nodalAssignmentReducer from "./features/nodalAssignments/Nodalassignmentslice";
 import reportsReducer from "./features/reports/reportsSlice";
 import chatReducer from "./features/chat/chatSlice";
-import driverHistoryReducer from "./features/manageDriver/Driverhistoryslice ";
+import driverHistoryReducer from "./features/manageDriver/Driverhistoryslice";
 
 const store = configureStore({
   reducer: {

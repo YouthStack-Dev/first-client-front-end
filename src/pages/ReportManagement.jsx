@@ -6,6 +6,7 @@ import ConfigModal from "../components/Reports/ConfigModal";
 import BookingAnalyticsView from "../components/Reports/views/BookingAnalyticsView";
 import DelayReportView from "../components/Reports/views/DelayReportView";
 import DriverDutyView from "../components/Reports/views/DriverDutyView";
+import BookingPreviewView from "../components/Reports/views/BookingPreviewView";  // ← NEW
 import { logDebug } from "../utils/logger";
 import { useReportsModal } from "../hooks/useReportsModal";
 
@@ -14,6 +15,7 @@ import {
   fetchDelayReport,
   fetchDriverDutyHours,
   downloadBookingsReport,
+  previewBookingsReport,    // ← NEW
 } from "../redux/features/reports/reportsTrunk";
 
 import {
@@ -21,80 +23,83 @@ import {
   selectDelays,
   selectDriverDutyHours,
   selectDownload,
+  selectBookingPreview,     // ← NEW
   clearBookingAnalytics,
   clearDelays,
   clearDriverDutyHours,
   clearDownloadStatus,
+  clearBookingPreview,      // ← NEW
 } from "../redux/features/reports/reportsSlice";
 
 const ReportsManagement = () => {
   const dispatch = useDispatch();
 
-  // ─── Modal state (custom hook) ────────────────────────────────────────────
-  const { configModal, openAnalytics, openDownload, closeModal } =
-    useReportsModal();
+  // ── Modal state ─────────────────────────────────────────────────────────────
+  const { configModal, openAnalytics, openDownload, openPreview, closeModal } =
+    useReportsModal();                                // openPreview ← NEW
 
-  // ─── Redux state ──────────────────────────────────────────────────────────
+  // ── Redux state ──────────────────────────────────────────────────────────────
   const bookingAnalytics = useSelector(selectBookingAnalytics);
-  const delays = useSelector(selectDelays);
-  const driverDutyHours = useSelector(selectDriverDutyHours);
-  const download = useSelector(selectDownload);
+  const delays           = useSelector(selectDelays);
+  const driverDutyHours  = useSelector(selectDriverDutyHours);
+  const download         = useSelector(selectDownload);
+  const bookingPreview   = useSelector(selectBookingPreview);  // ← NEW
 
-  // ─── Clear download status after 3s on success ────────────────────────────
+  // ── Clear download status after 3s ──────────────────────────────────────────
   useEffect(() => {
     if (download.success) {
-      const timer = setTimeout(() => {
-        dispatch(clearDownloadStatus());
-      }, 3000);
-      return () => clearTimeout(timer);
+      const t = setTimeout(() => dispatch(clearDownloadStatus()), 3000);
+      return () => clearTimeout(t);
     }
   }, [download.success, dispatch]);
 
-  // ─── Submit handler ───────────────────────────────────────────────────────
+  // ── Submit handler ───────────────────────────────────────────────────────────
   const handleConfigSubmit = (formData) => {
     const { type, config } = configModal;
-    const isDownload = config === "download";
-
     logDebug("Config submit:", { type, config, formData });
 
-    if (isDownload) {
+    if (config === "download") {
       dispatch(downloadBookingsReport(formData));
       return;
     }
 
-    // Analytics / view
-    if (type === REPORT_TYPES.BOOKINGS) {
-      dispatch(fetchBookingAnalytics(formData));
-    } else if (type === REPORT_TYPES.DELAYS) {
-      dispatch(fetchDelayReport(formData));
-    } else if (type === REPORT_TYPES.DRIVER_DUTY) {
-      dispatch(fetchDriverDutyHours(formData));
+    // ── Preview (JSON table) ── NEW
+    if (config === "preview") {
+      dispatch(previewBookingsReport(formData));
+      closeModal();
+      return;
     }
+
+    // ── Analytics / view ──────────────────────────────────────────
+    if (type === REPORT_TYPES.BOOKINGS)     dispatch(fetchBookingAnalytics(formData));
+    else if (type === REPORT_TYPES.DELAYS)  dispatch(fetchDelayReport(formData));
+    else if (type === REPORT_TYPES.DRIVER_DUTY) dispatch(fetchDriverDutyHours(formData));
 
     closeModal();
   };
 
-  // ─── Derive loading/error for the active modal ────────────────────────────
+  // ── Active state for the open modal ──────────────────────────────────────────
   const getActiveState = () => {
     if (configModal.config === "download") return download;
-    if (configModal.type === REPORT_TYPES.BOOKINGS) return bookingAnalytics;
-    if (configModal.type === REPORT_TYPES.DELAYS) return delays;
-    if (configModal.type === REPORT_TYPES.DRIVER_DUTY) return driverDutyHours;
+    if (configModal.config === "preview")  return bookingPreview;   // ← NEW
+    if (configModal.type  === REPORT_TYPES.BOOKINGS)    return bookingAnalytics;
+    if (configModal.type  === REPORT_TYPES.DELAYS)      return delays;
+    if (configModal.type  === REPORT_TYPES.DRIVER_DUTY) return driverDutyHours;
     return { loading: false, error: null };
   };
 
   const activeState = getActiveState();
 
-  // ─── Keep modal open on 400/403/404/422, close otherwise ─────────────────
+  // ── Keep modal open on 4xx errors ────────────────────────────────────────────
   useEffect(() => {
     if (!activeState.error) return;
-    const keepOpen = ["400", "403", "404", "422"].some((code) =>
-      activeState.error?.includes(code)
+    const keepOpen = ["400", "403", "404", "422"].some((c) =>
+      activeState.error?.includes(c)
     );
     if (!keepOpen) closeModal();
   }, [activeState.error]);
 
-  // ─── Close modal and clear data on download success ───────────────────────
+  // ── Close modal on download success ──────────────────────────────────────────
   useEffect(() => {
     if (download.success) closeModal();
   }, [download.success]);
@@ -103,7 +108,7 @@ const ReportsManagement = () => {
     <div className="bg-gradient-to-br p-6">
       <div className="mx-auto">
 
-        {/* Error Display */}
+        {/* ── Error display ─────────────────────────────────────────────────── */}
         {activeState.error && !configModal.isOpen && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
             <div className="flex items-center gap-2 text-red-700">
@@ -116,6 +121,7 @@ const ReportsManagement = () => {
                 dispatch(clearDelays());
                 dispatch(clearDriverDutyHours());
                 dispatch(clearDownloadStatus());
+                dispatch(clearBookingPreview());
               }}
               className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
             >
@@ -124,7 +130,7 @@ const ReportsManagement = () => {
           </div>
         )}
 
-        {/* Report Cards Grid */}
+        {/* ── Report Cards ──────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6">
           {reportModules.map((module) => (
             <ReportCard
@@ -134,20 +140,19 @@ const ReportsManagement = () => {
               icon={module.icon}
               color={module.color}
               onAnalytics={
-                module.hasAnalytics
-                  ? () => openAnalytics(module.id)
-                  : undefined
+                module.hasAnalytics ? () => openAnalytics(module.id) : undefined
               }
               onDownload={
-                module.hasDownload
-                  ? () => openDownload(module.id)
-                  : undefined
+                module.hasDownload ? () => openDownload(module.id) : undefined
+              }
+              onPreview={
+                module.hasPreview ? () => openPreview(module.id) : undefined  // ← NEW
               }
             />
           ))}
         </div>
 
-        {/* Report Views */}
+        {/* ── Analytics / Detail Views ──────────────────────────────────────── */}
         {bookingAnalytics.data && (
           <BookingAnalyticsView
             data={bookingAnalytics.data}
@@ -171,9 +176,18 @@ const ReportsManagement = () => {
             onClose={() => dispatch(clearDriverDutyHours())}
           />
         )}
+
+        {/* ── Booking Preview Table — NEW ───────────────────────────────────── */}
+        {(bookingPreview.loading || bookingPreview.rows?.length > 0 || bookingPreview.error) && (
+          <BookingPreviewView
+            data={bookingPreview}
+            onClose={() => dispatch(clearBookingPreview())}
+          />
+        )}
+
       </div>
 
-      {/* Config Modal */}
+      {/* ── Config Modal ──────────────────────────────────────────────────────── */}
       <ConfigModal
         isOpen={configModal.isOpen}
         onClose={closeModal}
@@ -184,15 +198,13 @@ const ReportsManagement = () => {
         error={activeState.error}
       />
 
-      {/* Download Success Toast */}
+      {/* ── Download success toast ────────────────────────────────────────────── */}
       {download.success && (
         <div className="fixed bottom-4 right-4 bg-green-50 border border-green-200 rounded-lg p-4 shadow-lg z-50">
           <div className="flex items-center gap-3">
             <div className="text-green-500">✓</div>
             <div>
-              <p className="text-green-700 font-medium text-sm">
-                Download Complete
-              </p>
+              <p className="text-green-700 font-medium text-sm">Download Complete</p>
               <p className="text-green-600 text-xs">
                 {download.filename} downloaded successfully
               </p>

@@ -9,6 +9,7 @@ export const reportModules = [
     color: "blue",
     hasDownload: true,
     hasAnalytics: true,
+    hasPreview: true,          // ← NEW
   },
   {
     id: "delays",
@@ -18,6 +19,7 @@ export const reportModules = [
     color: "orange",
     hasDownload: false,
     hasAnalytics: true,
+    hasPreview: false,
   },
   {
     id: "driver-duty-hours",
@@ -27,43 +29,23 @@ export const reportModules = [
     color: "purple",
     hasDownload: false,
     hasAnalytics: true,
+    hasPreview: false,
   },
 ];
 
 export const REPORT_TYPES = {
-  BOOKINGS: "bookings",
-  DELAYS: "delays",
-  DRIVER_DUTY: "driver-duty-hours",
+  BOOKINGS:     "bookings",
+  DELAYS:       "delays",
+  DRIVER_DUTY:  "driver-duty-hours",
 };
 
 export const BOOKING_STATUS_OPTIONS = [
-  "Request",
-  "Scheduled",
-  "Ongoing",
-  "Completed",
-  "Cancelled",
-  "No-Show",
-  "Expired",
+  "Request", "Scheduled", "Ongoing", "Completed", "Cancelled", "No-Show", "Expired",
 ];
 
 export const ROUTE_STATUS_OPTIONS = [
-  "Planned",
-  "Vendor Assigned",
-  "Driver Assigned",
-  "Ongoing",
-  "Completed",
-  "Cancelled",
+  "Planned", "Vendor Assigned", "Driver Assigned", "Ongoing", "Completed", "Cancelled",
 ];
 
-export const DELAY_TYPE_OPTIONS = [
-  "LATE",
-  "EARLY",
-  "ON_TIME",
-];
-
-export const DELAY_CATEGORY_OPTIONS = [
-  "DRIVER_DELAY",
-  "EMPLOYEE_DELAY",
-  "TRAFFIC_DELAY",
-  "NONE",
-];
+export const DELAY_TYPE_OPTIONS     = ["LATE", "EARLY", "ON_TIME"];
+export const DELAY_CATEGORY_OPTIONS = ["DRIVER_DELAY", "EMPLOYEE_DELAY", "TRAFFIC_DELAY", "NONE"];

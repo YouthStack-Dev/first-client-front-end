@@ -59,17 +59,14 @@ const ConfigModal = ({
   const isSuperAdmin = user?.type === "admin";
   const currentUserTenant = user?.tenant_id || user?.tenant?.tenant_id;
 
-  // ─── Read vendors from Redux ──────────────────────────────────────────────
   const reduxVendors = useSelector(selectVendors);
   const vendorsFetched = useSelector(selectVendorsFetched);
   const vendorsLoading = useSelector(selectVendorsLoading);
 
-  // ─── Read shifts from Redux ───────────────────────────────────────────────
   const reduxShifts = useSelector(selectAllShifts);
   const shiftsLoading = useSelector(selectShiftsLoading);
   const shiftsLoaded = useSelector((state) => state.shift.loaded);
 
-  // ─── Transform Redux data to dropdown format ──────────────────────────────
   const vendorOptions = [
     { value: "", label: "All Vendors" },
     ...reduxVendors.map((v) => ({
@@ -90,34 +87,21 @@ const ConfigModal = ({
 
   const hasFetchedInitialData = useRef(false);
 
-  // Reset ref when modal closes
   useEffect(() => {
     if (!isOpen) {
       hasFetchedInitialData.current = false;
     }
   }, [isOpen]);
 
-  // Initialize form + fetch data when modal opens
   useEffect(() => {
     if (isOpen && !hasFetchedInitialData.current) {
       setFormData(getDefaultFormData());
       setErrors({});
       hasFetchedInitialData.current = true;
 
-      // Fetch vendors from Redux if not already fetched
-      if (!vendorsFetched && !vendorsLoading) {
-        dispatch(fetchVendorsThunk());
-      }
-
-      // Fetch shifts from Redux if not already loaded
-      if (!shiftsLoaded && !shiftsLoading) {
-        dispatch(fetchShiftTrunk());
-      }
-
-      // Fetch tenants only for super admin
-      if (isSuperAdmin) {
-        fetchTenants();
-      }
+      if (!vendorsFetched && !vendorsLoading) dispatch(fetchVendorsThunk());
+      if (!shiftsLoaded && !shiftsLoading)    dispatch(fetchShiftTrunk());
+      if (isSuperAdmin) fetchTenants();
     }
   }, [isOpen, isSuperAdmin, vendorsFetched, vendorsLoading, shiftsLoaded, shiftsLoading, dispatch]);
 
@@ -145,9 +129,7 @@ const ConfigModal = ({
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
   const toggleArrayValue = (field, value) => {
@@ -169,7 +151,7 @@ const ConfigModal = ({
   const validateForm = () => {
     const newErrors = {};
     if (!formData.start_date) newErrors.start_date = "Start date is required";
-    if (!formData.end_date) newErrors.end_date = "End date is required";
+    if (!formData.end_date)   newErrors.end_date   = "End date is required";
     if (formData.start_date && formData.end_date) {
       if (new Date(formData.start_date) > new Date(formData.end_date)) {
         newErrors.end_date = "End date cannot be before start date";
@@ -189,25 +171,28 @@ const ConfigModal = ({
     onSubmit(submitData);
   };
 
-  const isBookings = type === REPORT_TYPES.BOOKINGS;
-  const isDelays = type === REPORT_TYPES.DELAYS;
-  const isDriverDuty = type === REPORT_TYPES.DRIVER_DUTY;
-  const isDownload = config === "download";
+  const isBookings    = type === REPORT_TYPES.BOOKINGS;
+  const isDelays      = type === REPORT_TYPES.DELAYS;
+  const isDriverDuty  = type === REPORT_TYPES.DRIVER_DUTY;
+  const isDownload    = config === "download";
+  const isPreview     = config === "preview";                // ← NEW
 
   const getTitle = () => {
     if (isDownload) return "Download Report";
+    if (isPreview)  return "Preview Report";                 // ← NEW
     const map = {
-      [REPORT_TYPES.BOOKINGS]: "Booking Analytics",
-      [REPORT_TYPES.DELAYS]: "Delay Report",
+      [REPORT_TYPES.BOOKINGS]:    "Booking Analytics",
+      [REPORT_TYPES.DELAYS]:      "Delay Report",
       [REPORT_TYPES.DRIVER_DUTY]: "Driver Duty Hours",
     };
     return map[type] || "View Report";
   };
 
   const getSubtitle = () => {
+    if (isPreview) return "Select filters to preview booking data as a table";  // ← NEW
     const map = {
-      [REPORT_TYPES.BOOKINGS]: "Configure filters for booking data",
-      [REPORT_TYPES.DELAYS]: "Configure filters for delay data",
+      [REPORT_TYPES.BOOKINGS]:    "Configure filters for booking data",
+      [REPORT_TYPES.DELAYS]:      "Configure filters for delay data",
       [REPORT_TYPES.DRIVER_DUTY]: "Configure filters for driver duty hours",
     };
     return map[type] || "Configure report parameters";
@@ -215,10 +200,11 @@ const ConfigModal = ({
 
   const getSubmitLabel = () => {
     if (isDownload) return loading ? "Preparing Download..." : "Download Report";
+    if (isPreview)  return loading ? "Loading..."            : "Preview Report";  // ← NEW
     const map = {
-      [REPORT_TYPES.BOOKINGS]: loading ? "Generating..." : "View Analytics",
-      [REPORT_TYPES.DELAYS]: loading ? "Loading..." : "View Delay Report",
-      [REPORT_TYPES.DRIVER_DUTY]: loading ? "Loading..." : "View Duty Hours",
+      [REPORT_TYPES.BOOKINGS]:    loading ? "Generating..." : "View Analytics",
+      [REPORT_TYPES.DELAYS]:      loading ? "Loading..."    : "View Delay Report",
+      [REPORT_TYPES.DRIVER_DUTY]: loading ? "Loading..."    : "View Duty Hours",
     };
     return map[type] || "Submit";
   };
@@ -256,7 +242,7 @@ const ConfigModal = ({
             loading={loading}
             showTenant={!isDriverDuty}
             showShift={isBookings}
-            showVendor={isBookings && isDownload}
+            showVendor={isBookings && (isDownload || isPreview)}  // ← NEW: preview also shows vendor
             tenants={tenants}
             tenantsLoading={tenantsLoading}
             shifts={shiftOptions}
@@ -267,8 +253,25 @@ const ConfigModal = ({
             currentUserTenant={currentUserTenant}
           />
 
-          {/* Booking filters */}
-          {isBookings && (
+          {/* Booking filters — show for both download and preview */}
+          {isBookings && (isDownload || isPreview) && (   // ← NEW: preview also shows booking filters
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                Booking Filters
+              </h3>
+              <BookingModuleConfig
+                formData={formData}
+                handleChange={handleChange}
+                toggleArrayValue={toggleArrayValue}
+                handleSelectAll={handleSelectAll}
+                errors={errors}
+                loading={loading}
+              />
+            </div>
+          )}
+
+          {/* Booking analytics filters (not download/preview) */}
+          {isBookings && !isDownload && !isPreview && (
             <div className="border-t pt-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 Booking Filters

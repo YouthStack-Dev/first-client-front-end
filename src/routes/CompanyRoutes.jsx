@@ -97,6 +97,6 @@ export const CompanyRoutes = () => (
       path="employee/:employee_id/bookings"
       element={<BookingManagement />}
     />
-    <Route path="repots-management" element={<ReportsManagement />} />
+    <Route path="reports-management" element={<ReportsManagement />} />
   </Route>
 );

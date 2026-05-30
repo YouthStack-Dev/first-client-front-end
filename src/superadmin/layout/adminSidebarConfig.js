@@ -47,16 +47,21 @@ export const baseSidebarConfig = [
   {
     title: "Vendors",
     items: [
-      // {
-      //   title: "Manage Vendors",
-      //   path: "/superadmin/manage-vendors",
-      //   permission: "vendor.read",
-      //   icon: Truck,
-      // },
       {
         title: "Manage Vendors",
         path: "/superadmin/new-vendor-management",
         permission: "vendor.read",
+        icon: BarChart3,
+      },
+    ],
+  },
+  {
+  title: "Reports",
+    items: [
+      {
+        title: "Reports Management",
+        path: "/superadmin/reports-management",
+        permission: "report.read",
         icon: BarChart3,
       },
     ],
