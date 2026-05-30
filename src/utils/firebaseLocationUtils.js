@@ -1,19 +1,24 @@
 // utils/firebaseLocationUtils.js
-import { ref, onValue, off } from "firebase/database";
+import {
+  ref,
+  onValue,
+  off,
+  onChildAdded,
+  onChildChanged,
+  onChildRemoved,
+} from "firebase/database";
 import { database } from "./firebase";
 import { logDebug } from "./logger";
 
-// ── FIX: Read tenant INSIDE function, not at module load time ─────────────────
-// Old code ran at import time = before login = always got "default_tenant"
-// Now reads fresh localStorage every time a subscription is created
+// ─── YOUR EXISTING CODE — untouched ──────────────────────────────────────────
+
 const getTenantId = () => {
   const tenant = JSON.parse(localStorage.getItem("tenant") || "null");
   return tenant?.tenant_id || "default_tenant";
 };
 
-// vendorId is passed dynamically from route.vendor.id — no hardcoding
 export const subscribeToDriverLocation = (driverId, vendorId, onUpdate, onError) => {
-  const tenant_id = getTenantId(); // ← fresh read every subscription
+  const tenant_id = getTenantId();
 
   if (!vendorId) {
     logDebug(`❌ No vendorId provided for driver ${driverId} — cannot subscribe`);
@@ -93,4 +98,96 @@ export const subscribeToMultipleDrivers = (drivers, onUpdate, onError) => {
     subscribeToDriverLocation(driverId, vendorId, onUpdate, onError)
   );
   return () => unsubscribes.forEach((u) => u());
+};
+
+// ─── NEW: tenant-level subscription for LiveDriverMap ────────────────────────
+
+/**
+ * subscribeToTenantDrivers
+ *
+ * Listens at:
+ *   drivers/{tenantId}            — all vendors (vendorId = null)
+ *   drivers/{tenantId}/{vendorId} — single vendor
+ *
+ * Callbacks:
+ *   onDriverUpdate(vendorId, driverId, { lat, lng, is_active, updated_at })
+ *   onDriverRemove(vendorId, driverId | null)   null = whole vendor removed
+ *   onError(message)
+ *
+ * Returns unsubscribe().
+ */
+export const subscribeToTenantDrivers = (
+  tenantId,
+  vendorId = null,
+  onDriverUpdate,
+  onDriverRemove,
+  onError
+) => {
+  if (!tenantId) {
+    logDebug("❌ subscribeToTenantDrivers: tenantId is required");
+    onError?.("Missing tenant ID");
+    return () => {};
+  }
+
+  // ── Single vendor: children are driver nodes ──────────────────────────────
+  if (vendorId) {
+    const path  = `drivers/${tenantId}/${vendorId}`;
+    const dbRef = ref(database, path);
+    logDebug(`📡 [TenantDrivers] vendor scope → ${path}`);
+
+    const pushUpdate = (snap) => {
+      const raw = snap.val();
+      if (!raw) return;
+      const parsed = parseLocationData(raw, snap.key);
+      if (parsed) {
+        onDriverUpdate(vendorId, snap.key, {
+          ...parsed,
+          is_active:  raw.is_active,
+          updated_at: raw.updated_at,
+        });
+      }
+    };
+
+    const addH = onChildAdded  (dbRef, pushUpdate);
+    const chgH = onChildChanged(dbRef, pushUpdate);
+    const remH = onChildRemoved(dbRef, (snap) => onDriverRemove(vendorId, snap.key));
+
+    return () => {
+      off(dbRef, "child_added",   addH);
+      off(dbRef, "child_changed", chgH);
+      off(dbRef, "child_removed", remH);
+      logDebug(`🔌 [TenantDrivers] unsubscribed vendor scope → ${path}`);
+    };
+  }
+
+  // ── All vendors: children are vendor nodes ────────────────────────────────
+  const path  = `drivers/${tenantId}`;
+  const dbRef = ref(database, path);
+  logDebug(`📡 [TenantDrivers] all-vendor scope → ${path}`);
+
+  const processVendorSnap = (vendorKey, snapVal) => {
+    if (!snapVal || typeof snapVal !== "object") return;
+    Object.entries(snapVal).forEach(([driverId, raw]) => {
+      if (!raw) return;
+      const parsed = parseLocationData(raw, driverId);
+      if (parsed) {
+        onDriverUpdate(vendorKey, driverId, {
+          ...parsed,
+          is_active:  raw.is_active,
+          updated_at: raw.updated_at,
+        });
+      }
+    });
+  };
+
+  const addH = onChildAdded  (dbRef, (s) => processVendorSnap(s.key, s.val()));
+  const chgH = onChildChanged(dbRef, (s) => processVendorSnap(s.key, s.val()));
+  const remH = onChildRemoved(dbRef, (s) => onDriverRemove(s.key, null));
+
+  return () => {
+    off(dbRef, "child_added",   addH);
+    off(dbRef, "child_changed", chgH);
+    off(dbRef, "child_removed", remH);
+    logDebug(`🔌 [TenantDrivers] unsubscribed all-vendor scope → ${path}`);
+  };
 };

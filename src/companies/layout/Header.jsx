@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Megaphone, Star, User, LogOut, ChevronDown } from "lucide-react";
+import { Menu, Megaphone, Star, User, LogOut, ChevronDown } from "lucide-react";
 import { useNavigate }                                 from "react-router-dom";
 import { useDispatch, useSelector }                    from "react-redux";
 import { jwtDecode }                                   from "jwt-decode";
 import Cookies                                         from "js-cookie";
 import { logout, selectCurrentUser }                   from "../../redux/features/auth/authSlice";
 
-const Header = ({ isSidebarOpen, title = "Dashboard" }) => {
+const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user     = useSelector(selectCurrentUser);
@@ -77,6 +77,15 @@ const Header = ({ isSidebarOpen, title = "Dashboard" }) => {
 
           {/* Left — title only */}
           <div className="flex items-center">
+            <button
+              type="button"
+              data-sidebar-toggle
+              onClick={toggleSidebar}
+              className="text-gray-500 hover:text-gray-600 mr-3 lg:hidden"
+              aria-label="Toggle sidebar"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
             <span className="text-blue-600 font-bold text-xl">{title}</span>
           </div>
 

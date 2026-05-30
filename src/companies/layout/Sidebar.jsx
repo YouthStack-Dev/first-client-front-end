@@ -364,7 +364,7 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
               e.stopPropagation();
               handleLogout();
             }}
-            className="flex items-center justify-center w-full px-4 py-2.5 bg-gradient-to-r from-sidebar-danger-600 to-sidebar-danger-500 text-white rounded-sidebar hover:from-sidebar-danger-700 hover:to-sidebar-danger-600 transition-all duration-200 shadow-sidebar-item hover:shadow-sidebar-item-hover group"
+            className="flex items-center justify-center w-full px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-sidebar hover:from-red-700 hover:to-red-600 transition-all duration-200 shadow-sidebar-item hover:shadow-sidebar-item-hover group"
             aria-label="Logout"
             title="Logout"
           >
