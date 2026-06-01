@@ -13,22 +13,25 @@ import { useReportsModal } from "../hooks/useReportsModal";
 import {
   fetchBookingAnalytics,
   fetchDelayReport,
+  fetchDelayDetail,
   fetchDriverDutyHours,
   downloadBookingsReport,
-  previewBookingsReport,    // ← NEW
+  previewBookingsReport,
 } from "../redux/features/reports/reportsTrunk";
 
 import {
   selectBookingAnalytics,
   selectDelays,
+  selectDelayDetail,
   selectDriverDutyHours,
   selectDownload,
-  selectBookingPreview,     // ← NEW
+  selectBookingPreview,
   clearBookingAnalytics,
   clearDelays,
+  clearDelayDetail,
   clearDriverDutyHours,
   clearDownloadStatus,
-  clearBookingPreview,      // ← NEW
+  clearBookingPreview,
 } from "../redux/features/reports/reportsSlice";
 
 const ReportsManagement = () => {
@@ -41,9 +44,10 @@ const ReportsManagement = () => {
   // ── Redux state ──────────────────────────────────────────────────────────────
   const bookingAnalytics = useSelector(selectBookingAnalytics);
   const delays           = useSelector(selectDelays);
+  const delayDetail      = useSelector(selectDelayDetail);
   const driverDutyHours  = useSelector(selectDriverDutyHours);
   const download         = useSelector(selectDownload);
-  const bookingPreview   = useSelector(selectBookingPreview);  // ← NEW
+  const bookingPreview   = useSelector(selectBookingPreview);
 
   // ── Clear download status after 3s ──────────────────────────────────────────
   useEffect(() => {
@@ -63,9 +67,11 @@ const ReportsManagement = () => {
       return;
     }
 
-    // ── Preview (JSON table) ── NEW
+    // ── Preview — routes to the same thunk as analytics per type ── NEW
     if (config === "preview") {
-      dispatch(previewBookingsReport(formData));
+      if (type === REPORT_TYPES.BOOKINGS)         dispatch(previewBookingsReport(formData));
+      else if (type === REPORT_TYPES.DELAYS)      dispatch(fetchDelayReport(formData));
+      else if (type === REPORT_TYPES.DRIVER_DUTY) dispatch(fetchDriverDutyHours(formData));
       closeModal();
       return;
     }
@@ -78,13 +84,17 @@ const ReportsManagement = () => {
     closeModal();
   };
 
-  // ── Active state for the open modal ──────────────────────────────────────────
   const getActiveState = () => {
     if (configModal.config === "download") return download;
-    if (configModal.config === "preview")  return bookingPreview;   // ← NEW
-    if (configModal.type  === REPORT_TYPES.BOOKINGS)    return bookingAnalytics;
-    if (configModal.type  === REPORT_TYPES.DELAYS)      return delays;
-    if (configModal.type  === REPORT_TYPES.DRIVER_DUTY) return driverDutyHours;
+    // preview uses the same slice state as analytics per type
+    if (configModal.config === "preview" || configModal.config === "analytics") {
+      if (configModal.type === REPORT_TYPES.BOOKINGS)    return configModal.config === "preview" ? bookingPreview : bookingAnalytics;
+      if (configModal.type === REPORT_TYPES.DELAYS)      return delays;
+      if (configModal.type === REPORT_TYPES.DRIVER_DUTY) return driverDutyHours;
+    }
+    if (configModal.type === REPORT_TYPES.BOOKINGS)    return bookingAnalytics;
+    if (configModal.type === REPORT_TYPES.DELAYS)      return delays;
+    if (configModal.type === REPORT_TYPES.DRIVER_DUTY) return driverDutyHours;
     return { loading: false, error: null };
   };
 
@@ -165,7 +175,14 @@ const ReportsManagement = () => {
           <DelayReportView
             data={delays.data}
             loading={delays.loading}
-            onClose={() => dispatch(clearDelays())}
+            onClose={() => {
+              dispatch(clearDelays());
+              dispatch(clearDelayDetail());
+            }}
+            onRouteClick={(routeId) =>
+              dispatch(fetchDelayDetail({ route_id: routeId, tenant_id: delays.data?.tenant_id }))
+            }
+            detailData={delayDetail}
           />
         )}
 

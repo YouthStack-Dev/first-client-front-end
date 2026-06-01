@@ -9,34 +9,34 @@ export const reportModules = [
     color: "blue",
     hasDownload: true,
     hasAnalytics: true,
-    hasPreview: true,          // ← NEW
+    hasPreview: true,
   },
-  {
-    id: "delays",
-    title: "Delay Reports",
-    description: "Monitor OTD delays and root causes",
-    icon: Clock,
-    color: "orange",
-    hasDownload: false,
-    hasAnalytics: true,
-    hasPreview: false,
-  },
-  {
-    id: "driver-duty-hours",
-    title: "Driver Duty Hours",
-    description: "Track driver hours and rest violations",
-    icon: Truck,
-    color: "purple",
-    hasDownload: false,
-    hasAnalytics: true,
-    hasPreview: false,
-  },
+  // {
+  //   id: "delays",
+  //   title: "Delay Reports",
+  //   description: "Monitor OTD delays and root causes",
+  //   icon: Clock,
+  //   color: "orange",
+  //   hasDownload: false,
+  //   hasAnalytics: true,
+  //   hasPreview: true,          // ← NEW
+  // },
+  // {
+  //   id: "driver-duty-hours",
+  //   title: "Driver Duty Hours",
+  //   description: "Track driver hours and rest violations",
+  //   icon: Truck,
+  //   color: "purple",
+  //   hasDownload: false,
+  //   hasAnalytics: true,
+  //   hasPreview: true,          // ← NEW
+  // },
 ];
 
 export const REPORT_TYPES = {
-  BOOKINGS:     "bookings",
-  DELAYS:       "delays",
-  DRIVER_DUTY:  "driver-duty-hours",
+  BOOKINGS:    "bookings",
+  DELAYS:      "delays",
+  DRIVER_DUTY: "driver-duty-hours",
 };
 
 export const BOOKING_STATUS_OPTIONS = [

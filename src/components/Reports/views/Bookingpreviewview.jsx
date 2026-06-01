@@ -32,7 +32,6 @@ const STATUS_COLORS = {
   scheduled:  "bg-yellow-100 text-yellow-700",
   request:    "bg-purple-100 text-purple-700",
   no_show:    "bg-orange-100 text-orange-600",
-  no_show:    "bg-orange-100 text-orange-600",
   expired:    "bg-gray-100 text-gray-500",
 };
 
