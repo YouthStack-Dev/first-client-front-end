@@ -9,6 +9,7 @@ import { useLiveDrivers } from "../utils/Uselivedrivers";
 
 import LiveDriverMapCanvas from "../components/liveDrivers/LiveDriverMapCanvas";
 import LiveDriverSidebar from "../components/liveDrivers/LiveDriverSidebar";
+import LiveDriverStats from "../components/liveDrivers/LiveDriverStats";
 
 import {
   vendorColor,
@@ -33,6 +34,7 @@ export default function LiveDriverMap() {
     isSuperAdmin ? "" : tenantId
   );
   const [selectedVid, setSelectedVid] = useState(null);
+  const [collapseVendorSelection, setCollapseVendorSelection] = useState(false);
   const [filterMode, setFilterMode] = useState("all");
   const [detail, setDetail] = useState(null);
   const [fitKey, setFitKey] = useState(0);
@@ -68,6 +70,13 @@ export default function LiveDriverMap() {
       setSelectedVid(null);
     }
   }, [selectedTenant, isSuperAdmin]);
+
+  useEffect(() => {
+    if (!selectedVid && vendorOptions.length > 0) {
+      setSelectedVid(String(vendorOptions[0].value));
+      setCollapseVendorSelection(true);
+    }
+  }, [vendorOptions, selectedVid]);
 
   const { driverMap, status, error: fbError } = useLiveDrivers({
     tenantId: tenantToUse,
@@ -124,6 +133,16 @@ export default function LiveDriverMap() {
     }
   }, [tenantToUse, isSuperAdmin]);
 
+  const allDrivers = useMemo(() => {
+    const rows = [];
+    Object.entries(driverMap).forEach(([vid, drivers]) => {
+      Object.entries(drivers).forEach(([did, data]) => {
+        rows.push({ vid, did, data });
+      });
+    });
+    return rows.sort((a, b) => a.vid.localeCompare(b.vid) || a.did.localeCompare(b.did));
+  }, [driverMap]);
+
   // Visible drivers for sidebar
   const visibleDrivers = useMemo(() => {
     const rows = [];
@@ -149,9 +168,9 @@ export default function LiveDriverMap() {
     return { active, offline, stale };
   }, [driverMap]);
 
-  const pillColor = status === "live" ? "#22c55e" : status === "error" ? "#ef4444" : "#f59e0b";
-  const pillBg = status === "live" ? "#0b2317" : status === "error" ? "#2d0f0f" : "#1a1400";
-  const pillLabel = status === "live" ? "● LIVE" : status === "error" ? "✕ ERROR" : "◌ CONNECTING";
+  const selectedVendorLabel = selectedVid
+    ? vendorOptions.find((option) => option.value === selectedVid)?.label || selectedVid
+    : "All vendors";
 
   return (
     <>
@@ -163,6 +182,22 @@ export default function LiveDriverMap() {
       `}</style>
 
       <div style={S.root}>
+        <LiveDriverStats
+          stats={{
+            total: stats.active + stats.offline + stats.stale,
+            active: stats.active,
+            stale: stats.stale,
+            offline: stats.offline,
+          }}
+          selectedVendor={selectedVendorLabel}
+          status={status}
+          onSpaceSync={handleSpaceSync}
+          syncing={syncing}
+          syncMessage={syncMessage}
+          syncError={syncError}
+          isSuperAdmin={isSuperAdmin}
+        />
+
         {/* ─── Map Canvas ─── */}
         <LiveDriverMapCanvas
           apiKey={import.meta.env.VITE_GOOGLE_API || ""}
@@ -173,44 +208,6 @@ export default function LiveDriverMap() {
           handleMarkerClick={handleMarkerClick}
         />
 
-        {/* ── Status Bar ── */}
-        <div style={S.sbar}>
-          <span style={{ ...S.pill, background: pillBg, color: pillColor }}>{pillLabel}</span>
-          <span style={S.sdiv}>|</span>
-          <span style={{ fontFamily: "monospace", fontSize: 11, color: "#888" }}>
-            {isSuperAdmin
-              ? selectedTenant || "Select tenant"
-              : tenantId || "—"}
-          </span>
-          <span style={S.sdiv}>|</span>
-          <Stat dot="#22c55e" value={stats.active} />
-          <Stat dot="#d97706" value={stats.stale} label="stale" />
-          <Stat dot="#3f4452" value={stats.offline} />
-
-          <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
-            <button
-              style={{
-                ...S.syncButton,
-                ...(syncing ? S.syncButtonActive : {}),
-              }}
-              onClick={handleSpaceSync}
-              disabled={syncing}
-            >
-              {syncing ? "Syncing…" : "Space Sync"}
-            </button>
-            {syncMessage ? (
-              <span
-                style={{
-                  ...S.syncMessage,
-                  color: syncError ? "#dc2626" : "#0f766e",
-                }}
-              >
-                {syncMessage}
-              </span>
-            ) : null}
-          </span>
-        </div>
-
         <LiveDriverSidebar
           vendorsLoading={vendorsLoading}
           vendorOptions={vendorOptions}
@@ -220,9 +217,12 @@ export default function LiveDriverMap() {
           isSuperAdmin={isSuperAdmin}
           selectedVid={selectedVid}
           setSelectedVid={setSelectedVid}
+          collapseVendorSelection={collapseVendorSelection}
+          setCollapseVendorSelection={setCollapseVendorSelection}
           filterMode={filterMode}
           setFilterMode={setFilterMode}
           visibleDrivers={visibleDrivers}
+          allDrivers={allDrivers}
           detail={detail}
           setDetail={setDetail}
           vendorColor={vendorColor}
@@ -230,7 +230,6 @@ export default function LiveDriverMap() {
           fmtAge={fmtAge}
           secAgo={secAgo}
         />
-
 
         {/* ── Legend ── */}
         <div style={S.legend}>

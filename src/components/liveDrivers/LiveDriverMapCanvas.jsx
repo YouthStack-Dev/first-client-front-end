@@ -62,6 +62,23 @@ function MapInner({
     map.fitBounds(bounds, 60);
   }, [map, driverMap, fitKey]);
 
+  // Center selected driver when a sidebar item is clicked
+  useEffect(() => {
+    if (!map || !selectedDetail) return;
+
+    const selectedDriver = visibleDrivers.find(
+      ({ vid, did }) => vid === selectedDetail.vid && did === selectedDetail.did
+    );
+
+    if (!selectedDriver?.data?.lat || !selectedDriver?.data?.lng) return;
+
+    map.panTo({ lat: selectedDriver.data.lat, lng: selectedDriver.data.lng });
+
+    if (map.getZoom && map.getZoom() < 14) {
+      map.setZoom(14);
+    }
+  }, [map, selectedDetail, visibleDrivers]);
+
   // Build drivers + maintain trail history
   const driversWithTrails = useMemo(() => {
     const result = [];
