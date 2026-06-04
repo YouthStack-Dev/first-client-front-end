@@ -25,13 +25,8 @@ import TeamEmployeesManagement from "../components/TeamEmployees/TeamEmployeesMa
 import ReviewManagement from "../pages/ReviewManagement";
 import ManageAnnouncements from "../pages/ManageAnnouncements";
 import SpeedViolationsPage from "../pages/SpeedViolationsPage";
-<<<<<<< HEAD
-import NodalPointsPage from "../pages/NodalpointsPage";
-import ChatSessionsPage from "../pages/ChatSessionsPage";
-=======
 import NodalPointManagement from "../pages/NodalPointManagement";
 import DelayReport from "../pages/DelayReport";
->>>>>>> origin/feature/logs-viewer
 
 
 export const CompanyRoutes = () => (
@@ -70,14 +65,9 @@ export const CompanyRoutes = () => (
     <Route path="announcements" element={<ManageAnnouncements />} />
     <Route path="reviews" element={<ReviewManagement />} />
     <Route path="speed-violations" element={<SpeedViolationsPage />} />
-<<<<<<< HEAD
-    <Route path="nodal-points" element={<NodalPointsPage />} />
-    <Route path="chats" element={<ChatSessionsPage />} />
-=======
     <Route path="nodal-points"           element={<NodalPointManagement />} />
     <Route path="reports/delays"          element={<DelayReport />} />
 
->>>>>>> origin/feature/logs-viewer
 
     <Route path="tracking" element={<TrackingManagement />} />
     <Route path="report-downloader" element={<ReportDownloader />} />

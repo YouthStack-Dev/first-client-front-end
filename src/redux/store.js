@@ -21,7 +21,7 @@ import reviewReducer from "./features/reviews/Reviewslice";
 import iamPermissionsReducer from "./features/iampermissions/Iampermissionsslice";
 import speedViolationsReducer from "./features/speedviolations/speedviolationsSlice";
 import nodalPointsReducer from "./features/nodalPoints/nodalPointsSlice";
-import logsReducer from "./features/logs/logsSlice";
+import logsReducer from "./features/log_feat/logsSlice";
 import delayReportsReducer from "./features/delayReports/delayReportsSlice";
 
 const store = configureStore({

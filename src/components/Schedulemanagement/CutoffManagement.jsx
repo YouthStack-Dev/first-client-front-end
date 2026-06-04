@@ -20,6 +20,8 @@ import {
   Building,
   Gauge,
   Route,
+  Sliders,
+  Timer,
 } from "lucide-react";
 import { logDebug } from "../../utils/logger";
 import ReusableButton from "../ui/ReusableButton";
@@ -72,6 +74,13 @@ const CutoffManagement = () => {
     speed_limit_kmph,
     one_trip_per_shift_enabled,
     auto_move_on_conflict,
+    driver_max_duty_minutes,
+    driver_rest_enforcement,
+    delay_driver_grace_minutes,
+    delay_employee_grace_minutes,
+    dark_hour_boarding_mode,
+    schedule_reminder_enabled,
+    schedule_reminder_minutes,
   } = formData || {};
 
   useEffect(() => {
@@ -84,18 +93,7 @@ const CutoffManagement = () => {
     const newValue = !formData[fieldName];
     dispatch(updateFormField({ name: fieldName, value: newValue }));
     if (activeTab === "tenant") {
-      const tenantData = {
-        escort_required_start_time,
-        escort_required_end_time,
-        escort_required_for_women,
-        login_boarding_otp,
-        login_deboarding_otp,
-        logout_boarding_otp,
-        logout_deboarding_otp,
-        speed_limit_kmph,
-        one_trip_per_shift_enabled,
-        auto_move_on_conflict,
-      };
+      const tenantData = buildTenantPayload();
       tenantData[fieldName] = newValue;
       dispatch(saveEscortConfigThunk(tenantData));
     }
@@ -112,6 +110,26 @@ const CutoffManagement = () => {
     }));
   };
 
+  const buildTenantPayload = () => ({
+    escort_required_start_time,
+    escort_required_end_time,
+    escort_required_for_women,
+    login_boarding_otp,
+    login_deboarding_otp,
+    logout_boarding_otp,
+    logout_deboarding_otp,
+    speed_limit_kmph,
+    one_trip_per_shift_enabled,
+    auto_move_on_conflict,
+    driver_max_duty_minutes,
+    driver_rest_enforcement,
+    delay_driver_grace_minutes,
+    delay_employee_grace_minutes,
+    dark_hour_boarding_mode,
+    schedule_reminder_enabled,
+    schedule_reminder_minutes,
+  });
+
   const handleSaveCutoff = () => {
     dispatch(saveCutoffThunk({
       booking_login_cutoff, cancel_login_cutoff, booking_logout_cutoff, cancel_logout_cutoff,
@@ -120,19 +138,7 @@ const CutoffManagement = () => {
   };
 
   const handleSaveTenant = () => {
-    const tenantData = {
-      escort_required_start_time,
-      escort_required_end_time,
-      escort_required_for_women,
-      login_boarding_otp,
-      login_deboarding_otp,
-      logout_boarding_otp,
-      logout_deboarding_otp,
-      speed_limit_kmph,
-      one_trip_per_shift_enabled,
-      auto_move_on_conflict,
-    };
-    dispatch(saveEscortConfigThunk(tenantData));
+    dispatch(saveEscortConfigThunk(buildTenantPayload()));
   };
 
   const parseTime = (t) => {
@@ -147,28 +153,28 @@ const CutoffManagement = () => {
     return { hours: parseInt(p[0]) || 0, minutes: parseInt(p[1]) || 0 };
   };
 
+  const cutoffFields = [
+    "booking_login_cutoff", "cancel_login_cutoff", "booking_logout_cutoff", "cancel_logout_cutoff",
+    "medical_emergency_booking_cutoff", "adhoc_booking_cutoff", "allow_adhoc_booking", "allow_medical_emergency_booking",
+  ];
+
+  const tenantFields = [
+    "escort_required_start_time", "escort_required_end_time", "escort_required_for_women",
+    "login_boarding_otp", "login_deboarding_otp", "logout_boarding_otp", "logout_deboarding_otp",
+    "speed_limit_kmph", "one_trip_per_shift_enabled", "auto_move_on_conflict",
+    "driver_max_duty_minutes", "driver_rest_enforcement",
+    "delay_driver_grace_minutes", "delay_employee_grace_minutes",
+    "dark_hour_boarding_mode", "schedule_reminder_enabled", "schedule_reminder_minutes",
+  ];
+
   const hasCutoffChanges = () => {
     if (!data) return false;
-    return ["booking_login_cutoff","cancel_login_cutoff","booking_logout_cutoff","cancel_logout_cutoff",
-      "medical_emergency_booking_cutoff","adhoc_booking_cutoff","allow_adhoc_booking","allow_medical_emergency_booking",
-    ].some((k) => formData[k] !== data[k]);
+    return cutoffFields.some((k) => formData[k] !== data[k]);
   };
 
   const hasTenantChanges = () => {
     if (!tenantConfig) return false;
-    const tenantFields = [
-      "escort_required_start_time",
-      "escort_required_end_time",
-      "escort_required_for_women",
-      "login_boarding_otp",
-      "login_deboarding_otp",
-      "logout_boarding_otp",
-      "logout_deboarding_otp",
-      "speed_limit_kmph",
-      "one_trip_per_shift_enabled",
-      "auto_move_on_conflict",
-    ];
-    return tenantFields.some((key) => formData[key] !== tenantConfig[key]);
+    return tenantFields.some((k) => formData[k] !== tenantConfig[k]);
   };
 
   const isSaving = (tab) => (tab === "tenant" ? tenantStatus : status) === "saving";
@@ -199,11 +205,6 @@ const CutoffManagement = () => {
     return null;
   };
 
-  useEffect(() => {
-    if (status === "saved") setTimeout(() => {}, 3000);
-    if (tenantStatus === "saved") setTimeout(() => {}, 3000);
-  }, [status, tenantStatus]);
-
   /* ── sub-components ── */
   const FieldRow = ({ icon: Icon, label, children }) => (
     <div className="group flex items-center gap-3 py-2.5 px-3 -mx-3 rounded-lg hover:bg-app-tertiary transition-colors">
@@ -225,10 +226,10 @@ const CutoffManagement = () => {
           </select>
           <span className="text-app-text-muted text-xs">:</span>
           <select value={minutes} onChange={(e) => handleTimeChange(fieldName, hours, +e.target.value)} className={`${selectCls} w-16`}>
-            {[0,15,30,45].map((m) => <option key={m} value={m}>{m}m</option>)}
+            {[0, 15, 30, 45].map((m) => <option key={m} value={m}>{m}m</option>)}
           </select>
           <span className="text-[10px] font-mono font-semibold text-app-primary bg-app-tertiary px-1.5 py-0.5 rounded w-12 text-center tabular-nums">
-            {hours}:{minutes.toString().padStart(2,"0")}
+            {hours}:{minutes.toString().padStart(2, "0")}
           </span>
         </div>
       </FieldRow>
@@ -241,14 +242,14 @@ const CutoffManagement = () => {
       <FieldRow icon={Icon} label={label}>
         <div className="flex items-center gap-1.5">
           <select value={hours} onChange={(e) => handleFullTimeChange(fieldName, +e.target.value, minutes)} className={`${selectCls} w-16`}>
-            {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{i.toString().padStart(2,"0")}h</option>)}
+            {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{i.toString().padStart(2, "0")}h</option>)}
           </select>
           <span className="text-app-text-muted text-xs">:</span>
           <select value={minutes} onChange={(e) => handleFullTimeChange(fieldName, hours, +e.target.value)} className={`${selectCls} w-16`}>
-            {Array.from({ length: 60 }, (_, i) => <option key={i} value={i}>{i.toString().padStart(2,"0")}m</option>)}
+            {Array.from({ length: 60 }, (_, i) => <option key={i} value={i}>{i.toString().padStart(2, "0")}m</option>)}
           </select>
           <span className="text-[10px] font-mono font-semibold text-app-primary bg-app-tertiary px-1.5 py-0.5 rounded w-12 text-center tabular-nums">
-            {hours.toString().padStart(2,"0")}:{minutes.toString().padStart(2,"0")}
+            {hours.toString().padStart(2, "00")}:{minutes.toString().padStart(2, "00")}
           </span>
         </div>
       </FieldRow>
@@ -256,7 +257,10 @@ const CutoffManagement = () => {
   };
 
   const CompactToggle = ({ label, enabled, onChange, description }) => (
-    <div className="group flex items-center justify-between gap-3 py-2.5 px-3 -mx-3 rounded-lg hover:bg-app-tertiary transition-colors cursor-pointer" onClick={onChange}>
+    <div
+      className="group flex items-center justify-between gap-3 py-2.5 px-3 -mx-3 rounded-lg hover:bg-app-tertiary transition-colors cursor-pointer"
+      onClick={onChange}
+    >
       <div className="flex-1 min-w-0">
         <p className="text-xs font-medium text-app-text-secondary">{label}</p>
         {description && <p className="text-[11px] text-app-text-muted mt-0.5 leading-snug">{description}</p>}
@@ -280,7 +284,8 @@ const CutoffManagement = () => {
     return (
       <FieldRow icon={Icon} label={label}>
         <div className="flex items-center gap-1.5">
-          <input type="number" value={local} min={min} max={max}
+          <input
+            type="number" value={local} min={min} max={max}
             onChange={(e) => setLocal(e.target.value)} onBlur={onBlur}
             className={`${selectCls} w-20 text-right`}
           />
@@ -296,17 +301,19 @@ const CutoffManagement = () => {
       <div className="flex gap-2">
         {[
           { value: "warn",  label: "Warn",  desc: "Proceed with amber banner", color: "border-amber-400 bg-amber-50 text-amber-800" },
-          { value: "block", label: "Block", desc: "Reject if rest insufficient", color: "border-red-400 bg-red-50 text-red-800"   },
+          { value: "block", label: "Block", desc: "Reject if rest insufficient", color: "border-red-400 bg-red-50 text-red-800" },
         ].map((opt) => {
           const active = driver_rest_enforcement === opt.value;
           return (
-            <label key={opt.value}
+            <label
+              key={opt.value}
               className={`flex-1 flex flex-col gap-1 p-2.5 rounded-lg border-2 cursor-pointer transition-all ${
                 active ? opt.color + " shadow-sm" : "border-app-border bg-app-surface hover:bg-app-tertiary"
               }`}
             >
               <div className="flex items-center gap-2">
-                <input type="radio" name="driver_rest_enforcement" value={opt.value}
+                <input
+                  type="radio" name="driver_rest_enforcement" value={opt.value}
                   checked={active}
                   onChange={() => dispatch(updateFormField({ name: "driver_rest_enforcement", value: opt.value }))}
                   className="accent-app-primary"
@@ -330,7 +337,8 @@ const CutoffManagement = () => {
   const TabBar = ({ tabs, active, onChange }) => (
     <div className="flex gap-1 bg-app-tertiary p-1 rounded-xl border border-app-border mb-4">
       {tabs.map(({ id, label, icon: Icon }) => (
-        <button key={id} onClick={() => onChange(id)}
+        <button
+          key={id} onClick={() => onChange(id)}
           className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 focus:outline-none
             ${active === id
               ? "bg-app-surface text-app-text-primary shadow-sm border border-app-border"
@@ -360,7 +368,10 @@ const CutoffManagement = () => {
   const SummaryRow = ({ label, value, pill }) => (
     <div className="flex items-center justify-between py-2 border-b border-app-border last:border-0">
       <span className="text-xs text-app-text-muted">{label}</span>
-      {pill !== undefined ? <StatusPill active={pill} /> : <span className="text-xs font-semibold text-app-text-primary tabular-nums">{value}</span>}
+      {pill !== undefined
+        ? <StatusPill active={pill} />
+        : <span className="text-xs font-semibold text-app-text-primary tabular-nums">{value}</span>
+      }
     </div>
   );
 
@@ -489,14 +500,14 @@ const CutoffManagement = () => {
               <Card>
                 <SectionHeader icon={Clock} title="Booking cutoffs" color="text-app-primary" />
                 <div className="space-y-0.5">
-                  <CompactTimeInput label="Login booking" fieldName="booking_login_cutoff" currentValue={booking_login_cutoff} icon={Clock} />
+                  <CompactTimeInput label="Login booking"  fieldName="booking_login_cutoff"  currentValue={booking_login_cutoff}  icon={Clock} />
                   <CompactTimeInput label="Logout booking" fieldName="booking_logout_cutoff" currentValue={booking_logout_cutoff} icon={Clock} />
                 </div>
               </Card>
               <Card>
                 <SectionHeader icon={XCircle} title="Cancellation cutoffs" color="text-red-500" />
                 <div className="space-y-0.5">
-                  <CompactTimeInput label="Login cancellation" fieldName="cancel_login_cutoff" currentValue={cancel_login_cutoff} icon={XCircle} />
+                  <CompactTimeInput label="Login cancellation"  fieldName="cancel_login_cutoff"  currentValue={cancel_login_cutoff}  icon={XCircle} />
                   <CompactTimeInput label="Logout cancellation" fieldName="cancel_logout_cutoff" currentValue={cancel_logout_cutoff} icon={XCircle} />
                 </div>
               </Card>
@@ -508,21 +519,20 @@ const CutoffManagement = () => {
                 <SectionHeader icon={Shield} title="Medical emergency" color="text-red-500" />
                 <div className="space-y-0.5">
                   <CompactTimeInput label="Emergency cutoff" fieldName="medical_emergency_booking_cutoff" currentValue={medical_emergency_booking_cutoff} icon={Shield} />
-                  <CompactToggle label="Enable medical emergency" enabled={allow_medical_emergency_booking} onChange={() => handleToggle("allow_medical_emergency_booking")} />
+                  <CompactToggle label="Enable medical emergency" enabled={!!allow_medical_emergency_booking} onChange={() => handleToggle("allow_medical_emergency_booking")} />
                 </div>
               </Card>
               <Card>
                 <SectionHeader icon={Zap} title="Adhoc shifts" color="text-purple-500" />
                 <div className="space-y-0.5">
                   <CompactTimeInput label="Adhoc cutoff" fieldName="adhoc_booking_cutoff" currentValue={adhoc_booking_cutoff} icon={Zap} />
-                  <CompactToggle label="Enable adhoc booking" enabled={allow_adhoc_booking} onChange={() => handleToggle("allow_adhoc_booking")} />
+                  <CompactToggle label="Enable adhoc booking" enabled={!!allow_adhoc_booking} onChange={() => handleToggle("allow_adhoc_booking")} />
                 </div>
               </Card>
             </div>
 
           </div>
         )}
-
 
         {/* ════════ TENANT TAB ════════ */}
         {activeTab === "tenant" && (
@@ -581,9 +591,9 @@ const CutoffManagement = () => {
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-app-text-muted mb-2">Grace & Dark Hours</p>
                   <div className="space-y-0.5">
-                    <SummaryRow label="Driver grace time" value={delay_driver_grace_minutes != null ? `${delay_driver_grace_minutes} min` : "—"} />
+                    <SummaryRow label="Driver grace time"   value={delay_driver_grace_minutes   != null ? `${delay_driver_grace_minutes} min`   : "—"} />
                     <SummaryRow label="Employee grace time" value={delay_employee_grace_minutes != null ? `${delay_employee_grace_minutes} min` : "—"} />
-                    <SummaryRow label="Dark hour mode" value={dark_hour_boarding_mode || "off"} />
+                    <SummaryRow label="Dark hour mode"      value={dark_hour_boarding_mode || "off"} />
                   </div>
                 </div>
 
@@ -597,74 +607,55 @@ const CutoffManagement = () => {
               <div className="flex-1 h-px bg-app-border" />
             </div>
 
-            {/* Vehicle Limits */}
-            <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
-                <Gauge className="w-4 h-4 text-orange-500" />
-                <h2 className="text-sm font-semibold text-app-text-primary">Vehicle Limits</h2>
-              </div>
-              <div className="space-y-1">
-                <CompactNumberInput
-                  label="Speed Limit"
-                  fieldName="speed_limit_kmph"
-                  currentValue={speed_limit_kmph}
-                  icon={Gauge}
-                  unit="km/h"
-                  min={0}
-                  max={200}
-                />
-              </div>
-            </div>
+            {/* ── Config cards grid ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-            {/* Routing Policy */}
-            <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
-                <Route className="w-4 h-4 text-violet-600" />
-                <h2 className="text-sm font-semibold text-app-text-primary">Routing Policy</h2>
-              </div>
-              <div className="space-y-1">
-                <CompactToggle
-                  label="Enforce one booking per shift per route"
-                  enabled={!!one_trip_per_shift_enabled}
-                  onChange={() => handleToggle("one_trip_per_shift_enabled")}
-                  description="When ON, a booking can only ride on one route at a time."
-                />
-                <div className={one_trip_per_shift_enabled ? "" : "opacity-40 pointer-events-none"}>
-                  <CompactToggle
-                    label="Auto-move booking to new route on conflict"
-                    enabled={!!auto_move_on_conflict}
-                    onChange={() => handleToggle("auto_move_on_conflict")}
-                    description="When OFF, the add operation is rejected instead of silently moving the booking."
-                  />
+              {/* Escort settings */}
+              <Card>
+                <SectionHeader icon={UserCheck} title="Escort settings" color="text-pink-500" />
+                <div className="space-y-0.5">
+                  <CompactFullTimeInput label="Escort start time" fieldName="escort_required_start_time" currentValue={escort_required_start_time} icon={Clock} />
+                  <CompactFullTimeInput label="Escort end time"   fieldName="escort_required_end_time"   currentValue={escort_required_end_time}   icon={Clock} />
+                  <CompactToggle label="Require escort for women" enabled={!!escort_required_for_women} onChange={() => handleToggle("escort_required_for_women")} />
                 </div>
-              </div>
-            </div>
+              </Card>
 
-            {/* Configuration Summary — spans full width */}
-            <div className="lg:col-span-2 bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
-                <Activity className="w-4 h-4 text-app-text-muted" />
-                <h2 className="text-sm font-semibold text-app-text-primary">Configuration Summary</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
-                    <p className="font-medium text-app-text-secondary mb-1 text-xs">Escort Active Period</p>
-                    <p className="text-sm font-semibold text-app-text-primary">
-                      {escort_required_start_time} - {escort_required_end_time}
-                    </p>
-                  </div>
-                  <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
-                    <p className="font-medium text-app-text-secondary mb-1 text-xs">Escort Status</p>
-                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium transition-colors ${escort_required_for_women ? "bg-green-100 text-green-700" : "bg-gray-200 text-app-text-muted"}`}>
-                      {escort_required_for_women ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-                  <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
-                    <p className="font-medium text-app-text-secondary mb-1 text-xs">Speed Limit</p>
-                    <p className="text-sm font-semibold text-app-text-primary">
-                      {speed_limit_kmph != null ? `${speed_limit_kmph} km/h` : "—"}
-                    </p>
+              {/* OTP settings */}
+              <Card>
+                <SectionHeader icon={Shield} title="OTP settings" color="text-blue-500" />
+                <div className="space-y-0.5">
+                  <CompactToggle label="Login boarding OTP"    enabled={!!login_boarding_otp}    onChange={() => handleToggle("login_boarding_otp")} />
+                  <CompactToggle label="Login deboarding OTP"  enabled={!!login_deboarding_otp}  onChange={() => handleToggle("login_deboarding_otp")} />
+                  <CompactToggle label="Logout boarding OTP"   enabled={!!logout_boarding_otp}   onChange={() => handleToggle("logout_boarding_otp")} />
+                  <CompactToggle label="Logout deboarding OTP" enabled={!!logout_deboarding_otp} onChange={() => handleToggle("logout_deboarding_otp")} />
+                </div>
+              </Card>
+
+              {/* Vehicle Limits */}
+              <Card>
+                <SectionHeader icon={Gauge} title="Vehicle limits" color="text-orange-500" />
+                <div className="space-y-1">
+                  <CompactNumberInput label="Speed limit" fieldName="speed_limit_kmph" currentValue={speed_limit_kmph} icon={Gauge} unit="km/h" min={0} max={200} />
+                </div>
+              </Card>
+
+              {/* Routing Policy */}
+              <Card>
+                <SectionHeader icon={Route} title="Routing policy" color="text-violet-600" />
+                <div className="space-y-1">
+                  <CompactToggle
+                    label="Enforce one booking per shift per route"
+                    enabled={!!one_trip_per_shift_enabled}
+                    onChange={() => handleToggle("one_trip_per_shift_enabled")}
+                    description="When ON, a booking can only ride on one route at a time."
+                  />
+                  <div className={one_trip_per_shift_enabled ? "" : "opacity-40 pointer-events-none"}>
+                    <CompactToggle
+                      label="Auto-move booking to new route on conflict"
+                      enabled={!!auto_move_on_conflict}
+                      onChange={() => handleToggle("auto_move_on_conflict")}
+                      description="When OFF, the add operation is rejected instead of silently moving the booking."
+                    />
                   </div>
                 </div>
               </Card>
@@ -694,24 +685,26 @@ const CutoffManagement = () => {
               <Card>
                 <SectionHeader icon={Activity} title="Grace & dark hour settings" color="text-rose-500" />
                 <div className="space-y-0.5">
-                  <CompactNumberInput label="Driver grace time" fieldName="delay_driver_grace_minutes" currentValue={delay_driver_grace_minutes} icon={Clock} unit="min" min={0} max={120} />
+                  <CompactNumberInput label="Driver grace time"   fieldName="delay_driver_grace_minutes"   currentValue={delay_driver_grace_minutes}   icon={Clock} unit="min" min={0} max={120} />
                   <CompactNumberInput label="Employee grace time" fieldName="delay_employee_grace_minutes" currentValue={delay_employee_grace_minutes} icon={Clock} unit="min" min={0} max={120} />
                   <div className="pt-1 pb-0.5">
                     <p className="text-xs font-medium text-app-text-secondary px-3 -mx-3 mb-2">Dark hour boarding</p>
                     <div className="flex gap-2">
                       {[
-                        { value: "off",  label: "Off",  desc: "No restrictions", color: "border-slate-400 bg-slate-50 text-slate-800" },
-                        { value: "on",   label: "On",   desc: "Restrict boarding", color: "border-rose-400 bg-rose-50 text-rose-800"   },
+                        { value: "off", label: "Off", desc: "No restrictions",    color: "border-slate-400 bg-slate-50 text-slate-800" },
+                        { value: "on",  label: "On",  desc: "Restrict boarding",  color: "border-rose-400 bg-rose-50 text-rose-800" },
                       ].map((opt) => {
                         const active = dark_hour_boarding_mode === opt.value;
                         return (
-                          <label key={opt.value}
+                          <label
+                            key={opt.value}
                             className={`flex-1 flex flex-col gap-1 p-2.5 rounded-lg border-2 cursor-pointer transition-all ${
                               active ? opt.color + " shadow-sm" : "border-app-border bg-app-surface hover:bg-app-tertiary"
                             }`}
                           >
                             <div className="flex items-center gap-2">
-                              <input type="radio" name="dark_hour_boarding_mode" value={opt.value}
+                              <input
+                                type="radio" name="dark_hour_boarding_mode" value={opt.value}
                                 checked={active}
                                 onChange={() => dispatch(updateFormField({ name: "dark_hour_boarding_mode", value: opt.value }))}
                                 className="accent-app-primary"
@@ -723,6 +716,30 @@ const CutoffManagement = () => {
                         );
                       })}
                     </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Pre-trip reminder — spans full width */}
+              <Card span2>
+                <SectionHeader icon={AlertTriangle} title="Pre-trip reminder" color="text-amber-500" />
+                <div className="space-y-0.5">
+                  <CompactToggle
+                    label="Enable pre-trip reminder"
+                    enabled={!!schedule_reminder_enabled}
+                    onChange={() => handleToggle("schedule_reminder_enabled")}
+                    description="Notify employees before their scheduled trip."
+                  />
+                  <div className={schedule_reminder_enabled ? "" : "opacity-40 pointer-events-none"}>
+                    <CompactNumberInput
+                      label="Remind before trip"
+                      fieldName="schedule_reminder_minutes"
+                      currentValue={schedule_reminder_minutes}
+                      icon={Clock}
+                      unit="min"
+                      min={1}
+                      max={120}
+                    />
                   </div>
                 </div>
               </Card>
