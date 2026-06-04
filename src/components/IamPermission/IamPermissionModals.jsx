@@ -56,9 +56,9 @@ const ErrorBox = ({ error }) => (
 // ─── Create Modal ─────────────────────────────────────────────────────────────
 export const CreatePermissionModal = ({ onClose, onSuccess }) => {
   const dispatch = useDispatch();
-  const loading  = useSelector(selectCreateLoading);
-  const error    = useSelector(selectCreateError);
-  const success  = useSelector(selectCreateSuccess);
+  const loading = useSelector(selectCreateLoading);
+  const error = useSelector(selectCreateError);
+  const success = useSelector(selectCreateSuccess);
 
   // ✅ All deps declared — no stale closure risk
   useEffect(() => {
@@ -71,11 +71,15 @@ export const CreatePermissionModal = ({ onClose, onSuccess }) => {
 
   const handleSubmit = useCallback(
     (form) => dispatch(createPermissionThunk(form)),
-    [dispatch]
+    [dispatch],
   );
 
   return (
-    <Modal title="Create Permission" subtitle="POST /api/v1/iam/permissions/" onClose={onClose}>
+    <Modal
+      title="Create Permission"
+      subtitle="POST /api/v1/iam/permissions/"
+      onClose={onClose}
+    >
       {error && <ErrorBox error={error} />}
       <IamPermissionForm
         mode="create"
@@ -90,9 +94,9 @@ export const CreatePermissionModal = ({ onClose, onSuccess }) => {
 // ─── Edit Modal ───────────────────────────────────────────────────────────────
 export const EditPermissionModal = ({ permission, onClose, onSuccess }) => {
   const dispatch = useDispatch();
-  const loading  = useSelector(selectUpdateLoading);
-  const error    = useSelector(selectUpdateError);
-  const success  = useSelector(selectUpdateSuccess);
+  const loading = useSelector(selectUpdateLoading);
+  const error = useSelector(selectUpdateError);
+  const success = useSelector(selectUpdateSuccess);
 
   // ✅ All deps declared
   useEffect(() => {
@@ -106,9 +110,12 @@ export const EditPermissionModal = ({ permission, onClose, onSuccess }) => {
   const handleSubmit = useCallback(
     (form) =>
       dispatch(
-        updatePermissionThunk({ permissionId: permission.permission_id, payload: form })
+        updatePermissionThunk({
+          permissionId: permission.permission_id,
+          payload: form,
+        }),
       ),
-    [dispatch, permission.permission_id]
+    [dispatch, permission.permission_id],
   );
 
   return (
@@ -131,9 +138,9 @@ export const EditPermissionModal = ({ permission, onClose, onSuccess }) => {
 
 // ─── View Modal ───────────────────────────────────────────────────────────────
 export const ViewPermissionModal = ({ permissionId, onClose, onEdit }) => {
-  const dispatch   = useDispatch();
+  const dispatch = useDispatch();
   const permission = useSelector(selectSelectedPermission);
-  const loading    = useSelector(selectPermissionByIdLoading);
+  const loading = useSelector(selectPermissionByIdLoading);
 
   // ✅ All deps declared; cleanup clears selected permission on unmount
   useEffect(() => {
@@ -144,13 +151,33 @@ export const ViewPermissionModal = ({ permissionId, onClose, onEdit }) => {
   // Field colour is data-driven (status active/inactive) — inline style is justified
   const fields = permission
     ? [
-        { key: "Permission ID", value: permission.permission_id,                         color: "#475569" },
-        { key: "Module",        value: permission.module,                                color: "#4f46e5" },
-        { key: "Action",        value: permission.action,                                color: "#16a34a" },
-        { key: "Description",   value: permission.description || "—",                    color: "#64748b" },
-        { key: "Status",        value: permission.is_active ? "Active" : "Inactive",     color: permission.is_active ? "#15803d" : "#dc2626" },
-        { key: "Created At",    value: permission.created_at || "—",                     color: "#94a3b8" },
-        { key: "Updated At",    value: permission.updated_at || "—",                     color: "#94a3b8" },
+        {
+          key: "Permission ID",
+          value: permission.permission_id,
+          color: "#475569",
+        },
+        { key: "Module", value: permission.module, color: "#4f46e5" },
+        { key: "Action", value: permission.action, color: "#16a34a" },
+        {
+          key: "Description",
+          value: permission.description || "—",
+          color: "#64748b",
+        },
+        {
+          key: "Status",
+          value: permission.is_active ? "Active" : "Inactive",
+          color: permission.is_active ? "#15803d" : "#dc2626",
+        },
+        {
+          key: "Created At",
+          value: permission.created_at || "—",
+          color: "#94a3b8",
+        },
+        {
+          key: "Updated At",
+          value: permission.updated_at || "—",
+          color: "#94a3b8",
+        },
       ]
     : [];
 
@@ -166,7 +193,6 @@ export const ViewPermissionModal = ({ permissionId, onClose, onEdit }) => {
         </div>
       ) : (
         <div className="flex flex-col gap-[10px]">
-
           {/* Field rows */}
           {fields.map(({ key, value, color }) => (
             <div
@@ -207,7 +233,6 @@ export const ViewPermissionModal = ({ permissionId, onClose, onEdit }) => {
               Close
             </button>
           </div>
-
         </div>
       )}
     </Modal>
@@ -217,16 +242,18 @@ export const ViewPermissionModal = ({ permissionId, onClose, onEdit }) => {
 // ─── Delete Modal ─────────────────────────────────────────────────────────────
 export const DeletePermissionModal = ({ permission, onClose, onSuccess }) => {
   const dispatch = useDispatch();
-  const loading  = useSelector(selectDeleteLoading);
-  const error    = useSelector(selectDeleteError);
-  const success  = useSelector(selectDeleteSuccess);
+  const loading = useSelector(selectDeleteLoading);
+  const error = useSelector(selectDeleteError);
+  const success = useSelector(selectDeleteSuccess);
 
   // ✅ Fixed: was incorrectly passing "error" as the toast type on a success event
   // ✅ All deps declared
   useEffect(() => {
     if (success) {
       dispatch(clearDeleteStatus());
-      onSuccess?.(`Permission #${permission.permission_id} deleted successfully`);
+      onSuccess?.(
+        `Permission #${permission.permission_id} deleted successfully`,
+      );
       onClose();
     }
   }, [success, dispatch, onSuccess, onClose, permission.permission_id]);
@@ -239,14 +266,19 @@ export const DeletePermissionModal = ({ permission, onClose, onSuccess }) => {
       width={440}
     >
       <div className="flex flex-col gap-4">
-
         {/* ── Warning box ── */}
         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
           <div className="flex items-start gap-3">
-
             {/* Warning icon */}
             <div className="w-9 h-9 rounded-lg bg-red-100 flex items-center justify-center shrink-0">
-              <svg width="18" height="18" fill="none" stroke="#dc2626" strokeWidth="2" viewBox="0 0 24 24">
+              <svg
+                width="18"
+                height="18"
+                fill="none"
+                stroke="#dc2626"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
                 <path
                   d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
                   strokeLinecap="round"
@@ -264,8 +296,9 @@ export const DeletePermissionModal = ({ permission, onClose, onSuccess }) => {
                 ?
               </p>
               <p className="text-red-400 text-[12px] leading-relaxed m-0">
-                This action cannot be undone. It may break existing role assignments
-                that depend on this permission (ID #{permission.permission_id}).
+                This action cannot be undone. It may break existing role
+                assignments that depend on this permission (ID #
+                {permission.permission_id}).
               </p>
             </div>
           </div>
@@ -283,16 +316,25 @@ export const DeletePermissionModal = ({ permission, onClose, onSuccess }) => {
         {/* ── Action buttons ── */}
         <div className="flex gap-[10px]">
           <button
-            onClick={() => dispatch(deletePermissionThunk(permission.permission_id))}
+            onClick={() =>
+              dispatch(deletePermissionThunk(permission.permission_id))
+            }
             disabled={loading}
             className={`flex-1 flex items-center justify-center gap-2 py-[11px]
               rounded-lg border-none text-[13px] font-bold transition-colors duration-150
-              ${loading
-                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                : "bg-red-600 hover:bg-red-700 text-white cursor-pointer"
+              ${
+                loading
+                  ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                  : "bg-red-600 hover:bg-red-700 text-white cursor-pointer"
               }`}
           >
-            {loading ? <><Spinner /> Deleting…</> : "Yes, Delete"}
+            {loading ? (
+              <>
+                <Spinner /> Deleting…
+              </>
+            ) : (
+              "Yes, Delete"
+            )}
           </button>
 
           <button
@@ -304,7 +346,6 @@ export const DeletePermissionModal = ({ permission, onClose, onSuccess }) => {
             Cancel
           </button>
         </div>
-
       </div>
     </Modal>
   );

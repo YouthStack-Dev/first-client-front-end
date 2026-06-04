@@ -101,7 +101,7 @@ const CommonFilters = ({
       )}
 
       {/* Current tenant info — non-superadmin */}
-      {showTenant && !isSuperAdmin && currentUserTenant && (
+      {/* {showTenant && !isSuperAdmin && currentUserTenant && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <div className="flex items-start gap-2">
             <svg
@@ -125,7 +125,7 @@ const CommonFilters = ({
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Warning — super admin no tenant selected */}
       {showTenant && isSuperAdmin && !formData.tenant_id && !tenantsLoading && (

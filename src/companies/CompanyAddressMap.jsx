@@ -28,14 +28,16 @@ const MapInner = memo(
 
       let autocompleteInstance = null;
       let attempts = 0;
-      const MAX_ATTEMPTS = 50; 
+      const MAX_ATTEMPTS = 50;
 
       const interval = setInterval(() => {
         attempts++;
 
         if (attempts > MAX_ATTEMPTS) {
           clearInterval(interval);
-          console.warn("[CompanyAddressMap] Google Maps places library did not load in time.");
+          console.warn(
+            "[CompanyAddressMap] Google Maps places library did not load in time.",
+          );
           return;
         }
 
@@ -45,7 +47,7 @@ const MapInner = memo(
 
         autocompleteInstance = new window.google.maps.places.Autocomplete(
           inputRef.current,
-          { fields: ["geometry", "formatted_address", "name"] }
+          { fields: ["geometry", "formatted_address", "name"] },
         );
 
         autocompleteListenerRef.current = autocompleteInstance.addListener(
@@ -70,9 +72,9 @@ const MapInner = memo(
             }
 
             setShowSearchBar(false);
-            
+
             if (inputRef.current) inputRef.current.blur();
-          }
+          },
         );
       }, 100);
 
@@ -80,7 +82,7 @@ const MapInner = memo(
         clearInterval(interval);
         if (autocompleteListenerRef.current && window.google?.maps?.event) {
           window.google.maps.event.removeListener(
-            autocompleteListenerRef.current
+            autocompleteListenerRef.current,
           );
           autocompleteListenerRef.current = null;
         }
@@ -123,7 +125,7 @@ const MapInner = memo(
               ref={inputRef}
               type="text"
               placeholder="Search company address"
-              aria-label="Search company address" 
+              aria-label="Search company address"
               className="w-full border rounded px-3 py-2 text-sm"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
@@ -138,7 +140,7 @@ const MapInner = memo(
         {!showSearchBar && !isReadOnly && (
           <button
             className="absolute top-4 right-4 bg-white px-3 py-1 rounded shadow text-sm hover:bg-gray-100"
-            aria-label="Change company address" 
+            aria-label="Change company address"
             onClick={() => setShowSearchBar(true)}
           >
             Change Address
@@ -146,7 +148,7 @@ const MapInner = memo(
         )}
       </div>
     );
-  }
+  },
 );
 
 MapInner.displayName = "MapInner";
@@ -180,7 +182,7 @@ const CompanyAddressMap = memo(
         lastSyncedPos.current = newPos;
         setPosition(newPos);
       }
-    }, [formData?.latitude, formData?.longitude]); 
+    }, [formData?.latitude, formData?.longitude]);
 
     const handlePositionChange = useCallback(
       (pos) => {
@@ -192,7 +194,7 @@ const CompanyAddressMap = memo(
           longitude: pos.lng.toFixed(6),
         }));
       },
-      [isReadOnly, setFormData]
+      [isReadOnly, setFormData],
     );
 
     const handleAddressChange = useCallback(
@@ -200,7 +202,7 @@ const CompanyAddressMap = memo(
         if (isReadOnly) return;
         setFormData((prev) => ({ ...prev, address: addr }));
       },
-      [isReadOnly, setFormData]
+      [isReadOnly, setFormData],
     );
 
     return (
@@ -211,7 +213,7 @@ const CompanyAddressMap = memo(
             libraries={["places"]}
             onError={() =>
               setMapsLoadError(
-                "Failed to load Google Maps. Check your API key or network connection."
+                "Failed to load Google Maps. Check your API key or network connection.",
               )
             }
           >
@@ -232,13 +234,12 @@ const CompanyAddressMap = memo(
         ) : (
           <div className="flex items-center justify-center h-[400px] bg-gray-200 text-gray-600 text-sm px-6 text-center">
             Google Maps API key missing. Add{" "}
-            <strong className="mx-1">VITE_GOOGLE_API</strong> to your .env
-            file.
+            <strong className="mx-1">VITE_GOOGLE_API</strong> to your .env file.
           </div>
         )}
       </div>
     );
-  }
+  },
 );
 
 CompanyAddressMap.displayName = "CompanyAddressMap";

@@ -185,7 +185,7 @@ const DocumentsTab = ({
           onFileChange(name, file);
         }
       },
-      [name, onFileChange]
+      [name, onFileChange],
     );
 
     return (
@@ -261,7 +261,7 @@ const DocumentsTab = ({
       (e) => {
         if (onChange) onChange(e);
       },
-      [onChange]
+      [onChange],
     );
 
     return (
@@ -290,7 +290,7 @@ const DocumentsTab = ({
           ) : (
             <div
               className={`flex-1 px-3 py-2 rounded-md border ${getStatusColor(
-                formData[name]
+                formData[name],
               )}`}
             >
               <div className="flex items-center">
@@ -318,7 +318,7 @@ const DocumentsTab = ({
           : ""; // → "YYYY-MM-DD"
         if (onChange) onChange({ target: { name, value: formattedDate } });
       },
-      [onChange]
+      [onChange],
     );
 
     return (
@@ -360,7 +360,7 @@ const DocumentsTab = ({
       (e) => {
         if (onChange) onChange(e);
       },
-      [onChange]
+      [onChange],
     );
 
     return (

@@ -65,19 +65,18 @@ export const pathTitleMap = {
   "/unauthorized": "Unauthorized",
 
   // ✅ Add these missing ones
-"/teams":                "Team Management",
-"/announcements":        "Announcements",
-"/reviews":              "Review Management",
-"/profile":              "Profile",
-"/reports":              "Reports Management",
-"/alert-config":          "Alert Configuration",
-"/notification":          "Alert Notifications",
-"/role-permission":      "User Role & Permission",
-"/escort-management":    "Escort Management",
-"/nodal-points":         "Nodal Points",
-"/reports-management":   "Reports Management",
-"/chats":              "Chat Management",
-
+  "/teams": "Team Management",
+  "/announcements": "Announcements",
+  "/reviews": "Review Management",
+  "/profile": "Profile",
+  "/reports": "Reports Management",
+  "/alert-config": "Alert Configuration",
+  "/notification": "Alert Notifications",
+  "/role-permission": "User Role & Permission",
+  "/escort-management": "Escort Management",
+  "/nodal-points": "Nodal Points",
+  "/reports-management": "Reports Management",
+  "/chats": "Chat Management",
 };
 
 /**

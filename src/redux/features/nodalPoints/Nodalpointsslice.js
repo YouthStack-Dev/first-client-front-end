@@ -1,178 +1,174 @@
 import { createSlice, createEntityAdapter } from "@reduxjs/toolkit";
 import {
+  createNodalPointThunk,
   fetchNodalPointsThunk,
   fetchNodalPointByIdThunk,
-  createNodalPointThunk,
   updateNodalPointThunk,
   deleteNodalPointThunk,
   fetchNearestNodalPointsThunk,
-} from "../nodalPoints/Nodalpointsthunk";
+} from "./Nodalpointsthunk"; 
 
-// ── Entity Adapter ────────────────────────────────────────────────────────────
 const nodalPointsAdapter = createEntityAdapter({
-  selectId: (nodalPoint) => nodalPoint.nodal_point_id,
+  selectId: (np) => np.nodal_point_id,
 });
 
 // ── Initial State ─────────────────────────────────────────────────────────────
+// getInitialState gives us { ids: [], entities: {} } plus our extra fields
 const initialState = nodalPointsAdapter.getInitialState({
-  loading: false,
+  nodalPointIdsByTenant: {},  // { [tenantId]: [id, id, ...] }
+  selectedNodalPoint: null,
+  nearestNodalPoints: [],
+  meta: null,
+
+  loading: {
+    fetch: false,
+    fetchById: false,
+    create: false,
+    update: false,
+    delete: false,
+  },
+  nearestLoading: false,        // ← separate flag (selector reads state.nodalPoints.nearestLoading)
   error: null,
-  nodalPointIdsByTenant: {},  // tenantId -> nodal_point_id[]
-  nearestNodalPoints: [],     // results from /nearest
-  nearestLoading: false,
-  meta: null,                 // pagination meta { total, page, per_page, total_pages }
 });
 
 // ── Slice ─────────────────────────────────────────────────────────────────────
 const nodalPointsSlice = createSlice({
   name: "nodalPoints",
   initialState,
-  reducers: {
-    clearNodalPoints: () => initialState,
 
-    clearError: (state) => {
+  reducers: {
+    clearSelectedNodalPoint(state) {
+      state.selectedNodalPoint = null;
+    },
+    clearNodalPointError(state) {
       state.error = null;
     },
-
-    clearNearestNodalPoints: (state) => {
+    clearNearestNodalPoints(state) {
       state.nearestNodalPoints = [];
-    },
-
-    clearMeta: (state) => {
-      state.meta = null;
-    },
-
-    clearNodalPointsByTenant: (state, action) => {
-      const tenantId = action.payload;
-      if (state.nodalPointIdsByTenant[tenantId]) {
-        state.nodalPointIdsByTenant[tenantId].forEach((id) => {
-          nodalPointsAdapter.removeOne(state, id);
-        });
-        delete state.nodalPointIdsByTenant[tenantId];
-      }
     },
   },
 
   extraReducers: (builder) => {
-    builder
 
-      // ── Fetch list ────────────────────────────────────────────────────────
+    // ── fetchNodalPointsThunk ─────────────────────────────────────────────────
+    builder
       .addCase(fetchNodalPointsThunk.pending, (state) => {
-        state.loading = true;
+        state.loading.fetch = true;
         state.error = null;
       })
       .addCase(fetchNodalPointsThunk.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loading.fetch = false;
         const { nodalPoints, tenantId, meta } = action.payload;
 
         nodalPointsAdapter.upsertMany(state, nodalPoints);
 
+        // Keep tenant → ids index in sync
         if (tenantId) {
           state.nodalPointIdsByTenant[tenantId] = nodalPoints.map(
-            (np) => np.nodal_point_id
-          );
+                (np) => np.nodal_point_id
+                );
         }
 
-        state.meta = meta || null;
+        state.meta = meta;
       })
       .addCase(fetchNodalPointsThunk.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || "Failed to fetch nodal points";
-      })
+        state.loading.fetch = false;
+        state.error = action.payload;
+      });
 
-      // ── Fetch by ID ───────────────────────────────────────────────────────
+    // ── fetchNodalPointByIdThunk ──────────────────────────────────────────────
+    builder
       .addCase(fetchNodalPointByIdThunk.pending, (state) => {
-        state.loading = true;
+        state.loading.fetchById = true;
         state.error = null;
       })
       .addCase(fetchNodalPointByIdThunk.fulfilled, (state, action) => {
-        state.loading = false;
-        nodalPointsAdapter.upsertOne(state, action.payload);
+        state.loading.fetchById = false;
+        nodalPointsAdapter.upsertOne(state, action.payload); // keep entity cache warm
+        state.selectedNodalPoint = action.payload;
       })
       .addCase(fetchNodalPointByIdThunk.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || "Failed to fetch nodal point";
-      })
+        state.loading.fetchById = false;
+        state.error = action.payload;
+      });
 
-      // ── Create ────────────────────────────────────────────────────────────
+    // ── createNodalPointThunk ─────────────────────────────────────────────────
+    builder
       .addCase(createNodalPointThunk.pending, (state) => {
-        state.loading = true;
+        state.loading.create = true;
         state.error = null;
       })
       .addCase(createNodalPointThunk.fulfilled, (state, action) => {
-        state.loading = false;
-        const nodalPoint = action.payload;
+        state.loading.create = false;
+        const newNp = action.payload;
 
-        if (nodalPoint?.nodal_point_id) {
-          nodalPointsAdapter.addOne(state, nodalPoint);
+        nodalPointsAdapter.addOne(state, newNp);
 
-          const tenantId = nodalPoint.tenant_id;
-          if (tenantId) {
-            if (!state.nodalPointIdsByTenant[tenantId]) {
-              state.nodalPointIdsByTenant[tenantId] = [];
-            }
-            state.nodalPointIdsByTenant[tenantId].push(
-              nodalPoint.nodal_point_id
-            );
+        // Prepend id to the tenant index so it appears first
+        const tenantId = newNp.tenant_id;
+        if (tenantId) {
+          if (!state.nodalPointIdsByTenant[tenantId]) {
+            state.nodalPointIdsByTenant[tenantId] = [];
           }
-
-          // Update meta total count if meta exists
-          if (state.meta) {
-            state.meta.total = (state.meta.total || 0) + 1;
-          }
+          state.nodalPointIdsByTenant[tenantId].unshift(newNp.id);
         }
       })
       .addCase(createNodalPointThunk.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || "Failed to create nodal point";
-      })
+        state.loading.create = false;
+        state.error = action.payload;
+      });
 
-      // ── Update (partial) ──────────────────────────────────────────────────
+    // ── updateNodalPointThunk ─────────────────────────────────────────────────
+    builder
       .addCase(updateNodalPointThunk.pending, (state) => {
-        state.loading = true;
+        state.loading.update = true;
         state.error = null;
       })
       .addCase(updateNodalPointThunk.fulfilled, (state, action) => {
-        state.loading = false;
-        const nodalPoint = action.payload;
+        state.loading.update = false;
+        nodalPointsAdapter.upsertOne(state, action.payload);
 
-        if (nodalPoint?.nodal_point_id) {
-          nodalPointsAdapter.updateOne(state, {
-            id: nodalPoint.nodal_point_id,
-            changes: nodalPoint,
-          });
+        if (state.selectedNodalPoint?.id === action.payload.id) {
+          state.selectedNodalPoint = action.payload;
         }
       })
       .addCase(updateNodalPointThunk.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || "Failed to update nodal point";
-      })
+        state.loading.update = false;
+        state.error = action.payload;
+      });
 
-      // ── Soft-delete ───────────────────────────────────────────────────────
+    // ── deleteNodalPointThunk ─────────────────────────────────────────────────
+    builder
       .addCase(deleteNodalPointThunk.pending, (state) => {
-        state.loading = true;
+        state.loading.delete = true;
         state.error = null;
       })
       .addCase(deleteNodalPointThunk.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loading.delete = false;
         const { nodalPointId } = action.payload;
 
-        // Soft-delete: set is_active = false, preserve entity in store
-        // selectActiveNodalPointsByTenantId will naturally exclude it
-        const nodalPoint = state.entities[nodalPointId];
-        if (nodalPoint) {
-          nodalPoint.is_active = false;
-          nodalPoint.updated_at = new Date().toISOString();
+        nodalPointsAdapter.removeOne(state, nodalPointId);
+
+        // Scrub id from every tenant's index
+        Object.keys(state.nodalPointIdsByTenant).forEach((tid) => {
+          state.nodalPointIdsByTenant[tid] = state.nodalPointIdsByTenant[
+            tid
+          ].filter((id) => id !== nodalPointId);
+        });
+
+        if (state.selectedNodalPoint?.id === nodalPointId) {
+          state.selectedNodalPoint = null;
         }
       })
       .addCase(deleteNodalPointThunk.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || "Failed to deactivate nodal point";
-      })
+        state.loading.delete = false;
+        state.error = action.payload;
+      });
 
-      // ── Nearest ───────────────────────────────────────────────────────────
+    // ── fetchNearestNodalPointsThunk ──────────────────────────────────────────
+    builder
       .addCase(fetchNearestNodalPointsThunk.pending, (state) => {
-        state.nearestLoading = true;
+        state.nearestLoading = true;    // ← flat flag, not inside loading{}
         state.error = null;
       })
       .addCase(fetchNearestNodalPointsThunk.fulfilled, (state, action) => {
@@ -181,27 +177,26 @@ const nodalPointsSlice = createSlice({
       })
       .addCase(fetchNearestNodalPointsThunk.rejected, (state, action) => {
         state.nearestLoading = false;
-        state.error = action.payload || "Failed to fetch nearest nodal points";
+        state.error = action.payload;
       });
   },
 });
 
-// ── Action Exports ────────────────────────────────────────────────────────────
+// ── Actions ───────────────────────────────────────────────────────────────────
 export const {
-  clearNodalPoints,
-  clearError,
+  clearSelectedNodalPoint,
+  clearNodalPointError,
   clearNearestNodalPoints,
-  clearMeta,
-  clearNodalPointsByTenant,
 } = nodalPointsSlice.actions;
 
-// ── Adapter Selector Exports ──────────────────────────────────────────────────
-export const {
-  selectAll: selectAllNodalPoints,
-  selectById: selectNodalPointById,
-  selectIds: selectNodalPointIds,
-  selectEntities: selectNodalPointEntities,
-  selectTotal: selectTotalNodalPoints,
-} = nodalPointsAdapter.getSelectors((state) => state.nodalPoints);
+// ── Entity Adapter Selectors (consumed by Nodalpointsselectors.js) ─────────────
+const adapterSelectors = nodalPointsAdapter.getSelectors(
+  (state) => state.nodalPoints
+);
+
+export const selectAllNodalPoints     = adapterSelectors.selectAll;
+export const selectNodalPointEntities = adapterSelectors.selectEntities;
+export const selectNodalPointById     = adapterSelectors.selectById;
+export const selectNodalPointIds      = adapterSelectors.selectIds;
 
 export default nodalPointsSlice.reducer;

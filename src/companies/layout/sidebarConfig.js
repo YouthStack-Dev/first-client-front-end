@@ -11,8 +11,8 @@ import {
   Shield,
   FileText,
   Settings,
-   Truck,
-   Bell, 
+  Truck,
+  Bell,
 } from "lucide-react";
 
 // Base sidebar configuration
@@ -123,12 +123,12 @@ export const baseSidebarConfig = [
   {
     title: "Operations Management",
     items: [
-    {
-      title: "Route Management",
-      icon: MapPin,
-      path: "/companies/routing", 
-      permission: "route.read",
-    },
+      {
+        title: "Route Management",
+        icon: MapPin,
+        path: "/companies/routing",
+        permission: "route.read",
+      },
       {
         title: "Shift Management",
         icon: Clock,
@@ -177,37 +177,37 @@ export const baseSidebarConfig = [
       // },
     ],
   },
-  // {
-  //   title: "Reports",
-  //   items: [
-  //     {
-  //       title: "Reports Management",
-  //       icon: FileText,
-  //       path: "/companies/reports-management",
-  //       permission: "report.read",
-  //       subItems: [
-  //         {
-  //           title: "Tenant Reports",
-  //           icon: Building,
-  //           path: "/companies/reports/tenants",
-  //           permission: "report.tenant.read",
-  //         },
-  //         {
-  //           title: "Vendor Reports",
-  //           icon: Store,
-  //           path: "/companies/reports/vendors",
-  //           permission: "report.vendor.read",
-  //         },
-  //         {
-  //           title: "Operational Reports",
-  //           icon: MapPin,
-  //           path: "/companies/reports/operations",
-  //           permission: "report.operations.read",
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // },
+  {
+    title: "Reports",
+    items: [
+      {
+        title: "Reports Management",
+        icon: FileText,
+        path: "/companies/reports-management",
+        permission: "report.read",
+        subItems: [
+          // {
+          //   title: "Tenant Reports",
+          //   icon: Building,
+          //   path: "/companies/reports/tenants",
+          //   permission: "report.tenant.read",
+          // },
+          // {
+          //   title: "Vendor Reports",
+          //   icon: Store,
+          //   path: "/companies/reports/vendors",
+          //   permission: "report.vendor.read",
+          // },
+          // {
+          //   title: "Operational Reports",
+          //   icon: MapPin,
+          //   path: "/companies/reports/operations",
+          //   permission: "report.operations.read",
+          // },
+        ],
+      },
+    ],
+  },
 ];
 
 // Helper function to check if user has permission
@@ -230,14 +230,14 @@ export const getFilteredSidebar = (userPermissions) => {
           ...item,
           subItems: item.subItems
             ? item.subItems.filter((subItem) =>
-                hasPermission(userPermissions, subItem.permission)
+                hasPermission(userPermissions, subItem.permission),
               )
             : [],
         }))
         .filter(
           (item) =>
             (item.subItems && item.subItems.length > 0) ||
-            (item.path && hasPermission(userPermissions, item.permission))
+            (item.path && hasPermission(userPermissions, item.permission)),
         ),
     }))
     .filter((group) => group.items.length > 0);

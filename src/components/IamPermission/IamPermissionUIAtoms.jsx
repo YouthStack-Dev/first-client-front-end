@@ -20,9 +20,10 @@ export const ModuleBadge = ({ label }) => {
 export const ActiveBadge = ({ active }) => (
   <span
     className={`inline-flex items-center gap-[5px] text-[11px] font-semibold px-[10px] py-[3px] rounded-full border
-      ${active
-        ? "bg-green-50 border-green-200 text-green-700"
-        : "bg-red-50   border-red-200   text-red-600"
+      ${
+        active
+          ? "bg-green-50 border-green-200 text-green-700"
+          : "bg-red-50   border-red-200   text-red-600"
       }`}
   >
     <span
@@ -50,9 +51,15 @@ export const Spinner = ({ size = 15 }) => (
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 const TOAST_STYLES = {
-  success: { className: "bg-green-50 border-green-200 text-green-700", icon: "✓" },
-  error:   { className: "bg-red-50   border-red-200   text-red-600",   icon: "✕" },
-  default: { className: "bg-slate-50 border-slate-200 text-slate-600", icon: "i" },
+  success: {
+    className: "bg-green-50 border-green-200 text-green-700",
+    icon: "✓",
+  },
+  error: { className: "bg-red-50   border-red-200   text-red-600", icon: "✕" },
+  default: {
+    className: "bg-slate-50 border-slate-200 text-slate-600",
+    icon: "i",
+  },
 };
 
 export const Toast = ({ msg, type, onClose }) => {
@@ -60,7 +67,9 @@ export const Toast = ({ msg, type, onClose }) => {
   // parent re-renders and passes a new inline function reference.
   // The timeout fires exactly once, 3.5s after Toast first mounts.
   const onCloseRef = useRef(onClose);
-  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     const t = setTimeout(() => onCloseRef.current?.(), 3500);
@@ -94,9 +103,13 @@ export const Modal = ({ title, subtitle, onClose, children, width = 520 }) => (
       {/* Header */}
       <div className="flex items-start justify-between px-6 py-[18px] border-b border-slate-100 bg-[#fafafa]">
         <div>
-          <h2 className="text-slate-900 font-bold text-base leading-snug">{title}</h2>
+          <h2 className="text-slate-900 font-bold text-base leading-snug">
+            {title}
+          </h2>
           {subtitle && (
-            <p className="text-slate-400 text-[11px] mt-[3px] font-mono">{subtitle}</p>
+            <p className="text-slate-400 text-[11px] mt-[3px] font-mono">
+              {subtitle}
+            </p>
           )}
         </div>
 

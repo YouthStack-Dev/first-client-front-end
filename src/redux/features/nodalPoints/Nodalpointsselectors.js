@@ -7,7 +7,7 @@ import {
 // ── Primitive selectors ───────────────────────────────────────────────────────
 
 export const selectNodalPointsLoading = (state) =>
-  state.nodalPoints.loading;
+  state.nodalPoints.loading.fetch;
 
 export const selectNearestLoading = (state) =>
   state.nodalPoints.nearestLoading;

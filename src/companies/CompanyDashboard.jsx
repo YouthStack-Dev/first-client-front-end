@@ -1,5 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
-import { X, TrendingUp, Shield, Gauge, Users, Car, Bus, MapPin, Calendar, CheckCircle } from "lucide-react";
+import {
+  X,
+  TrendingUp,
+  Shield,
+  Gauge,
+  Users,
+  Car,
+  Bus,
+  MapPin,
+  Calendar,
+  CheckCircle,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import Skeleton from "react-loading-skeleton";
@@ -10,25 +21,26 @@ import { API_CLIENT } from "../Api/API_Client";
 import { selectCurrentUser } from "../redux/features/auth/authSlice";
 
 const CompanyDashboard = () => {
-  const navigate    = useNavigate();
+  const navigate = useNavigate();
   const currentUser = useSelector(selectCurrentUser);
 
-  const isAdmin    = currentUser?.type === "admin";
-  const tenantId   =
+  const isAdmin = currentUser?.type === "admin";
+  const tenantId =
     currentUser?.employee?.tenant_id ||
     currentUser?.vendor_user?.tenant_id ||
-    currentUser?.tenant_id || "";
+    currentUser?.tenant_id ||
+    "";
 
-  const [modalOpen,    setModalOpen]    = useState(false);
-  const [modalTitle,   setModalTitle]   = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
   const [focusedInput, setFocusedInput] = useState(null);
-  const [isLoading,    setIsLoading]    = useState(true);
-  const [summary,      setSummary]      = useState(null);
-  const [apiError,     setApiError]     = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [summary, setSummary] = useState(null);
+  const [apiError, setApiError] = useState(null);
 
-  const vehicleInputRef  = useRef(null);
+  const vehicleInputRef = useRef(null);
   const employeeInputRef = useRef(null);
-  const tripInputRef     = useRef(null);
+  const tripInputRef = useRef(null);
 
   // ── Fetch dashboard summary ──────────────────────────────────────────────
   useEffect(() => {
@@ -41,7 +53,7 @@ const CompanyDashboard = () => {
         if (isAdmin && tenantId) params.append("tenant_id", tenantId);
 
         const response = await API_CLIENT.get(
-          `/dashboard/summary${params.toString() ? `?${params}` : ""}`
+          `/dashboard/summary${params.toString() ? `?${params}` : ""}`,
         );
 
         if (response.data?.success) {
@@ -50,7 +62,9 @@ const CompanyDashboard = () => {
           setApiError("Failed to load dashboard data");
         }
       } catch (err) {
-        setApiError(err?.response?.data?.message || "Failed to load dashboard data");
+        setApiError(
+          err?.response?.data?.message || "Failed to load dashboard data",
+        );
       } finally {
         setIsLoading(false);
       }
@@ -165,8 +179,14 @@ const CompanyDashboard = () => {
       ]
     : [];
 
-  const openModal  = (title) => { setModalTitle(title); setModalOpen(true); };
-  const closeModal = ()      => { setModalOpen(false);  setFocusedInput(null); };
+  const openModal = (title) => {
+    setModalTitle(title);
+    setModalOpen(true);
+  };
+  const closeModal = () => {
+    setModalOpen(false);
+    setFocusedInput(null);
+  };
 
   const handleCardClick = (stat) => {
     if (stat.key === "violations") {
@@ -202,7 +222,6 @@ const CompanyDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-app-background via-app-surface to-app-background">
       <div className="p-6 mx-auto">
-
         {/* Stats Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
@@ -235,13 +254,38 @@ const CompanyDashboard = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {isLoading
               ? Array.from({ length: 9 }).map((_, index) => (
-                  <div key={index} className="bg-app-surface rounded-xl shadow-sm p-6 border border-app-border">
+                  <div
+                    key={index}
+                    className="bg-app-surface rounded-xl shadow-sm p-6 border border-app-border"
+                  >
                     <div className="flex justify-between items-start mb-4">
-                      <Skeleton width={120} height={20} baseColor="#e0f2fe" highlightColor="#f1f5f9" />
-                      <Skeleton circle width={32} height={32} baseColor="#e0f2fe" highlightColor="#f1f5f9" />
+                      <Skeleton
+                        width={120}
+                        height={20}
+                        baseColor="#e0f2fe"
+                        highlightColor="#f1f5f9"
+                      />
+                      <Skeleton
+                        circle
+                        width={32}
+                        height={32}
+                        baseColor="#e0f2fe"
+                        highlightColor="#f1f5f9"
+                      />
                     </div>
-                    <Skeleton width={80} height={32} baseColor="#e0f2fe" highlightColor="#f1f5f9" className="mb-2" />
-                    <Skeleton width={60} height={16} baseColor="#e0f2fe" highlightColor="#f1f5f9" />
+                    <Skeleton
+                      width={80}
+                      height={32}
+                      baseColor="#e0f2fe"
+                      highlightColor="#f1f5f9"
+                      className="mb-2"
+                    />
+                    <Skeleton
+                      width={60}
+                      height={16}
+                      baseColor="#e0f2fe"
+                      highlightColor="#f1f5f9"
+                    />
                   </div>
                 ))
               : stats.map((stat) => (
@@ -265,8 +309,13 @@ const CompanyDashboard = () => {
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
             <div className="bg-app-surface rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl animate-in slide-in-from-bottom-8 zoom-in-95 duration-300 border border-app-border">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-app-text-primary">{modalTitle}</h2>
-                <button onClick={closeModal} className="p-2 text-app-text-muted hover:text-app-text-secondary hover:bg-app-tertiary rounded-xl transition-all duration-300">
+                <h2 className="text-2xl font-bold text-app-text-primary">
+                  {modalTitle}
+                </h2>
+                <button
+                  onClick={closeModal}
+                  className="p-2 text-app-text-muted hover:text-app-text-secondary hover:bg-app-tertiary rounded-xl transition-all duration-300"
+                >
                   <X className="w-6 h-6" />
                 </button>
               </div>
@@ -275,21 +324,28 @@ const CompanyDashboard = () => {
                   <TrendingUp className="w-8 h-8 text-white" />
                 </div>
                 <p className="text-app-text-secondary leading-relaxed">
-                  This feature is currently under development. Our team is working hard to bring you detailed analytics and management capabilities for this metric.
+                  This feature is currently under development. Our team is
+                  working hard to bring you detailed analytics and management
+                  capabilities for this metric.
                 </p>
               </div>
               <div className="flex justify-end space-x-3">
-                <button onClick={closeModal} className="px-6 py-3 text-app-text-secondary hover:text-app-text-primary hover:bg-app-tertiary rounded-xl transition-all duration-300 font-medium">
+                <button
+                  onClick={closeModal}
+                  className="px-6 py-3 text-app-text-secondary hover:text-app-text-primary hover:bg-app-tertiary rounded-xl transition-all duration-300 font-medium"
+                >
                   Cancel
                 </button>
-                <button onClick={closeModal} className="px-6 py-3 bg-gradient-to-r from-sidebar-primary to-sidebar-secondary text-white rounded-xl hover:from-sidebar-secondary hover:to-sidebar-primary focus:outline-none focus:ring-4 focus:ring-sidebar-secondary/20 transition-all duration-300 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                <button
+                  onClick={closeModal}
+                  className="px-6 py-3 bg-gradient-to-r from-sidebar-primary to-sidebar-secondary text-white rounded-xl hover:from-sidebar-secondary hover:to-sidebar-primary focus:outline-none focus:ring-4 focus:ring-sidebar-secondary/20 transition-all duration-300 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                >
                   Got it
                 </button>
               </div>
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

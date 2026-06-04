@@ -106,6 +106,10 @@ export const saveEscortConfigThunk = createAsyncThunk(
         dark_hour_boarding_mode: formData.dark_hour_boarding_mode ?? "off",
         delay_driver_grace_minutes: formData.delay_driver_grace_minutes ?? 10,
         delay_employee_grace_minutes: formData.delay_employee_grace_minutes ?? 5,
+        // ── NEW: ETA / geofence / staleness thresholds
+        eta_change_threshold_minutes: formData.eta_change_threshold_minutes ?? 5,
+        geofence_arrival_radius_meters: formData.geofence_arrival_radius_meters ?? 300,
+        stale_driver_threshold_minutes: formData.stale_driver_threshold_minutes ?? 5,
       };
 
       console.log("Saving tenant config payload:", payload);

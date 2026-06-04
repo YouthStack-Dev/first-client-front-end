@@ -45,6 +45,10 @@ const cutoffSlice = createSlice({
       dark_hour_boarding_mode: "off",
       delay_driver_grace_minutes: 10,
       delay_employee_grace_minutes: 5,
+      // ── NEW: ETA / geofence / staleness thresholds
+      eta_change_threshold_minutes: 5,
+      geofence_arrival_radius_meters: 300,
+      stale_driver_threshold_minutes: 5,
     },
     status: "idle",       // idle | loading | succeeded | failed | saving | saved
     tenantStatus: "idle", // idle | loading | succeeded | failed | saving | saved
@@ -218,6 +222,10 @@ const mapTenantApiDataToForm = (apiData) => {
     dark_hour_boarding_mode: "off",
     delay_driver_grace_minutes: 10,
     delay_employee_grace_minutes: 5,
+    // ── NEW: ETA / geofence / staleness thresholds
+    eta_change_threshold_minutes: 5,
+    geofence_arrival_radius_meters: 300,
+    stale_driver_threshold_minutes: 5,
   };
 
   const tenantData = apiData?.config || apiData;
@@ -250,6 +258,10 @@ const mapTenantApiDataToForm = (apiData) => {
     dark_hour_boarding_mode: tenantData?.dark_hour_boarding_mode,
     delay_driver_grace_minutes: tenantData?.delay_driver_grace_minutes,
     delay_employee_grace_minutes: tenantData?.delay_employee_grace_minutes,
+    // ── NEW: ETA / geofence / staleness thresholds
+    eta_change_threshold_minutes: tenantData?.eta_change_threshold_minutes,
+    geofence_arrival_radius_meters: tenantData?.geofence_arrival_radius_meters,
+    stale_driver_threshold_minutes: tenantData?.stale_driver_threshold_minutes,
   };
 
   const formData = {};

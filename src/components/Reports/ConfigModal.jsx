@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { selectCurrentUser } from "../../redux/features/auth/authSlice";
-import { logDebug } from "../../utils/logger";
 import { API_CLIENT } from "../../Api/API_Client";
 import CommonFilters from "./CommonConfig";
 import BookingModuleConfig from "./BookingModuleConfig";
@@ -12,6 +11,7 @@ import {
   selectVendors,
   selectVendorsFetched,
   selectVendorsLoading,
+  resetVendorFetched,
 } from "../../redux/features/vendors/vendorSlice";
 import { fetchVendorsThunk } from "../../redux/features/vendors/vendorThunk";
 import {
@@ -19,6 +19,10 @@ import {
   selectLoading as selectShiftsLoading,
 } from "../../redux/features/shift/shiftSlice";
 import { fetchShiftTrunk } from "../../redux/features/shift/shiftTrunk";
+
+// ── ADD this action to shiftSlice.js reducers: resetShiftsLoaded(state) { state.loaded = false; }
+// then import it here:
+import { resetShiftsLoaded } from "../../redux/features/shift/shiftSlice";
 
 const getDefaultFormData = () => {
   const today = new Date().toISOString().split("T")[0];
@@ -56,27 +60,42 @@ const ConfigModal = ({
   const [tenantsLoading, setTenantsLoading] = useState(false);
 
   const user = useSelector(selectCurrentUser);
-  const isSuperAdmin = user?.type === "admin";
+  const isSuperAdmin = user?.roles?.includes("SuperAdmin") || user?.admin_id != null;
   const currentUserTenant = user?.tenant_id || user?.tenant?.tenant_id;
 
-  // ─── Read vendors from Redux ──────────────────────────────────────────────
   const reduxVendors = useSelector(selectVendors);
   const vendorsFetched = useSelector(selectVendorsFetched);
   const vendorsLoading = useSelector(selectVendorsLoading);
 
-  // ─── Read shifts from Redux ───────────────────────────────────────────────
   const reduxShifts = useSelector(selectAllShifts);
   const shiftsLoading = useSelector(selectShiftsLoading);
   const shiftsLoaded = useSelector((state) => state.shift.loaded);
 
-  // ─── Transform Redux data to dropdown format ──────────────────────────────
-  const vendorOptions = [
-    { value: "", label: "All Vendors" },
-    ...reduxVendors.map((v) => ({
-      value: v.vendor_id,
-      label: `${v.name}${v.service_type ? ` - ${v.service_type}` : ""}`,
-    })),
-  ];
+//   console.log("=================================");
+// console.log("[CONFIG MODAL] Selected Tenant:", formData.tenant_id);
+// console.log("[CONFIG MODAL] Vendors Count:", reduxVendors?.length);
+// console.log("[CONFIG MODAL] Vendors:", reduxVendors);
+// console.log("=================================");
+
+const filteredVendorList =
+  isSuperAdmin && formData.tenant_id
+    ? reduxVendors.filter(
+        (vendor) => vendor?.tenant_id === formData.tenant_id
+      )
+    : reduxVendors;
+
+// console.log(
+//   "[CONFIG MODAL] Filtered Vendors Count:",
+//   filteredVendorList.length
+// );
+
+const vendorOptions = [
+  { value: "", label: "All Vendors" },
+  ...filteredVendorList.map((v) => ({
+    value: v.vendor_id,
+    label: `${v.name}${v.service_type ? ` - ${v.service_type}` : ""}`,
+  })),
+];
 
   const shiftOptions = [
     { value: "", label: "All Shifts" },
@@ -97,29 +116,35 @@ const ConfigModal = ({
     }
   }, [isOpen]);
 
-  // Initialize form + fetch data when modal opens
+  // Initial fetch on modal open
   useEffect(() => {
     if (isOpen && !hasFetchedInitialData.current) {
       setFormData(getDefaultFormData());
       setErrors({});
       hasFetchedInitialData.current = true;
 
-      // Fetch vendors from Redux if not already fetched
-      if (!vendorsFetched && !vendorsLoading) {
-        dispatch(fetchVendorsThunk());
-      }
-
-      // Fetch shifts from Redux if not already loaded
-      if (!shiftsLoaded && !shiftsLoading) {
-        dispatch(fetchShiftTrunk());
-      }
-
-      // Fetch tenants only for super admin
-      if (isSuperAdmin) {
+      if (!isSuperAdmin) {
+        // Regular admin — fetch vendors + shifts scoped to their tenant
+        if (!vendorsFetched && !vendorsLoading) {
+          dispatch(fetchVendorsThunk({ tenant_id: currentUserTenant }));
+        }
+        if (!shiftsLoaded && !shiftsLoading) {
+          dispatch(fetchShiftTrunk({ tenant_id: currentUserTenant }));
+        }
+      } else {
+        // Superadmin — only fetch tenant list; vendors+shifts wait for tenant selection
         fetchTenants();
       }
     }
   }, [isOpen, isSuperAdmin, vendorsFetched, vendorsLoading, shiftsLoaded, shiftsLoading, dispatch]);
+
+  // Superadmin — re-fetch vendors + shifts when tenant is selected/changed
+  useEffect(() => {
+    if (isOpen && isSuperAdmin && formData.tenant_id) {
+      dispatch(fetchShiftTrunk({ tenant_id: formData.tenant_id }));
+      dispatch(fetchVendorsThunk({ tenant_id: formData.tenant_id }));
+    }
+  }, [formData.tenant_id, isOpen, isSuperAdmin, dispatch]);
 
   const fetchTenants = async () => {
     try {
@@ -144,10 +169,20 @@ const ConfigModal = ({
   };
 
   const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+      // Reset shift + vendor when superadmin switches tenant
+      ...(field === "tenant_id" ? { shift_id: "", vendor_id: "" } : {}),
+    }));
+
+    // Reset fetched flags so tenant-change triggers fresh fetch
+    if (field === "tenant_id" && isSuperAdmin) {
+      dispatch(resetVendorFetched());
+      dispatch(resetShiftsLoaded());
     }
+
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
   const toggleArrayValue = (field, value) => {
@@ -169,7 +204,7 @@ const ConfigModal = ({
   const validateForm = () => {
     const newErrors = {};
     if (!formData.start_date) newErrors.start_date = "Start date is required";
-    if (!formData.end_date) newErrors.end_date = "End date is required";
+    if (!formData.end_date)   newErrors.end_date   = "End date is required";
     if (formData.start_date && formData.end_date) {
       if (new Date(formData.start_date) > new Date(formData.end_date)) {
         newErrors.end_date = "End date cannot be before start date";
@@ -189,25 +224,42 @@ const ConfigModal = ({
     onSubmit(submitData);
   };
 
-  const isBookings = type === REPORT_TYPES.BOOKINGS;
-  const isDelays = type === REPORT_TYPES.DELAYS;
+  const isBookings   = type === REPORT_TYPES.BOOKINGS;
+  const isDelays     = type === REPORT_TYPES.DELAYS;
   const isDriverDuty = type === REPORT_TYPES.DRIVER_DUTY;
-  const isDownload = config === "download";
+  const isDownload   = config === "download";
+  const isPreview    = config === "preview";
 
   const getTitle = () => {
     if (isDownload) return "Download Report";
+    if (isPreview) {
+      const map = {
+        [REPORT_TYPES.BOOKINGS]:    "Preview Booking Report",
+        [REPORT_TYPES.DELAYS]:      "Preview Delay Report",
+        [REPORT_TYPES.DRIVER_DUTY]: "Preview Driver Duty Hours",
+      };
+      return map[type] || "Preview Report";
+    }
     const map = {
-      [REPORT_TYPES.BOOKINGS]: "Booking Analytics",
-      [REPORT_TYPES.DELAYS]: "Delay Report",
+      [REPORT_TYPES.BOOKINGS]:    "Booking Analytics",
+      [REPORT_TYPES.DELAYS]:      "Delay Report",
       [REPORT_TYPES.DRIVER_DUTY]: "Driver Duty Hours",
     };
     return map[type] || "View Report";
   };
 
   const getSubtitle = () => {
+    if (isPreview) {
+      const map = {
+        [REPORT_TYPES.BOOKINGS]:    "Select filters to preview booking data as a table",
+        [REPORT_TYPES.DELAYS]:      "Select filters to preview delay data as a table",
+        [REPORT_TYPES.DRIVER_DUTY]: "Select filters to preview driver duty hours as a table",
+      };
+      return map[type] || "Select filters to preview data as a table";
+    }
     const map = {
-      [REPORT_TYPES.BOOKINGS]: "Configure filters for booking data",
-      [REPORT_TYPES.DELAYS]: "Configure filters for delay data",
+      [REPORT_TYPES.BOOKINGS]:    "Configure filters for booking data",
+      [REPORT_TYPES.DELAYS]:      "Configure filters for delay data",
       [REPORT_TYPES.DRIVER_DUTY]: "Configure filters for driver duty hours",
     };
     return map[type] || "Configure report parameters";
@@ -215,10 +267,11 @@ const ConfigModal = ({
 
   const getSubmitLabel = () => {
     if (isDownload) return loading ? "Preparing Download..." : "Download Report";
+    if (isPreview)  return loading ? "Loading..."            : "Preview Report";
     const map = {
-      [REPORT_TYPES.BOOKINGS]: loading ? "Generating..." : "View Analytics",
-      [REPORT_TYPES.DELAYS]: loading ? "Loading..." : "View Delay Report",
-      [REPORT_TYPES.DRIVER_DUTY]: loading ? "Loading..." : "View Duty Hours",
+      [REPORT_TYPES.BOOKINGS]:    loading ? "Generating..." : "View Analytics",
+      [REPORT_TYPES.DELAYS]:      loading ? "Loading..."    : "View Delay Report",
+      [REPORT_TYPES.DRIVER_DUTY]: loading ? "Loading..."    : "View Duty Hours",
     };
     return map[type] || "Submit";
   };
@@ -256,7 +309,7 @@ const ConfigModal = ({
             loading={loading}
             showTenant={!isDriverDuty}
             showShift={isBookings}
-            showVendor={isBookings && isDownload}
+            showVendor={isBookings && (isDownload || isPreview)}
             tenants={tenants}
             tenantsLoading={tenantsLoading}
             shifts={shiftOptions}
@@ -267,8 +320,25 @@ const ConfigModal = ({
             currentUserTenant={currentUserTenant}
           />
 
-          {/* Booking filters */}
-          {isBookings && (
+          {/* Booking filters — download and preview */}
+          {isBookings && (isDownload || isPreview) && (
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                Booking Filters
+              </h3>
+              <BookingModuleConfig
+                formData={formData}
+                handleChange={handleChange}
+                toggleArrayValue={toggleArrayValue}
+                handleSelectAll={handleSelectAll}
+                errors={errors}
+                loading={loading}
+              />
+            </div>
+          )}
+
+          {/* Booking analytics filters */}
+          {isBookings && !isDownload && !isPreview && (
             <div className="border-t pt-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 Booking Filters

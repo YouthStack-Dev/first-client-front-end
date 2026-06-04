@@ -4,17 +4,18 @@ import { API_CLIENT } from "../../../Api/API_Client";
 export const fetchShiftTrunk = createAsyncThunk(
   "shift/fetchShiftTrunk",
   async (
-    { skip = 0, limit = 100, is_active, log_type = "" } = {},
+    { skip = 0, limit = 100, log_type = "", tenant_id = "" } = {},
     { rejectWithValue }
   ) => {
     try {
       const params = new URLSearchParams({ skip, limit });
-      if (log_type) params.append("log_type", log_type);
+      if (log_type)         params.append("log_type", log_type);
+      if (tenant_id?.trim()) params.append("tenant_id", tenant_id.trim()); // ← trimmed guard
 
       const response = await API_CLIENT.get(`/shifts/?${params.toString()}`);
 
       if (response.status === 200 && response.data?.success) {
-        return response.data.data.items; // ✅ return array of shifts
+        return response.data.data.items;
       }
       return rejectWithValue(
         response.data?.message || "Failed to fetch shift data"

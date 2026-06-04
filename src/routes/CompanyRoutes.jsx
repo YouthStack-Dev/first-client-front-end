@@ -27,6 +27,7 @@ import ManageAnnouncements from "../pages/ManageAnnouncements";
 import SpeedViolationsPage from "../pages/SpeedViolationsPage";
 import NodalPointsPage from "../pages/NodalpointsPage";
 import ChatSessionsPage from "../pages/ChatSessionsPage";
+import LivedriversPage from "../pages/Livedrivermap";
 
 
 export const CompanyRoutes = () => (
@@ -67,10 +68,12 @@ export const CompanyRoutes = () => (
     <Route path="speed-violations" element={<SpeedViolationsPage />} />
     <Route path="nodal-points" element={<NodalPointsPage />} />
     <Route path="chats" element={<ChatSessionsPage />} />
+    <Route path="live-drivers" element={<LivedriversPage />} />
 
     <Route path="tracking" element={<TrackingManagement />} />
     <Route path="report-downloader" element={<ReportDownloader />} />
     <Route path="routing" element={<RouteScheduledBookings />} />
+
 
         {/* ✅ Add this new route for vendor routing */}
     {/* <Route path="vendor-routing" element={<VendorRouteManagement />} /> */}
@@ -94,6 +97,6 @@ export const CompanyRoutes = () => (
       path="employee/:employee_id/bookings"
       element={<BookingManagement />}
     />
-    <Route path="repots-management" element={<ReportsManagement />} />
+    <Route path="reports-management" element={<ReportsManagement />} />
   </Route>
 );

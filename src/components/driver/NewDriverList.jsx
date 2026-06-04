@@ -4,18 +4,18 @@ import ReusableToggleButton from "../ui/ReusableToggleButton";
 import { ReusablePagination } from "../ui/ReusablePagination";
 
 const DRIVER_TABLE_HEADERS = [
-  { key: "s_no",            label: "S No."          },
-  { key: "name",            label: "Name"            },
-  { key: "license_number",  label: "License No."     },
-  { key: "code",            label: "Driver Code"     },
-  { key: "phone",           label: "Driver Phone"    },
+  { key: "s_no", label: "S No." },
+  { key: "name", label: "Name" },
+  { key: "license_number", label: "License No." },
+  { key: "code", label: "Driver Code" },
+  { key: "phone", label: "Driver Phone" },
   { key: "date_of_joining", label: "Date of Joining" },
-  { key: "status",          label: "Status"          },
-  { key: "actions",         label: "Actions"         },
+  { key: "status", label: "Status" },
+  { key: "actions", label: "Actions" },
 ];
 
 const VISIBLE_HEADERS = DRIVER_TABLE_HEADERS.filter(
-  (h) => h.key !== "documentsUploaded"
+  (h) => h.key !== "documentsUploaded",
 );
 
 const CENTERED_KEYS = new Set(["actions", "status"]);
@@ -26,7 +26,7 @@ export const NewDriverList = ({
   error = "",
   onEdit,
   onView,
-  onHistory,          // ← NEW: opens the history tab/modal for this driver
+  onHistory, // ← NEW: opens the history tab/modal for this driver
   onStatusToggle,
   currentPage,
   totalPages,
@@ -37,7 +37,6 @@ export const NewDriverList = ({
   showPagination = false,
   paginationClassName = "",
 }) => {
-
   const getDriverStatus = (driver) => driver.is_active ?? false;
 
   const formatDate = (dateString) => {
@@ -134,10 +133,22 @@ export const NewDriverList = ({
         <tr>
           <td colSpan={VISIBLE_HEADERS.length} className="py-12 text-center">
             <div className="flex flex-col items-center justify-center gap-2">
-              <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-8 h-8 text-red-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
-              <span className="text-xs text-red-500">Failed to load drivers: {error}</span>
+              <span className="text-xs text-red-500">
+                Failed to load drivers: {error}
+              </span>
             </div>
           </td>
         </tr>
@@ -149,8 +160,18 @@ export const NewDriverList = ({
         <tr>
           <td colSpan={VISIBLE_HEADERS.length} className="py-12 text-center">
             <div className="flex flex-col items-center justify-center gap-2">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              <svg
+                className="w-8 h-8 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                />
               </svg>
               <span className="text-xs text-gray-500">No drivers found</span>
             </div>

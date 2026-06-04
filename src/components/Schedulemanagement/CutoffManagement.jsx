@@ -81,6 +81,9 @@ const CutoffManagement = () => {
     dark_hour_boarding_mode,
     delay_driver_grace_minutes,
     delay_employee_grace_minutes,
+    eta_change_threshold_minutes,
+    geofence_arrival_radius_meters,
+    stale_driver_threshold_minutes,
   } = formData || {};
 
   useEffect(() => {
@@ -100,6 +103,7 @@ const CutoffManagement = () => {
         one_trip_per_shift_enabled, auto_move_on_conflict,
         driver_max_duty_minutes, driver_rest_enforcement,
         dark_hour_boarding_mode, delay_driver_grace_minutes, delay_employee_grace_minutes,
+        eta_change_threshold_minutes, geofence_arrival_radius_meters, stale_driver_threshold_minutes,
         [fieldName]: newValue,
       }));
     }
@@ -131,7 +135,19 @@ const CutoffManagement = () => {
       one_trip_per_shift_enabled, auto_move_on_conflict,
       driver_max_duty_minutes, driver_rest_enforcement,
       dark_hour_boarding_mode, delay_driver_grace_minutes, delay_employee_grace_minutes,
+      eta_change_threshold_minutes, geofence_arrival_radius_meters, stale_driver_threshold_minutes,
     }));
+  };
+
+  // Dispatch a radio field update without allowing the browser to scroll the
+  // focused input into view. We intercept the label click, prevent default
+  // (stops browser focus-scroll), dispatch ourselves, then blur so no element
+  // stays focused to trigger a scroll on the next render.
+  const handleRadioClick = (fieldName, value) => (e) => {
+    e.preventDefault();
+    dispatch(updateFormField({ name: fieldName, value }));
+    // Blur any focused element so the browser has nothing to scroll to
+    if (document.activeElement) document.activeElement.blur();
   };
 
   const parseTime = (t) => {
@@ -160,6 +176,7 @@ const CutoffManagement = () => {
       "speed_limit_kmph","schedule_reminder_enabled","schedule_reminder_minutes",
       "one_trip_per_shift_enabled","auto_move_on_conflict","driver_max_duty_minutes","driver_rest_enforcement",
       "dark_hour_boarding_mode","delay_driver_grace_minutes","delay_employee_grace_minutes",
+      "eta_change_threshold_minutes","geofence_arrival_radius_meters","stale_driver_threshold_minutes",
     ].some((k) => String(formData[k]) !== String(tenantConfig[k]));
   };
 
@@ -220,7 +237,7 @@ const CutoffManagement = () => {
             {[0,15,30,45].map((m) => <option key={m} value={m}>{m}m</option>)}
           </select>
           <span className="text-[10px] font-mono font-semibold text-app-primary bg-app-tertiary px-1.5 py-0.5 rounded w-12 text-center tabular-nums">
-            {hours}:{minutes.toString().padStart(2,"0")}
+            {hours}:{minutes.toString().padStart(2,"00")}
           </span>
         </div>
       </FieldRow>
@@ -282,33 +299,41 @@ const CutoffManagement = () => {
     );
   };
 
+  // Radio option card — clicking anywhere on the card (label) dispatches the
+  // action and blurs focus so the browser never scrolls to a focused input.
+  const RadioCard = ({ fieldName, value, currentValue, label, desc, activeColor }) => {
+    const active = currentValue === value;
+    return (
+      <div
+        role="radio"
+        aria-checked={active}
+        tabIndex={0}
+        onClick={handleRadioClick(fieldName, value)}
+        onKeyDown={(e) => { if (e.key === " " || e.key === "Enter") handleRadioClick(fieldName, value)(e); }}
+        className={`flex-1 flex flex-col gap-1 p-2.5 rounded-lg border-2 cursor-pointer transition-all select-none ${
+          active ? activeColor + " shadow-sm" : "border-app-border bg-app-surface hover:bg-app-tertiary"
+        }`}
+      >
+        <div className="flex items-center gap-2">
+          {/* Visual-only dot — no real <input> so no focus-scroll */}
+          <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+            active ? "border-current" : "border-slate-400"
+          }`}>
+            {active && <span className="w-1.5 h-1.5 rounded-full bg-current" />}
+          </span>
+          <span className={`text-xs font-semibold ${active ? "" : "text-app-text-primary"}`}>{label}</span>
+        </div>
+        <p className={`text-[11px] leading-snug pl-5 ${active ? "" : "text-app-text-muted"}`}>{desc}</p>
+      </div>
+    );
+  };
+
   const EnforcementModeInput = () => (
     <div className="pt-1 pb-0.5">
       <p className="text-xs font-medium text-app-text-secondary px-3 -mx-3 mb-2">Enforcement mode</p>
       <div className="flex gap-2">
-        {[
-          { value: "warn",  label: "Warn",  desc: "Proceed with amber banner", color: "border-amber-400 bg-amber-50 text-amber-800" },
-          { value: "block", label: "Block", desc: "Reject if rest insufficient", color: "border-red-400 bg-red-50 text-red-800"   },
-        ].map((opt) => {
-          const active = driver_rest_enforcement === opt.value;
-          return (
-            <label key={opt.value}
-              className={`flex-1 flex flex-col gap-1 p-2.5 rounded-lg border-2 cursor-pointer transition-all ${
-                active ? opt.color + " shadow-sm" : "border-app-border bg-app-surface hover:bg-app-tertiary"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <input type="radio" name="driver_rest_enforcement" value={opt.value}
-                  checked={active}
-                  onChange={() => dispatch(updateFormField({ name: "driver_rest_enforcement", value: opt.value }))}
-                  className="accent-app-primary"
-                />
-                <span className={`text-xs font-semibold ${active ? "" : "text-app-text-primary"}`}>{opt.label}</span>
-              </div>
-              <p className={`text-[11px] leading-snug pl-5 ${active ? "" : "text-app-text-muted"}`}>{opt.desc}</p>
-            </label>
-          );
-        })}
+        <RadioCard fieldName="driver_rest_enforcement" value="warn"  currentValue={driver_rest_enforcement} label="Warn"  desc="Proceed with amber banner"    activeColor="border-amber-400 bg-amber-50 text-amber-800" />
+        <RadioCard fieldName="driver_rest_enforcement" value="block" currentValue={driver_rest_enforcement} label="Block" desc="Reject if rest insufficient" activeColor="border-red-400 bg-red-50 text-red-800" />
       </div>
     </div>
   );
@@ -529,9 +554,9 @@ const CutoffManagement = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                <div>
+                <Card className="p-3">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-app-text-muted mb-2">Operational</p>
-                  <div className="space-y-0.5">
+                  <div className="space-y-1">
                     <SummaryRow label="Escort window" value={`${escort_required_start_time} – ${escort_required_end_time}`} />
                     <SummaryRow label="Escort for women" pill={escort_required_for_women} />
                     <SummaryRow label="Speed limit" value={speed_limit_kmph != null ? `${speed_limit_kmph} km/h` : "—"} />
@@ -541,25 +566,31 @@ const CutoffManagement = () => {
                     {schedule_reminder_enabled && schedule_reminder_minutes != null && (
                       <SummaryRow label="Remind before" value={`${schedule_reminder_minutes} min`} />
                     )}
+                    <SummaryRow label="ETA change threshold" value={eta_change_threshold_minutes != null ? `${eta_change_threshold_minutes} min` : "—"} />
+                    <SummaryRow label="Geofence radius" value={geofence_arrival_radius_meters != null ? `${geofence_arrival_radius_meters} m` : "—"} />
+                    <SummaryRow label="Stale driver threshold" value={stale_driver_threshold_minutes != null ? `${stale_driver_threshold_minutes} min` : "—"} />
                   </div>
-                </div>
+                </Card>
 
-                <div>
+                <Card className="p-3">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-app-text-muted mb-2">OTP settings</p>
-                  <div className="space-y-0.5">
+                  <div className="space-y-1">
                     <SummaryRow label="Login boarding"    pill={login_boarding_otp} />
                     <SummaryRow label="Login deboarding"  pill={login_deboarding_otp} />
                     <SummaryRow label="Logout boarding"   pill={logout_boarding_otp} />
                     <SummaryRow label="Logout deboarding" pill={logout_deboarding_otp} />
                   </div>
-                </div>
+                </Card>
 
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-app-text-muted mb-2">Driver duty hours</p>
-                  <div className="space-y-0.5">
+                <Card className="p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-app-text-muted mb-2">Driver duty & grace</p>
+                  <div className="space-y-1">
                     <SummaryRow label="Max duty limit" value={driver_max_duty_minutes != null ? `${driver_max_duty_minutes} min` : "—"} />
                     <SummaryRow label="Required rest"  value={driver_max_duty_minutes != null ? `${1440 - driver_max_duty_minutes} min` : "—"} />
-                    <div className="flex items-center justify-between py-2 border-b border-app-border last:border-0">
+                    <SummaryRow label="Driver grace time" value={delay_driver_grace_minutes != null ? `${delay_driver_grace_minutes} min` : "—"} />
+                    <SummaryRow label="Employee grace time" value={delay_employee_grace_minutes != null ? `${delay_employee_grace_minutes} min` : "—"} />
+                    <SummaryRow label="Dark hour mode" value={dark_hour_boarding_mode || "off"} />
+                    <div className="flex items-center justify-between py-2">
                       <span className="text-xs text-app-text-muted">Enforcement</span>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide ${
                         driver_rest_enforcement === "block" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
@@ -568,16 +599,7 @@ const CutoffManagement = () => {
                       </span>
                     </div>
                   </div>
-                </div>
-
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-app-text-muted mb-2">Grace & Dark Hours</p>
-                  <div className="space-y-0.5">
-                    <SummaryRow label="Driver grace time" value={delay_driver_grace_minutes != null ? `${delay_driver_grace_minutes} min` : "—"} />
-                    <SummaryRow label="Employee grace time" value={delay_employee_grace_minutes != null ? `${delay_employee_grace_minutes} min` : "—"} />
-                    <SummaryRow label="Dark hour mode" value={dark_hour_boarding_mode || "off"} />
-                  </div>
-                </div>
+                </Card>
 
               </div>
             </div>
@@ -620,6 +642,16 @@ const CutoffManagement = () => {
                 <SectionHeader icon={Gauge} title="Vehicle limits" color="text-orange-500" />
                 <div className="space-y-0.5">
                   <CompactNumberInput label="Speed limit" fieldName="speed_limit_kmph" currentValue={speed_limit_kmph} icon={Gauge} unit="km/h" min={0} max={200} />
+                </div>
+              </Card>
+
+              {/* Location & ETA */}
+              <Card>
+                <SectionHeader icon={Gauge} title="Location & ETA" color="text-indigo-500" />
+                <div className="space-y-0.5">
+                  <CompactNumberInput label="ETA change threshold" fieldName="eta_change_threshold_minutes" currentValue={eta_change_threshold_minutes} icon={Clock} unit="min" min={0} max={120} />
+                  <CompactNumberInput label="Geofence arrival radius" fieldName="geofence_arrival_radius_meters" currentValue={geofence_arrival_radius_meters} icon={Gauge} unit="m" min={0} max={10000} />
+                  <CompactNumberInput label="Stale driver threshold" fieldName="stale_driver_threshold_minutes" currentValue={stale_driver_threshold_minutes} icon={Timer} unit="min" min={0} max={1440} />
                 </div>
               </Card>
 
@@ -675,29 +707,8 @@ const CutoffManagement = () => {
                   <div className="pt-1 pb-0.5">
                     <p className="text-xs font-medium text-app-text-secondary px-3 -mx-3 mb-2">Dark hour boarding</p>
                     <div className="flex gap-2">
-                      {[
-                        { value: "off",  label: "Off",  desc: "No restrictions", color: "border-slate-400 bg-slate-50 text-slate-800" },
-                        { value: "on",   label: "On",   desc: "Restrict boarding", color: "border-rose-400 bg-rose-50 text-rose-800"   },
-                      ].map((opt) => {
-                        const active = dark_hour_boarding_mode === opt.value;
-                        return (
-                          <label key={opt.value}
-                            className={`flex-1 flex flex-col gap-1 p-2.5 rounded-lg border-2 cursor-pointer transition-all ${
-                              active ? opt.color + " shadow-sm" : "border-app-border bg-app-surface hover:bg-app-tertiary"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <input type="radio" name="dark_hour_boarding_mode" value={opt.value}
-                                checked={active}
-                                onChange={() => dispatch(updateFormField({ name: "dark_hour_boarding_mode", value: opt.value }))}
-                                className="accent-app-primary"
-                              />
-                              <span className={`text-xs font-semibold ${active ? "" : "text-app-text-primary"}`}>{opt.label}</span>
-                            </div>
-                            <p className={`text-[11px] leading-snug pl-5 ${active ? "" : "text-app-text-muted"}`}>{opt.desc}</p>
-                          </label>
-                        );
-                      })}
+                      <RadioCard fieldName="dark_hour_boarding_mode" value="off" currentValue={dark_hour_boarding_mode} label="Off" desc="No restrictions"   activeColor="border-slate-400 bg-slate-50 text-slate-800" />
+                      <RadioCard fieldName="dark_hour_boarding_mode" value="on"  currentValue={dark_hour_boarding_mode} label="On"  desc="Restrict boarding" activeColor="border-rose-400 bg-rose-50 text-rose-800" />
                     </div>
                   </div>
                 </div>

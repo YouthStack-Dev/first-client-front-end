@@ -1,19 +1,25 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Megaphone, Star, User, LogOut, ChevronDown } from "lucide-react";
-import { useNavigate }                                 from "react-router-dom";
-import { useDispatch, useSelector }                    from "react-redux";
-import { jwtDecode }                                   from "jwt-decode";
-import Cookies                                         from "js-cookie";
-import { logout, selectCurrentUser }                   from "../../redux/features/auth/authSlice";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
+import { Menu, Megaphone, Star, User, LogOut, ChevronDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { jwtDecode } from "jwt-decode";
+import Cookies from "js-cookie";
+import { logout, selectCurrentUser } from "../../redux/features/auth/authSlice";
 
-const Header = ({ isSidebarOpen, title = "Dashboard" }) => {
+const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user     = useSelector(selectCurrentUser);
+  const user = useSelector(selectCurrentUser);
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
-
+  
   // ── Real email decoded from JWT (avoids dummy@gmail.com from Redux) ───
   const displayEmail = useMemo(() => {
     try {
@@ -21,10 +27,10 @@ const Header = ({ isSidebarOpen, title = "Dashboard" }) => {
       if (token) {
         const decoded = jwtDecode(token);
         return (
-          decoded.email      ||
+          decoded.email ||
           decoded.user_email ||
-          decoded.sub        ||
-          user?.email        ||
+          decoded.sub ||
+          user?.email ||
           ""
         );
       }
@@ -35,19 +41,20 @@ const Header = ({ isSidebarOpen, title = "Dashboard" }) => {
   }, [user]);
 
   const displayName =
-    user?.name              ||
-    user?.full_name         ||
-    user?.employee?.name    ||
+    user?.name ||
+    user?.full_name ||
+    user?.employee?.name ||
     user?.vendor_user?.name ||
     displayEmail.split("@")[0] ||
     "Admin User";
 
-  const initials = displayName
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "AD";
+  const initials =
+    displayName
+      .split(" ")
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "AD";
 
   // ── Close on outside click ─────────────────────────────────────────────
   useEffect(() => {
@@ -59,30 +66,54 @@ const Header = ({ isSidebarOpen, title = "Dashboard" }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleAvatarClick       = useCallback(() => setIsProfileOpen(prev => !prev), []);
-  const handleProfileNavigation = useCallback(() => { navigate("/companies/profile"); setIsProfileOpen(false); }, [navigate]);
-  const handleAnnouncementClick = useCallback(() =>   navigate("/companies/announcements"), [navigate]);
-  const handleReviewsClick      = useCallback(() =>   navigate("/companies/reviews"),       [navigate]);
-  const handleLogout            = useCallback(() => { dispatch(logout()); setIsProfileOpen(false); }, [dispatch]);
+  const handleAvatarClick = useCallback(
+    () => setIsProfileOpen((prev) => !prev),
+    [],
+  );
+  const handleProfileNavigation = useCallback(() => {
+    navigate("/companies/profile");
+    setIsProfileOpen(false);
+  }, [navigate]);
+  const handleAnnouncementClick = useCallback(
+    () => navigate("/companies/announcements"),
+    [navigate],
+  );
+  const handleReviewsClick = useCallback(
+    () => navigate("/companies/reviews"),
+    [navigate],
+  );
+  const handleLogout = useCallback(() => {
+    dispatch(logout());
+    setIsProfileOpen(false);
+  }, [dispatch]);
 
   return (
-    <header className={`
+    <header
+      className={`
       bg-white border-b border-gray-100 fixed top-0 right-0 z-40
       transition-all duration-300 shadow-sm
       left-0
       ${isSidebarOpen ? "lg:left-[256px]" : "lg:left-[64px]"}
-    `}>
+    `}
+    >
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-
           {/* Left — title only */}
           <div className="flex items-center">
+            <button
+              type="button"
+              data-sidebar-toggle
+              onClick={toggleSidebar}
+              className="text-gray-500 hover:text-gray-600 mr-3 lg:hidden"
+              aria-label="Toggle sidebar"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
             <span className="text-blue-600 font-bold text-xl">{title}</span>
           </div>
 
           {/* Right — announcements + reviews + avatar */}
           <div className="flex items-center gap-1">
-
             {/* Announcements */}
             <button
               type="button"
@@ -129,8 +160,10 @@ const Header = ({ isSidebarOpen, title = "Dashboard" }) => {
                   hover:bg-gray-100 transition-colors
                   focus:outline-none focus:ring-2 focus:ring-blue-300"
               >
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600
-                  flex items-center justify-center text-white text-sm font-semibold select-none shadow-sm">
+                <div
+                  className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600
+                  flex items-center justify-center text-white text-sm font-semibold select-none shadow-sm"
+                >
                   {initials}
                 </div>
                 <div className="hidden sm:block text-left">
@@ -143,26 +176,34 @@ const Header = ({ isSidebarOpen, title = "Dashboard" }) => {
                     </p>
                   )}
                 </div>
-                <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200
+                <ChevronDown
+                  className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200
                   ${isProfileOpen ? "rotate-180" : ""}`}
                 />
               </button>
 
               {isProfileOpen && (
-                <div className="absolute right-0 mt-2 w-52 rounded-xl shadow-lg bg-white
-                  ring-1 ring-black ring-opacity-5 z-50 overflow-hidden">
-
+                <div
+                  className="absolute right-0 mt-2 w-52 rounded-xl shadow-lg bg-white
+                  ring-1 ring-black ring-opacity-5 z-50 overflow-hidden"
+                >
                   {/* User info */}
                   <div className="px-4 py-3 bg-gradient-to-br from-blue-50 to-indigo-50 border-b border-gray-100">
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600
-                        flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                      <div
+                        className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600
+                        flex items-center justify-center text-white text-sm font-semibold flex-shrink-0"
+                      >
                         {initials}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-800 truncate">{displayName}</p>
+                        <p className="text-sm font-semibold text-gray-800 truncate">
+                          {displayName}
+                        </p>
                         {displayEmail && (
-                          <p className="text-xs text-gray-500 truncate">{displayEmail}</p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {displayEmail}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -196,7 +237,6 @@ const Header = ({ isSidebarOpen, title = "Dashboard" }) => {
                 </div>
               )}
             </div>
-
           </div>
         </div>
       </div>

@@ -6,24 +6,15 @@ import {
   selectNodalAssignmentLoading,
   selectNodalAssignmentError,
 } from "../../redux/features/nodalAssignments/Nodalassignmentselectors";
-import { clearError } from "../../redux/features/nodalAssignments/Nodalassignmentslice";
+import { clearNodalPointError } from "../../redux/features/nodalAssignments/Nodalassignmentslice";
 
 import { fetchNodalPointsThunk } from "../../redux/features/nodalPoints/Nodalpointsthunk";
 import {
   selectAllNodalPoints,
-  clearError as clearNodalError,
+  clearNodalPointError as clearNodalError, 
 } from "../../redux/features/nodalPoints/Nodalpointsslice";
 import { selectNodalPointsLoading } from "../../redux/features/nodalPoints/Nodalpointsselectors";
 
-/**
- * AssignNodalModal
- * Props:
- *  - isOpen    : boolean
- *  - onClose   : () => void
- *  - employee  : { employee_id, name, nodal_point } | null
- *  - tenantId  : string
- *  - onSuccess : () => void
- */
 export default function AssignNodalModal({
   isOpen,
   onClose,
@@ -33,21 +24,20 @@ export default function AssignNodalModal({
 }) {
   const dispatch = useDispatch();
 
-  const loading      = useSelector(selectNodalAssignmentLoading);
-  const error        = useSelector(selectNodalAssignmentError);
-  const hubs         = useSelector(selectAllNodalPoints);
-  const hubsLoading  = useSelector(selectNodalPointsLoading);
+  const loading     = useSelector(selectNodalAssignmentLoading);
+  const error       = useSelector(selectNodalAssignmentError);
+  const hubs        = useSelector(selectAllNodalPoints);
+  const hubsLoading = useSelector(selectNodalPointsLoading);
 
   const [nodalPointId, setNodalPointId] = useState("");
   const [isOverridden, setIsOverridden] = useState(false);
 
-  // Reset form when modal opens + fetch hubs only if not already in store
   useEffect(() => {
     if (isOpen) {
       setNodalPointId("");
       setIsOverridden(employee?.nodal_point?.is_overridden ?? false);
-      dispatch(clearError());
-      dispatch(clearNodalError());
+      dispatch(clearNodalPointError()); // ← was: clearError() — clears assignment slice error
+      dispatch(clearNodalError());      // ← clears nodal points slice error
       if (hubs.length === 0) {
         dispatch(fetchNodalPointsThunk({ tenant_id: tenantId, is_active: true, per_page: 100 }));
       }
@@ -56,8 +46,8 @@ export default function AssignNodalModal({
 
   if (!isOpen || !employee) return null;
 
-  const isReassign  = !!employee.nodal_point;
-  const activeHubs  = hubs.filter((h) => h.is_active);
+  const isReassign = !!employee.nodal_point;
+  const activeHubs = hubs.filter((h) => h.is_active);
 
   const handleSubmit = async () => {
     const payload = {
@@ -66,7 +56,6 @@ export default function AssignNodalModal({
       is_overridden: isOverridden,
     };
 
-    // Only send nodal_point_id if one was selected — blank = auto-nearest
     if (nodalPointId !== "") {
       payload.nodal_point_id = parseInt(nodalPointId, 10);
     }
@@ -80,10 +69,8 @@ export default function AssignNodalModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
-      {/* Panel */}
       <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl mx-4">
 
         {/* Header */}
@@ -105,7 +92,6 @@ export default function AssignNodalModal({
         {/* Body */}
         <div className="px-6 py-5 space-y-5">
 
-          {/* Current assignment info */}
           {isReassign && (
             <div className="flex items-start gap-3 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3">
               <i className="ti ti-map-pin text-blue-500 text-sm mt-0.5" />

@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { X, User, Mail, Phone, Hash, Shield, Building2, Eye, EyeOff } from "lucide-react";
+import {
+  X,
+  User,
+  Mail,
+  Phone,
+  Hash,
+  Shield,
+  Building2,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   createVendorThunk,
@@ -9,7 +19,17 @@ import {
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phoneRegex = /^[\d+\-()\s]{7,20}$/;
 
-const InputField = ({ label, name, type = "text", value, onChange, error, icon: Icon, readOnly = false, showToggle = false }) => {
+const InputField = ({
+  label,
+  name,
+  type = "text",
+  value,
+  onChange,
+  error,
+  icon: Icon,
+  readOnly = false,
+  showToggle = false,
+}) => {
   const [showPassword, setShowPassword] = useState(false);
   const inputType = showToggle ? (showPassword ? "text" : "password") : type;
 
@@ -18,13 +38,15 @@ const InputField = ({ label, name, type = "text", value, onChange, error, icon: 
       <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
         {label}
       </label>
-      <div className={`relative flex items-center rounded-lg border transition-all duration-200 ${
-        readOnly
-          ? "bg-gray-50 border-gray-200"
-          : error
-          ? "border-red-400 bg-red-50 focus-within:ring-2 focus-within:ring-red-200"
-          : "border-gray-200 bg-white focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100"
-      }`}>
+      <div
+        className={`relative flex items-center rounded-lg border transition-all duration-200 ${
+          readOnly
+            ? "bg-gray-50 border-gray-200"
+            : error
+              ? "border-red-400 bg-red-50 focus-within:ring-2 focus-within:ring-red-200"
+              : "border-gray-200 bg-white focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100"
+        }`}
+      >
         {Icon && (
           <div className="pl-3 text-gray-400">
             <Icon size={15} />
@@ -100,13 +122,15 @@ const AssignEntityModal = ({
       setErrors({});
       setTimeout(
         () => modalRef.current?.querySelector("input:not([readonly])")?.focus(),
-        0
+        0,
       );
     }
   }, [isOpen, sourceEntity]);
 
   useEffect(() => {
-    const handleKeyDown = (e) => { if (e.key === "Escape") onClose(); };
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
     if (isOpen) window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
@@ -115,7 +139,10 @@ const AssignEntityModal = ({
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
@@ -123,17 +150,29 @@ const AssignEntityModal = ({
     const newErrors = {};
     if (isEditMode) {
       if (!formData.name) newErrors.name = "Vendor name is required";
-      if (!emailRegex.test(formData.email)) newErrors.email = "Invalid vendor email";
-      if (!phoneRegex.test(formData.phone)) newErrors.phone = "Invalid vendor phone";
+      if (!emailRegex.test(formData.email))
+        newErrors.email = "Invalid vendor email";
+      if (!phoneRegex.test(formData.phone))
+        newErrors.phone = "Invalid vendor phone";
     } else {
       if (!formData.name) newErrors.name = "Vendor name is required";
-      if (!emailRegex.test(formData.email)) newErrors.email = "Invalid vendor email";
-      if (!emailRegex.test(formData.admin_email)) newErrors.admin_email = "Invalid admin email";
-      if (formData.email && formData.admin_email && formData.email === formData.admin_email)
-        newErrors.admin_email = "Admin email must be different from vendor email";
-      if (!phoneRegex.test(formData.phone)) newErrors.phone = "Invalid vendor phone";
-      if (!phoneRegex.test(formData.admin_phone)) newErrors.admin_phone = "Invalid admin phone";
-      if (!formData.admin_password) newErrors.admin_password = "Admin password is required";
+      if (!emailRegex.test(formData.email))
+        newErrors.email = "Invalid vendor email";
+      if (!emailRegex.test(formData.admin_email))
+        newErrors.admin_email = "Invalid admin email";
+      if (
+        formData.email &&
+        formData.admin_email &&
+        formData.email === formData.admin_email
+      )
+        newErrors.admin_email =
+          "Admin email must be different from vendor email";
+      if (!phoneRegex.test(formData.phone))
+        newErrors.phone = "Invalid vendor phone";
+      if (!phoneRegex.test(formData.admin_phone))
+        newErrors.admin_phone = "Invalid admin phone";
+      if (!formData.admin_password)
+        newErrors.admin_password = "Admin password is required";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -144,7 +183,9 @@ const AssignEntityModal = ({
     try {
       let result;
       if (isEditMode) {
-        result = await dispatch(updateVendorThunk({ vendorId: sourceEntity.vendor_id, formData })).unwrap();
+        result = await dispatch(
+          updateVendorThunk({ vendorId: sourceEntity.vendor_id, formData }),
+        ).unwrap();
       } else {
         result = await dispatch(createVendorThunk(formData)).unwrap();
       }
@@ -164,7 +205,6 @@ const AssignEntityModal = ({
       ref={modalRef}
     >
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
-
         {/* ── Header ── */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div className="flex items-center gap-3">
@@ -176,7 +216,10 @@ const AssignEntityModal = ({
                 {isEditMode ? "Update Vendor" : "Add Vendor"}
               </h2>
               <p className="text-xs text-gray-500">
-                Tenant: <span className="font-medium text-gray-700">{sourceEntity?.name || formData.tenant_id || "N/A"}</span>
+                Tenant:{" "}
+                <span className="font-medium text-gray-700">
+                  {sourceEntity?.name || formData.tenant_id || "N/A"}
+                </span>
               </p>
             </div>
           </div>
@@ -191,20 +234,25 @@ const AssignEntityModal = ({
 
         {/* ── Form Body ── */}
         <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
-
           {/* Tenant ID — read only, full width */}
           <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
             <div className="flex items-center gap-2 mb-1">
               <Building2 size={14} className="text-gray-400" />
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tenant ID</span>
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Tenant ID
+              </span>
             </div>
-            <p className="text-sm font-medium text-gray-700">{formData.tenant_id || "—"}</p>
+            <p className="text-sm font-medium text-gray-700">
+              {formData.tenant_id || "—"}
+            </p>
           </div>
 
           {/* ── Vendor Info Card ── */}
           <div className="border border-gray-200 rounded-xl overflow-hidden">
             <div className="bg-blue-50 px-4 py-2.5 border-b border-blue-100">
-              <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Vendor Information</p>
+              <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">
+                Vendor Information
+              </p>
             </div>
             <div className="p-4 grid grid-cols-2 gap-4">
               <InputField
@@ -246,7 +294,9 @@ const AssignEntityModal = ({
           {/* ── Admin Info Card ── */}
           <div className="border border-gray-200 rounded-xl overflow-hidden">
             <div className="bg-purple-50 px-4 py-2.5 border-b border-purple-100">
-              <p className="text-xs font-bold text-purple-700 uppercase tracking-wide">Admin Information</p>
+              <p className="text-xs font-bold text-purple-700 uppercase tracking-wide">
+                Admin Information
+              </p>
             </div>
             <div className="p-4 grid grid-cols-2 gap-4">
               <InputField
@@ -291,18 +341,25 @@ const AssignEntityModal = ({
           <div className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-xl border border-gray-100">
             <div>
               <p className="text-sm font-medium text-gray-700">Active Status</p>
-              <p className="text-xs text-gray-500">Vendor will be {formData.is_active ? "active" : "inactive"} after saving</p>
+              <p className="text-xs text-gray-500">
+                Vendor will be {formData.is_active ? "active" : "inactive"}{" "}
+                after saving
+              </p>
             </div>
             <button
               type="button"
-              onClick={() => setFormData((p) => ({ ...p, is_active: !p.is_active }))}
+              onClick={() =>
+                setFormData((p) => ({ ...p, is_active: !p.is_active }))
+              }
               className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
                 formData.is_active ? "bg-green-500" : "bg-gray-300"
               }`}
             >
-              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${
-                formData.is_active ? "translate-x-5" : "translate-x-0"
-              }`} />
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${
+                  formData.is_active ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
             </button>
           </div>
         </div>

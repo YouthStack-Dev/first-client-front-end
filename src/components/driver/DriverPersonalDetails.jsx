@@ -105,7 +105,12 @@ const DriverPersonalDetails = ({
       isMounted = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [formData.profileImage, formData.photo, formData.photo_url, lastFetchedPhoto]);
+  }, [
+    formData.profileImage,
+    formData.photo,
+    formData.photo_url,
+    lastFetchedPhoto,
+  ]);
 
   // ----------------- ✅ UI -----------------
   return (

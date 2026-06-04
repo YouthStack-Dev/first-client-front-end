@@ -53,16 +53,16 @@ const DriverFormModal = ({
   const [showPassword, setShowPassword] = useState(false);
 
   // logDebug(" this are the vendor from the parrent in driver form ", vendors);
-  
+
   // Initialize form data when mode or driverData changes
   useEffect(() => {
     if (mode === "create") {
       setFormData(defaultFormData);
     } else if (mode === "edit" || mode === "view") {
       if (driverData) {
-          const transformed = transformApiToFormData(driverData); // ✅ DEFINE IT
-          setFormData(transformed);
-          setInitialFormData(transformed); 
+        const transformed = transformApiToFormData(driverData); // ✅ DEFINE IT
+        setFormData(transformed);
+        setInitialFormData(transformed);
       }
     }
     setActiveTab("personal");
@@ -103,7 +103,7 @@ const DriverFormModal = ({
     }
   };
 
-    const handleFileChange = (fileKey, file) => {
+  const handleFileChange = (fileKey, file) => {
     if (!file) return;
 
     // ✅ Allow only PDF
@@ -113,18 +113,18 @@ const DriverFormModal = ({
     }
 
     // ✅ Limit size to 3MB
-      if (file.size > MAX_FILE_SIZE) {
-        setError("File size must be less than or equal to 3MB.");
-        return;
-      }
+    if (file.size > MAX_FILE_SIZE) {
+      setError("File size must be less than or equal to 3MB.");
+      return;
+    }
 
-      setError(null);
+    setError(null);
 
-      setFormData((prev) => ({
-        ...prev,
-        [fileKey]: file,
-      }));
-    };
+    setFormData((prev) => ({
+      ...prev,
+      [fileKey]: file,
+    }));
+  };
 
   const handleRemoveFile = (fileKey) => {
     setFormData((prev) => ({
@@ -211,7 +211,7 @@ const DriverFormModal = ({
 
     if (missing.length > 0) {
       setError(
-        `Please fill all required document fields:\n- ${missing.join("\n- ")}`
+        `Please fill all required document fields:\n- ${missing.join("\n- ")}`,
       );
       return false;
     }
@@ -315,7 +315,7 @@ const DriverFormModal = ({
           updateDriverThunk({
             driverId: driverData.driver_id,
             formData: payload,
-          })
+          }),
         ).unwrap();
 
         if (onSubmitSuccess) {
@@ -357,15 +357,15 @@ const DriverFormModal = ({
                     {mode === "create"
                       ? "Add New Driver"
                       : mode === "edit"
-                      ? "Edit Driver"
-                      : "Driver Details"}
+                        ? "Edit Driver"
+                        : "Driver Details"}
                   </h2>
                   <p className="text-sm text-gray-500">
                     {mode === "create"
                       ? "Create a new driver"
                       : mode === "edit"
-                      ? `Editing: ${formData.name}`
-                      : `Viewing: ${formData.name}`}
+                        ? `Editing: ${formData.name}`
+                        : `Viewing: ${formData.name}`}
                   </p>
                 </div>
               </div>
@@ -413,7 +413,7 @@ const DriverFormModal = ({
                     onClick={() => {
                       if (!canGoToDocuments()) {
                         setError(
-                          "Please complete all basic information before going to Documents."
+                          "Please complete all basic information before going to Documents.",
                         );
                         setActiveTab("personal");
                         return;
@@ -470,7 +470,7 @@ const DriverFormModal = ({
                               onChange={(e) =>
                                 handleFileChange(
                                   "profileImage",
-                                  e.target.files[0]
+                                  e.target.files[0],
                                 )
                               }
                             />
@@ -587,7 +587,11 @@ const DriverFormModal = ({
                               onClick={() => setShowPassword((p) => !p)}
                               className="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-600"
                             >
-                              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              {showPassword ? (
+                                <EyeOff className="w-4 h-4" />
+                              ) : (
+                                <Eye className="w-4 h-4" />
+                              )}
                             </button>
                           </div>
                         </div>
@@ -639,7 +643,10 @@ const DriverFormModal = ({
                               <Building className="w-4 h-4 text-gray-500" />
                               <span className="text-sm">
                                 {formData.vendor_id
-                                  ? getVendorNameById(formData.vendor_id, vendors)
+                                  ? getVendorNameById(
+                                      formData.vendor_id,
+                                      vendors,
+                                    )
                                   : "No vendor assigned"}
                               </span>
                             </div>
@@ -708,75 +715,78 @@ const DriverFormModal = ({
                         )}
                       </div>
                     </div>
- {/* Device Binding – Edit mode only */}
-{mode === "edit" && (
-  <div className="border-t pt-6 mt-6">
-    <h3 className="text-sm font-semibold text-gray-800 mb-4">
-      Device Binding
-    </h3>
+                    {/* Device Binding – Edit mode only */}
+                    {mode === "edit" && (
+                      <div className="border-t pt-6 mt-6">
+                        <h3 className="text-sm font-semibold text-gray-800 mb-4">
+                          Device Binding
+                        </h3>
 
-    <div className="grid grid-cols-2 gap-4">
-      {/* Active Android ID */}
-      <div>
-        <label className="block text-xs font-medium text-gray-700 mb-1">
-          Active Android ID
-        </label>
-        <input
-          type="text"
-          name="activeAndroidId"
-          value={formData.activeAndroidId || ""}
-          onChange={handleInputChange}
-          disabled={isReadOnly}
-          placeholder="Enter active android device ID"
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded
+                        <div className="grid grid-cols-2 gap-4">
+                          {/* Active Android ID */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              Active Android ID
+                            </label>
+                            <input
+                              type="text"
+                              name="activeAndroidId"
+                              value={formData.activeAndroidId || ""}
+                              onChange={handleInputChange}
+                              disabled={isReadOnly}
+                              placeholder="Enter active android device ID"
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded
                      focus:ring-2 focus:ring-blue-500 focus:border-transparent
                      disabled:bg-gray-50"
-        />
-        <p className="text-xs text-gray-500 mt-1">
-          This device will be actively bound to the driver.
-        </p>
-      </div>
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                              This device will be actively bound to the driver.
+                            </p>
+                          </div>
 
-      {/* Android ID History (Selectable → fills Active ID) */}
-      <div>
-        <label className="block text-xs font-medium text-gray-700 mb-1">
-          Android ID History
-        </label>
-        <select
-          value=""
-          disabled={isReadOnly}
-          onChange={(e) => {
-            const selectedId = e.target.value;
-            if (!selectedId) return;
+                          {/* Android ID History (Selectable → fills Active ID) */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              Android ID History
+                            </label>
+                            <select
+                              value=""
+                              disabled={isReadOnly}
+                              onChange={(e) => {
+                                const selectedId = e.target.value;
+                                if (!selectedId) return;
 
-            setFormData((prev) => ({
-              ...prev,
-              activeAndroidId: selectedId,
-            }));
-          }}
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  activeAndroidId: selectedId,
+                                }));
+                              }}
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded
                      focus:ring-2 focus:ring-blue-500 focus:border-transparent
                      disabled:bg-gray-50"
-        >
-          <option value="">Select from history</option>
+                            >
+                              <option value="">Select from history</option>
 
-          {formData.androidIdHistory?.length > 0 ? (
-            formData.androidIdHistory.map((device, idx) => (
-              <option key={idx} value={device.android_id}>
-                {device.android_id} ({device.device_model})
-              </option>
-            ))
-          ) : (
-            <option disabled>No device history available</option>
-          )}
-        </select>
-        <p className="text-xs text-gray-500 mt-1">
-          Selecting a device will copy it to Active Android ID.
-        </p>
-      </div>
-    </div>
-  </div>
-)}
+                              {formData.androidIdHistory?.length > 0 ? (
+                                formData.androidIdHistory.map((device, idx) => (
+                                  <option key={idx} value={device.android_id}>
+                                    {device.android_id} ({device.device_model})
+                                  </option>
+                                ))
+                              ) : (
+                                <option disabled>
+                                  No device history available
+                                </option>
+                              )}
+                            </select>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Selecting a device will copy it to Active Android
+                              ID.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -940,7 +950,7 @@ const DriverFormModal = ({
                                     onClick={() =>
                                       handleDownloadFile(
                                         file,
-                                        `${doc.label}.pdf`
+                                        `${doc.label}.pdf`,
                                       )
                                     }
                                     disabled={isLoading}

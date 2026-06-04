@@ -27,7 +27,9 @@ const Layout = ({ type }) => {
     const handleClickOutside = (event) => {
       if (window.innerWidth < 1024 && sidebarOpen) {
         const isSidebarClick = sidebarRef.current?.contains(event.target);
-        const isToggleButtonClick = event.target.closest("[data-sidebar-toggle]");
+        const isToggleButtonClick = event.target.closest(
+          "[data-sidebar-toggle]",
+        );
         if (!isSidebarClick && !isToggleButtonClick) {
           setSidebarOpen(false);
         }

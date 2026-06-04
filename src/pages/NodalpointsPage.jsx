@@ -19,7 +19,7 @@ import {
 
 import {
   selectAllNodalPoints,
-  clearError,
+  clearNodalPointError,
 } from "../redux/features/nodalPoints/Nodalpointsslice";
 
 import { selectCurrentUser } from "../redux/features/auth/authSlice";
@@ -57,13 +57,18 @@ export default function NodalPointsPage() {
   const [showEdit, setShowEdit]             = useState(false);
   const [editHub, setEditHub]               = useState(null);
 
+  // console.log("tenantId:", tenantId);
+  // console.log("hubs:", hubs);
+  // console.log("loading:", loading);
+  // console.log("error:", error);
+
   // Fetch hubs on mount + when page/filter changes.
   // activeTab intentionally excluded from deps — switching tabs should not re-fetch.
   useEffect(() => {
     const params = { tenant_id: tenantId, page, per_page: 20 };
     if (isActiveFilter !== "") params.is_active = isActiveFilter === "true";
     dispatch(fetchNodalPointsThunk(params));
-    return () => { dispatch(clearError()); };
+    return () => { dispatch(clearNodalPointError()); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, tenantId, page, isActiveFilter]);
 
@@ -101,6 +106,8 @@ export default function NodalPointsPage() {
       isActiveFilter !== "" ? h.is_active === (isActiveFilter === "true") : true;
     return matchesName && matchesStatus;
   });
+
+  // console.log("visibleHubs:", visibleHubs);
 
   const stats = [
     {
@@ -248,16 +255,19 @@ export default function NodalPointsPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {visibleHubs.map((hub) => (
-                  <NodalPointCard
-                    key={hub.nodal_point_id}
-                    hub={hub}
-                    tenantId={tenantId}
-                    onUpdate={handleUpdate}
-                    onDelete={handleDelete}
-                    onEdit={openEdit}
-                  />
-                ))}
+                {visibleHubs.map((hub) => {
+  // console.log("Rendering hub:", hub);
+  return (
+    <NodalPointCard
+      key={hub.nodal_point_id}
+      hub={hub}
+      tenantId={tenantId}
+      onUpdate={handleUpdate}
+      onDelete={handleDelete}
+      onEdit={openEdit}
+    />
+  );
+})}
               </div>
             )}
 

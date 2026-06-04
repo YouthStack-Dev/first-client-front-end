@@ -26,7 +26,7 @@ export const useVendorOptions = (tenantId = null, shouldFetch = false) => {
     : vendors;
 
   const vendorOptions = vendorList.map((vendor) => ({
-    value: vendor.vendor_id,
+    value: String(vendor.vendor_id ?? ""),
     label: vendor.name,
   }));
 

@@ -20,10 +20,10 @@ const CompanyList = ({
 }) => {
   const dispatch = useDispatch();
 
-  const vendors        = useSelector(selectVendors);
+  const vendors = useSelector(selectVendors);
   const vendorsFetched = useSelector(selectVendorsFetched);
   const vendorsLoading = useSelector(selectVendorsLoading);
-  const vendorsError   = useSelector(selectVendorsError);
+  const vendorsError = useSelector(selectVendorsError);
 
   useEffect(() => {
     if (!vendorsFetched) dispatch(fetchVendorsThunk());
@@ -31,37 +31,46 @@ const CompanyList = ({
 
   const stats = useMemo(
     () => ({
-      total:    companies.length,
-      active:   companies.filter((c) => c.is_active === true).length,
+      total: companies.length,
+      active: companies.filter((c) => c.is_active === true).length,
       inactive: companies.filter((c) => c.is_active === false).length,
     }),
-    [companies]
+    [companies],
   );
 
   return (
     <div className="space-y-4">
-
       {/* Vendor fetch error */}
       {vendorsError && (
-        <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200
-          text-yellow-700 px-4 py-3 rounded-lg text-sm">
+        <div
+          className="flex items-center gap-2 bg-yellow-50 border border-yellow-200
+          text-yellow-700 px-4 py-3 rounded-lg text-sm"
+        >
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>
-            Vendor data could not be loaded. Some card details may be incomplete.
+            Vendor data could not be loaded. Some card details may be
+            incomplete.
           </span>
         </div>
       )}
 
       {/* Stats bar */}
       {companies.length > 0 && (
-        <div className="grid grid-cols-3 gap-3" role="region" aria-label="Company statistics">
+        <div
+          className="grid grid-cols-3 gap-3"
+          role="region"
+          aria-label="Company statistics"
+        >
           {[
-            { n: stats.total,    label: "Total",    color: "text-slate-800"   },
-            { n: stats.active,   label: "Active",   color: "text-emerald-600" },
-            { n: stats.inactive, label: "Inactive", color: "text-rose-500"    },
+            { n: stats.total, label: "Total", color: "text-slate-800" },
+            { n: stats.active, label: "Active", color: "text-emerald-600" },
+            { n: stats.inactive, label: "Inactive", color: "text-rose-500" },
           ].map(({ n, label, color }) => (
-            <div key={label} className="bg-white px-4 py-3 rounded-lg border border-slate-200
-              flex items-center gap-3">
+            <div
+              key={label}
+              className="bg-white px-4 py-3 rounded-lg border border-slate-200
+              flex items-center gap-3"
+            >
               <div className={`text-xl font-bold ${color}`}>{n}</div>
               <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
                 {label}
@@ -89,7 +98,7 @@ const CompanyList = ({
             if (!key) {
               console.warn(
                 "[CompanyList] Company rendered without a stable unique ID:",
-                company
+                company,
               );
             }
             return (

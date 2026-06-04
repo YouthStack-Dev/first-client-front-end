@@ -58,7 +58,7 @@ const ReportDownloader = () => {
       link.href = url;
       link.setAttribute(
         "download",
-        `bookings_report_${filters.start_date}_to_${filters.end_date}.xlsx`
+        `bookings_report_${filters.start_date}_to_${filters.end_date}.xlsx`,
       );
       document.body.appendChild(link);
       link.click();
