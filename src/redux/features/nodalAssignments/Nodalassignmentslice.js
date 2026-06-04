@@ -132,7 +132,7 @@ const nodalAssignmentSlice = createSlice({
 /* =========================================================
    EXPORTS
    ========================================================= */
-export const { clearNodalAssignments, clearBulkResult, clearError } =
+export const { clearNodalAssignments, clearBulkResult, clearNodalPointError  } =
   nodalAssignmentSlice.actions;
 
 export default nodalAssignmentSlice.reducer;

@@ -9,6 +9,7 @@ import IamPermissionsPage from "../pages/IamPermissionsPage";
 import TeamManagement from "../pages/TeamManagement";
 import TeamEmployeesManagement from "../components/TeamEmployees/TeamEmployeesManagemnt.jsx";
 import SpeedViolationsPage from "../pages/SpeedViolationsPage";
+import LogsViewer from "../pages/LogsViewer";
 
 
 export const AdminRoutes = () => (
@@ -22,6 +23,7 @@ export const AdminRoutes = () => (
     <Route path="iam/permissions"       element={<IamPermissionsPage />} />
      <Route path="speed-violations"     element={<SpeedViolationsPage />} />
      <Route path="reports-management"   element={<ReportsManagement />} />
+     <Route path="logs"          element={<LogsViewer />} />
 
     {/* No PermissionCheck here — superadmin bypasses all permission gates */}
     <Route path="teams"                  element={<TeamManagement />} />
