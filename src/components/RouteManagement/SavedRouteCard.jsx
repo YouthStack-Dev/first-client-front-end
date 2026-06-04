@@ -20,6 +20,7 @@ import {
 
 import { renderSafeValue, getStatusInfo, isFemaleGender } from "./routeCardUtils";
 import { ESCORT_COLORS, MAX_VISIBLE_CHIPS } from "../RouteManagement/routeCardConstants";
+import DelayBadge from "../RouteManagement/DelayBadge";
 import { API_CLIENT } from "../../Api/API_Client";
 import { logError }   from "../../utils/logger";
 
@@ -138,9 +139,32 @@ const SavedRouteCard = ({
       onToast?.success?.(`Added ${selectedBookings?.size ?? 0} booking${selectedBookings?.size !== 1 ? "s" : ""} to route ${route.route_code}`);
     } catch (err) {
       logError("Failed to update route:", err);
-      const msg = err?.response?.data?.message || "Failed to update route. Please try again.";
-      if (onToast?.error) onToast.error(msg);
-      else alert(msg);
+      setShowUpdateModal(false);
+
+      const status    = err?.response?.status;
+      const errorCode = err?.response?.data?.error_code;
+      const details   = err?.response?.data?.details;
+
+      if (status === 409 && errorCode === "BOOKING_ALREADY_ACTIVE") {
+        const bookingId    = details?.booking_id;
+        const bookingStatus = details?.booking_status;
+        const msg = `Booking #${bookingId} is currently ${bookingStatus} on another route and cannot be reassigned. End that trip first before moving this booking.`;
+        if (onToast?.error) onToast.error(msg);
+        else { setAlertMessage(msg); setShowAlertModal(true); }
+
+      } else if (status === 409 && errorCode === "BOOKING_ALREADY_ASSIGNED") {
+        const bookingId   = details?.booking_id;
+        const conflictIds = details?.conflict_route_ids || [];
+        const routeText   = conflictIds.map((id) => `Route #${id}`).join(", ");
+        const msg = `Booking #${bookingId} is already assigned to ${routeText}. Remove it from that route first, or enable Auto-Move in Tenant Settings (Configuration > System Configuration).`;
+        if (onToast?.error) onToast.error(msg);
+        else { setAlertMessage(msg); setShowAlertModal(true); }
+
+      } else {
+        const msg = err?.response?.data?.message || "Failed to update route. Please try again.";
+        if (onToast?.error) onToast.error(msg);
+        else alert(msg);
+      }
     }
   };
 
@@ -181,6 +205,17 @@ const SavedRouteCard = ({
                   {STATUS_ICONS[statusInfo.iconName]}
                   <span className="capitalize">{renderSafeValue(route.status)}</span>
                 </span>
+                {/* Delay badge — shown when delay_type is set, or when Completed but not yet tagged */}
+                {route.delay_type ? (
+                  <DelayBadge
+                    delayType={route.delay_type}
+                    delayMinutes={route.delay_minutes}
+                    graceMins={route.ota_grace_minutes}
+                    compact
+                  />
+                ) : isCompleted && route.ota_grace_minutes != null ? (
+                  <DelayBadge showNull compact />
+                ) : null}
                 {hasDriver && !isCompleted && (
                   <>
                     <span className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded border bg-orange-50 text-orange-700 border-orange-200">

@@ -28,11 +28,7 @@ import {
 
 import { toast } from "react-toastify";
 
-// ─── constants ────────────────────────────────────────────────────────────────
-
 const MODULE = "vehicle_type";
-
-// ─── debounce hook ────────────────────────────────────────────────────────────
 
 const useDebounce = (value, delay = 500) => {
   const [debouncedValue, setDebouncedValue] = useState(value);

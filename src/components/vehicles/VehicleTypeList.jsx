@@ -4,42 +4,9 @@ import ReusableButton from "../ui/ReusableButton";
 import ReusableToggleButton from "../ui/ReusableToggleButton";
 import { ReusablePagination } from "../ui/ReusablePagination";
 
-// ─── constants ────────────────────────────────────────────────────────────────
-
 const MODULE = "vehicle_type";
 
-// ─── skeleton loader ──────────────────────────────────────────────────────────
-
-const SkeletonRow = () => (
-  <tr className="border-b animate-pulse">
-    {Array.from({ length: 6 }).map((_, i) => (
-      <td key={i} className="px-4 py-3">
-        <div className="h-3 bg-gray-200 rounded w-full" />
-      </td>
-    ))}
-  </tr>
-);
-
-// ─── main component ───────────────────────────────────────────────────────────
-
-/**
- * VehicleTypeList
- *
- * Props:
- *  vehicleTypes          – vehicle type[]
- *  onView                – (vt) => void
- *  onEdit                – (vt) => void
- *  onStatusToggle        – (vt) => void
- *  showPagination        – boolean (default false)
- *  currentPage           – number (default 1)
- *  totalPages            – number (default 1)
- *  totalItems            – number (default 0)
- *  itemsPerPage          – number (default 10)
- *  onPageChange          – (page) => void
- *  onItemsPerPageChange  – (n) => void
- *  isLoading             – boolean (default false)
- */
-export const VehicleTypeList = ({
+const VehicleTypeList = ({
   vehicleTypes = [],
   onView,
   onEdit,

@@ -26,5 +26,23 @@ const endpoint = {
 
   routesuggestion: "/grouping/bookings/routesuggestion",
   savedRoutes: "/routes/",
+
+  //  Nodal Points
+  nodalPoints: "/nodal-points/",
+  nodalPointById: (id) => `/nodal-points/${id}`,
+  nodalPointNearest: "/nodal-points/nearest",
+  nodalPointEmployeeAssign: (employeeId) =>
+    `/nodal-points/employees/${employeeId}/assign`,
+  nodalPointEmployeeAssignment: (employeeId) =>
+    `/nodal-points/employees/${employeeId}`,
+  nodalPointBulkAssignNearest: "/nodal-points/employees/bulk-assign-nearest",
+
+  //  Logs (superadmin)
+  logsStream: "/logs/stream",
+  logsRecent: "/logs/recent",
+
+  //  Delay Reports (Feature 6 — OTA/OTD)
+  delayReport: "/reports/delays",
+  delayReportByRoute: (routeId) => `/reports/delays/${routeId}`,
 };
 export default endpoint;

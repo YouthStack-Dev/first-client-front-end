@@ -32,6 +32,7 @@ export const getAdminTitleFromPath = (pathname) => {
     "/superadmin/teams": "Teams",
     "/superadmin/role-management": "Role Management",
     "/superadmin/iam/permissions": "IAM Permissions",
+    "/superadmin/logs": "Logs Viewer",
   };
 
   // Try exact match first

@@ -19,9 +19,7 @@ import {
   UserCheck,
   Building,
   Gauge,
-  Bell,
-  Timer,
-  Sliders,
+  Route,
 } from "lucide-react";
 import { logDebug } from "../../utils/logger";
 import ReusableButton from "../ui/ReusableButton";
@@ -72,15 +70,8 @@ const CutoffManagement = () => {
     logout_boarding_otp,
     logout_deboarding_otp,
     speed_limit_kmph,
-    schedule_reminder_enabled,
-    schedule_reminder_minutes,
     one_trip_per_shift_enabled,
     auto_move_on_conflict,
-    driver_max_duty_minutes,
-    driver_rest_enforcement,
-    dark_hour_boarding_mode,
-    delay_driver_grace_minutes,
-    delay_employee_grace_minutes,
   } = formData || {};
 
   useEffect(() => {
@@ -93,15 +84,20 @@ const CutoffManagement = () => {
     const newValue = !formData[fieldName];
     dispatch(updateFormField({ name: fieldName, value: newValue }));
     if (activeTab === "tenant") {
-      dispatch(saveEscortConfigThunk({
-        escort_required_start_time, escort_required_end_time, escort_required_for_women,
-        login_boarding_otp, login_deboarding_otp, logout_boarding_otp, logout_deboarding_otp,
-        speed_limit_kmph, schedule_reminder_enabled, schedule_reminder_minutes,
-        one_trip_per_shift_enabled, auto_move_on_conflict,
-        driver_max_duty_minutes, driver_rest_enforcement,
-        dark_hour_boarding_mode, delay_driver_grace_minutes, delay_employee_grace_minutes,
-        [fieldName]: newValue,
-      }));
+      const tenantData = {
+        escort_required_start_time,
+        escort_required_end_time,
+        escort_required_for_women,
+        login_boarding_otp,
+        login_deboarding_otp,
+        logout_boarding_otp,
+        logout_deboarding_otp,
+        speed_limit_kmph,
+        one_trip_per_shift_enabled,
+        auto_move_on_conflict,
+      };
+      tenantData[fieldName] = newValue;
+      dispatch(saveEscortConfigThunk(tenantData));
     }
   };
 
@@ -124,14 +120,19 @@ const CutoffManagement = () => {
   };
 
   const handleSaveTenant = () => {
-    dispatch(saveEscortConfigThunk({
-      escort_required_start_time, escort_required_end_time, escort_required_for_women,
-      login_boarding_otp, login_deboarding_otp, logout_boarding_otp, logout_deboarding_otp,
-      speed_limit_kmph, schedule_reminder_enabled, schedule_reminder_minutes,
-      one_trip_per_shift_enabled, auto_move_on_conflict,
-      driver_max_duty_minutes, driver_rest_enforcement,
-      dark_hour_boarding_mode, delay_driver_grace_minutes, delay_employee_grace_minutes,
-    }));
+    const tenantData = {
+      escort_required_start_time,
+      escort_required_end_time,
+      escort_required_for_women,
+      login_boarding_otp,
+      login_deboarding_otp,
+      logout_boarding_otp,
+      logout_deboarding_otp,
+      speed_limit_kmph,
+      one_trip_per_shift_enabled,
+      auto_move_on_conflict,
+    };
+    dispatch(saveEscortConfigThunk(tenantData));
   };
 
   const parseTime = (t) => {
@@ -155,12 +156,19 @@ const CutoffManagement = () => {
 
   const hasTenantChanges = () => {
     if (!tenantConfig) return false;
-    return ["escort_required_start_time","escort_required_end_time","escort_required_for_women",
-      "login_boarding_otp","login_deboarding_otp","logout_boarding_otp","logout_deboarding_otp",
-      "speed_limit_kmph","schedule_reminder_enabled","schedule_reminder_minutes",
-      "one_trip_per_shift_enabled","auto_move_on_conflict","driver_max_duty_minutes","driver_rest_enforcement",
-      "dark_hour_boarding_mode","delay_driver_grace_minutes","delay_employee_grace_minutes",
-    ].some((k) => String(formData[k]) !== String(tenantConfig[k]));
+    const tenantFields = [
+      "escort_required_start_time",
+      "escort_required_end_time",
+      "escort_required_for_women",
+      "login_boarding_otp",
+      "login_deboarding_otp",
+      "logout_boarding_otp",
+      "logout_deboarding_otp",
+      "speed_limit_kmph",
+      "one_trip_per_shift_enabled",
+      "auto_move_on_conflict",
+    ];
+    return tenantFields.some((key) => formData[key] !== tenantConfig[key]);
   };
 
   const isSaving = (tab) => (tab === "tenant" ? tenantStatus : status) === "saving";
@@ -589,59 +597,75 @@ const CutoffManagement = () => {
               <div className="flex-1 h-px bg-app-border" />
             </div>
 
-            {/* ── Config cards ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Vehicle Limits */}
+            <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
+                <Gauge className="w-4 h-4 text-orange-500" />
+                <h2 className="text-sm font-semibold text-app-text-primary">Vehicle Limits</h2>
+              </div>
+              <div className="space-y-1">
+                <CompactNumberInput
+                  label="Speed Limit"
+                  fieldName="speed_limit_kmph"
+                  currentValue={speed_limit_kmph}
+                  icon={Gauge}
+                  unit="km/h"
+                  min={0}
+                  max={200}
+                />
+              </div>
+            </div>
 
-              {/* Escort */}
-              <Card>
-                <SectionHeader icon={UserCheck} title="Escort requirements" color="text-indigo-500" />
-                <div className="space-y-0.5">
-                  <CompactFullTimeInput label="Start time" fieldName="escort_required_start_time" currentValue={escort_required_start_time} icon={Clock} />
-                  <CompactFullTimeInput label="End time"   fieldName="escort_required_end_time"   currentValue={escort_required_end_time}   icon={Clock} />
-                  <CompactToggle label="Required for women" enabled={escort_required_for_women}
-                    onChange={() => handleToggle("escort_required_for_women")}
-                    description="Mandatory escort during specified window" />
+            {/* Routing Policy */}
+            <div className="bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
+                <Route className="w-4 h-4 text-violet-600" />
+                <h2 className="text-sm font-semibold text-app-text-primary">Routing Policy</h2>
+              </div>
+              <div className="space-y-1">
+                <CompactToggle
+                  label="Enforce one booking per shift per route"
+                  enabled={!!one_trip_per_shift_enabled}
+                  onChange={() => handleToggle("one_trip_per_shift_enabled")}
+                  description="When ON, a booking can only ride on one route at a time."
+                />
+                <div className={one_trip_per_shift_enabled ? "" : "opacity-40 pointer-events-none"}>
+                  <CompactToggle
+                    label="Auto-move booking to new route on conflict"
+                    enabled={!!auto_move_on_conflict}
+                    onChange={() => handleToggle("auto_move_on_conflict")}
+                    description="When OFF, the add operation is rejected instead of silently moving the booking."
+                  />
                 </div>
-              </Card>
+              </div>
+            </div>
 
-              {/* OTP */}
-              <Card>
-                <SectionHeader icon={Shield} title="OTP requirements" color="text-emerald-600" />
-                <div className="space-y-0.5">
-                  <CompactToggle label="Login boarding OTP"    enabled={login_boarding_otp}    onChange={() => handleToggle("login_boarding_otp")}    description="Require OTP for boarding during login" />
-                  <CompactToggle label="Login deboarding OTP"  enabled={login_deboarding_otp}  onChange={() => handleToggle("login_deboarding_otp")}  description="Require OTP for deboarding during login" />
-                  <CompactToggle label="Logout boarding OTP"   enabled={logout_boarding_otp}   onChange={() => handleToggle("logout_boarding_otp")}   description="Require OTP for boarding during logout" />
-                  <CompactToggle label="Logout deboarding OTP" enabled={logout_deboarding_otp} onChange={() => handleToggle("logout_deboarding_otp")} description="Require OTP for deboarding during logout" />
-                </div>
-              </Card>
-
-              {/* Vehicle limits */}
-              <Card>
-                <SectionHeader icon={Gauge} title="Vehicle limits" color="text-orange-500" />
-                <div className="space-y-0.5">
-                  <CompactNumberInput label="Speed limit" fieldName="speed_limit_kmph" currentValue={speed_limit_kmph} icon={Gauge} unit="km/h" min={0} max={200} />
-                </div>
-              </Card>
-
-              {/* Reminders */}
-              <Card>
-                <SectionHeader icon={Bell} title="Reminder notifications" color="text-blue-500" />
-                <div className="space-y-0.5">
-                  <CompactToggle label="Enable pre-trip reminders" enabled={schedule_reminder_enabled}
-                    onChange={() => handleToggle("schedule_reminder_enabled")}
-                    description="Send push notification before cab pickup" />
-                  {schedule_reminder_enabled && (
-                    <CompactNumberInput label="Remind before" fieldName="schedule_reminder_minutes" currentValue={schedule_reminder_minutes} icon={Clock} unit="min" min={1} max={240} />
-                  )}
-                </div>
-              </Card>
-
-              {/* Trip & conflict */}
-              <Card>
-                <SectionHeader icon={Zap} title="Trip & conflict settings" color="text-purple-500" />
-                <div className="space-y-0.5">
-                  <CompactToggle label="One trip per shift"    enabled={one_trip_per_shift_enabled} onChange={() => handleToggle("one_trip_per_shift_enabled")} description="Allow only one trip per shift per employee" />
-                  <CompactToggle label="Auto move on conflict" enabled={auto_move_on_conflict}      onChange={() => handleToggle("auto_move_on_conflict")}      description="Automatically resolve booking conflicts" />
+            {/* Configuration Summary — spans full width */}
+            <div className="lg:col-span-2 bg-app-surface rounded-lg border border-app-border p-4 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-app-border">
+                <Activity className="w-4 h-4 text-app-text-muted" />
+                <h2 className="text-sm font-semibold text-app-text-primary">Configuration Summary</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
+                    <p className="font-medium text-app-text-secondary mb-1 text-xs">Escort Active Period</p>
+                    <p className="text-sm font-semibold text-app-text-primary">
+                      {escort_required_start_time} - {escort_required_end_time}
+                    </p>
+                  </div>
+                  <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
+                    <p className="font-medium text-app-text-secondary mb-1 text-xs">Escort Status</p>
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium transition-colors ${escort_required_for_women ? "bg-green-100 text-green-700" : "bg-gray-200 text-app-text-muted"}`}>
+                      {escort_required_for_women ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                  <div className="p-2 bg-app-tertiary rounded-lg transition-all hover:bg-app-secondary">
+                    <p className="font-medium text-app-text-secondary mb-1 text-xs">Speed Limit</p>
+                    <p className="text-sm font-semibold text-app-text-primary">
+                      {speed_limit_kmph != null ? `${speed_limit_kmph} km/h` : "—"}
+                    </p>
+                  </div>
                 </div>
               </Card>
 

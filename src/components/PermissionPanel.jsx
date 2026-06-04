@@ -139,6 +139,7 @@ export const PermissionPanel = ({
     const icons = {
       booking: "📅",
       driver: "👨‍💼",
+      driver_app: "📱",
       employee: "👥",
       "route-booking": "🛣️",
       route: "🗺️",
@@ -146,13 +147,17 @@ export const PermissionPanel = ({
       team: "👨‍👩‍👧‍👦",
       "admin.tenant": "🏢",
       vehicle: "🚗",
-      "vehicle_type": "🔧",
+      "vehicle-type": "🔧",
+      vehicle_type: "🔧",
       vendor: "🏪",
-      "vendor_user": "👤",
-      "weekoff_config": "📅",
+      "vendor-user": "👤",
+      vendor_user: "👤",
+      "weekoff-config": "📅",
+      weekoff_config: "📅",
       permissions: "🔐",
       policy: "📜",
-      role: "🎭"
+      role: "🎭",
+      report: "📊"
     };
     return icons[module] || "📁";
   };

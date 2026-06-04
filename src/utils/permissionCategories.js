@@ -310,7 +310,7 @@ export const  permissionModules = [
   {
       "module": "vehicle_type",
       "action": "create",
-      "description": "Create vehicle-type",
+      "description": "Create vehicle_type",
       "is_active": true,
       "permission_id": 37,
       "created_at": "2025-09-23T14:28:51.098110",
@@ -319,7 +319,7 @@ export const  permissionModules = [
   {
       "module": "vehicle_type",
       "action": "read",
-      "description": "Read vehicle-type",
+      "description": "Read vehicle_type",
       "is_active": true,
       "permission_id": 38,
       "created_at": "2025-09-23T14:28:51.098110",
@@ -328,7 +328,7 @@ export const  permissionModules = [
   {
       "module": "vehicle_type",
       "action": "update",
-      "description": "Update vehicle-type",
+      "description": "Update vehicle_type",
       "is_active": true,
       "permission_id": 39,
       "created_at": "2025-09-23T14:28:51.098110",
@@ -337,7 +337,7 @@ export const  permissionModules = [
   {
       "module": "vehicle_type",
       "action": "delete",
-      "description": "Delete vehicle-type",
+      "description": "Delete vehicle_type",
       "is_active": true,
       "permission_id": 40,
       "created_at": "2025-09-23T14:28:51.098110",
@@ -436,7 +436,7 @@ export const  permissionModules = [
   {
       "module": "weekoff_config",
       "action": "update",
-      "description": "Update weekoff-config",
+      "description": "Update weekoff_config",
       "is_active": true,
       "permission_id": 51,
       "created_at": "2025-09-23T14:28:51.098110",
@@ -558,6 +558,42 @@ export const  permissionModules = [
       "permission_id": 64,
       "created_at": "2025-09-23T14:28:51.098110",
       "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "report",
+      "action": "create",
+      "description": "Create report",
+      "is_active": true,
+      "permission_id": 65,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "report",
+      "action": "read",
+      "description": "Read report",
+      "is_active": true,
+      "permission_id": 66,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "report",
+      "action": "update",
+      "description": "Update report",
+      "is_active": true,
+      "permission_id": 67,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
+  },
+  {
+      "module": "report",
+      "action": "delete",
+      "description": "Delete report",
+      "is_active": true,
+      "permission_id": 68,
+      "created_at": "2025-09-23T14:28:51.098110",
+      "updated_at": "2025-09-23T14:28:51.098110"
   }
 ]
 export const categorizePermissions = (permissions=permissionModules) => {
@@ -588,6 +624,13 @@ export const categorizePermissions = (permissions=permissionModules) => {
         name: "Administration",
         icon: "⚙️",
         modules: ["admin.tenant", "weekoff_config", "permissions", "policy", "role"]
+      },
+
+      // Reports
+      reports: {
+        name: "Reports",
+        icon: "📊",
+        modules: ["report"]
       }
     };
   
