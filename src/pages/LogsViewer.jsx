@@ -13,14 +13,14 @@ import {
   WifiOff,
 } from "lucide-react";
 
-import { fetchRecentLogsThunk } from "../redux/features/logs/logsThunks";
+import { fetchRecentLogsThunk } from "../redux/features/log_viewer/logsThunks";
 import {
   clearRecentLogs,
   selectRecentLogEntries,
   selectRecentLogsTotal,
   selectRecentLogsLoading,
   selectRecentLogsError,
-} from "../redux/features/logs/logsSlice";
+} from "../redux/features/log_viewer/logsSlice";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
