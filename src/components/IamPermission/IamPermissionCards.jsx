@@ -4,9 +4,8 @@ import { Spinner } from "./IamPermissionUIAtoms";
 
 const CARDS_PER_PAGE = 16;
 
-
 const NavBtn = ({ dir, page, totalPages, onPageChange }) => {
-  const isPrev   = dir === "prev";
+  const isPrev = dir === "prev";
   const disabled = isPrev ? page === 1 : page === totalPages;
 
   return (
@@ -15,12 +14,20 @@ const NavBtn = ({ dir, page, totalPages, onPageChange }) => {
       disabled={disabled}
       className={`w-[34px] h-[34px] rounded-lg border border-slate-200 bg-white
         flex items-center justify-center transition-colors duration-150
-        ${disabled
-          ? "text-slate-300 cursor-not-allowed"
-          : "text-slate-500 hover:bg-slate-50 cursor-pointer"
+        ${
+          disabled
+            ? "text-slate-300 cursor-not-allowed"
+            : "text-slate-500 hover:bg-slate-50 cursor-pointer"
         }`}
     >
-      <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <svg
+        width="14"
+        height="14"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+      >
         <path
           d={isPrev ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"}
           strokeLinecap="round"
@@ -34,11 +41,11 @@ const NavBtn = ({ dir, page, totalPages, onPageChange }) => {
 // ─── Pagination ───────────────────────────────────────────────────────────────
 const Pagination = ({ page, totalPages, total, onPageChange }) => {
   const start = (page - 1) * CARDS_PER_PAGE + 1;
-  const end   = Math.min(page * CARDS_PER_PAGE, total);
+  const end = Math.min(page * CARDS_PER_PAGE, total);
 
   // Build page number array with "..." gaps
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1)
-    .filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
+    .filter((n) => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
     .reduce((acc, n, i, arr) => {
       if (i > 0 && n - arr[i - 1] > 1) acc.push("...");
       acc.push(n);
@@ -50,15 +57,20 @@ const Pagination = ({ page, totalPages, total, onPageChange }) => {
       {/* Count label */}
       <p className="text-slate-400 text-[13px]">
         Showing{" "}
-        <strong className="text-slate-900">{start}–{end}</strong>
-        {" "}of{" "}
-        <strong className="text-slate-900">{total}</strong>
-        {" "}permissions
+        <strong className="text-slate-900">
+          {start}–{end}
+        </strong>{" "}
+        of <strong className="text-slate-900">{total}</strong> permissions
       </p>
 
       {/* Page buttons */}
       <div className="flex items-center gap-[6px]">
-        <NavBtn dir="prev" page={page} totalPages={totalPages} onPageChange={onPageChange} />
+        <NavBtn
+          dir="prev"
+          page={page}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+        />
 
         {pages.map((n, i) =>
           n === "..." ? (
@@ -73,18 +85,28 @@ const Pagination = ({ page, totalPages, total, onPageChange }) => {
               key={n}
               onClick={() => onPageChange(n)}
               className={`w-[34px] h-[34px] rounded-lg text-[13px] cursor-pointer transition-all duration-150
-                ${n === page
-                  ? "border-none text-white font-bold shadow-[0_2px_8px_rgba(99,102,241,0.35)]"
-                  : "border border-slate-200 bg-white text-slate-500 font-medium hover:bg-slate-50"
+                ${
+                  n === page
+                    ? "border-none text-white font-bold shadow-[0_2px_8px_rgba(99,102,241,0.35)]"
+                    : "border border-slate-200 bg-white text-slate-500 font-medium hover:bg-slate-50"
                 }`}
-              style={n === page ? { background: "linear-gradient(135deg,#6366f1,#8b5cf6)" } : undefined}
+              style={
+                n === page
+                  ? { background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }
+                  : undefined
+              }
             >
               {n}
             </button>
-          )
+          ),
         )}
 
-        <NavBtn dir="next" page={page} totalPages={totalPages} onPageChange={onPageChange} />
+        <NavBtn
+          dir="next"
+          page={page}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+        />
       </div>
     </div>
   );
@@ -92,7 +114,7 @@ const Pagination = ({ page, totalPages, total, onPageChange }) => {
 
 // ─── PermissionCard ───────────────────────────────────────────────────────────
 const PermissionCard = memo(({ p, index, onView, onEdit, onDelete }) => {
-  const grad   = getGradient(p.module);
+  const grad = getGradient(p.module);
   const aStyle = getActionStyle(p.action);
 
   return (
@@ -105,14 +127,14 @@ const PermissionCard = memo(({ p, index, onView, onEdit, onDelete }) => {
     >
       {/* ── Card Header ── */}
       <div className="relative px-[18px] py-4" style={{ background: grad }}>
-
         {/* Active / Inactive badge — pinned top-right */}
         <span
           className={`absolute top-3 right-3 inline-flex items-center gap-1
             text-[11px] font-semibold px-[10px] py-[3px] rounded-full border
-            ${p.is_active
-              ? "bg-green-400/20 border-green-400/40 text-green-100"
-              : "bg-red-400/20   border-red-400/40   text-red-200"
+            ${
+              p.is_active
+                ? "bg-green-400/20 border-green-400/40 text-green-100"
+                : "bg-red-400/20   border-red-400/40   text-red-200"
             }`}
         >
           <span
@@ -125,7 +147,14 @@ const PermissionCard = memo(({ p, index, onView, onEdit, onDelete }) => {
         {/* Icon + module name + ID */}
         <div className="flex items-center gap-3 pr-20">
           <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-            <svg width="19" height="19" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
+            <svg
+              width="19"
+              height="19"
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
               <rect x="3" y="11" width="18" height="11" rx="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" strokeLinecap="round" />
             </svg>
@@ -139,21 +168,34 @@ const PermissionCard = memo(({ p, index, onView, onEdit, onDelete }) => {
             </p>
           </div>
         </div>
-
       </div>
 
       {/* ── Card Body ── */}
       <div className="px-[18px] py-[14px]">
-
         {/* Action — highlighted block */}
         <div className="flex items-center gap-2 mb-[10px]">
-          <svg width="12" height="12" fill="none" stroke="#94a3b8" strokeWidth="2" viewBox="0 0 24 24">
-            <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round" />
+          <svg
+            width="12"
+            height="12"
+            fill="none"
+            stroke="#94a3b8"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M13 10V3L4 14h7v7l9-11h-7z"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
           <span className="text-slate-400 text-[12px]">Action</span>
           <span
             className="text-[13px] font-extrabold px-3 py-[4px] rounded-lg border-2 uppercase tracking-widest"
-            style={{ background: aStyle.bg, color: aStyle.color, borderColor: aStyle.border }}
+            style={{
+              background: aStyle.bg,
+              color: aStyle.color,
+              borderColor: aStyle.border,
+            }}
           >
             {p.action}
           </span>
@@ -163,12 +205,22 @@ const PermissionCard = memo(({ p, index, onView, onEdit, onDelete }) => {
         <div className="flex items-start gap-2">
           <svg
             className="mt-[1px] shrink-0"
-            width="12" height="12" fill="none" stroke="#94a3b8" strokeWidth="2" viewBox="0 0 24 24"
+            width="12"
+            height="12"
+            fill="none"
+            stroke="#94a3b8"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
           >
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" strokeLinecap="round" />
+            <path
+              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+              strokeLinecap="round"
+            />
             <polyline points="14 2 14 8 20 8" />
           </svg>
-          <span className={`text-[12px] leading-relaxed ${p.description ? "text-slate-600" : "text-slate-300"}`}>
+          <span
+            className={`text-[12px] leading-relaxed ${p.description ? "text-slate-600" : "text-slate-300"}`}
+          >
             {p.description || "No description provided"}
           </span>
         </div>
@@ -219,7 +271,12 @@ const EmptyState = () => (
   <div className="text-center py-20">
     <svg
       className="mx-auto mb-[14px]"
-      width="48" height="48" fill="none" stroke="#cbd5e1" strokeWidth="1.5" viewBox="0 0 24 24"
+      width="48"
+      height="48"
+      fill="none"
+      stroke="#cbd5e1"
+      strokeWidth="1.5"
+      viewBox="0 0 24 24"
     >
       <path
         d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
@@ -227,11 +284,14 @@ const EmptyState = () => (
         strokeLinejoin="round"
       />
     </svg>
-    <p className="text-[15px] font-semibold text-slate-500">No permissions found</p>
-    <p className="text-[13px] text-slate-400 mt-1">Try adjusting your search or filter</p>
+    <p className="text-[15px] font-semibold text-slate-500">
+      No permissions found
+    </p>
+    <p className="text-[13px] text-slate-400 mt-1">
+      Try adjusting your search or filter
+    </p>
   </div>
 );
-
 
 const IamPermissionCards = ({
   permissions,
@@ -243,9 +303,12 @@ const IamPermissionCards = ({
   onDelete,
 }) => {
   const totalPages = Math.ceil(permissions.length / CARDS_PER_PAGE);
-  const paginated  = permissions.slice((page - 1) * CARDS_PER_PAGE, page * CARDS_PER_PAGE);
+  const paginated = permissions.slice(
+    (page - 1) * CARDS_PER_PAGE,
+    page * CARDS_PER_PAGE,
+  );
 
-  if (loading)             return <LoadingState />;
+  if (loading) return <LoadingState />;
   if (!permissions.length) return <EmptyState />;
 
   return (

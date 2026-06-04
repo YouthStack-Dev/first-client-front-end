@@ -14,8 +14,8 @@ export default function LiveDriverSidebar({
   setSelectedVid,
   collapseVendorSelection,
   setCollapseVendorSelection,
-  filterMode,
-  setFilterMode,
+  filterMode, // ← now actually used
+  setFilterMode, // ← now actually used
   visibleDrivers,
   allDrivers,
   detail,
@@ -29,7 +29,9 @@ export default function LiveDriverSidebar({
   const [showVendorSelection, setShowVendorSelection] = useState(false);
 
   const selectedVendorLabel = selectedVid
-    ? vendorOptions.find((option) => String(option.value) === String(selectedVid))?.label || selectedVid
+    ? vendorOptions.find(
+        (option) => String(option.value) === String(selectedVid),
+      )?.label || selectedVid
     : "All vendors";
 
   const vendorStats = useMemo(() => {
@@ -57,14 +59,10 @@ export default function LiveDriverSidebar({
           offline: 0,
         });
       }
-
       const entry = statsMap.get(key);
       entry.total += 1;
-      if (data.is_active) {
-        entry.active += 1;
-      } else {
-        entry.offline += 1;
-      }
+      if (data.is_active) entry.active += 1;
+      else entry.offline += 1;
     });
 
     return Array.from(statsMap.values()).filter((vendor) => {
@@ -81,7 +79,8 @@ export default function LiveDriverSidebar({
     ? vendorStats.find((vendor) => String(vendor.value) === String(selectedVid))
     : null;
 
-  const showVendorSelectionList = showVendorSelection || Boolean(searchVendor.trim());
+  const showVendorSelectionList =
+    showVendorSelection || Boolean(searchVendor.trim());
 
   useEffect(() => {
     if (collapseVendorSelection && selectedVid) {
@@ -90,10 +89,19 @@ export default function LiveDriverSidebar({
     }
   }, [collapseVendorSelection, selectedVid, setCollapseVendorSelection]);
 
+  // ── Filter tabs config ────────────────────────────────────────────────────
+  const FILTERS = [
+    { key: "all", label: "All" },
+    { key: "active", label: "Active" },
+    { key: "offline", label: "Offline" },
+    { key: "stale", label: "Stale" },
+  ];
+
   return (
     <div style={S.lpanel}>
+      {/* ── Head: tenant / vendor selector ── */}
       <div style={S.lhead}>
-        {isSuperAdmin ? (
+        {isSuperAdmin && (
           <div style={{ marginBottom: 12 }}>
             <div style={S.tenantLabel}>Tenant</div>
             <select
@@ -109,9 +117,9 @@ export default function LiveDriverSidebar({
               ))}
             </select>
           </div>
-        ) : null}
+        )}
 
-        {(!isSuperAdmin || selectedTenant) ? (
+        {!isSuperAdmin || selectedTenant ? (
           <>
             <div style={S.sidebarTitle}>Fleet Overview</div>
             <input
@@ -129,74 +137,92 @@ export default function LiveDriverSidebar({
                   <>
                     <button
                       type="button"
-                      style={{
-                        ...S.vendorCard,
-                        ...S.vendorCardActive,
-                      }}
+                      style={{ ...S.vendorCard, ...S.vendorCardActive }}
                       onClick={() => setShowVendorSelection(true)}
                     >
                       <div style={S.vendorCardHeader}>
-                        <span style={S.vendorCardLabel}>{selectedVendorLabel}</span>
-                        <span style={S.vendorCardTotal}>{selectedVendor?.total ?? 0}</span>
+                        <span style={S.vendorCardLabel}>
+                          {selectedVendorLabel}
+                        </span>
+                        <span style={S.vendorCardTotal}>
+                          {selectedVendor?.total ?? 0}
+                        </span>
                       </div>
                       <div style={S.vendorCardCounts}>
-                        <span style={{ ...S.vendorCountBadge, ...S.vendorCountBadgeActive }}>
+                        <span
+                          style={{
+                            ...S.vendorCountBadge,
+                            ...S.vendorCountBadgeActive,
+                          }}
+                        >
                           🟢 {selectedVendor?.active ?? 0}
                         </span>
-                        <span style={{ ...S.vendorCountBadge, ...S.vendorCountBadgeOffline }}>
+                        <span
+                          style={{
+                            ...S.vendorCountBadge,
+                            ...S.vendorCountBadgeOffline,
+                          }}
+                        >
                           ⚫ {selectedVendor?.offline ?? 0}
                         </span>
                       </div>
                     </button>
                     <button
                       type="button"
-                      style={{
-                        ...S.tab,
-                        width: "100%",
-                        marginTop: 6,
-                      }}
+                      style={{ ...S.tab, width: "100%", marginTop: 6 }}
                       onClick={() => setShowVendorSelection(true)}
                     >
                       Change vendor
                     </button>
                   </>
                 ) : (
-                  <>
-                    {showVendorSelectionList && (
-                      vendorStats.length === 0 ? (
-                        <div style={S.empty}>No vendors found.</div>
-                      ) : (
-                        vendorStats.map((vendor) => (
-                          <button
-                            key={vendor.value}
-                            type="button"
+                  showVendorSelectionList &&
+                  (vendorStats.length === 0 ? (
+                    <div style={S.empty}>No vendors found.</div>
+                  ) : (
+                    vendorStats.map((vendor) => (
+                      <button
+                        key={vendor.value}
+                        type="button"
+                        style={{
+                          ...S.vendorCard,
+                          ...(String(selectedVid) === String(vendor.value)
+                            ? S.vendorCardActive
+                            : {}),
+                        }}
+                        onClick={() => {
+                          setSelectedVid(String(vendor.value));
+                          setShowVendorSelection(false);
+                          setSearchVendor("");
+                        }}
+                      >
+                        <div style={S.vendorCardHeader}>
+                          <span style={S.vendorCardLabel}>
+                            🚕 {vendor.label}
+                          </span>
+                          <span style={S.vendorCardTotal}>{vendor.total}</span>
+                        </div>
+                        <div style={S.vendorCardCounts}>
+                          <span
                             style={{
-                              ...S.vendorCard,
-                              ...(String(selectedVid) === String(vendor.value) ? S.vendorCardActive : {}),
-                            }}
-                            onClick={() => {
-                              setSelectedVid(String(vendor.value));
-                              setShowVendorSelection(false);
-                              setSearchVendor("");
+                              ...S.vendorCountBadge,
+                              ...S.vendorCountBadgeActive,
                             }}
                           >
-                            <div style={S.vendorCardHeader}>
-                              <span style={S.vendorCardLabel}>🚕 {vendor.label}</span>
-                              <span style={S.vendorCardTotal}>{vendor.total}</span>
-                            </div>
-                            <div style={S.vendorCardCounts}>
-                              <span style={{ ...S.vendorCountBadge, ...S.vendorCountBadgeActive }}>
-                                🟢 {vendor.active}
-                              </span>
-                              <span style={{ ...S.vendorCountBadge, ...S.vendorCountBadgeOffline }}>
-                                ⚫ {vendor.offline}
-                              </span>
-                            </div>
-                          </button>
-                        ))
-                      )
-                    )}
-                  </>
+                            🟢 {vendor.active}
+                          </span>
+                          <span
+                            style={{
+                              ...S.vendorCountBadge,
+                              ...S.vendorCountBadgeOffline,
+                            }}
+                          >
+                            ⚫ {vendor.offline}
+                          </span>
+                        </div>
+                      </button>
+                    ))
+                  ))
                 )}
               </div>
             )}
@@ -208,96 +234,100 @@ export default function LiveDriverSidebar({
         )}
       </div>
 
+      {/* ── Body: filter tabs + driver list ── */}
       <div style={S.lbody}>
-        <div style={{ padding: "12px 14px", borderBottom: "1px solid #dbeafe", background: "#eef4fb" }}>
+        {/* ── Filter tabs — the only addition ── */}
+        <div
+          style={{
+            display: "flex",
+            gap: 4,
+            padding: "8px 10px",
+            borderBottom: "1px solid #dbeafe",
+            background: "#f8fafc",
+            flexShrink: 0,
+          }}
+        >
+          {FILTERS.map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              style={{
+                ...S.tab,
+                flex: 1,
+                ...(filterMode === key ? S.tabOn : {}),
+              }}
+              onClick={() => setFilterMode(key)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Vendor context label */}
+        <div
+          style={{
+            padding: "10px 14px",
+            borderBottom: "1px solid #dbeafe",
+            background: "#eef4fb",
+          }}
+        >
           <div style={{ fontSize: 11, fontWeight: 700, color: "#0f172a" }}>
             Showing drivers for
           </div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginTop: 4 }}>
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: "#0f172a",
+              marginTop: 4,
+            }}
+          >
             {selectedVendorLabel}
           </div>
         </div>
 
+        {/* Driver rows */}
         {visibleDrivers.length === 0 ? (
-          <div style={S.empty}>
-            No live drivers available for this vendor.
-          </div>
+          <div style={S.empty}>No live drivers available for this vendor.</div>
         ) : (
           (() => {
             let lastVid = null;
-
             return visibleDrivers.map(({ vid, did, data }) => {
               const c = vendorColor(vid);
               const stl = isStale(data);
-
-              const dotC = !data.is_active
-                ? "#3f4452"
-                : stl
-                ? "#d97706"
-                : c;
-
+              const dotC = !data.is_active ? "#3f4452" : stl ? "#d97706" : c;
               const hdr =
                 vid !== lastVid
                   ? ((lastVid = vid),
                     (
-                      <div
-                        key={`h-${vid}`}
-                        style={{
-                          ...S.vname,
-                          color: c,
-                        }}
-                      >
+                      <div key={`h-${vid}`} style={{ ...S.vname, color: c }}>
                         {vid}
                       </div>
                     ))
                   : null;
-
-              const active =
-                detail?.vid === vid && detail?.did === did;
+              const isSelected = detail?.vid === vid && detail?.did === did;
 
               return (
                 <div key={`${vid}/${did}`}>
                   {hdr}
-
                   <button
                     style={{
                       ...S.drow,
-                      ...(active
-                        ? {
-                            background: "rgba(255,255,255,.05)",
-                          }
+                      ...(isSelected
+                        ? { background: "rgba(59,130,246,.08)" }
                         : {}),
-                      ...(!data.is_active
-                        ? {
-                            opacity: 0.4,
-                          }
-                        : {}),
+                      ...(!data.is_active ? { opacity: 0.4 } : {}),
                     }}
-                    onClick={() =>
-                      setDetail({
-                        vid,
-                        did,
-                      })
-                    }
+                    onClick={() => setDetail({ vid, did })}
                   >
-                    <span
-                      style={{
-                        ...S.ddot,
-                        background: dotC,
-                      }}
-                    />
-
+                    <span style={{ ...S.ddot, background: dotC }} />
                     <span style={S.ddid}>
                       {data.driver_name || data.driver_code || did}
                     </span>
-
-                    {data.route_code ? (
+                    {data.route_code && (
                       <span style={S.ddsub}>{data.route_code}</span>
-                    ) : null}
-
-                    <span style={S.dtm}>
-                      {fmtAge(secAgo(data.updated_at))}
-                    </span>
+                    )}
+                    <span style={S.dtm}>{fmtAge(secAgo(data.updated_at))}</span>
                   </button>
                 </div>
               );

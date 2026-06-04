@@ -6,9 +6,18 @@ import ReusableButton from "../ui/ReusableButton";
 import ReusableToggle from "../ui/ReusableToggle";
 
 const GENDER_STYLES = {
-  male:   { label: "Male",   className: "bg-blue-50 text-blue-700 border border-blue-200" },
-  female: { label: "Female", className: "bg-pink-50 text-pink-700 border border-pink-200" },
-  other:  { label: "Other",  className: "bg-purple-50 text-purple-700 border border-purple-200" },
+  male: {
+    label: "Male",
+    className: "bg-blue-50 text-blue-700 border border-blue-200",
+  },
+  female: {
+    label: "Female",
+    className: "bg-pink-50 text-pink-700 border border-pink-200",
+  },
+  other: {
+    label: "Other",
+    className: "bg-purple-50 text-purple-700 border border-purple-200",
+  },
 };
 
 const EscortTable = ({
@@ -30,7 +39,9 @@ const EscortTable = ({
     const style = GENDER_STYLES[key];
     if (!style) return <span className="text-gray-400 text-sm">—</span>;
     return (
-      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${style.className}`}>
+      <span
+        className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${style.className}`}
+      >
         {style.label}
       </span>
     );
@@ -47,7 +58,10 @@ const EscortTable = ({
           {[...Array(5)].map((_, i) => (
             <div key={i} className="px-4 py-3 flex gap-4">
               {[...Array(7)].map((_, j) => (
-                <div key={j} className="h-4 bg-gray-100 rounded animate-pulse flex-1" />
+                <div
+                  key={j}
+                  className="h-4 bg-gray-100 rounded animate-pulse flex-1"
+                />
               ))}
             </div>
           ))}
@@ -63,7 +77,9 @@ const EscortTable = ({
         <div className="bg-gray-100 p-4 rounded-full mb-4">
           <Users className="w-8 h-8 text-gray-400" />
         </div>
-        <p className="text-gray-700 font-medium text-base mb-1">No escorts found</p>
+        <p className="text-gray-700 font-medium text-base mb-1">
+          No escorts found
+        </p>
         <p className="text-gray-400 text-sm">Add an escort to get started.</p>
       </div>
     );
@@ -74,7 +90,9 @@ const EscortTable = ({
       {/* Table header bar */}
       <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
         <span className="text-sm font-medium text-gray-600">
-          Showing <span className="text-gray-900 font-semibold">{escorts.length}</span> escort{escorts.length !== 1 ? "s" : ""}
+          Showing{" "}
+          <span className="text-gray-900 font-semibold">{escorts.length}</span>{" "}
+          escort{escorts.length !== 1 ? "s" : ""}
         </span>
       </div>
 
@@ -82,7 +100,17 @@ const EscortTable = ({
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              {["ID", "Name", "Phone", "Email", "Vendor", "Gender", "Active", "Available", "Actions"].map((col) => (
+              {[
+                "ID",
+                "Name",
+                "Phone",
+                "Email",
+                "Vendor",
+                "Gender",
+                "Active",
+                "Available",
+                "Actions",
+              ].map((col) => (
                 <th
                   key={col}
                   className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap"
@@ -130,9 +158,7 @@ const EscortTable = ({
                 </td>
 
                 {/* Gender */}
-                <td className="px-4 py-3">
-                  {getGenderBadge(escort.gender)}
-                </td>
+                <td className="px-4 py-3">{getGenderBadge(escort.gender)}</td>
 
                 {/* Active toggle */}
                 <td className="px-4 py-3">

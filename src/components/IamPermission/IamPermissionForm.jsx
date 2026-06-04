@@ -22,30 +22,29 @@ const IamPermissionForm = ({ initial, onSubmit, onCancel, loading, mode }) => {
   const [form, setForm] = useState(
     initial
       ? {
-          module:      initial.module      || "",
-          action:      initial.action      || "",
+          module: initial.module || "",
+          action: initial.action || "",
           description: initial.description || "",
-          is_active:   initial.is_active   ?? true,
+          is_active: initial.is_active ?? true,
         }
-      : EMPTY_FORM
+      : EMPTY_FORM,
   );
 
-  const set   = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const valid = form.module.trim() && form.action.trim();
 
   const handleSubmit = () => {
     if (!valid || loading) return;
     onSubmit({
-      module:      form.module.trim(),
-      action:      form.action.trim(),
+      module: form.module.trim(),
+      action: form.action.trim(),
       description: form.description.trim() || null,
-      is_active:   form.is_active,
+      is_active: form.is_active,
     });
   };
 
   return (
     <div className="flex flex-col gap-4">
-
       {/* ── Live payload preview ── */}
       <div className="bg-slate-50 border border-slate-200 rounded-xl px-[14px] py-3">
         <p className="text-slate-400 text-[10px] tracking-[0.12em] uppercase font-semibold mb-2">
@@ -61,14 +60,18 @@ const IamPermissionForm = ({ initial, onSubmit, onCancel, loading, mode }) => {
           <span className="text-slate-400">{"{\n"}</span>
           <span className="text-slate-400">{"  "}</span>
           <span className="text-indigo-500">"module"</span>
-          <span className="text-slate-400">:      </span>
-          <span style={{ color: form.module      ? "#16a34a" : "#cbd5e1" }}>"{form.module      || "…"}"</span>
+          <span className="text-slate-400">: </span>
+          <span style={{ color: form.module ? "#16a34a" : "#cbd5e1" }}>
+            "{form.module || "…"}"
+          </span>
           <span className="text-slate-400">,{"\n"}</span>
 
           <span className="text-slate-400">{"  "}</span>
           <span className="text-indigo-500">"action"</span>
-          <span className="text-slate-400">:      </span>
-          <span style={{ color: form.action      ? "#0369a1" : "#cbd5e1" }}>"{form.action      || "…"}"</span>
+          <span className="text-slate-400">: </span>
+          <span style={{ color: form.action ? "#0369a1" : "#cbd5e1" }}>
+            "{form.action || "…"}"
+          </span>
           <span className="text-slate-400">,{"\n"}</span>
 
           <span className="text-slate-400">{"  "}</span>
@@ -81,8 +84,8 @@ const IamPermissionForm = ({ initial, onSubmit, onCancel, loading, mode }) => {
 
           <span className="text-slate-400">{"  "}</span>
           <span className="text-indigo-500">"is_active"</span>
-          <span className="text-slate-400">:   </span>
-          <span style={{ color: form.is_active   ? "#16a34a" : "#dc2626" }}>
+          <span className="text-slate-400">: </span>
+          <span style={{ color: form.is_active ? "#16a34a" : "#dc2626" }}>
             {String(form.is_active)}
           </span>
           <span className="text-slate-400">{"\n}"}</span>
@@ -178,22 +181,29 @@ const IamPermissionForm = ({ initial, onSubmit, onCancel, loading, mode }) => {
           disabled={loading || !valid}
           className={`flex-1 flex items-center justify-center gap-2 py-[11px] rounded-lg
             border-none text-[13px] font-bold transition-all duration-150
-            ${valid && !loading
-              ? "text-white cursor-pointer shadow-[0_2px_10px_rgba(99,102,241,0.3)] hover:opacity-90"
-              : "bg-slate-100 text-slate-400 cursor-not-allowed"
+            ${
+              valid && !loading
+                ? "text-white cursor-pointer shadow-[0_2px_10px_rgba(99,102,241,0.3)] hover:opacity-90"
+                : "bg-slate-100 text-slate-400 cursor-not-allowed"
             }`}
           style={
             valid && !loading
-              ? { background: "linear-gradient(135deg,#6366f1,#8b5cf6)", opacity: loading ? 0.7 : 1 }
+              ? {
+                  background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
+                  opacity: loading ? 0.7 : 1,
+                }
               : undefined
           }
         >
-          {loading
-            ? <><Spinner /> Saving…</>
-            : mode === "edit"
-              ? "Update Permission"
-              : "Create Permission"
-          }
+          {loading ? (
+            <>
+              <Spinner /> Saving…
+            </>
+          ) : mode === "edit" ? (
+            "Update Permission"
+          ) : (
+            "Create Permission"
+          )}
         </button>
 
         <button
@@ -206,7 +216,6 @@ const IamPermissionForm = ({ initial, onSubmit, onCancel, loading, mode }) => {
           Cancel
         </button>
       </div>
-
     </div>
   );
 };

@@ -238,7 +238,8 @@ const BookingCard = ({
           </button>
         </div>
 
-        <div className="flex flex-col items-end gap-1">z
+        <div className="flex flex-col items-end gap-1">
+          z
           <p className="text-xs text-gray-500">
             Booking ID: {booking.booking_id}
           </p>

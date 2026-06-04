@@ -19,8 +19,8 @@ export default function LiveDriverDrawer({
   const [stC, stTx] = !d.is_active
     ? ["#3f4452", "Offline"]
     : stl
-    ? ["#d97706", "Stale"]
-    : ["#22c55e", "Active"];
+      ? ["#d97706", "Stale"]
+      : ["#22c55e", "Active"];
 
   return (
     <div
@@ -31,10 +31,7 @@ export default function LiveDriverDrawer({
     >
       <div style={S.dpinner}>
         <div style={S.dphead}>
-          <button
-            style={S.dpx}
-            onClick={() => setDetail(null)}
-          >
+          <button style={S.dpx} onClick={() => setDetail(null)}>
             ✕
           </button>
 
@@ -97,23 +94,15 @@ export default function LiveDriverDrawer({
               d.route_code
                 ? `${d.route_code} (${d.route_id ?? "—"})`
                 : d.route_id
-                ? `#${d.route_id}`
-                : "—",
+                  ? `#${d.route_id}`
+                  : "—",
             ],
-            [
-              "Speed",
-              d.speed != null ? `${d.speed.toFixed(1)} km/h` : "—",
-            ],
+            ["Speed", d.speed != null ? `${d.speed.toFixed(1)} km/h` : "—"],
             [
               "Coordinates",
-              d.lat
-                ? `${d.lat.toFixed(5)}, ${d.lng.toFixed(5)}`
-                : "—",
+              d.lat ? `${d.lat.toFixed(5)}, ${d.lng.toFixed(5)}` : "—",
             ],
-            [
-              "Last update",
-              fmtAge(secAgo(d.updated_at)) + " ago",
-            ],
+            ["Last update", fmtAge(secAgo(d.updated_at)) + " ago"],
             ["is_active", String(d.is_active)],
           ].map(([lbl, val]) => (
             <div key={lbl} style={S.dprow}>
@@ -139,21 +128,13 @@ export default function LiveDriverDrawer({
             </div>
           ))}
 
-          {(
-            d.provider || d.accuracy != null || d.heading != null
-          ) && (
+          {(d.provider || d.accuracy != null || d.heading != null) && (
             <>
               <div style={{ height: 14 }} />
               {[
                 ["Provider", d.provider || "—"],
-                [
-                  "Accuracy",
-                  d.accuracy != null ? `${d.accuracy} m` : "—",
-                ],
-                [
-                  "Heading",
-                  d.heading != null ? `${d.heading}°` : "—",
-                ],
+                ["Accuracy", d.accuracy != null ? `${d.accuracy} m` : "—"],
+                ["Heading", d.heading != null ? `${d.heading}°` : "—"],
               ].map(([lbl, val]) => (
                 <div key={lbl} style={S.dprow}>
                   <span

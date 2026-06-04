@@ -95,7 +95,6 @@
 //   }
 // );
 
-
 import axios from "axios";
 import Cookies from "js-cookie";
 import { logDebug } from "../utils/logger";
@@ -164,7 +163,7 @@ API_CLIENT.interceptors.request.use(
   (error) => {
     console.error("❌ Request Error:", error);
     return Promise.reject(error);
-  }
+  },
 );
 
 // ───────────────────────────────────
@@ -221,7 +220,7 @@ API_CLIENT.interceptors.response.use(
       try {
         const { data } = await axios.post(
           `${API_BASE_URL}/auth/refresh-token`,
-          { refresh_token: refreshToken }
+          { refresh_token: refreshToken },
         );
 
         const { access_token, refresh_token: newRefreshToken } = data.data;
@@ -244,9 +243,8 @@ API_CLIENT.interceptors.response.use(
 
         // Fetch full user details (tenant_id, permissions etc.) from /auth/me
         if (_store) {
-          const { fetchUserFromToken } = await import(
-            "../redux/features/auth/authTrunk"
-          );
+          const { fetchUserFromToken } =
+            await import("../redux/features/auth/authTrunk");
           _store.dispatch(fetchUserFromToken());
         }
 
@@ -284,5 +282,5 @@ API_CLIENT.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );

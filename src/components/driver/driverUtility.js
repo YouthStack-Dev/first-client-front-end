@@ -312,11 +312,7 @@ export const buildDriverFormData = (formData) => {
 //   ...mapDriverTextFields(formData),
 // });
 
-export const buildDriverUpdateData = (
-  formData,
-  initialFormData,
-  driverId
-) => {
+export const buildDriverUpdateData = (formData, initialFormData, driverId) => {
   const payload = {};
 
   const fields = mapDriverTextFields(formData);
@@ -334,17 +330,18 @@ export const buildDriverUpdateData = (
   return { driver_id: driverId, ...payload };
 };
 
-
 // Get vendor name by ID
 export const getVendorNameById = (vendorId, vendorsArray = []) => {
   if (!vendorId) return "No vendor assigned";
-  
+
   // First, check in the dynamic vendors array (from API)
   if (vendorsArray && vendorsArray.length > 0) {
-    const vendor = vendorsArray.find((v) => v.value === vendorId || v.value === vendorId.toString());
+    const vendor = vendorsArray.find(
+      (v) => v.value === vendorId || v.value === vendorId.toString(),
+    );
     if (vendor) return vendor.label;
   }
-  
+
   // Fallback to static vendors
   const staticVendor = staticVendors.find((v) => v.id === vendorId.toString());
   return staticVendor ? staticVendor.name : "Unknown Vendor";
@@ -366,19 +363,19 @@ export const validateField = (name, value, formData) => {
     case "drivingLicenseExpiry":
       return validationRules.validateFutureDate(
         value,
-        "Driving license expiry"
+        "Driving license expiry",
       );
 
     case "policeVerificationExpiry":
       return validationRules.validateFutureDate(
         value,
-        "Police verification expiry"
+        "Police verification expiry",
       );
 
     case "medicalCertificateExpiry":
       return validationRules.validateFutureDate(
         value,
-        "Medical certificate expiry"
+        "Medical certificate expiry",
       );
 
     case "altGovtIdExpiry":
@@ -388,7 +385,7 @@ export const validateField = (name, value, formData) => {
     case "drivingLicenseDate":
       return validationRules.validatePastDate(
         value,
-        "Driving license issue date"
+        "Driving license issue date",
       );
 
     // Alternate Government ID validation
@@ -577,7 +574,10 @@ export const fieldMapping = {
 };
 
 export const reverseFieldMapping = Object.fromEntries(
-  Object.entries(fieldMapping).map(([frontend, backend]) => [backend, frontend])
+  Object.entries(fieldMapping).map(([frontend, backend]) => [
+    backend,
+    frontend,
+  ]),
 );
 
 // Backend field -> Frontend field mapping
@@ -667,7 +667,7 @@ export const logFieldMapping = (formData) => {
     const backendKey = fieldMapping[key] || key;
     const value = formData[key];
     console.log(
-      `Frontend: ${key} -> Backend: ${backendKey} | Value: ${value} | Type: ${typeof value}`
+      `Frontend: ${key} -> Backend: ${backendKey} | Value: ${value} | Type: ${typeof value}`,
     );
   });
   console.log("=== END FIELD MAPPING ===");
@@ -686,17 +686,17 @@ const debugAPIClient = () => {
   console.log("Headers:", API_CLIENT.defaults?.headers);
   console.log(
     "Auth Token from localStorage:",
-    localStorage.getItem("access_token")
+    localStorage.getItem("access_token"),
   );
 
   // Check if interceptors are working
   console.log(
     "Request Interceptors:",
-    API_CLIENT.interceptors.request.handlers.length
+    API_CLIENT.interceptors.request.handlers.length,
   );
   console.log(
     "Response Interceptors:",
-    API_CLIENT.interceptors.response.handlers.length
+    API_CLIENT.interceptors.response.handlers.length,
   );
 
   // Test a simple GET request to see if connection works

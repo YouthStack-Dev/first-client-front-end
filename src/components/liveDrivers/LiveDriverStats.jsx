@@ -8,31 +8,68 @@ const defaultCards = [
   { icon: "⚫", label: "Offline", key: "offline" },
 ];
 
-export default function LiveDriverStats({ stats = {}, selectedVendor = "All vendors", status = "connecting", onSpaceSync, syncing = false, syncMessage = "", syncError = false, isSuperAdmin = false }) {
+export default function LiveDriverStats({
+  stats = {},
+  selectedVendor = "All vendors",
+  status = "connecting",
+  onSpaceSync,
+  syncing = false,
+  syncMessage = "",
+  syncError = false,
+  isSuperAdmin = false,
+}) {
   const [collapsed, setCollapsed] = useState(false);
 
-  const total = stats.total ?? ((stats.active ?? 0) + (stats.offline ?? 0) + (stats.stale ?? 0));
+  const total =
+    stats.total ??
+    (stats.active ?? 0) + (stats.offline ?? 0) + (stats.stale ?? 0);
 
   if (collapsed) {
     return (
       <div style={S.compactBar}>
         <div style={S.compactLeft}>
-          <button style={S.compactIcon} onClick={() => setCollapsed(false)} aria-label="Expand stats">🚕</button>
-          <span style={{ marginLeft: 8, fontWeight: 800, fontSize: 14, color: "#0f172a" }}>{total}</span>
+          <button
+            style={S.compactIcon}
+            onClick={() => setCollapsed(false)}
+            aria-label="Expand stats"
+          >
+            🚕
+          </button>
+          <span
+            style={{
+              marginLeft: 8,
+              fontWeight: 800,
+              fontSize: 14,
+              color: "#0f172a",
+            }}
+          >
+            {total}
+          </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {onSpaceSync && (
             <button
               onClick={onSpaceSync}
-              style={{ ...(S.syncButton), ...(syncing ? S.syncButtonActive : {}) }}
+              style={{
+                ...S.syncButton,
+                ...(syncing ? S.syncButtonActive : {}),
+              }}
               aria-pressed={syncing}
             >
               {syncing ? "Syncing…" : "Sync"}
             </button>
           )}
-          <button style={S.compactToggle} onClick={() => setCollapsed(false)} aria-label="Expand stats">▾</button>
+          <button
+            style={S.compactToggle}
+            onClick={() => setCollapsed(false)}
+            aria-label="Expand stats"
+          >
+            ▾
+          </button>
         </div>
-        {syncMessage ? <div style={{ marginTop: 6, ...S.syncMessage }}>{syncMessage}</div> : null}
+        {syncMessage ? (
+          <div style={{ marginTop: 6, ...S.syncMessage }}>{syncMessage}</div>
+        ) : null}
       </div>
     );
   }
@@ -56,17 +93,28 @@ export default function LiveDriverStats({ stats = {}, selectedVendor = "All vend
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button
               onClick={onSpaceSync}
-              style={{ ...(S.syncButton), ...(syncing ? S.syncButtonActive : {}) }}
+              style={{
+                ...S.syncButton,
+                ...(syncing ? S.syncButtonActive : {}),
+              }}
               aria-pressed={syncing}
             >
               {syncing ? "Syncing…" : "Sync"}
             </button>
-            {syncMessage ? <span style={S.syncMessage}>{syncMessage}</span> : null}
+            {syncMessage ? (
+              <span style={S.syncMessage}>{syncMessage}</span>
+            ) : null}
           </div>
         )}
 
         <div style={{ width: 8 }} />
-        <button style={S.collapseButton} onClick={() => setCollapsed(true)} aria-label="Collapse stats">▴</button>
+        <button
+          style={S.collapseButton}
+          onClick={() => setCollapsed(true)}
+          aria-label="Collapse stats"
+        >
+          ▴
+        </button>
       </div>
     </div>
   );

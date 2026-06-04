@@ -1,4 +1,7 @@
-import { BOOKING_STATUS_OPTIONS, ROUTE_STATUS_OPTIONS } from "../../staticData/StaticReport";
+import {
+  BOOKING_STATUS_OPTIONS,
+  ROUTE_STATUS_OPTIONS,
+} from "../../staticData/StaticReport";
 
 const BookingModuleConfig = ({
   formData,
@@ -9,7 +12,6 @@ const BookingModuleConfig = ({
 }) => {
   return (
     <div className="space-y-6">
-
       {/* Booking Status */}
       <div>
         <div className="flex justify-between items-center mb-3">
@@ -42,7 +44,9 @@ const BookingModuleConfig = ({
                 className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
                 disabled={loading}
               />
-              <span className={`text-sm ${loading ? "text-gray-400" : "text-gray-700"}`}>
+              <span
+                className={`text-sm ${loading ? "text-gray-400" : "text-gray-700"}`}
+              >
                 {status}
               </span>
             </label>
@@ -82,7 +86,9 @@ const BookingModuleConfig = ({
                 className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
                 disabled={loading}
               />
-              <span className={`text-sm ${loading ? "text-gray-400" : "text-gray-700"}`}>
+              <span
+                className={`text-sm ${loading ? "text-gray-400" : "text-gray-700"}`}
+              >
                 {status}
               </span>
             </label>
@@ -100,12 +106,13 @@ const BookingModuleConfig = ({
             className="w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
             disabled={loading}
           />
-          <span className={`text-sm font-medium ${loading ? "text-gray-400" : "text-gray-700"}`}>
+          <span
+            className={`text-sm font-medium ${loading ? "text-gray-400" : "text-gray-700"}`}
+          >
             Include Unrouted Bookings
           </span>
         </label>
       </div>
-
     </div>
   );
 };

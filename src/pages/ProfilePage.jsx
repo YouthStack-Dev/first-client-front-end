@@ -49,11 +49,17 @@ export default function ProfilePage() {
       if (response.data.success) {
         setUserProfile(response.data.data.user);
       } else {
-        toast.error("Failed to load profile", { position: "top-right", autoClose: 5000 });
+        toast.error("Failed to load profile", {
+          position: "top-right",
+          autoClose: 5000,
+        });
       }
     } catch (err) {
       console.error("Error fetching user profile:", err);
-      toast.error("Something went wrong while fetching profile", { position: "top-right", autoClose: 5000 });
+      toast.error("Something went wrong while fetching profile", {
+        position: "top-right",
+        autoClose: 5000,
+      });
     }
   }, []);
 
@@ -72,7 +78,7 @@ export default function ProfilePage() {
       try {
         const bookingDate = date || bookingFilters.date;
         const response = await API_CLIENT.get(
-          `${endpoint.booking}employee?booking_date=${bookingDate}&employee_id=${userProfile?.employee_id}`
+          `${endpoint.booking}employee?booking_date=${bookingDate}&employee_id=${userProfile?.employee_id}`,
         );
 
         logDebug("Booking history response:", response.data);
@@ -94,9 +100,13 @@ export default function ProfilePage() {
             availableStatuses,
           }));
 
-          logDebug(`Loaded ${bookings.length} bookings for date: ${bookingDate}`);
+          logDebug(
+            `Loaded ${bookings.length} bookings for date: ${bookingDate}`,
+          );
         } else {
-          throw new Error(response.data.message || "Failed to fetch booking history");
+          throw new Error(
+            response.data.message || "Failed to fetch booking history",
+          );
         }
       } catch (error) {
         console.error("Error fetching booking history:", error);
@@ -104,14 +114,14 @@ export default function ProfilePage() {
         setErrorMessageHistory(
           error.response?.data?.message ||
             error.message ||
-            "Failed to load booking history"
+            "Failed to load booking history",
         );
         setBookingHistoryData([]);
       } finally {
         setIsLoadingHistory(false);
       }
     },
-    [userProfile?.employee_id, bookingFilters.date]
+    [userProfile?.employee_id, bookingFilters.date],
   );
 
   useEffect(() => {
@@ -143,7 +153,7 @@ export default function ProfilePage() {
         toast.error(`${err.path.join(".")}: ${err.message}`, {
           position: "top-right",
           autoClose: 5000,
-        })
+        }),
       );
       setIsSubmitting(false);
       return;
@@ -154,7 +164,7 @@ export default function ProfilePage() {
 
       toast.success(
         response.data?.message || "Booking confirmed successfully!",
-        { position: "top-right", autoClose: 4000 }
+        { position: "top-right", autoClose: 4000 },
       );
 
       setSelectedDates([]);
@@ -187,7 +197,10 @@ export default function ProfilePage() {
 
   const handleNextToShift = () => {
     if (selectedDates.length === 0) {
-      toast.error("Please select at least one date", { position: "top-right", autoClose: 4000 });
+      toast.error("Please select at least one date", {
+        position: "top-right",
+        autoClose: 4000,
+      });
       return;
     }
     setErrors([]);
@@ -226,7 +239,7 @@ export default function ProfilePage() {
         fetchBookingHistory(value);
       }
     },
-    [fetchBookingHistory]
+    [fetchBookingHistory],
   );
 
   const handleClearBookingFilters = () => {
@@ -274,9 +287,11 @@ export default function ProfilePage() {
               onViewBookingHistory={handleViewBookingHistory}
               step={step}
               onBack={
-                step === "shift" ? handleBackToCalendar :
-                step === "calendar" || step === "history" ? handleBackToWelcome :
-                undefined
+                step === "shift"
+                  ? handleBackToCalendar
+                  : step === "calendar" || step === "history"
+                    ? handleBackToWelcome
+                    : undefined
               }
             />
           </div>

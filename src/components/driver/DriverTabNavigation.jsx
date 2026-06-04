@@ -22,7 +22,7 @@ const DriverTabNavigation = ({
           "Attempting tab switch from:",
           activeTab,
           "Errors:",
-          currentErrors
+          currentErrors,
         );
         // toast.error("Please fix errors in this tab before switching");
         return; // Block tab switch

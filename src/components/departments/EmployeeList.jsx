@@ -50,7 +50,7 @@ const EmployeeList = ({
     try {
       await onStatusChange?.(
         pendingStatusChange.employeeId,
-        pendingStatusChange.newis_active
+        pendingStatusChange.newis_active,
       );
       setShowConfirmation(false);
       setPendingStatusChange(null);
@@ -82,7 +82,7 @@ const EmployeeList = ({
         await new Promise((resolve) => setTimeout(resolve, 1000));
         console.log(
           `Week off updated for ${updateData.employeeName} at ${updateData.updateLevel} level:`,
-          updateData.weekOffData
+          updateData.weekOffData,
         );
       }
       setShowWeekOffModal(false);
@@ -141,9 +141,13 @@ const EmployeeList = ({
                 <input type="checkbox" disabled className="w-3.5 h-3.5" />
               </th>
               <th className="p-3 border-b border-r border-gray-200">Name</th>
-              <th className="p-3 border-b border-r border-gray-200">Employee Code</th>
+              <th className="p-3 border-b border-r border-gray-200">
+                Employee Code
+              </th>
               <th className="p-3 border-b border-r border-gray-200">Email</th>
-              <th className="p-3 border-b border-r border-gray-200">Mobile Number</th>
+              <th className="p-3 border-b border-r border-gray-200">
+                Mobile Number
+              </th>
               <th className="p-3 border-b border-r border-gray-200">Gender</th>
               <th className="p-3 border-b border-r border-gray-200">Status</th>
               <th className="p-3 border-b text-center">Actions</th>
@@ -163,10 +167,22 @@ const EmployeeList = ({
               <tr>
                 <td colSpan="8" className="text-center py-8 text-red-500">
                   <div className="flex flex-col items-center justify-center">
-                    <svg className="w-8 h-8 text-red-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      className="w-8 h-8 text-red-400 mb-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
-                    <span className="text-xs">Failed to load employees: {error}</span>
+                    <span className="text-xs">
+                      Failed to load employees: {error}
+                    </span>
                   </div>
                 </td>
               </tr>
@@ -174,11 +190,23 @@ const EmployeeList = ({
               <tr>
                 <td colSpan="8" className="text-center py-8 text-gray-500">
                   <div className="flex flex-col items-center justify-center">
-                    <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    <svg
+                      className="w-8 h-8 text-gray-400 mb-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                      />
                     </svg>
                     <span className="text-xs">
-                      {hasActiveSearch ? "No employees match your search." : "No employees found."}
+                      {hasActiveSearch
+                        ? "No employees match your search."
+                        : "No employees found."}
                     </span>
                   </div>
                 </td>
@@ -194,9 +222,15 @@ const EmployeeList = ({
                   <td className="p-3 border-r border-gray-100">
                     <input
                       type="checkbox"
-                      checked={selectedEmployeeIds.includes(employee.employee_id)}
+                      checked={selectedEmployeeIds.includes(
+                        employee.employee_id,
+                      )}
                       onChange={(e) => {
-                        logDebug(" this is the employee code and id ", employee.employee_code, employee.employee_id);
+                        logDebug(
+                          " this is the employee code and id ",
+                          employee.employee_code,
+                          employee.employee_id,
+                        );
                         onCheckboxChange?.(employee.employee_id);
                       }}
                       className="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
@@ -237,8 +271,8 @@ const EmployeeList = ({
                         employee.gender?.toLowerCase() === "female"
                           ? "bg-pink-100 text-pink-700 border border-pink-200"
                           : employee.gender?.toLowerCase() === "male"
-                          ? "bg-blue-100 text-blue-700 border border-blue-200"
-                          : "bg-gray-100 text-gray-700 border border-gray-200"
+                            ? "bg-blue-100 text-blue-700 border border-blue-200"
+                            : "bg-gray-100 text-gray-700 border border-gray-200"
                       }`}
                     >
                       {employee.gender || "Not specified"}
@@ -272,10 +306,10 @@ const EmployeeList = ({
                         action="update"
                         icon={Edit}
                         title="Edit Employee"
-                         onClick={() => {
-                            console.log("🟢 Edit button clicked", employee);
-                            onEdit?.(employee);
-                          }}
+                        onClick={() => {
+                          console.log("🟢 Edit button clicked", employee);
+                          onEdit?.(employee);
+                        }}
                         className="text-sidebar-primary-600 hover:text-sidebar-primary-700 transition-colors"
                         iconSize={14}
                       />
