@@ -6,7 +6,7 @@ import ConfigModal from "../components/Reports/ConfigModal";
 import BookingAnalyticsView from "../components/Reports/views/BookingAnalyticsView";
 import DelayReportView from "../components/Reports/views/DelayReportView";
 import DriverDutyView from "../components/Reports/views/DriverDutyView";
-import BookingPreviewView from "../components/Reports/views/BookingPreviewView";  // ← NEW
+import BookingPreviewView from "../components/Reports/views/BookingPreviewview";  // ← NEW
 import { logDebug } from "../utils/logger";
 import { useReportsModal } from "../hooks/useReportsModal";
 
