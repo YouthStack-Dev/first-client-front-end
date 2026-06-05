@@ -72,7 +72,13 @@ export const createEmployeeThunk = createAsyncThunk(
         return rejectWithValue("Failed to create employee");
       }
     } catch (error) {
-      return rejectWithValue(error.message);
+      const apiDetail = error.response?.data?.detail;
+      const msg = Array.isArray(apiDetail)
+        ? apiDetail.map((e) => e.msg || JSON.stringify(e)).join(", ")
+        : typeof apiDetail === "string"
+        ? apiDetail
+        : error.message || "Failed to create employee";
+      return rejectWithValue(msg);
     }
   }
 );
@@ -88,7 +94,13 @@ export const updateEmployeeThunk = createAsyncThunk(
         return rejectWithValue("Failed to update employee");
       }
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message || "Network error");
+      const apiDetail = error.response?.data?.detail;
+      const msg = Array.isArray(apiDetail)
+        ? apiDetail.map((e) => e.msg || JSON.stringify(e)).join(", ")
+        : typeof apiDetail === "string"
+        ? apiDetail
+        : error.message || "Failed to update employee";
+      return rejectWithValue(msg);
     }
   }
 );
