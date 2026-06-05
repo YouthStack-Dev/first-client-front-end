@@ -265,7 +265,7 @@ export const subscribeToTenantDrivers = (
   if (vendorId) {
     const path  = `drivers/${tenantId}/${vendorId}`;
     const dbRef = ref(database, path);
-    logDebug(`📡 [TenantDrivers] vendor scope → ${path}`);
+    // logDebug(`📡 [TenantDrivers] vendor scope → ${path}`);
 
     const pushUpdate = (snap) => {
       const raw = snap.val();
@@ -284,14 +284,14 @@ export const subscribeToTenantDrivers = (
       off(dbRef, "child_added",   addH);
       off(dbRef, "child_changed", chgH);
       off(dbRef, "child_removed", remH);
-      logDebug(`🔌 [TenantDrivers] unsubscribed vendor scope → ${path}`);
+      // logDebug(`🔌 [TenantDrivers] unsubscribed vendor scope → ${path}`);
     };
   }
 
   // ── All vendors: children are vendor nodes ────────────────────────────────
   const path  = `drivers/${tenantId}`;
   const dbRef = ref(database, path);
-  logDebug(`📡 [TenantDrivers] all-vendor scope → ${path}`);
+  // logDebug(`📡 [TenantDrivers] all-vendor scope → ${path}`);
 
   const processVendorSnap = (vendorKey, snapVal) => {
     if (!snapVal || typeof snapVal !== "object") return;
@@ -312,6 +312,6 @@ export const subscribeToTenantDrivers = (
     off(dbRef, "child_added",   addH);
     off(dbRef, "child_changed", chgH);
     off(dbRef, "child_removed", remH);
-    logDebug(`🔌 [TenantDrivers] unsubscribed all-vendor scope → ${path}`);
+    // logDebug(`🔌 [TenantDrivers] unsubscribed all-vendor scope → ${path}`);
   };
 };

@@ -188,6 +188,15 @@ function MapInner({ driverMap, visibleDrivers, fitKey, selectedDetail, handleMar
 
   useEffect(() => { fitDoneRef.current = false; }, [fitKey]);
 
+  // ── TEMP DEBUG — remove after fixing ──────────────────────────────────────
+  useEffect(() => {
+    // console.log("[DEBUG] visibleDrivers count:", visibleDrivers.length);
+    visibleDrivers.forEach(({ vid, did, data }) => {
+      // console.log(`[DEBUG] ${vid}/${did} → lat:${data?.lat} lng:${data?.lng} is_active:${data?.is_active}`);
+    });
+  }, [visibleDrivers]);
+  // ──────────────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     if (!map || fitDoneRef.current) return;
     const pts = Object.values(driverMap || {})
