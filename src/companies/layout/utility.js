@@ -77,6 +77,7 @@ export const pathTitleMap = {
   "/nodal-points": "Nodal Points",
   "/reports-management": "Reports Management",
   "/chats": "Chat Management",
+  "/live-drivers": "Live Driver Map",
 };
 
 /**
