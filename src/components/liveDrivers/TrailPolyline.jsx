@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { useMap } from "@vis.gl/react-google-maps";
 
 export default function TrailPolyline({ trail = [], color = "#22c55e" }) {
-  const map     = useMap();
+  const map = useMap();
   const polyRef = useRef(null);
 
   // ── FIX Effect 1: Create polyline ONCE per map instance ──────────────────
@@ -12,10 +12,10 @@ export default function TrailPolyline({ trail = [], color = "#22c55e" }) {
     if (!map) return;
 
     polyRef.current = new window.google.maps.Polyline({
-      geodesic:       true,
-      strokeOpacity:  0.8,
-      strokeWeight:   3,
-      clickable:      false,
+      geodesic: true,
+      strokeOpacity: 0.8,
+      strokeWeight: 3,
+      clickable: false,
       map,
     });
 

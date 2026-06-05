@@ -7,29 +7,56 @@ import { markerColor, isStale } from "./liveDriverHelpers";
 import { routeStatusColor } from "./liveRouteUtils";
 
 function buildMarkerHtml(
-  vid, did, color, active, stale, label, selected, data, routeStatus = "no-route",
+  vid,
+  did,
+  color,
+  active,
+  stale,
+  label,
+  selected,
+  data,
+  routeStatus = "no-route",
 ) {
   const mc = !active ? "#64748b" : stale ? "#f59e0b" : color;
-  const statusText  = !data?.is_active ? "Offline" : stale ? "Stale" : "Active";
-  const statusColor = !data?.is_active ? "#3f4452" : stale ? "#d97706" : "#22c55e";
-  const updatedText = data?.updated_at ? new Date(data.updated_at).toLocaleString() : "Unknown";
-  const speedText   = data?.speed != null ? `${data.speed.toFixed(1)} km/h` : "—";
-  const coordsText  = data?.lat != null && data?.lng != null
-    ? `${data.lat.toFixed(5)}, ${data.lng.toFixed(5)}` : "—";
-  const routeText   = data?.route_code
+  const statusText = !data?.is_active ? "Offline" : stale ? "Stale" : "Active";
+  const statusColor = !data?.is_active
+    ? "#3f4452"
+    : stale
+      ? "#d97706"
+      : "#22c55e";
+  const updatedText = data?.updated_at
+    ? new Date(data.updated_at).toLocaleString()
+    : "Unknown";
+  const speedText = data?.speed != null ? `${data.speed.toFixed(1)} km/h` : "—";
+  const coordsText =
+    data?.lat != null && data?.lng != null
+      ? `${data.lat.toFixed(5)}, ${data.lng.toFixed(5)}`
+      : "—";
+  const routeText = data?.route_code
     ? `${data.route_code}${data.route_id ? ` (#${data.route_id})` : ""}`
-    : data?.route_id ? `#${data.route_id}` : "—";
-  const routeStatusText    = routeStatus === "on-route" ? "✓ On Route" : routeStatus === "off-route" ? "⚠ Off Route" : "—";
+    : data?.route_id
+      ? `#${data.route_id}`
+      : "—";
+  const routeStatusText =
+    routeStatus === "on-route"
+      ? "✓ On Route"
+      : routeStatus === "off-route"
+        ? "⚠ Off Route"
+        : "—";
   const routeStatusBgColor = routeStatusColor(routeStatus);
-  const driverCodeText     = data?.driver_code || "—";
+  const driverCodeText = data?.driver_code || "—";
 
   return `
     <div style="position:relative;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;cursor:pointer;">
 
-      ${active ? `
+      ${
+        active
+          ? `
         <div style="position:absolute;width:70px;height:70px;border-radius:50%;
           background:${mc}40;animation:dm-pulse 2s infinite;z-index:0;"></div>
-      ` : ""}
+      `
+          : ""
+      }
 
       <div style="width:52px;height:52px;border-radius:50%;background:${mc};
         display:flex;align-items:center;justify-content:center;font-size:28px;
@@ -40,7 +67,9 @@ function buildMarkerHtml(
         border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap;
         box-shadow:0 4px 12px rgba(0,0,0,.25);">${label}</div>
 
-      ${selected ? `
+      ${
+        selected
+          ? `
         <div style="position:absolute;top:-260px;left:50%;transform:translateX(-50%);
           width:240px;background:rgba(15,23,42,0.96);border:1px solid rgba(148,163,184,0.22);
           border-radius:16px;padding:14px;color:#e5e7eb;font-family:system-ui,sans-serif;
@@ -57,13 +86,17 @@ function buildMarkerHtml(
             </div>
           </div>
           <div style="color:#94a3b8;font-size:11px;margin-bottom:12px;">Vendor ${vid}</div>
-          ${routeStatus !== "no-route" ? `
+          ${
+            routeStatus !== "no-route"
+              ? `
             <div style="margin-bottom:10px;padding:6px 8px;border-radius:6px;
               background:${routeStatusBgColor}22;border-left:2px solid ${routeStatusBgColor};
               color:${routeStatusBgColor};font-size:11px;font-weight:600;">
               ${routeStatusText}
             </div>
-          ` : ""}
+          `
+              : ""
+          }
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
             <div><div style="color:#94a3b8;font-size:10px;margin-bottom:2px;">Driver ID</div><div style="color:#e5e7eb;font-size:12px;">${did}</div></div>
             <div><div style="color:#94a3b8;font-size:10px;margin-bottom:2px;">Driver Code</div><div style="color:#e5e7eb;font-size:12px;">${driverCodeText}</div></div>
@@ -73,7 +106,9 @@ function buildMarkerHtml(
             <div><div style="color:#94a3b8;font-size:10px;margin-bottom:2px;">Coordinates</div><div style="color:#e5e7eb;font-size:12px;">${coordsText}</div></div>
           </div>
         </div>
-      ` : ""}
+      `
+          : ""
+      }
 
     </div>
   `;
@@ -83,20 +118,36 @@ export default function DriverMarker({
   vid,
   did,
   data,
-  trail    = [],
-  offset   = { x: 0, y: 0 },
+  trail = [],
+  offset = { x: 0, y: 0 },
   selected = false,
   onClick,
   routeStatus = "no-route",
 }) {
-  const map         = useMap();
-  const overlayRef  = useRef(null);
-  const elRef       = useRef(null);
+  const map = useMap();
+  const overlayRef = useRef(null);
+  const elRef = useRef(null);
 
   // Keep a ref of latest props so draw() always has fresh values
-  const propsRef = useRef({ vid, did, data, offset, selected, onClick, routeStatus });
+  const propsRef = useRef({
+    vid,
+    did,
+    data,
+    offset,
+    selected,
+    onClick,
+    routeStatus,
+  });
   useEffect(() => {
-    propsRef.current = { vid, did, data, offset, selected, onClick, routeStatus };
+    propsRef.current = {
+      vid,
+      did,
+      data,
+      offset,
+      selected,
+      onClick,
+      routeStatus,
+    };
     // If overlay already exists, trigger a redraw with new props
     overlayRef.current?.draw();
   }, [vid, did, data, offset, selected, onClick, routeStatus]);
@@ -106,20 +157,21 @@ export default function DriverMarker({
 
     class HtmlMarker extends window.google.maps.OverlayView {
       onAdd() {
-        const el          = document.createElement("div");
+        const el = document.createElement("div");
         el.style.position = "absolute";
-        el.style.zIndex   = "9999";
-        el.style.cursor   = "pointer";
-        elRef.current     = el;
+        el.style.zIndex = "9999";
+        el.style.cursor = "pointer";
+        elRef.current = el;
         this.getPanes().floatPane.appendChild(el);
       }
 
       draw() {
         const proj = this.getProjection();
-        const el   = elRef.current;
+        const el = elRef.current;
         if (!proj || !el) return;
 
-        const { vid, did, data, offset, selected, onClick, routeStatus } = propsRef.current;
+        const { vid, did, data, offset, selected, onClick, routeStatus } =
+          propsRef.current;
         if (!data?.lat || !data?.lng) return;
 
         // Position
@@ -127,13 +179,14 @@ export default function DriverMarker({
           new window.google.maps.LatLng(data.lat, data.lng),
         );
         if (!pt) return;
-        el.style.left          = `${pt.x + (offset?.x || 0)}px`;
-        el.style.top           = `${pt.y + (offset?.y || 0)}px`;
+        el.style.left = `${pt.x + (offset?.x || 0)}px`;
+        el.style.top = `${pt.y + (offset?.y || 0)}px`;
         el.style.pointerEvents = "auto";
 
         // HTML — always render fresh from propsRef
         el.innerHTML = buildMarkerHtml(
-          vid, did,
+          vid,
+          did,
           markerColor(vid, data),
           data.is_active,
           isStale(data),
@@ -159,10 +212,10 @@ export default function DriverMarker({
       marker.setMap(null);
       overlayRef.current = null;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map]);
 
-  return trail?.length > 1
-    ? <TrailPolyline trail={trail} color={markerColor(vid, data)} />
-    : null;
+  return trail?.length > 1 ? (
+    <TrailPolyline trail={trail} color={markerColor(vid, data)} />
+  ) : null;
 }
