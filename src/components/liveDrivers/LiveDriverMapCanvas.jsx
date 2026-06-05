@@ -162,7 +162,7 @@ function MapToolbar({ map, visibleDrivers }) {
 }
 
 const TB = {
-  wrap:       { position: "absolute", bottom: 120, right: 12, zIndex: 1400, display: "flex", flexDirection: "column", gap: 6 },
+  wrap:       { position: "absolute", top: 12, right: 12, zIndex: 1400, display: "flex", flexDirection: "column", gap: 6 },
   btn:        { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: 52, height: 52, borderRadius: 12, background: "#ffffff", border: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(0,0,0,.12)", cursor: "pointer", gap: 2, position: "relative", transition: "all .15s" },
   btnOn:      { background: "#eff6ff", border: "1px solid #bfdbfe", boxShadow: "0 2px 12px rgba(37,99,235,.2)" },
   btnDenied:  { background: "#fff1f2", border: "1px solid #fecdd3" },
@@ -296,7 +296,10 @@ export default function LiveDriverMapCanvas({
           scaleControl
           rotateControl
           fullscreenControl
-          streetViewControl={true}
+          streetViewControl
+          streetViewControlOptions={{
+            position: window.google?.maps?.ControlPosition?.RIGHT_BOTTOM ?? 9,
+          }}
         >
           <MapInner
             driverMap={driverMap}
