@@ -5,7 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import { Menu, Megaphone, Star, User, LogOut, ChevronDown } from "lucide-react";
+import { Menu, Megaphone, Star, User, LogOut, ChevronDown, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { jwtDecode } from "jwt-decode";
@@ -82,10 +82,16 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
     () => navigate("/companies/reviews"),
     [navigate],
   );
+  const handleLiveDriversClick = useCallback(
+    () => navigate("/companies/live-drivers"),
+    [navigate],
+  );
   const handleLogout = useCallback(() => {
     dispatch(logout());
     setIsProfileOpen(false);
   }, [dispatch]);
+
+  const isLiveDrivers = window.location.pathname === "/companies/live-drivers";
 
   return (
     <header
@@ -112,8 +118,38 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
             <span className="text-blue-600 font-bold text-xl">{title}</span>
           </div>
 
-          {/* Right — announcements + reviews + avatar */}
+          {/* Right — live drivers + announcements + reviews + avatar */}
           <div className="flex items-center gap-1">
+
+            {/* Live Drivers */}
+            <button
+              type="button"
+              onClick={handleLiveDriversClick}
+              className={`group relative flex items-center gap-2 px-3 py-2 rounded-xl
+                transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-300
+                ${isLiveDrivers
+                  ? "text-emerald-700 bg-emerald-50"
+                  : "text-gray-500 hover:text-emerald-600 hover:bg-emerald-50"
+                }`}
+            >
+              <div className={`relative p-1.5 rounded-lg transition-colors
+                ${isLiveDrivers
+                  ? "bg-emerald-100"
+                  : "bg-gray-100 group-hover:bg-emerald-100"
+                }`}>
+                <MapPin className="h-4 w-4" />
+                {/* live pulse dot */}
+                <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white">
+                  <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                </span>
+              </div>
+              <span className="text-xs font-semibold tracking-wide hidden sm:block">
+                Live Drivers
+              </span>
+            </button>
+
+            <div className="w-px h-6 bg-gray-200 mx-1" />
+
             {/* Announcements */}
             <button
               type="button"
