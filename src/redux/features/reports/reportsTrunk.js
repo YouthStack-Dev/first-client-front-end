@@ -39,7 +39,7 @@ export const fetchBookingAnalytics = createAsyncThunk(
   }
 );
 
-// ─── Preview Bookings Report (JSON) — NEW ────────────────────────────────────
+// ─── Preview Bookings Report (JSON) ──────────────────────────────────────────
 export const previewBookingsReport = createAsyncThunk(
   "reports/previewBookingsReport",
   async (params, { rejectWithValue }) => {
@@ -56,15 +56,7 @@ export const previewBookingsReport = createAsyncThunk(
 
       const response = await API_CLIENT.get(`/reports/bookings?${q.toString()}`);
 
-      const rows = Array.isArray(response.data)
-        ? response.data
-        : Array.isArray(response.data?.data)
-        ? response.data.data
-        : Array.isArray(response.data?.results)
-        ? response.data.results
-        : [];
-
-      return rows;
+      return response.data; // ← FIXED: return full response so the slice can unwrap bookings/meta/pagination/summary
     } catch (error) { return rejectWithValue(await extractErrorMessage(error)); }
   }
 );
