@@ -296,10 +296,7 @@ export default function LiveDriverMapCanvas({
           scaleControl
           rotateControl
           fullscreenControl
-          streetViewControl
-          streetViewControlOptions={{
-            position: window.google?.maps?.ControlPosition?.RIGHT_BOTTOM ?? 9,
-          }}
+          streetViewControl={true}
         >
           <MapInner
             driverMap={driverMap}
