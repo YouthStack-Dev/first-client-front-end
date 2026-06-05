@@ -16,7 +16,7 @@ import {
   vendorColor,
   isStale,
   secAgo,
-  fmtAge,
+  fmtAge, 
 } from "../components/liveDrivers/liveDriverHelpers";
 
 import { S } from "../components/liveDrivers/styles";
