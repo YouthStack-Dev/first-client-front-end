@@ -5,7 +5,7 @@ import {
   fetchDelayDetail,
   fetchDriverDutyHours,
   downloadBookingsReport,
-  previewBookingsReport,   // ← NEW
+  previewBookingsReport,
 } from "./reportsTrunk";
 
 const initialState = {
@@ -15,8 +15,8 @@ const initialState = {
   driverDutyHours:  { data: null, loading: false, error: null },
   download:         { loading: false, error: null, success: false, filename: null },
 
-  // ── Preview — NEW ──────────────────────────────────────────────────────────
-  bookingPreview:   { rows: [], loading: false, error: null },
+  // ── Preview ────────────────────────────────────────────────────────────────
+  bookingPreview: { rows: [], meta: null, pagination: null, summary: null, loading: false, error: null }, // ← UPDATED
 };
 
 const reportsSlice = createSlice({
@@ -28,20 +28,27 @@ const reportsSlice = createSlice({
     clearDelayDetail:      (state) => { state.delayDetail      = initialState.delayDetail;      },
     clearDriverDutyHours:  (state) => { state.driverDutyHours  = initialState.driverDutyHours;  },
     clearDownloadStatus:   (state) => { state.download         = initialState.download;         },
-    clearBookingPreview:   (state) => { state.bookingPreview   = initialState.bookingPreview;   }, // ← NEW
+    clearBookingPreview:   (state) => { state.bookingPreview   = initialState.bookingPreview;   },
     clearAllReports:       ()      => initialState,
   },
   extraReducers: (builder) => {
     // ── Booking Analytics ──────────────────────────────────────────────────
     builder
-      .addCase(fetchBookingAnalytics.pending,   (state)          => { state.bookingAnalytics.loading = true;  state.bookingAnalytics.error = null; })
-      .addCase(fetchBookingAnalytics.fulfilled, (state, action)  => { state.bookingAnalytics.loading = false; state.bookingAnalytics.data  = action.payload; state.bookingAnalytics.error = null; })
-      .addCase(fetchBookingAnalytics.rejected,  (state, action)  => { state.bookingAnalytics.loading = false; state.bookingAnalytics.error = action.payload; });
+      .addCase(fetchBookingAnalytics.pending,   (state)         => { state.bookingAnalytics.loading = true;  state.bookingAnalytics.error = null; })
+      .addCase(fetchBookingAnalytics.fulfilled, (state, action) => { state.bookingAnalytics.loading = false; state.bookingAnalytics.data  = action.payload; state.bookingAnalytics.error = null; })
+      .addCase(fetchBookingAnalytics.rejected,  (state, action) => { state.bookingAnalytics.loading = false; state.bookingAnalytics.error = action.payload; });
 
-    // ── Preview Bookings (JSON) — NEW ──────────────────────────────────────
+    // ── Preview Bookings (JSON) ────────────────────────────────────────────
     builder
       .addCase(previewBookingsReport.pending,   (state)         => { state.bookingPreview.loading = true;  state.bookingPreview.error = null; state.bookingPreview.rows = []; })
-      .addCase(previewBookingsReport.fulfilled, (state, action) => { state.bookingPreview.loading = false; state.bookingPreview.rows  = action.payload; state.bookingPreview.error = null; })
+      .addCase(previewBookingsReport.fulfilled, (state, action) => { // ← UPDATED
+        state.bookingPreview.loading    = false;
+        state.bookingPreview.error      = null;
+        state.bookingPreview.rows       = action.payload?.data?.bookings   ?? [];
+        state.bookingPreview.meta       = action.payload?.data?.meta       ?? null;
+        state.bookingPreview.pagination = action.payload?.data?.pagination ?? null;
+        state.bookingPreview.summary    = action.payload?.data?.summary    ?? null;
+      })
       .addCase(previewBookingsReport.rejected,  (state, action) => { state.bookingPreview.loading = false; state.bookingPreview.error = action.payload; });
 
     // ── Delay Report ───────────────────────────────────────────────────────
@@ -76,7 +83,7 @@ export const {
   clearDelayDetail,
   clearDriverDutyHours,
   clearDownloadStatus,
-  clearBookingPreview,   // ← NEW
+  clearBookingPreview,
   clearAllReports,
 } = reportsSlice.actions;
 
@@ -86,6 +93,6 @@ export const selectDelays           = (state) => state.reports.delays;
 export const selectDelayDetail      = (state) => state.reports.delayDetail;
 export const selectDriverDutyHours  = (state) => state.reports.driverDutyHours;
 export const selectDownload         = (state) => state.reports.download;
-export const selectBookingPreview   = (state) => state.reports.bookingPreview;   // ← NEW
+export const selectBookingPreview   = (state) => state.reports.bookingPreview;
 
 export default reportsSlice.reducer;
