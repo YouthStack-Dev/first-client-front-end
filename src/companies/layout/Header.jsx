@@ -5,7 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import { Menu, Megaphone, Star, User, LogOut, ChevronDown, MapPin } from "lucide-react";
+import { Menu, User, LogOut, ChevronDown, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { jwtDecode } from "jwt-decode";
@@ -19,8 +19,7 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
-  
-  // ── Real email decoded from JWT (avoids dummy@gmail.com from Redux) ───
+
   const displayEmail = useMemo(() => {
     try {
       const token = Cookies.get("auth_token");
@@ -56,7 +55,6 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
       .toUpperCase()
       .slice(0, 2) || "AD";
 
-  // ── Close on outside click ─────────────────────────────────────────────
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (profileRef.current && !profileRef.current.contains(e.target))
@@ -68,23 +66,15 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
 
   const handleAvatarClick = useCallback(
     () => setIsProfileOpen((prev) => !prev),
-    [],
+    []
   );
   const handleProfileNavigation = useCallback(() => {
     navigate("/companies/profile");
     setIsProfileOpen(false);
   }, [navigate]);
-  const handleAnnouncementClick = useCallback(
-    () => navigate("/companies/announcements"),
-    [navigate],
-  );
-  const handleReviewsClick = useCallback(
-    () => navigate("/companies/reviews"),
-    [navigate],
-  );
   const handleLiveDriversClick = useCallback(
     () => navigate("/companies/live-drivers"),
-    [navigate],
+    [navigate]
   );
   const handleLogout = useCallback(() => {
     dispatch(logout());
@@ -96,15 +86,15 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
   return (
     <header
       className={`
-      bg-white border-b border-gray-100 fixed top-0 right-0 z-40
-      transition-all duration-300 shadow-sm
-      left-0
-      ${isSidebarOpen ? "lg:left-[256px]" : "lg:left-[64px]"}
-    `}
+        bg-white border-b border-gray-100 fixed top-0 right-0 z-40
+        transition-all duration-300 shadow-sm
+        left-0
+        ${isSidebarOpen ? "lg:left-[256px]" : "lg:left-[64px]"}
+      `}
     >
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Left — title only */}
+          {/* Left — title */}
           <div className="flex items-center">
             <button
               type="button"
@@ -118,7 +108,7 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
             <span className="text-blue-600 font-bold text-xl">{title}</span>
           </div>
 
-          {/* Right — live drivers + announcements + reviews + avatar */}
+          {/* Right — live drivers + avatar */}
           <div className="flex items-center gap-1">
 
             {/* Live Drivers */}
@@ -138,50 +128,12 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
                   : "bg-gray-100 group-hover:bg-emerald-100"
                 }`}>
                 <MapPin className="h-4 w-4" />
-                {/* live pulse dot */}
                 <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white">
                   <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
                 </span>
               </div>
               <span className="text-xs font-semibold tracking-wide hidden sm:block">
                 Live Drivers
-              </span>
-            </button>
-
-            <div className="w-px h-6 bg-gray-200 mx-1" />
-
-            {/* Announcements */}
-            <button
-              type="button"
-              onClick={handleAnnouncementClick}
-              className="group relative flex items-center gap-2 px-3 py-2 rounded-xl
-                text-gray-500 hover:text-indigo-600 hover:bg-indigo-50
-                transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-            >
-              <div className="relative p-1.5 rounded-lg bg-gray-100 group-hover:bg-indigo-100 transition-colors">
-                <Megaphone className="h-4 w-4" />
-              </div>
-              <span className="text-xs font-semibold tracking-wide hidden sm:block">
-                Announcements
-              </span>
-            </button>
-
-            <div className="w-px h-6 bg-gray-200 mx-1" />
-
-            {/* Reviews */}
-            <button
-              type="button"
-              onClick={handleReviewsClick}
-              className="group relative flex items-center gap-2 px-3 py-2 rounded-xl
-                text-gray-500 hover:text-amber-600 hover:bg-amber-50
-                transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-300"
-            >
-              <div className="relative p-1.5 rounded-lg bg-gray-100 group-hover:bg-amber-100 transition-colors">
-                <Star className="h-4 w-4" />
-                <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-white" />
-              </div>
-              <span className="text-xs font-semibold tracking-wide hidden sm:block">
-                Reviews
               </span>
             </button>
 
@@ -223,7 +175,6 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
                   className="absolute right-0 mt-2 w-52 rounded-xl shadow-lg bg-white
                   ring-1 ring-black ring-opacity-5 z-50 overflow-hidden"
                 >
-                  {/* User info */}
                   <div className="px-4 py-3 bg-gradient-to-br from-blue-50 to-indigo-50 border-b border-gray-100">
                     <div className="flex items-center gap-3">
                       <div

@@ -193,7 +193,13 @@ const Sidebar = ({ isOpen, setIsOpen, isPinned, setIsPinned }) => {
         <div className="p-4 border-b border-sidebar-primary-200/30 flex items-center justify-between bg-sidebar-primary-800/50 backdrop-blur-sm">
           {isOpen && (
             <>
-              <h2 className="text-xl font-bold text-white">{tenant?.name}</h2>
+              <Link
+                  to="/companies/dashboard"
+                  onClick={handleMenuItemClick}
+                  className="text-xl font-bold text-white hover:text-sidebar-primary-200 transition-colors duration-200 cursor-pointer truncate"
+                >
+                  {tenant?.name}
+                </Link>
               {!isMobile && (
                 <button
                   onClick={togglePin}
