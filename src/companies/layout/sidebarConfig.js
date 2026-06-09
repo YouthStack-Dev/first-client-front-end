@@ -51,7 +51,7 @@ export const baseSidebarConfig = [
     ],
   },
   {
-    title: "Resources",
+    title: "Transport Management",
     items: [
       {
         title: "Manage Drivers",
@@ -88,12 +88,12 @@ export const baseSidebarConfig = [
         path: "/companies/teams",
         permission: "team.read",             // ✅ module: "team"
       },
-      {
-        title: "Tracking Management",
-        icon: MapPin,
-        path: "/companies/tracking",
-        permission: "route.read",            // ✅ closest match: module: "route"
-      },
+      // {
+      //   title: "Tracking Management",
+      //   icon: MapPin,
+      //   path: "/companies/tracking",
+      //   permission: "route.read",            // ✅ closest match: module: "route"
+      // },
     ],
   },
   {

@@ -5,7 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import { Menu, User, LogOut, ChevronDown, MapPin } from "lucide-react";
+import { Menu, User, LogOut, ChevronDown, MapPin, Gauge } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { jwtDecode } from "jwt-decode";
@@ -19,6 +19,10 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
+
+  const currentPath = window.location.pathname;
+  const isLiveDrivers = currentPath === "/companies/live-drivers";
+  const isSpeedViolations = currentPath === "/companies/speed-violations";
 
   const displayEmail = useMemo(() => {
     try {
@@ -76,12 +80,14 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
     () => navigate("/companies/live-drivers"),
     [navigate]
   );
+  const handleSpeedViolationsClick = useCallback(
+    () => navigate("/companies/speed-violations"),
+    [navigate]
+  );
   const handleLogout = useCallback(() => {
     dispatch(logout());
     setIsProfileOpen(false);
   }, [dispatch]);
-
-  const isLiveDrivers = window.location.pathname === "/companies/live-drivers";
 
   return (
     <header
@@ -108,8 +114,34 @@ const Header = ({ toggleSidebar, isSidebarOpen, title = "Dashboard" }) => {
             <span className="text-blue-600 font-bold text-xl">{title}</span>
           </div>
 
-          {/* Right — live drivers + avatar */}
+          {/* Right — speed violations + live drivers + avatar */}
           <div className="flex items-center gap-1">
+
+            {/* Speed Violations */}
+            <button
+              type="button"
+              onClick={handleSpeedViolationsClick}
+              className={`group relative flex items-center gap-2 px-3 py-2 rounded-xl
+                transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-300
+                ${isSpeedViolations
+                  ? "text-red-700 bg-red-50"
+                  : "text-gray-500 hover:text-red-600 hover:bg-red-50"
+                }`}
+            >
+              <div className={`relative p-1.5 rounded-lg transition-colors
+                ${isSpeedViolations
+                  ? "bg-red-100"
+                  : "bg-gray-100 group-hover:bg-red-100"
+                }`}>
+                <Gauge className="h-4 w-4" />
+                <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
+              </div>
+              <span className="text-xs font-semibold tracking-wide hidden sm:block">
+                Speed Violations
+              </span>
+            </button>
+
+            <div className="w-px h-6 bg-gray-200 mx-1" />
 
             {/* Live Drivers */}
             <button

@@ -5,52 +5,46 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { getTitleFromPath } from "./utility";
 import { selectCurrentUser, selectAuthLoading } from "@features/auth/authSlice";
-import { logDebug } from "@utils/logger";
 import Unauthorized from "../../components/Unauthorized";
 
 const Layout = ({ type }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
-  const [mounted, setMounted] = useState(false);
+
   const sidebarRef = useRef(null);
-  const mainContentRef = useRef(null);
+  // Ref mirror of sidebarOpen — lets handleClickOutside read current value
+  // without being re-registered every time sidebarOpen changes
+  const sidebarOpenRef = useRef(sidebarOpen);
 
   const user = useSelector(selectCurrentUser);
-  const authLoading = useSelector((state) => state.auth.loading);
+  const authLoading = useSelector(selectAuthLoading); // ← use imported selector
   const location = useLocation();
 
+  // Keep ref in sync with state
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    sidebarOpenRef.current = sidebarOpen;
+  }, [sidebarOpen]);
 
+  // Stable listener — registered once, reads fresh value via ref
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (window.innerWidth < 1024 && sidebarOpen) {
-        const isSidebarClick = sidebarRef.current?.contains(event.target);
-        const isToggleButtonClick = event.target.closest(
-          "[data-sidebar-toggle]",
-        );
-        if (!isSidebarClick && !isToggleButtonClick) {
-          setSidebarOpen(false);
-        }
-      }
+      if (window.innerWidth >= 1024 || !sidebarOpenRef.current) return;
+      const isSidebarClick = sidebarRef.current?.contains(event.target);
+      const isToggleClick = event.target.closest("[data-sidebar-toggle]");
+      if (!isSidebarClick && !isToggleClick) setSidebarOpen(false);
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("touchstart", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("touchstart", handleClickOutside);
     };
-  }, [sidebarOpen]);
+  }, []); // no deps — stable for component lifetime
 
-  const toggleSidebar = useCallback(() => {
-    setSidebarOpen((prev) => !prev);
-  }, []);
-
+  const toggleSidebar = useCallback(() => setSidebarOpen((prev) => !prev), []);
   const closeSidebar = useCallback(() => {
-    if (window.innerWidth < 1024) {
-      setSidebarOpen(false);
-    }
+    if (window.innerWidth < 1024) setSidebarOpen(false);
   }, []);
 
   const title = getTitleFromPath(location.pathname);
@@ -76,11 +70,7 @@ const Layout = ({ type }) => {
   }
 
   return (
-    <div
-      className={`h-screen flex overflow-hidden ${
-        mounted ? "transition-opacity duration-500 opacity-100" : "opacity-0"
-      }`}
-    >
+    <div className="h-screen flex overflow-hidden">
       <div ref={sidebarRef}>
         <Sidebar
           isOpen={sidebarOpen}
@@ -91,12 +81,10 @@ const Layout = ({ type }) => {
       </div>
 
       <div
-        ref={mainContentRef}
         className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
           sidebarOpen ? "lg:ml-64" : "lg:ml-16"
         }`}
       >
-        {/* ✅ Pass isSidebarOpen so Header offsets itself correctly */}
         <Header
           toggleSidebar={toggleSidebar}
           title={title}
@@ -110,7 +98,7 @@ const Layout = ({ type }) => {
         </main>
       </div>
 
-      {/* Mobile Backdrop */}
+      {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-10 bg-gray-600 opacity-75 lg:hidden"
