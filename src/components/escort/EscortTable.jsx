@@ -32,7 +32,7 @@ const EscortTable = ({
   isLoading,
 }) => {
   const getVendorName = (vendorId) =>
-    vendors.find((v) => v.value === vendorId)?.label || "N/A";
+    vendors.find((v) => String(v.value) === String(vendorId))?.label || "N/A"
 
   const getGenderBadge = (gender) => {
     const key = gender?.toLowerCase();

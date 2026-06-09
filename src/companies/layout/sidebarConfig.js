@@ -17,53 +17,25 @@ import {
 
 export const baseSidebarConfig = [
   {
-    title: "Vendor Management",
-    items: [
-      {
-        title: "All Vendors",
-        icon: Store,
-        path: "/companies/new-vendor-management",
-        permission: "vendor.read",           // ✅ module: "vendor"
-      },
-      {
-        title: "Vendor Users",
-        icon: Users,
-        path: "/companies/vendor-user-management",
-        permission: "vendor_user.read",      // ✅ module: "vendor_user"
-      },
-    ],
-  },
-  {
-    title: "User Administrator",
-    items: [
-      {
-        title: "User Role & Permission",
-        icon: Key,
-        path: "/companies/role-permission",
-        permission: "role.read",             // ✅ module: "role"
-      },
-      {
-        title: "Escort Management",
-        icon: Users2,
-        path: "/companies/escort-management",
-        permission: "escort.read",           // ✅ module: "escort"
-      },
-    ],
-  },
-  {
     title: "Transport Management",
     items: [
       {
         title: "Manage Drivers",
         icon: Users,
         path: "/companies/driverform",
-        permission: "driver.read",           // ✅ module: "driver"
+        permission: "driver.read",
       },
       {
         title: "Vehicles",
         icon: Car,
         path: "/companies/vehicles-management",
-        permission: "vehicle.read",          // ✅ module: "vehicle"
+        permission: "vehicle.read",
+      },
+      {
+        title: "Escort Management",          // moved here from User Administrator
+        icon: Users2,
+        path: "/companies/escort-management",
+        permission: "escort.read",
       },
     ],
   },
@@ -74,26 +46,20 @@ export const baseSidebarConfig = [
         title: "Route Management",
         icon: MapPin,
         path: "/companies/routing",
-        permission: "route.read",            // ✅ module: "route"
+        permission: "route.read",
       },
       {
         title: "Shift Management",
         icon: Clock,
         path: "/companies/shifts",
-        permission: "shift.read",            // ✅ module: "shift"
+        permission: "shift.read",
       },
       {
         title: "Teams",
         icon: Users2,
         path: "/companies/teams",
-        permission: "team.read",             // ✅ module: "team"
+        permission: "team.read",
       },
-      // {
-      //   title: "Tracking Management",
-      //   icon: MapPin,
-      //   path: "/companies/tracking",
-      //   permission: "route.read",            // ✅ closest match: module: "route"
-      // },
     ],
   },
   {
@@ -103,31 +69,31 @@ export const baseSidebarConfig = [
         title: "System Configuration",
         icon: Settings,
         path: "/companies/cutoff",
-        permission: "cutoff.read",           // ✅ module: "cutoff"
+        permission: "cutoff.read",
       },
       {
         title: "Alert Configuration",
         icon: Shield,
         path: "/companies/alert-config",
-        permission: "alert.read",            // ✅ module: "alert"
+        permission: "alert.read",
       },
       {
         title: "Alert Notifications",
         icon: Bell,
         path: "/companies/notification",
-        permission: "alert.read",            // ✅ module: "alert"
+        permission: "alert.read",
       },
       {
         title: "Announcements",
         icon: Megaphone,
         path: "/companies/announcements",
-        permission: null,                    // ⚠️ no "announcement" module in permissions, showing for all
+        permission: null,
       },
       {
         title: "Reviews",
         icon: Star,
         path: "/companies/reviews",
-        permission: null,                    // ⚠️ no "review" module in permissions, showing for all
+        permission: null,
       },
     ],
   },
@@ -138,7 +104,35 @@ export const baseSidebarConfig = [
         title: "Reports Management",
         icon: FileText,
         path: "/companies/reports-management",
-        permission: "report.read",           // ✅ module: "report"
+        permission: "report.read",
+      },
+    ],
+  },
+  {
+    title: "Vendor Management",              // moved to last
+    items: [
+      {
+        title: "All Vendors",
+        icon: Store,
+        path: "/companies/new-vendor-management",
+        permission: "vendor.read",
+      },
+      {
+        title: "Vendor Users",
+        icon: Users,
+        path: "/companies/vendor-user-management",
+        permission: "vendor_user.read",
+      },
+    ],
+  },
+  {
+    title: "User Administrator",
+    items: [
+      {
+        title: "User Role & Permission",
+        icon: Key,
+        path: "/companies/role-permission",
+        permission: "role.read",
       },
     ],
   },
