@@ -12,8 +12,6 @@ const Layout = ({ type }) => {
   const [isPinned, setIsPinned] = useState(false);
 
   const sidebarRef = useRef(null);
-  // Ref mirror of sidebarOpen — lets handleClickOutside read current value
-  // without being re-registered every time sidebarOpen changes
   const sidebarOpenRef = useRef(sidebarOpen);
 
   const user = useSelector(selectCurrentUser);

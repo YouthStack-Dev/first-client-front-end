@@ -102,7 +102,7 @@ const EscortFormModal = ({
             <div className="col-span-2">
               <FormField label="Vendor" required error={errors.vendor_id}>
                 <Select
-                  value={vendors.find((v) => v.value === formData.vendor_id)}
+                  value={vendors.find((v) => String(v.value) === String(formData.vendor_id))}
                   onChange={(selected) =>
                     onChange("vendor_id", selected?.value || null)
                   }
