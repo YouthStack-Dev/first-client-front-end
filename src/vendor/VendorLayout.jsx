@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import VendorSidebar from "./VendorSidebar";
+import VendorSidebar from "./VendorSideBar";
 import VendorHeader from "./VendorHeader";
-import { getTitleFromVendorPath } from "./vendorUtility";
+import { getTitleFromVendorPath } from "./Vendorutility";
 import { selectCurrentUser, selectAuthLoading } from "@features/auth/authSlice";
 import Unauthorized from "../components/Unauthorized";
 
