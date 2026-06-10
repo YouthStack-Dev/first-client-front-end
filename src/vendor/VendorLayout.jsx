@@ -1,86 +1,52 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
+import VendorSidebar from "./VendorSidebar";
 import VendorHeader from "./VendorHeader";
-import VendorSideBar from "./VendorSideBar";
-import { selectAuthLoading, selectCurrentUser } from "../redux/features/auth/authSlice";
-
-// Static title mapping for vendor routes
-const vendorPathTitleMap = {
-  "/vendor/dashboard": "Dashboard",
-  "/vendor/vehicles": "Vehicle Management",
-  "/vendor/vehicles/add": "Add Vehicle",
-  "/vendor/vehicles/edit": "Edit Vehicle",
-  "/vendor/drivers": "Driver Management",
-  "/vendor/drivers/add": "Add Driver",
-  "/vendor/drivers/edit": "Edit Driver",
-  "/vendor/routes": "Route Management",
-  "/vendor/routes/add": "Add Route",
-  "/vendor/routes/edit": "Edit Route",
-  "/vendor/trips": "Trip Management",
-  "/vendor/trips/active": "Active Trips",
-  "/vendor/trips/completed": "Completed Trips",
-  "/vendor/bookings": "Booking Management",
-  "/vendor/bookings/pending": "Pending Bookings",
-  "/vendor/bookings/confirmed": "Confirmed Bookings",
-  "/vendor/documents": "Document Management",
-  "/vendor/documents/vehicle": "Vehicle Documents",
-  "/vendor/documents/driver": "Driver Documents",
-  "/vendor/reports": "Reports & Analytics",
-  "/vendor/reports/trips": "Trip Reports",
-  "/vendor/reports/revenue": "Revenue Reports",
-  "/vendor/settings": "Settings",
-  "/vendor/profile": "Company Profile",
-  "/vendor/users": "User Management",
-};
-
-const getTitleFromVendorPath = (pathname) => {
-  return vendorPathTitleMap[pathname] || "Vendor Portal";
-};
+import { getTitleFromVendorPath } from "./vendorUtility";
+import { selectCurrentUser, selectAuthLoading } from "@features/auth/authSlice";
+import Unauthorized from "../components/Unauthorized";
 
 const VendorLayout = ({ type }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isPinned, setIsPinned] = useState(false);
-  const mainContentRef = useRef(null);
-  const [mounted, setMounted] = useState(false);
-  const location = useLocation();
-  const user = useSelector(selectCurrentUser);
+  const [isPinned, setIsPinned]       = useState(false);
+
+  const sidebarRef    = useRef(null);
+  const sidebarOpenRef = useRef(sidebarOpen);
+
+  const user        = useSelector(selectCurrentUser);
   const authLoading = useSelector(selectAuthLoading);
+  const location    = useLocation();
 
+  // Keep ref in sync with state so the stable listener can read fresh value
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    sidebarOpenRef.current = sidebarOpen;
+  }, [sidebarOpen]);
 
-  // Handle outside click to close sidebar on mobile
+  // Stable outside-click listener — registered once, reads via ref
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        window.innerWidth < 1024 &&
-        sidebarOpen &&
-        mainContentRef.current &&
-        !mainContentRef.current.contains(event.target)
-      ) {
-        setSidebarOpen(false);
-      }
+      if (window.innerWidth >= 1024 || !sidebarOpenRef.current) return;
+      const isSidebarClick = sidebarRef.current?.contains(event.target);
+      const isToggleClick  = event.target.closest("[data-sidebar-toggle]");
+      if (!isSidebarClick && !isToggleClick) setSidebarOpen(false);
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [sidebarOpen]);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, []); // stable for component lifetime
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const closeSidebar = () => {
-    if (window.innerWidth < 1024) {
-      setSidebarOpen(false);
-    }
-  };
+  const toggleSidebar = useCallback(() => setSidebarOpen((prev) => !prev), []);
+  const closeSidebar  = useCallback(() => {
+    if (window.innerWidth < 1024) setSidebarOpen(false);
+  }, []);
 
   const title = getTitleFromVendorPath(location.pathname);
 
-  // Loading and authentication states - moved after all hooks
   if (authLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -98,49 +64,44 @@ const VendorLayout = ({ type }) => {
   }
 
   if (type !== user.type) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <h2 className="text-xl font-semibold animate-pulse">Unauthorized Access</h2>
-      </div>
-    );
+    return <Unauthorized />;
   }
 
   return (
-    <div
-      className={`h-screen flex overflow-hidden bg-gray-50 ${
-        mounted ? "transition-opacity duration-500 opacity-100" : "opacity-0"
-      }`}
-    >
-      <VendorSideBar
-        isOpen={sidebarOpen}
-        setIsOpen={setSidebarOpen}
-        isPinned={isPinned}
-        setIsPinned={setIsPinned}
-      />
+    <div className="h-screen flex overflow-hidden">
+      <div ref={sidebarRef}>
+        <VendorSidebar
+          isOpen={sidebarOpen}
+          setIsOpen={setSidebarOpen}
+          isPinned={isPinned}
+          setIsPinned={setIsPinned}
+        />
+      </div>
 
       <div
-        ref={mainContentRef}
         className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
           sidebarOpen ? "lg:ml-64" : "lg:ml-16"
         }`}
       >
-        {/* Header */}
-        <VendorHeader toggleSidebar={toggleSidebar} title={title} />
+        <VendorHeader
+          toggleSidebar={toggleSidebar}
+          title={title}
+          isSidebarOpen={sidebarOpen}
+        />
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto pt-16 pb-6">
-          <div className="w-full mx-auto">
+        <main className="flex-1 flex flex-col min-h-0 pt-16 overflow-hidden">
+          <div className="flex-1 min-h-0 w-full mx-auto overflow-y-auto">
             <Outlet />
           </div>
         </main>
       </div>
 
-      {/* Mobile Backdrop */}
+      {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-10 bg-gray-600 opacity-75 lg:hidden"
           onClick={closeSidebar}
-        ></div>
+        />
       )}
     </div>
   );

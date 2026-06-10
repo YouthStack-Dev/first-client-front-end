@@ -11,7 +11,6 @@ import ReusableButton from "../ui/ReusableButton";
 
 import { NewVehicleList } from "./NewVehicleList";
 import VehicleFormModal from "./VehicleFormModal";
-
 import {
   fetchVehiclesThunk,
   toggleVehicleStatus,
@@ -179,7 +178,7 @@ const NewVehicleManagement = () => {
         }
         rightElements={
           <div className="flex flex-wrap items-center gap-3">
-            {!isVendorUser && (
+            {/* {!isVendorUser && ( */}
               <ReusableButton
                 module="vehicle"
                 action="read"
@@ -193,7 +192,7 @@ const NewVehicleManagement = () => {
                 }}
                 className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md"
               />
-            )}
+            {/* )} */}
 
             {!isVendorUser && (
               <div className="min-w-[200px] z-10 relative">
