@@ -4,7 +4,6 @@ import Cookies from "js-cookie";
 import { fetchUserFromToken, loginUser } from "./authTrunk";
 import { logDebug } from "../../../utils/logger";
 
-// Utility function to get token expiration
 const getTokenExpiration = (token) => {
   logDebug("Decoding token for expiration:", token);
   try {
@@ -38,55 +37,44 @@ const authSlice = createSlice({
       Object.assign(state, initialState);
     },
     logout: (state) => {
-      // Clear all client-side storage
       Cookies.remove("auth_token", { path: "/" });
       Cookies.remove("refresh_token", { path: "/" });
-      sessionStorage.clear(); // clear ALL session data
-      localStorage.clear(); // clear ALL localStorage keys
+      sessionStorage.clear();
+      localStorage.clear(); // ✅ clears everything — tenant, vendor_user, userPermissions
       window.location.reload();
-      // Reset redux state
       Object.assign(state, initialState);
     },
 
     setAuthCredentials: (state, action) => {
       const { user, token } = action.payload;
 
-      let userType = "admin"; // default type
-
+      let userType = "admin";
       if (user.employee) {
         userType = "employee";
       } else if (user.vendor_user) {
         userType = "vendor";
       }
 
-      // Assign the type to the user object
-      const userWithType = { ...user, type: userType };
-
-      // Update state
-      // state.user = userWithType;
-        state.user = {
-    ...user,
-    type: userType,
-    // ✅ Only guarantee tenant_id is at top level — nothing else changes
-    tenant_id: user.tenant_id || user.employee?.tenant_id || user.vendor_user?.tenant_id || null,
-  };
+      state.user = {
+        ...user,
+        type: userType,
+        tenant_id: user.tenant_id || user.employee?.tenant_id || user.vendor_user?.tenant_id || null,
+      };
       state.token = token;
       state.isAuthenticated = true;
 
-      logDebug("Setting auth credentials:", { user: userWithType, token });
+      logDebug("Setting auth credentials:", { user: state.user, token });
     },
 
-    // New reducer to handle token-based state restoration
     setAuthFromToken: (state, action) => {
       state.user = action.payload.user;
       state.permissions = action.payload.permissions || null;
       state.isAuthenticated = true;
-      state.loading = false; // Ensure loading is set to false
+      state.loading = false;
     },
     clearError: (state) => {
       state.error = null;
     },
-    // Add a reducer to explicitly set loading state
     setLoading: (state, action) => {
       state.loading = action.payload;
     },
@@ -101,14 +89,14 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        const { user, token,refresh_token, allowedModules } = action.payload;
+        const { user, token, refresh_token, allowedModules } = action.payload;
         console.log("🔥 REFRESH TOKEN FROM PAYLOAD:", refresh_token);
-        logDebug(" this is the payload ", action.payload);
-        // state.user = user;
-         state.user = {
-            ...user,
-            tenant_id: user.tenant_id || user.employee?.tenant_id || user.vendor_user?.tenant_id || null,
-          };
+        logDebug("this is the payload", action.payload);
+
+        state.user = {
+          ...user,
+          tenant_id: user.tenant_id || user.employee?.tenant_id || user.vendor_user?.tenant_id || null,
+        };
         state.token = token;
         state.permissions = allowedModules;
         state.isAuthenticated = true;
@@ -116,25 +104,23 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = null;
 
-        // Set cookie with proper expiration based on token
         const tokenExpiration = getTokenExpiration(token);
         const cookieOptions = {
-          expires: tokenExpiration ? tokenExpiration : 7, // Use token expiration or fallback to 7 days
+          expires: tokenExpiration ? tokenExpiration : 7,
           path: "/",
           secure: process.env.NODE_ENV === "production",
           sameSite: "strict",
         };
 
         Cookies.set("auth_token", token, cookieOptions);
+        Cookies.set("refresh_token", refresh_token, {
+          path: "/",
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+        });
 
-         Cookies.set("refresh_token", refresh_token, {
-            path: "/",
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-          });
-
-        // Persist to session storage
-        sessionStorage.setItem(
+        // ✅ localStorage — uniform for all login types
+        localStorage.setItem(
           "userPermissions",
           JSON.stringify({
             user,
@@ -152,30 +138,26 @@ const authSlice = createSlice({
           errors: action.payload?.errors || null,
           timestamp: new Date().toISOString(),
         };
-        logDebug("This is the error ", action.payload?.errors);
+        logDebug("This is the error", action.payload?.errors);
 
-        // Clear any partial auth data
         Cookies.remove("auth_token", { path: "/" });
-        sessionStorage.removeItem("userPermissions");
+        // ✅ localStorage
+        localStorage.removeItem("userPermissions");
       })
-      // Handle token-based user fetching
       .addCase(fetchUserFromToken.pending, (state) => {
         state.loading = true;
       })
       .addCase(fetchUserFromToken.fulfilled, (state, action) => {
         const { user, permissions: allowedModules, user_type } = action.payload;
-        logDebug(" this is the refresh payload user ", action.payload);
+        logDebug("this is the refresh payload user", action.payload);
+
         state.user = {
           ...user,
           type: user_type,
-          tenant_id:
-            user.tenant_id ||
-            user.employee?.tenant_id ||
-            user.vendor_user?.tenant_id ||
-            null,
+          tenant_id: user.tenant_id || user.employee?.tenant_id || user.vendor_user?.tenant_id || null,
         };
         state.permissions = allowedModules;
-        // Sync token from cookie (updated by refresh interceptor)
+
         const freshToken = Cookies.get("auth_token");
         if (freshToken) {
           state.token = freshToken;
@@ -184,8 +166,8 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = null;
 
-        // Update session storage
-        sessionStorage.setItem(
+        // ✅ localStorage
+        localStorage.setItem(
           "userPermissions",
           JSON.stringify({
             user,
@@ -198,19 +180,15 @@ const authSlice = createSlice({
         state.loading = false;
         state.isAuthenticated = false;
         state.error = action.payload;
-        console.log(
-          " this is the error when fetching the permission ",
-          action.payload
-        );
+        console.log("this is the error when fetching the permission", action.payload);
 
-        // Clear invalid token
         Cookies.remove("auth_token", { path: "/" });
-        sessionStorage.removeItem("userPermissions");
+        // ✅ localStorage
+        localStorage.removeItem("userPermissions");
       });
   },
 });
 
-// Action creators
 export const {
   resetAuthState,
   logout,
@@ -221,7 +199,6 @@ export const {
   setAuthLoading,
 } = authSlice.actions;
 
-// Selectors
 export const selectCurrentUser = (state) => state.auth.user;
 export const selectAuthToken = (state) => state.auth.token;
 export const selectPermissions = (state) => state.auth.permissions;
@@ -230,53 +207,43 @@ export const selectAuthError = (state) => state.auth.error;
 export const selectAuthLoading = (state) => state.auth.loading;
 export const selectLastLogin = (state) => state.auth.lastLogin;
 
-// Utility function to initialize auth state
 export const initializeAuth = () => async (dispatch) => {
   const token = Cookies.get("auth_token") || "";
-  // logDebug("Decoded token:", token);
   dispatch(setAuthLoading(true));
+
   if (!token) {
-    // No token → reset auth state
     dispatch(resetAuthState());
     return;
   } else {
     dispatch(setAuthLoading(false));
   }
+
   try {
-    // Verify token is still valid
-
-    // Decode token and set basic user info
     const decoded = jwtDecode(token);
-    logDebug(" thi is the decoded data ", decoded);
+    logDebug("this is the decoded data", decoded);
 
-    const storedData = sessionStorage.getItem("userPermissions");
+    // ✅ localStorage
+    const storedData = localStorage.getItem("userPermissions");
 
     if (storedData) {
       try {
         const parsedData = JSON.parse(storedData);
         const { user: storedUser = {}, permissions = [] } = parsedData;
 
-        // ✅ Use complete user data from storage (preserves name, email, etc.)
         const user = {
           ...storedUser,
           type: decoded.user_type || storedUser.type,
           tenant_id: decoded.tenant_id || storedUser.tenant_id || null,
         };
 
-        dispatch(
-          setAuthFromToken({
-            user,
-            permissions,
-          })
-        );
+        dispatch(setAuthFromToken({ user, permissions }));
         dispatch(setAuthLoading(false));
       } catch (error) {
         console.error("Failed to parse stored permissions:", error);
-        // If parsing fails, fetch from server
         await dispatch(fetchUserFromToken());
       }
     } else {
-      // If no session storage → fetch from server
+      // ✅ No localStorage → fetch from server
       await dispatch(fetchUserFromToken());
     }
   } catch (error) {

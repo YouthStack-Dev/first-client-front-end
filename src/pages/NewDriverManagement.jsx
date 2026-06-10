@@ -322,7 +322,7 @@ const NewDriverManagement = () => {
         }
         rightElements={
           <div className="flex flex-wrap items-center gap-3">
-            {!isVendorUser && (
+            {/* {!isVendorUser && ( */}
               <ReusableButton
                 module="driver"
                 action="read"
@@ -333,7 +333,7 @@ const NewDriverManagement = () => {
                 onClick={() => setShowAuditModal(true)}
                 className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md"
               />
-            )}
+            {/* )} */}
 
             <ReusableButton
               module="driver"

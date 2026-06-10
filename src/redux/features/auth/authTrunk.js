@@ -19,6 +19,17 @@ export const loginUser = createAsyncThunk(
         localStorage.setItem("tenant", JSON.stringify(user?.tenant));
         logDebug("Tenant stored in localStorage:", user?.tenant);
       }
+
+      if (user?.vendor_user) {
+        localStorage.setItem("vendor_user", JSON.stringify(user.vendor_user));
+        logDebug("Vendor user stored in localStorage:", user.vendor_user);
+      }
+
+      if (user?.roles?.includes("SuperAdmin")) {
+        localStorage.setItem("superadmin_user", JSON.stringify(user));
+        logDebug("Superadmin stored in localStorage:", user);
+      }
+
       // Extract permissions from user
       const allowedModules = user?.permissions || [];
 

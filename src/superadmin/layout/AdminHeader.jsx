@@ -145,7 +145,7 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen = false, title = "Team Dashb
             </div> */}
 
             {/* Notifications */}
-            <div className="relative" ref={notificationsRef}>
+            {/* <div className="relative" ref={notificationsRef}>
               <button
                 type="button"
                 onClick={() => setShowNotifications((v) => !v)}
@@ -207,7 +207,7 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen = false, title = "Team Dashb
                   </div>
                 </div>
               )}
-            </div>
+            </div> */}
 
             {/* Profile Dropdown */}
             <div className="relative" ref={profileRef}>

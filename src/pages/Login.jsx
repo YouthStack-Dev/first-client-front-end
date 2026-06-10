@@ -75,8 +75,8 @@ const resolvePathConfig = (pathname) => {
       title: "Vendor Login",
       subtitle: "Vendor portal access",
       icon: <Truck className="w-8 h-8 text-green-600" />,
-      idLabel: "Vendor ID",
-      idPlaceholder: "Enter your vendor ID",
+      idLabel: "Tenant ID",
+      idPlaceholder: "Enter your tenant ID",
       companyName: "Vendor Portal",
       tagline: "Streamlined Vendor Management",
     };

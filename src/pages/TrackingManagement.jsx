@@ -23,7 +23,7 @@ const TrackingManagement = () => {
     (state) => state.company
   );
   const userType = user?.type || "admin"; // Fallback to admin for testing
-  logDebug(" This is the user Type ", userType);
+  // logDebug(" This is the user Type ", userType);
   // Fetch companies if not fetched yet
   useEffect(() => {
     if (userType === "admin" && !fetched && !companiesLoading) {
