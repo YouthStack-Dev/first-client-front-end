@@ -16,10 +16,16 @@ import {
   vendorColor,
   isStale,
   secAgo,
-  fmtAge, 
+  fmtAge,
 } from "../components/liveDrivers/liveDriverHelpers";
 
 import { S } from "../components/liveDrivers/styles";
+
+// Normalize is_active from Firebase — can be boolean true/false or string "true"/"false"
+const normalizeDriver = (data) => ({
+  ...data,
+  is_active: data.is_active === true || data.is_active === "true",
+});
 
 export default function LiveDriverMap() {
   const user = useSelector(selectCurrentUser);
@@ -158,7 +164,7 @@ export default function LiveDriverMap() {
     const rows = [];
     Object.entries(driverMap).forEach(([vid, drivers]) =>
       Object.entries(drivers).forEach(([did, data]) =>
-        rows.push({ vid, did, data }),
+        rows.push({ vid, did, data: normalizeDriver(data) }),
       ),
     );
     return rows.sort(
@@ -170,7 +176,8 @@ export default function LiveDriverMap() {
     const rows = [];
     Object.entries(driverMap).forEach(([vid, drivers]) =>
       Object.entries(drivers).forEach(([did, data]) => {
-        if (isVisible(vid, data)) rows.push({ vid, did, data });
+        const normalized = normalizeDriver(data);
+        if (isVisible(vid, normalized)) rows.push({ vid, did, data: normalized });
       }),
     );
     return rows.sort(
@@ -184,8 +191,9 @@ export default function LiveDriverMap() {
       stale = 0;
     Object.values(driverMap).forEach((vd) =>
       Object.values(vd).forEach((d) => {
-        if (!d.is_active) offline++;
-        else if (isStale(d)) stale++;
+        const nd = normalizeDriver(d);
+        if (!nd.is_active) offline++;
+        else if (isStale(nd)) stale++;
         else active++;
       }),
     );
