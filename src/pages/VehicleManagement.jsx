@@ -4,7 +4,7 @@ import ManageVehicles from "../components/vehicles/Vehicles";
 
 const VehicleManagement = () => {
   const [activeTab, setActiveTab] = useState(() => {
-    return sessionStorage.getItem("activeVehicleTab") || "types";
+    return localStorage.getItem("activeVehicleTab") || "types";
   });
 
   const tabs = [

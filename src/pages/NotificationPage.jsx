@@ -19,7 +19,7 @@ import {
 
 const getEmployeeFromSession = () => {
   try {
-    const data = JSON.parse(sessionStorage.getItem("userPermissions"));
+    const data = JSON.parse(localStorage.getItem("userPermissions"));
     return data?.user?.employee || null;
   } catch { return null; }
 };

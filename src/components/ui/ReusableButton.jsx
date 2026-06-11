@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { icons } from "lucide-react";
+import { useSelector } from "react-redux";
 
 const DefaultIcon = icons.AlertCircle || icons.Info;
 
@@ -23,30 +24,23 @@ const ReusableButton = ({
   const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
   const buttonRef = useRef(null);
 
+  // Get permissions directly from Redux
+  const permissions = useSelector(
+    (state) => state.auth?.permissions || []
+  );
+  // console.log("Redux Permissions:", permissions);
+
   // Don't render if module or action is not provided
   if (!module || !action) {
     return null;
   }
 
-  const getPermissions = () => {
-    const userPermissions = sessionStorage.getItem("userPermissions");
-    if (userPermissions) {
-      try {
-        const { permissions } = JSON.parse(userPermissions) || [];
-        return permissions || [];
-      } catch (error) {
-        console.error("Error parsing user permissions:", error);
-        return [];
-      }
-    }
-    return [];
-  };
-
-  const permissions = getPermissions();
-
   const hasPermission = () => {
-    const modulePermission = permissions.find((p) => p.module === module);
-    return modulePermission?.action.includes(action);
+    const modulePermission = permissions.find(
+      (p) => p.module === module
+    );
+
+    return modulePermission?.action?.includes(action);
   };
 
   const handleClick = (e) => {
@@ -57,6 +51,7 @@ const ReusableButton = ({
 
   const IconToUse = IconComponent || DefaultIcon;
 
+  // Hide button if permission not available
   if (!hasPermission()) {
     return null;
   }
@@ -75,11 +70,13 @@ const ReusableButton = ({
         onMouseEnter={() => {
           if (buttonRef.current) {
             const rect = buttonRef.current.getBoundingClientRect();
+
             setTooltipPos({
               top: rect.top - 8,
               left: rect.left + rect.width / 2,
             });
           }
+
           setShowTooltipState(true);
         }}
         onMouseLeave={() => setShowTooltipState(false)}
@@ -88,21 +85,27 @@ const ReusableButton = ({
       >
         {loading ? (
           <>
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current "></div>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
             {loadingText && <span>{loadingText}</span>}
           </>
         ) : (
           <>
             {IconComponent && (
-              <IconToUse size={size} className={buttonName ? "" : ""} />
+              <IconToUse
+                size={size}
+                className={buttonName ? "" : ""}
+              />
             )}
+
             {buttonName && <span>{buttonName}</span>}
           </>
         )}
       </button>
 
-      {/* Tooltip rendered in a portal so it escapes all stacking contexts */}
-      {title && showTooltip && !loading && showTooltipState &&
+      {title &&
+        showTooltip &&
+        !loading &&
+        showTooltipState &&
         createPortal(
           <div
             role="tooltip"
@@ -119,8 +122,7 @@ const ReusableButton = ({
             <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45" />
           </div>,
           document.body
-        )
-      }
+        )}
     </div>
   );
 };

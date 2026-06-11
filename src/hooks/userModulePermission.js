@@ -3,7 +3,7 @@ import { useMemo } from "react";
 export default function usePermission(moduleId) {
     // Load and cache permissions only once per render cycle
     const allowedModules = useMemo(() => {
-        const data = JSON.parse(sessionStorage.getItem("userPermissions")) || {};
+        const data = JSON.parse(localStorage.getItem("userPermissions")) || {};
         return data.allowedModules || [];
     }, []);
 
