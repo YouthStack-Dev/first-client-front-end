@@ -202,22 +202,24 @@ const normalizeDriverNode = (raw, driverId) => {
 
   return {
     ...coords,
-    is_active: isActive,
-    updated_at: updatedAt,
-    updated_at_raw: raw.updated_at,
-    created_at: createdAt,
-    cleared_at: clearedAt,
-    timestamp: normalizeTimestamp(raw.timestamp) || updatedAt || Date.now(),
+    is_active:        isActive,
+    updated_at:       updatedAt,
+    updated_at_raw:   raw.updated_at,
+    created_at:       createdAt,
+    cleared_at:       clearedAt,
+    timestamp:        normalizeTimestamp(raw.timestamp) || updatedAt || Date.now(),
     speed,
-    accuracy: raw.accuracy ?? null,
-    heading: raw.heading ?? null,
+    accuracy:         raw.accuracy  ?? null,
+    heading:          raw.heading   ?? null,
     provider,
-    driver_name: raw.driver_name || raw.driverName || raw.name || null,
-    driver_code: raw.driver_code || raw.driverCode || null,
-    route_id: raw.route_id ?? raw.routeId ?? null,
-    route_code: raw.route_code || raw.routeCode || null,
-    vendor_id: raw.vendor_id || raw.vendorId || null,
-    driver_id: raw.driver_id || raw.driverId || driverId,
+    driver_name:      raw.driver_name  || raw.driverName  || raw.name || null,
+    driver_code:      raw.driver_code  || raw.driverCode  || null,
+    driver_id:        raw.driver_id    || raw.driverId    || driverId,
+    route_id:         raw.route_id     ?? raw.routeId     ?? null,
+    route_code:       raw.route_code   || raw.routeCode   || null,
+    vendor_id:        raw.vendor_id    || raw.vendorId    || null,
+    vehicle_rc_number: raw.vehicle_rc_number || raw.vehicleRcNumber || null,
+    vehicle_type:     raw.vehicle_type || raw.vehicleType || null,
   };
 };
 
@@ -242,7 +244,7 @@ export const subscribeToMultipleDrivers = (drivers, onUpdate, onError) => {
  *   drivers/{tenantId}/{vendorId} — single vendor
  *
  * Callbacks:
- *   onDriverUpdate(vendorId, driverId, { lat, lng, is_active, updated_at })
+ *   onDriverUpdate(vendorId, driverId, { lat, lng, is_active, updated_at, ... })
  *   onDriverRemove(vendorId, driverId | null)   null = whole vendor removed
  *   onError(message)
  *
@@ -265,7 +267,6 @@ export const subscribeToTenantDrivers = (
   if (vendorId) {
     const path  = `drivers/${tenantId}/${vendorId}`;
     const dbRef = ref(database, path);
-    // logDebug(`📡 [TenantDrivers] vendor scope → ${path}`);
 
     const pushUpdate = (snap) => {
       const raw = snap.val();
@@ -284,14 +285,12 @@ export const subscribeToTenantDrivers = (
       off(dbRef, "child_added",   addH);
       off(dbRef, "child_changed", chgH);
       off(dbRef, "child_removed", remH);
-      // logDebug(`🔌 [TenantDrivers] unsubscribed vendor scope → ${path}`);
     };
   }
 
   // ── All vendors: children are vendor nodes ────────────────────────────────
   const path  = `drivers/${tenantId}`;
   const dbRef = ref(database, path);
-  // logDebug(`📡 [TenantDrivers] all-vendor scope → ${path}`);
 
   const processVendorSnap = (vendorKey, snapVal) => {
     if (!snapVal || typeof snapVal !== "object") return;
@@ -312,6 +311,5 @@ export const subscribeToTenantDrivers = (
     off(dbRef, "child_added",   addH);
     off(dbRef, "child_changed", chgH);
     off(dbRef, "child_removed", remH);
-    // logDebug(`🔌 [TenantDrivers] unsubscribed all-vendor scope → ${path}`);
   };
 };
