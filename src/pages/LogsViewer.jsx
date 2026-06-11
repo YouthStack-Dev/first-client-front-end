@@ -294,7 +294,7 @@ const LogsViewer = () => {
 
   // Active tab (sessionStorage-persisted like other admin pages)
   const [activeTab, setActiveTab] = useState(
-    () => sessionStorage.getItem("activeLogsTab") || "stream"
+    () => localStorage.getItem("activeLogsTab") || "stream"
   );
   useEffect(() => {
     sessionStorage.setItem("activeLogsTab", activeTab);

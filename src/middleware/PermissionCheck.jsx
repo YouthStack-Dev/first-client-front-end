@@ -2,7 +2,7 @@ import React from "react";
 
 const PermissionCheck = ({ module, action, children }) => {
   const getPermissions = () => {
-    const userPermissions = sessionStorage.getItem("userPermissions");
+    const userPermissions = localStorage.getItem("userPermissions");
     if (userPermissions) {
       const { permissions } = JSON.parse(userPermissions) || [];
       return permissions;

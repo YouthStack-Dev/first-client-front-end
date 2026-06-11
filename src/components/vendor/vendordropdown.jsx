@@ -18,9 +18,9 @@ const VendorSelector = ({ onChange }) => {
   const dispatch = useDispatch();
   let currentUser = useSelector(selectCurrentUser);
 
-  // Handle refresh / fallback to sessionStorage
+  // Handle refresh / fallback to localStorage
   if (!currentUser) {
-    const stored = sessionStorage.getItem("currentUser");
+    const stored = localStorage.getItem("currentUser");
     if (stored) currentUser = JSON.parse(stored);
   }
 
