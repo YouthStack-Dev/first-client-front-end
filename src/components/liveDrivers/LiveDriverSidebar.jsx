@@ -43,6 +43,7 @@ export default function LiveDriverSidebar({
         label: option.label,
         total: 0,
         active: 0,
+        stale: 0,
         offline: 0,
       });
     });
@@ -56,13 +57,15 @@ export default function LiveDriverSidebar({
           label: option?.label || key,
           total: 0,
           active: 0,
+          stale: 0,
           offline: 0,
         });
       }
       const entry = statsMap.get(key);
       entry.total += 1;
-      if (data.is_active) entry.active += 1;
-      else entry.offline += 1;
+      if (!data.is_active) entry.offline += 1;
+      else if (isStale(data)) entry.stale += 1;
+      else entry.active += 1;
     });
 
     return Array.from(statsMap.values()).filter((vendor) => {
@@ -151,6 +154,14 @@ export default function LiveDriverSidebar({
       borderRadius: 6,
       padding: "2px 7px",
     },
+    badgeStale: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: "#f59e0b",
+      background: "rgba(245,158,11,0.12)",
+      borderRadius: 6,
+      padding: "2px 7px",
+    },
   };
 
   const changeBtn = {
@@ -233,6 +244,11 @@ export default function LiveDriverSidebar({
                         <span style={card.badgeActive}>
                           🟢 {selectedVendor?.active ?? 0} active
                         </span>
+                        {(selectedVendor?.stale ?? 0) > 0 && (
+                          <span style={card.badgeStale}>
+                            🟠 {selectedVendor.stale} stale
+                          </span>
+                        )}
                         <span style={card.badgeOffline}>
                           ⚫ {selectedVendor?.offline ?? 0} offline
                         </span>
@@ -279,6 +295,11 @@ export default function LiveDriverSidebar({
                             <span style={card.badgeActive}>
                               🟢 {vendor.active}
                             </span>
+                            {vendor.stale > 0 && (
+                              <span style={card.badgeStale}>
+                                🟠 {vendor.stale}
+                              </span>
+                            )}
                             <span style={card.badgeOffline}>
                               ⚫ {vendor.offline}
                             </span>
@@ -350,42 +371,22 @@ export default function LiveDriverSidebar({
               const c = vendorColor(vid);
               const stl = isStale(data);
               const dotC = !data.is_active ? "#475569" : stl ? "#d97706" : "#22c55e";
-              const hdr =
-                vid !== lastVid
-                  ? ((lastVid = vid),
-                    (
-                      <div
-                        key={`h-${vid}`}
-                        style={{
-                          ...S.vname,
-                          color: "#94a3b8",
-                          fontSize: 10,
-                          fontWeight: 700,
-                          letterSpacing: "0.08em",
-                          padding: "6px 14px 2px",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {vid}
-                      </div>
-                    ))
-                  : null;
+              if (vid !== lastVid) lastVid = vid;
               const isSelected = detail?.vid === vid && detail?.did === did;
 
               return (
                 <div key={`${vid}/${did}`}>
-                  {hdr}
                   <button
                     style={driverRow(isSelected, data.is_active)}
                     onClick={() => setDetail({ vid, did })}
                   >
                     <span style={{ ...S.ddot, background: dotC }} />
                     <span style={{ ...S.ddid, color: "#f1f5f9", fontWeight: 600 }}>
-                      {data.driver_name || data.driver_code || did}
+                      {data.driver_name || data.driver_code || data.vehicle_rc_number || `Driver ${did}`}
                     </span>
-                    {data.route_code && (
+                    {(data.route_code || data.route_id) && (
                       <span style={{ ...S.ddsub, color: "#94a3b8" }}>
-                        {data.route_code}
+                        {data.route_code || `#${data.route_id}`}
                       </span>
                     )}
                     <span style={{ ...S.dtm, color: "#64748b" }}>
