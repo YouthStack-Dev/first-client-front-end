@@ -24,7 +24,7 @@ export const VendorUsersTable = ({
   itemsPerPage = 10,
   onPageChange,
   currentPage = 1,
-  vendorOptions = [], // ✅ added
+  vendorOptions = [], 
 }) => {
   const [pageSize, setPageSize] = useState(itemsPerPage);
   const [localPage, setLocalPage] = useState(currentPage);
@@ -45,7 +45,7 @@ export const VendorUsersTable = ({
   // ✅ helper to get vendor name from vendorOptions
   const getVendorName = (user) => {
     if (user.vendor_name) return user.vendor_name;
-    const found = vendorOptions.find((v) => v.value === user.vendor_id);
+    const found = vendorOptions.find((v) => String(v.value) === String(user.vendor_id));
     return found?.label || `Vendor ${user.vendor_id}`;
   };
 

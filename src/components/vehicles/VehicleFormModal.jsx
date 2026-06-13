@@ -41,9 +41,21 @@ import {
   buildVehicleUpdateData,
 } from "./vehicleUtility";
 
+import {
+  fetchContractsThunk,
+} from "../../redux/features/contract/contractsThunk";
+
+import {
+  selectContracts,
+} from "../../redux/features/contract/contractsSelector";
+
 /* ====================================================== */
 const TABS = ["basic", "documents"];
 /* ====================================================== */
+
+/* ===== ERROR MESSAGE EXTRACTOR ===== */
+const extractErrorMessage = (err, fallback = "Something went wrong") =>
+  err?.detail?.message || err?.message || fallback;
 
 /* ===== DATE VALIDATION ===== */
 const isFutureDate = (value) => {
@@ -65,6 +77,10 @@ const validateVehicleForm = ({ formData, isVendorUser, mode }) => {
 
   if (!formData.driver_id) {
     return "Driver is required";
+  }
+
+  if (!formData.contract_id) {
+    return "Contract is required";
   }
 
   if (!formData.rc_number || formData.rc_number.trim().length < 4) {
@@ -111,7 +127,6 @@ const VehicleFormModal = ({
   const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
   const { vendorOptions } = useVendorOptions(null, true);
-
 
   const isVendorUser = user?.type === "vendor";
   const isReadOnly = mode === "view";
@@ -185,6 +200,30 @@ const VehicleFormModal = ({
         label: d.name,
       })),
     [drivers]
+  );
+
+  /* ================= CONTRACTS ================= */
+  const contracts = useSelector(selectContracts);
+
+  useEffect(() => {
+    if (effectiveVendorId) {
+      dispatch(
+        fetchContractsThunk({
+          vendor_id: effectiveVendorId,
+        })
+      );
+    }
+  }, [dispatch, effectiveVendorId]);
+
+  const contractOptions = useMemo(
+    () =>
+      contracts
+        .filter((c) => c.is_active)
+        .map((c) => ({
+          value: c.contract_id,
+          label: c.contract_name,
+        })),
+    [contracts]
   );
 
   /* ================= HANDLERS ================= */
@@ -354,7 +393,11 @@ const VehicleFormModal = ({
       onSubmitSuccess?.();
       onClose();
     } catch (err) {
-      toast.error(err?.message || "Vehicle operation failed");
+      const message = extractErrorMessage(
+        err,
+        mode === "create" ? "Failed to create vehicle" : "Failed to update vehicle"
+      );
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -434,12 +477,14 @@ const VehicleFormModal = ({
                     {isReadOnly ? (
                       <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded border border-gray-300">
                         <Building className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm">{vendorOptions.find((v) => v.value === formData.vendor_id)?.label}</span>
+                        <span className="text-sm">
+                          {vendorOptions.find((v) => v.value === String(formData.vendor_id))?.label}
+                        </span>
                       </div>
                     ) : (
                       <Select
                         options={vendorOptions}
-                        value={vendorOptions.find((v) => v.value === formData.vendor_id) || null}
+                        value={vendorOptions.find((v) => v.value === String(formData.vendor_id)) || null}
                         onChange={(v) => handleChange("vendor_id", v?.value || "")}
                         isDisabled={isReadOnly}
                         placeholder="Select vendor..."
@@ -471,6 +516,27 @@ const VehicleFormModal = ({
                     isDisabled={isReadOnly}
                     placeholder="Select driver..."
                     classNamePrefix="select"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Contract *
+                  </label>
+                  <Select
+                    options={contractOptions}
+                    value={
+                      contractOptions.find(
+                        (c) => c.value === formData.contract_id
+                      ) || null
+                    }
+                    onChange={(v) =>
+                      handleChange("contract_id", v?.value || null)
+                    }
+                    isDisabled={isReadOnly}
+                    placeholder="Select contract..."
+                    classNamePrefix="select"
+                    isClearable
                   />
                 </div>
 

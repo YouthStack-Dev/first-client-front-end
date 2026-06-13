@@ -78,9 +78,7 @@
 
           // Set selected vendor
           if (initialData.vendor_id && vendors.length > 0) {
-                  const vendor = vendors.find(
-                    (v) => v.value === initialData.vendor_id
-                  );
+                  const vendor = vendors.find((v) => String(v.value) === String(initialData.vendor_id));
                   if (vendor) {
                     setSelectedVendor(vendor); // ✅ already correct format, use directly
                   }
@@ -117,7 +115,7 @@
         initialData?.role_id &&
         roleOptions.length > 0
       ) {
-        const role = roleOptions.find((r) => r.value === initialData.role_id);
+        const role = roleOptions.find((r) => String(r.value) === String(initialData.role_id));
         if (role) {
           setSelectedRole(role);
           rolePrefilled.current = true; // ✅ block further runs

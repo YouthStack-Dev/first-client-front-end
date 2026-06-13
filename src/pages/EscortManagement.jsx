@@ -93,19 +93,39 @@ const EscortManagement = () => {
   };
 
   const handleEdit = (escort) => {
-    setModalMode("edit");
-    setSelectedEscort(escort);
-    setFormData(escort);
-    setFormErrors({});
-    setIsModalOpen(true);
-  };
+  setModalMode("edit");
+  setSelectedEscort(escort);
 
-  const handleView = (escort) => {
-    setModalMode("view");
-    setSelectedEscort(escort);
-    setFormData(escort);
-    setIsModalOpen(true);
-  };
+  setFormData({
+    ...getInitialFormData(),
+    ...escort,
+    name: escort?.name ?? "",
+    phone: escort?.phone ?? "",
+    email: escort?.email ?? "",
+    address: escort?.address ?? "",
+    gender: escort?.gender ?? "",
+  });
+
+  setFormErrors({});
+  setIsModalOpen(true);
+};
+
+const handleView = (escort) => {
+  setModalMode("view");
+  setSelectedEscort(escort);
+
+  setFormData({
+    ...getInitialFormData(),
+    ...escort,
+    name: escort?.name ?? "",
+    phone: escort?.phone ?? "",
+    email: escort?.email ?? "",
+    address: escort?.address ?? "",
+    gender: escort?.gender ?? "",
+  });
+
+  setIsModalOpen(true);
+};
 
   const handleDelete = (escortId) => {
     setDeleteConfirm({ open: true, escortId });

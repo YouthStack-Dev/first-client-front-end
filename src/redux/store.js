@@ -26,6 +26,7 @@ import reportsReducer from "./features/reports/reportsSlice";
 import chatReducer from "./features/chat/chatSlice";
 import driverHistoryReducer from "./features/manageDriver/Driverhistoryslice";
 import logReducer from "./features/log_viewer/logsSlice";
+import contractsReducer from "./features/contract/contractsSlice";
 
 const store = configureStore({
   reducer: {
@@ -56,6 +57,7 @@ const store = configureStore({
     chat: chatReducer,
     driverHistory: driverHistoryReducer,
     logs: logReducer,
+    contracts: contractsReducer,
   },
 });
 
