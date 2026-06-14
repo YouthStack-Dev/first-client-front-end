@@ -78,6 +78,7 @@ export const pathTitleMap = {
   "/reports-management": "Reports Management",
   "/chats": "Chat Management",
   "/live-drivers": "Live Driver Map",
+  "/contracts": "Contract & Slab Management",
 };
 
 /**

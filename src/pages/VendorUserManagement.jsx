@@ -377,6 +377,7 @@ const VendorUserManagement = () => {
             <ReusableButton
               module="vendor_user"
               action="create"
+               buttonName={"vendor User"}
               icon={UserPlus}
               title="Create Vendor User"
               onClick={handleCreateVendorUser}

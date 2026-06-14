@@ -106,6 +106,12 @@ export const baseSidebarConfig = [
         path: "/companies/reports-management",
         permission: "report.read",
       },
+      {
+        title: "Cost Management",
+        icon: FileText,
+        path: "/companies/contracts",
+        permission: "contract.read",
+      },
     ],
   },
   {

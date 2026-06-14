@@ -28,7 +28,7 @@ import SpeedViolationsPage from "../pages/SpeedViolationsPage";
 import NodalPointsPage from "../pages/NodalpointsPage";
 import ChatSessionsPage from "../pages/ChatSessionsPage";
 import LivedriversPage from "../pages/Livedrivermap";
-
+import ContractManagement from "../pages/ContractManagement";
 
 export const CompanyRoutes = () => (
   <Route path="/companies" element={<Layout type="employee" />}>
@@ -73,6 +73,7 @@ export const CompanyRoutes = () => (
     <Route path="tracking" element={<TrackingManagement />} />
     <Route path="report-downloader" element={<ReportDownloader />} />
     <Route path="routing" element={<RouteScheduledBookings />} />
+    <Route path="contracts" element={<ContractManagement />} />
 
 
         {/* ✅ Add this new route for vendor routing */}
