@@ -22,7 +22,7 @@ import endpoint from "../../Api/Endpoints";
 import { useValidation } from "../../hooks/useValidation";
 import { useRoleOptions } from "../../hooks/useRoles";
 import { Modal } from "../SmallComponents";
-import { invalidateVendorUsers } from "../../redux/features/vendorUser/vendorUserSlice"; // ✅ added
+import { invalidateVendorUsers } from "../../redux/features/Vendoruser/Vendoruserslice"; 
 
 const VendorUserForm = ({
   isOpen,
