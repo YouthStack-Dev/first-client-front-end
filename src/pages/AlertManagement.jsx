@@ -48,11 +48,12 @@ const AlertManagement = () => {
   const configs = useMemo(() => allIds.map((id) => byId[id]), [allIds, byId]);
 
   const loading = useSelector((state) => state.alertconfig.loading.fetch);
+  const loaded  = useSelector((state) => state.alertconfig.loaded);
 
-  // Initial fetch when component mounts
+  // Replace the useEffect
   useEffect(() => {
-    dispatch(getAlertConfigThunk());
-  }, []);
+    if (!loaded) dispatch(getAlertConfigThunk());
+  }, [dispatch, loaded]);
 
   // Clear form errors when form opens/closes or mode changes
   useEffect(() => {

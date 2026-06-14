@@ -8,25 +8,18 @@ import {
   toggleEscortAvailableThunk,
 } from "./escortThunks";
 
-// ------------------------------------------------------
-// ENTITY ADAPTER — NORMALIZED STATE
-// ------------------------------------------------------
 const escortsAdapter = createEntityAdapter({
   selectId: (escort) => escort.escort_id,
 });
 
-// ------------------------------------------------------
-// INITIAL STATE
-// ------------------------------------------------------
 const initialState = escortsAdapter.getInitialState({
   loading: false,
   error: null,
   selectedEscort: null,
+  loaded: false,              // ← NEW: was data ever fetched?
+  lastVendorFilter: null,     // ← NEW: which vendor filter was last fetched with?
 });
 
-// ------------------------------------------------------
-// SLICE
-// ------------------------------------------------------
 const escortSlice = createSlice({
   name: "escort",
   initialState,
@@ -38,8 +31,11 @@ const escortSlice = createSlice({
       state.selectedEscort = action.payload;
     },
     clearEscortError: (state) => {
-      // Add this reducer
       state.error = null;
+    },
+    resetEscortLoaded: (state) => {   // ← NEW: force re-fetch if ever needed
+      state.loaded = false;
+      state.lastVendorFilter = null;
     },
   },
 
@@ -54,16 +50,19 @@ const escortSlice = createSlice({
         escortsAdapter.setAll(state, action.payload || []);
         state.loading = false;
         state.error = null;
+        state.loaded = true;                              // ← NEW
+        state.lastVendorFilter = action.meta.arg?.vendor_id ?? null; // ← NEW
       })
       .addCase(fetchEscortsThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || action.payload || "Failed to fetch escorts";
+        // loaded stays false so next mount retries
       })
 
       // ============================ CREATE =============================
       .addCase(createEscortThunk.pending, (state) => {
         state.loading = true;
-        state.error = null; // Clear previous errors when starting new operation
+        state.error = null;
       })
       .addCase(createEscortThunk.fulfilled, (state, action) => {
         escortsAdapter.addOne(state, action.payload);
@@ -78,7 +77,7 @@ const escortSlice = createSlice({
       // ============================ UPDATE =============================
       .addCase(updateEscortThunk.pending, (state) => {
         state.loading = true;
-        state.error = null; // Clear previous errors when starting new operation
+        state.error = null;
       })
       .addCase(updateEscortThunk.fulfilled, (state, action) => {
         escortsAdapter.upsertOne(state, action.payload);
@@ -93,7 +92,7 @@ const escortSlice = createSlice({
       // ============================ DELETE =============================
       .addCase(deleteEscortThunk.pending, (state) => {
         state.loading = true;
-        state.error = null; // Clear previous errors when starting new operation
+        state.error = null;
       })
       .addCase(deleteEscortThunk.fulfilled, (state, action) => {
         escortsAdapter.removeOne(state, action.payload?.id);
@@ -119,6 +118,7 @@ const escortSlice = createSlice({
         state.loading = false;
         state.error = action.payload?.message || action.payload || "Failed to update active status";
       })
+
       .addCase(toggleEscortAvailableThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -135,27 +135,21 @@ const escortSlice = createSlice({
   },
 });
 
-// ------------------------------------------------------
-// ACTIONS
-// ------------------------------------------------------
 export const {
   clearSelectedEscort,
   setSelectedEscort,
-  clearEscortError, // Export the new action
+  clearEscortError,
+  resetEscortLoaded,
 } = escortSlice.actions;
 
-// ------------------------------------------------------
-// REDUCER
-// ------------------------------------------------------
 export default escortSlice.reducer;
 
-// ------------------------------------------------------
-// SELECTORS
-// ------------------------------------------------------
 export const escortSelectors = escortsAdapter.getSelectors(
   (state) => state.escort
 );
 
-export const selectEscortLoading = (state) => state.escort.loading;
-export const selectEscortError = (state) => state.escort.error;
-export const selectSelectedEscort = (state) => state.escort.selectedEscort;
+export const selectEscortLoading     = (state) => state.escort.loading;
+export const selectEscortError       = (state) => state.escort.error;
+export const selectSelectedEscort    = (state) => state.escort.selectedEscort;
+export const selectEscortLoaded      = (state) => state.escort.loaded;           // ← NEW
+export const selectEscortLastVendor  = (state) => state.escort.lastVendorFilter; // ← NEW
