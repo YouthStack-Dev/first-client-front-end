@@ -4,7 +4,7 @@ import {
   fetchVendorUsersThunk,
   deleteVendorUserThunk,
   toggleVendorUserStatusThunk,
-} from "./vendorUserThunks";
+} from "../Vendoruser/Vendoruserthunks";
 
 const initialState = {
   data: [],
