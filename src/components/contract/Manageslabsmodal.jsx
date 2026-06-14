@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
-import PopupModal from "./PopupModal";
-import SlabFormModal from "./SlabFormModal";
+import PopupModal from "../contract/PopupModal";
+import SlabFormModal from "../contract/Slabformmodal";
 
 import {
   createSlabThunk,
