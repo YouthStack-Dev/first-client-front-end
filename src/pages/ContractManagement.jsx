@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 
 import ContractFormModal from "../components/contract/Contractformmodal";
 import ManageSlabsModal from "../components/contract/Manageslabsmodal";
-import ContractSummaryModal from "../components/contract/ContractSummaryModal";
+import ContractSummaryModal from "../components/contract/Contractsummarymodal";
 import ReusableButton from "../components/ui/ReusableButton";
 import ReusableToggleButton from "../components/ui/ReusableToggleButton";
 import { ReusablePagination } from "../components/ui/ReusablePagination";
@@ -16,7 +16,7 @@ import {
   updateContractThunk,
   deleteContractThunk,
   toggleContractStatusThunk,
-} from "../redux/features/contract/contractsThunk";
+} from "../redux/features/contract/contractsSlice";
 
 import { clearError } from "../redux/features/contract/contractsSlice";
 
