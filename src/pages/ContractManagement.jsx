@@ -16,7 +16,7 @@ import {
   updateContractThunk,
   deleteContractThunk,
   toggleContractStatusThunk,
-} from "../redux/features/contract/contractsSlice";
+} from "../redux/features/contract/contractsThunk";
 
 import { clearError } from "../redux/features/contract/contractsSlice";
 
