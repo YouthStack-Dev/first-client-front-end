@@ -52,8 +52,8 @@ const CutoffManagement = () => {
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState("cutoff");
 
-  const { formData, status, error, data, tenantConfig, tenantStatus, tenantError } =
-    useSelector((state) => state.cutoff);
+  const { formData, status, error, data, loaded, tenantConfig, tenantLoaded, tenantStatus, tenantError } =
+  useSelector((state) => state.cutoff);
 
   const {
     booking_login_cutoff,
@@ -86,10 +86,10 @@ const CutoffManagement = () => {
     stale_driver_threshold_minutes,
   } = formData || {};
 
-  useEffect(() => {
-    if (!data) dispatch(fetchCutoffsThunk());
-    dispatch(fetchEscortConfigThunk());
-  }, [dispatch, data]);
+ useEffect(() => {
+  if (!loaded)       dispatch(fetchCutoffsThunk());
+  if (!tenantLoaded) dispatch(fetchEscortConfigThunk());
+}, [dispatch, loaded, tenantLoaded]);
 
   const handleToggle = (fieldName) => {
     logDebug("toggle", fieldName);

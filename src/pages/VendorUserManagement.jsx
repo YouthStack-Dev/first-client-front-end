@@ -18,31 +18,29 @@ import {
   CheckCircle,
   XCircle,
   Truck,
-  FileText,
   Trash2,
 } from "lucide-react";
 
 import { selectCurrentUser } from "../redux/features/auth/authSlice";
 import { useVendorOptions } from "../hooks/useVendorOptions";
 import { VendorUsersTable } from "../components/vendor/VendorUsersTable";
-import { API_CLIENT } from "../Api/API_Client";
-import endpoint from "../Api/Endpoints";
 import { fetchCompaniesThunk } from "../redux/features/company/companyThunks";
 
 import {
-  buildSearchParams,
-  getSearchPlaceholder,
-  extractDataFromResponse,
-  handleApiError,
-} from "../utils/searchHelpers";
+  fetchVendorUsersThunk,
+  deleteVendorUserThunk,
+  toggleVendorUserStatusThunk,
+} from "../redux/features/vendorUser/vendorUserThunks";
+
+import {
+  selectVendorUsers,
+  selectVendorUsersTotal,
+  selectVendorUsersLoading,
+  selectVendorUsersLastFetched,
+  selectVendorUsersLastParams,
+} from "../redux/features/vendorUser/vendorUserSlice";
 
 import VendorUsersModal from "../components/modals/VendorUsersModal";
-
-const VENDOR_USER_STATUS = {
-  ACTIVE: "active",
-  INACTIVE: "inactive",
-  PENDING: "pending",
-};
 
 const MODAL_MODES = {
   CREATE: "create",
@@ -53,8 +51,10 @@ const MODAL_MODES = {
 const DEFAULT_PAGINATION = {
   PAGE: 1,
   PAGE_SIZE: 10,
-  PAGE_SIZE_OPTIONS: [5, 10, 25, 50, 100],
 };
+
+// How long before cached data is considered stale
+const STALE_TIME_MS = 5 * 60 * 1000; // 5 minutes
 
 const VendorUserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -64,25 +64,25 @@ const VendorUserManagement = () => {
   const [selectedVendorId, setSelectedVendorId] = useState("");
   const [modalMode, setModalMode] = useState(MODAL_MODES.CREATE);
   const [selectedVendorUser, setSelectedVendorUser] = useState(null);
-
-  const [vendorUsers, setVendorUsers] = useState([]);
-  const [filteredVendorUsers, setFilteredVendorUsers] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(DEFAULT_PAGINATION.PAGE);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGINATION.PAGE_SIZE);
-  const [totalItems, setTotalItems] = useState(0);
-
-  // ✅ Custom delete confirmation state (replaces window.confirm)
   const [deleteConfirm, setDeleteConfirm] = useState({ open: false, userId: null });
 
   const dispatch = useDispatch();
-  const { vendorOptions, loading: vendorLoading } = useVendorOptions(null, true);
+
+  // ── Redux selectors ────────────────────────────────────────────────────────
+  const vendorUsers = useSelector(selectVendorUsers);
+  const totalItems  = useSelector(selectVendorUsersTotal);
+  const isLoading   = useSelector(selectVendorUsersLoading);
+  const lastFetched = useSelector(selectVendorUsersLastFetched);
+  const lastParams  = useSelector(selectVendorUsersLastParams);
+
   const { type: userType, tenant_id } = useSelector(selectCurrentUser);
+  const { vendorOptions, loading: vendorLoading } = useVendorOptions(null, true);
 
   const {
     data: companies = [],
     loading: companyLoading = false,
-    error: companyError = null,
   } = useSelector((state) => state.company || {});
 
   const companyOptions = [
@@ -99,70 +99,54 @@ const VendorUserManagement = () => {
     }
   }, [dispatch, companies]);
 
-  const fetchVendorUsers = useCallback(
-    async (page, size, search = "", companyId = "", vendorId = "") => {
-      setIsLoading(true);
-      try {
-        const baseParams = {
-          skip: (page - 1) * size,
-          limit: size,
-          tenant_id: tenant_id || "SAM001",
-        };
+  // ── Core fetch with staleness + params-changed check ──────────────────────
+  // tenantId: for admin users the API needs tenant_id as a query param;
+  //           for employee users it is enforced from the token automatically.
+  // selectedCompanyId changes which tenant_id we pass (admin switching context).
+  const fetchIfNeeded = useCallback(
+    (page, size, search, vendorId, companyId, force = false) => {
+      // Admin can filter by company, which changes the effective tenant_id
+      const effectiveTenantId = companyId || tenant_id || undefined;
 
-        const searchParams = buildSearchParams(search);
+      const params = {
+        page,
+        size,
+        search,
+        vendorId,
+        tenantId: effectiveTenantId,
+      };
 
-        const params = {
-          ...baseParams,
-          ...searchParams,
-          company_id: companyId || undefined,
-          vendor_id: vendorId || undefined,
-        };
+      const paramsChanged =
+        !lastParams ||
+        lastParams.page     !== page     ||
+        lastParams.size     !== size     ||
+        lastParams.search   !== search   ||
+        lastParams.vendorId !== vendorId ||
+        lastParams.tenantId !== effectiveTenantId;
 
-        const response = await API_CLIENT.get(endpoint.VendorUser, { params });
-        const { data: users, total } = extractDataFromResponse(response);
+      const isStale = !lastFetched || Date.now() - lastFetched > STALE_TIME_MS;
 
-        setVendorUsers(users);
-        setFilteredVendorUsers(users);
-        setTotalItems(total);
-      } catch (error) {
-        const { data: users, total } = handleApiError(error, toast);
-        setVendorUsers(users);
-        setFilteredVendorUsers(users);
-        setTotalItems(total);
-      } finally {
-        setIsLoading(false);
+      if (force || isStale || paramsChanged) {
+        dispatch(fetchVendorUsersThunk(params));
       }
     },
-    [tenant_id]
+    [dispatch, tenant_id, lastFetched, lastParams]
   );
 
-  const debouncedFetchVendorUsers = useCallback(
-    debounce((page, size, search, companyId, vendorId) => {
-      fetchVendorUsers(page, size, search, companyId, vendorId);
+  // ── Debounced version for search/filter typing ─────────────────────────────
+  const debouncedFetch = useCallback(
+    debounce((page, size, search, vendorId, companyId) => {
+      fetchIfNeeded(page, size, search, vendorId, companyId);
     }, 500),
-    [fetchVendorUsers]
+    [fetchIfNeeded]
   );
 
   useEffect(() => {
-    debouncedFetchVendorUsers(
-      currentPage,
-      itemsPerPage,
-      searchTerm,
-      selectedCompanyId,
-      selectedVendorId
-    );
-    return () => {
-      debouncedFetchVendorUsers.cancel();
-    };
-  }, [
-    searchTerm,
-    selectedCompanyId,
-    selectedVendorId,
-    currentPage,
-    itemsPerPage,
-    debouncedFetchVendorUsers,
-  ]);
+    debouncedFetch(currentPage, itemsPerPage, searchTerm, selectedVendorId, selectedCompanyId);
+    return () => debouncedFetch.cancel();
+  }, [searchTerm, selectedVendorId, selectedCompanyId, currentPage, itemsPerPage, debouncedFetch]);
 
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleCompanyChange = (e) => {
     setSelectedCompanyId(e.target.value);
     setCurrentPage(DEFAULT_PAGINATION.PAGE);
@@ -204,69 +188,44 @@ const VendorUserManagement = () => {
     setShowVendorUserModal(true);
   };
 
-  // ✅ Step 1: open the custom modal instead of window.confirm
   const handleDeleteVendorUser = (id) => {
     setDeleteConfirm({ open: true, userId: id });
   };
 
-  // ✅ Step 2: actual delete runs only after user clicks "Delete" in the modal
   const confirmDelete = async () => {
     const id = deleteConfirm.userId;
     setDeleteConfirm({ open: false, userId: null });
-    setIsLoading(true);
-    try {
-      await API_CLIENT.delete(`${endpoint.VendorUser}${id}`);
-      await fetchVendorUsers(
-        currentPage,
-        itemsPerPage,
-        searchTerm,
-        selectedCompanyId,
-        selectedVendorId
-      );
+
+    // DELETE /api/v1/vendor-users/{id}?tenant_id=...
+    // tenant_id required as query param for admin; automatic for employee
+    const result = await dispatch(
+      deleteVendorUserThunk({
+        id,
+        tenantId: selectedCompanyId || tenant_id || undefined,
+      })
+    );
+
+    if (deleteVendorUserThunk.fulfilled.match(result)) {
       toast.success("Vendor user deleted successfully!");
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete vendor user");
-    } finally {
-      setIsLoading(false);
+    } else {
+      toast.error(result.payload || "Failed to delete vendor user");
     }
   };
 
   const handleToggleVendorUser = async (user) => {
-    const userId = user.vendor_user_id || user.id;
+    // PATCH /api/v1/vendor-users/{id}/toggle-status?tenant_id=...
+    // Optimistic update applied in slice pending; rolled back on rejected
+    const result = await dispatch(
+      toggleVendorUserStatusThunk({
+        user,
+        tenantId: selectedCompanyId || tenant_id || undefined,
+      })
+    );
 
-    // ✅ Optimistically update UI instantly — no refetch
-    const updateUsers = (users) =>
-      users.map((u) =>
-        (u.vendor_user_id || u.id) === userId
-          ? { ...u, is_active: !u.is_active }
-          : u
-      );
-
-    setVendorUsers((prev) => updateUsers(prev));
-    setFilteredVendorUsers((prev) => updateUsers(prev));
-
-    try {
-      const response = await API_CLIENT.patch(
-        `${endpoint.VendorUser}${userId}/toggle-status`
-      );
-      toast.success(
-        response.data?.message || "Vendor user status updated successfully!"
-      );
-    } catch (error) {
-      // ✅ Rollback on failure — revert the optimistic update
-      const revertUsers = (users) =>
-        users.map((u) =>
-          (u.vendor_user_id || u.id) === userId
-            ? { ...u, is_active: user.is_active }
-            : u
-        );
-
-      setVendorUsers((prev) => revertUsers(prev));
-      setFilteredVendorUsers((prev) => revertUsers(prev));
-
-      toast.error(
-        error.response?.data?.message || "Failed to toggle vendor user status"
-      );
+    if (toggleVendorUserStatusThunk.fulfilled.match(result)) {
+      toast.success(result.payload?.message || "Vendor user status updated successfully!");
+    } else {
+      toast.error(result.payload?.message || "Failed to toggle vendor user status");
     }
   };
 
@@ -278,12 +237,10 @@ const VendorUserManagement = () => {
   };
 
   const handleVendorUserSuccess = () => {
-    fetchVendorUsers(
-      currentPage,
-      itemsPerPage,
-      searchTerm,
-      selectedCompanyId,
-      selectedVendorId
+    // Force refetch after create/edit — list content changed
+    fetchIfNeeded(
+      currentPage, itemsPerPage, searchTerm, selectedVendorId, selectedCompanyId,
+      true // force
     );
     if (modalMode === MODAL_MODES.CREATE) {
       toast.success("Vendor user created successfully!");
@@ -292,8 +249,8 @@ const VendorUserManagement = () => {
     }
   };
 
-  const activeUsersCount = vendorUsers.filter((user) => user.is_active).length;
-  const inactiveUsersCount = vendorUsers.filter((user) => !user.is_active).length;
+  const activeUsersCount   = vendorUsers.filter((u) => u.is_active).length;
+  const inactiveUsersCount = vendorUsers.filter((u) => !u.is_active).length;
 
   return (
     <div className="p-1">
@@ -333,18 +290,8 @@ const VendorUserManagement = () => {
                 ))}
               </select>
               <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                <svg
-                  className="w-4 h-4 text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
+                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
             </div>
@@ -361,7 +308,6 @@ const VendorUserManagement = () => {
               />
             )}
 
-            {/* Audit Log Button */}
             <ReusableButton
               module="vendor_user"
               action="read"
@@ -373,11 +319,10 @@ const VendorUserManagement = () => {
               size={16}
             />
 
-            {/* Create Vendor User Button */}
             <ReusableButton
               module="vendor_user"
               action="create"
-               buttonName={"vendor User"}
+              buttonName={"vendor User"}
               icon={UserPlus}
               title="Create Vendor User"
               onClick={handleCreateVendorUser}
@@ -399,9 +344,7 @@ const VendorUserManagement = () => {
             </div>
             <div>
               <p className="text-sm text-gray-500 font-medium">Total Vendor Users</p>
-              <p className="text-2xl font-bold text-gray-800">
-                {totalItems || vendorUsers.length}
-              </p>
+              <p className="text-2xl font-bold text-gray-800">{totalItems || vendorUsers.length}</p>
             </div>
           </div>
         </div>
@@ -434,25 +377,21 @@ const VendorUserManagement = () => {
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-4 flex-wrap">
-              <span className="text-sm font-semibold text-blue-800">
-                Active Filters:
-              </span>
+              <span className="text-sm font-semibold text-blue-800">Active Filters:</span>
               {searchTerm && (
                 <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">
-                  <span>Search: {searchTerm}</span>
+                  Search: {searchTerm}
                 </span>
               )}
               {selectedVendorId && (
                 <span className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 text-indigo-700 text-sm font-medium rounded-full">
                   <Truck className="w-3 h-3" />
-                  <span>
-                    {vendorOptions.find((v) => v.value === selectedVendorId)?.label}
-                  </span>
+                  {vendorOptions.find((v) => v.value === selectedVendorId)?.label}
                 </span>
               )}
             </div>
             <span className="text-sm text-blue-700 font-medium">
-              Found {filteredVendorUsers.length} result(s)
+              Found {vendorUsers.length} result(s)
             </span>
           </div>
         </div>
@@ -461,7 +400,7 @@ const VendorUserManagement = () => {
       {/* Vendor Users Table */}
       <div className="mt-6">
         <VendorUsersTable
-          vendorUsers={filteredVendorUsers}
+          vendorUsers={vendorUsers}
           onView={handleViewVendorUser}
           onEdit={handleEditVendorUser}
           onDelete={handleDeleteVendorUser}
@@ -495,22 +434,18 @@ const VendorUserManagement = () => {
         moduleName="Vendor User"
         showUserColumn={true}
         apimodule="vendor_user"
-        selectedCompany={tenant_id}
+        selectedCompany={selectedCompanyId || tenant_id}
       />
 
-      {/* ✅ Custom Delete Confirmation Modal */}
+      {/* Custom Delete Confirmation Modal */}
       {deleteConfirm.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-6 w-80 text-center">
             <div className="flex items-center justify-center w-11 h-11 rounded-full bg-red-100 mx-auto mb-3">
               <Trash2 className="w-5 h-5 text-red-500" />
             </div>
-            <p className="font-semibold text-gray-800 text-base mb-1">
-              Delete vendor user?
-            </p>
-            <p className="text-sm text-gray-500 mb-5">
-              This action cannot be undone.
-            </p>
+            <p className="font-semibold text-gray-800 text-base mb-1">Delete vendor user?</p>
+            <p className="text-sm text-gray-500 mb-5">This action cannot be undone.</p>
             <div className="flex gap-3 justify-center">
               <button
                 onClick={() => setDeleteConfirm({ open: false, userId: null })}

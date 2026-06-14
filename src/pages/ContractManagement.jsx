@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Search, Pencil, Layers, Trash2, RefreshCw } from "lucide-react";
+import { Search, Pencil, Layers, Trash2, RefreshCw, Car } from "lucide-react";
 import { toast } from "react-toastify";
 
-import ContractFormModal from "../components/contract/ContractFormModal";
+import ContractFormModal from "../components/contract/Contractformmodal";
 import ManageSlabsModal from "../components/contract/Manageslabsmodal";
+import ContractSummaryModal from "../components/contract/ContractSummaryModal";
 import ReusableButton from "../components/ui/ReusableButton";
 import ReusableToggleButton from "../components/ui/ReusableToggleButton";
 import { ReusablePagination } from "../components/ui/ReusablePagination";
@@ -68,6 +69,8 @@ const ContractManagement = () => {
   const [activeContract, setActiveContract] = useState(null);
 
   const [togglingId, setTogglingId] = useState(null);
+
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false);
 
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [forceDeleting, setForceDeleting] = useState(false);
@@ -244,6 +247,16 @@ const ContractManagement = () => {
     }
   };
 
+  /* ================= VENDOR NAME HELPER ================= */
+  const selectedVendorName =
+    vendors.find(
+      (v) => String(v.vendor_id ?? v.id) === String(selectedVendorId)
+    )?.name ||
+    vendors.find(
+      (v) => String(v.vendor_id ?? v.id) === String(selectedVendorId)
+    )?.vendor_name ||
+    "";
+
   return (
     <div className="px-4 py-3">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
@@ -281,7 +294,7 @@ const ContractManagement = () => {
             ))}
           </select>
 
-          {/* Sync button — only shown when a vendor is selected */}
+          {/* Sync button */}
           {selectedVendorId && (
             <button
               type="button"
@@ -295,6 +308,18 @@ const ContractManagement = () => {
                 className={syncing || loading ? "animate-spin" : ""}
               />
               Sync
+            </button>
+          )}
+
+          {/* Contract Summary button */}
+          {selectedVendorId && (
+            <button
+              type="button"
+              onClick={() => setSummaryModalOpen(true)}
+              className="flex items-center gap-1.5 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2.5 text-sm font-medium text-blue-700 shadow-sm hover:bg-blue-100"
+            >
+              <Car size={14} />
+              Contract Summary
             </button>
           )}
 
@@ -461,6 +486,14 @@ const ContractManagement = () => {
           setActiveContract(null);
         }}
         contract={activeContract}
+      />
+
+      {/* Contract Summary Modal */}
+      <ContractSummaryModal
+        isOpen={summaryModalOpen}
+        onClose={() => setSummaryModalOpen(false)}
+        vendorId={selectedVendorId}
+        vendorName={selectedVendorName}
       />
 
       {/* Force Delete Confirmation Modal */}

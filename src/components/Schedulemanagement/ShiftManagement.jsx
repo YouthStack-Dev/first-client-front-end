@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Modal from "../modals/Modal";
-import { Download, Edit, Plus } from "lucide-react";
+import { Edit } from "lucide-react";
 import ShiftForm from "./ShiftForm";
 import ConfirmationModal from "../modals/ConfirmationModal";
 import { useDispatch, useSelector } from "react-redux";
@@ -52,58 +52,51 @@ const ShiftManagement = () => {
     setIsModalOpen(true);
   };
 
-const handleStatusToggle = async (shift) => {
-  try {
-    const res = await dispatch(
-      toggleShiftStatus(shift.shift_id)
-    ).unwrap();
-
-    console.log("✅ Toggle success:", res);
-
-    toast.success(`Shift "${shift.shift_code}" status updated!`);
-  } catch (error) {
-    console.error("❌ Toggle failed:", error);
-
-    toast.error(error || "Failed to toggle shift status");
-  }
-};
-
-const handleFormSubmit = async (data) => {
-  try {
-    const formattedData = {
-      ...data,
-      shift_time: data.shift_time.includes(":")
-        ? data.shift_time.split(":").slice(0, 2).join(":")
-        : data.shift_time,
-    };
-
-    if (editingShift && editingShift.shift_id) {
-      await dispatch(
-        updateShiftTrunk({
-          shift_id: editingShift.shift_id,
-          data: formattedData,
-        })
-      ).unwrap();
-      toast.success("Shift updated successfully!");
-    } else {
-      await dispatch(createShiftTrunk(formattedData)).unwrap();
-      toast.success("Shift created successfully!");
+  const handleStatusToggle = async (shift) => {
+    try {
+      const res = await dispatch(toggleShiftStatus(shift.shift_id)).unwrap();
+      console.log("✅ Toggle success:", res);
+      toast.success(`Shift "${shift.shift_code}" status updated!`);
+    } catch (error) {
+      console.error("❌ Toggle failed:", error);
+      toast.error(error || "Failed to toggle shift status");
     }
+  };
 
-    setIsModalOpen(false);
-    setEditingShift(null);
-    dispatch(fetchShiftTrunk());
-  } catch (error) {
-    const message =
-      error?.detail?.message ||
-      error?.message         ||
-      error                  ||
-      "Failed to save shift";
-    toast.error(message);
-  }
-};
+  const handleFormSubmit = async (data) => {
+    try {
+      const formattedData = {
+        ...data,
+        shift_time: data.shift_time.includes(":")
+          ? data.shift_time.split(":").slice(0, 2).join(":")
+          : data.shift_time,
+      };
 
-  const handleSearchChange = (e) => setSearchTerm(e.target.value);
+      if (editingShift && editingShift.shift_id) {
+        await dispatch(
+          updateShiftTrunk({ shift_id: editingShift.shift_id, data: formattedData })
+        ).unwrap();
+        toast.success("Shift updated successfully!");
+      } else {
+        await dispatch(createShiftTrunk(formattedData)).unwrap();
+        toast.success("Shift created successfully!");
+      }
+
+      setIsModalOpen(false);
+      setEditingShift(null);
+      dispatch(fetchShiftTrunk());
+    } catch (error) {
+      const message =
+        error?.detail?.message || error?.message || error || "Failed to save shift";
+      toast.error(message);
+    }
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setSelectedShifts([]);
+  };
+
   const formatTime = (t) => t?.slice(0, 5) || "N/A";
 
   const handleSelectShift = (id) => {
@@ -120,16 +113,57 @@ const handleFormSubmit = async (data) => {
     }
   };
 
-  const tabs = [
+  // Row 1: top-level type tabs
+  const typeTabs = [
     { key: "all", label: "All Shifts" },
-    { key: "login", label: "Login Shifts" },
-    { key: "logout", label: "Logout Shifts" },
+    { key: "pickup", label: "Pickup" },
+    { key: "nodal", label: "Nodal" },
   ];
 
+  // Row 2: log type sub-tabs (only shown when pickup or nodal is selected)
+  const logTabs = [
+    { key: "in", label: "Login" },
+    { key: "out", label: "Logout" },
+  ];
+
+  const activePickupType = activeTab.startsWith("pickup")
+    ? "pickup"
+    : activeTab.startsWith("nodal")
+    ? "nodal"
+    : "all";
+
+  const activeLogType = activeTab.includes("_in")
+    ? "in"
+    : activeTab.includes("_out")
+    ? "out"
+    : null;
+
+  const handleTypeTabClick = (key) => {
+    setActiveTab(key);
+    setSelectedShifts([]);
+  };
+
+  const handleLogTabClick = (logKey) => {
+    if (activePickupType === "all") return;
+    const newTab =
+      activeLogType === logKey
+        ? activePickupType
+        : `${activePickupType}_${logKey}`;
+    setActiveTab(newTab);
+    setSelectedShifts([]);
+  };
+
   const filteredByTab = shifts.filter((shift) => {
-    if (activeTab === "login") return shift.log_type?.toLowerCase() === "in";
-    if (activeTab === "logout") return shift.log_type?.toLowerCase() === "out";
-    return true;
+    const logType = shift.log_type?.toLowerCase();
+    const pickupType = shift.pickup_type?.toLowerCase();
+
+    if (activeTab === "pickup") return pickupType === "pickup";
+    if (activeTab === "pickup_in") return pickupType === "pickup" && logType === "in";
+    if (activeTab === "pickup_out") return pickupType === "pickup" && logType === "out";
+    if (activeTab === "nodal") return pickupType === "nodal";
+    if (activeTab === "nodal_in") return pickupType === "nodal" && logType === "in";
+    if (activeTab === "nodal_out") return pickupType === "nodal" && logType === "out";
+    return true; // "all"
   });
 
   const filteredShifts = filteredByTab.filter((shift) => {
@@ -147,37 +181,32 @@ const handleFormSubmit = async (data) => {
 
   return (
     <div className="">
+      {/* Toolbar + Search on one line */}
       <ToolBar
         module="shift"
-        className="p-4 bg-white border rounded-lg shadow-sm mb-6"
+        className="p-4 bg-white border rounded-lg shadow-sm mb-4"
         onAddClick={handleAddClick}
         addButtonLabel="Add Shift"
-        rightElements={
-          <div className="flex items-center gap-3">
-            {/* Export Button */}
-            {/* <ReusableButton
-              module="shift"
-              action="read"
-              icon={Download}
-              title="Export roles to CSV"
-              onClick={() => alert(" Exporting rolses not implimented ")}
-              className="text-gray-600 hover:text-gray-800 p-2  bg-green-100 rounded-lg hover:bg-green-100 border border-gray-300"
-              size={18}
-            /> */}
-          </div>
+        leftElements={
+          <SearchInput
+            value={searchTerm}
+            onChange={handleSearchChange}
+            placeholder="Search by code, type, time..."
+          />
         }
       />
 
-      {/* Tabs */}
-      <div className="flex space-x-2 mb-4">
-        {tabs.map((tab) => (
+      {/* Row 1: Type Tabs */}
+      <div className="flex space-x-2 mb-2">
+        {typeTabs.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`flex-1 text-center py-2 text-sm font-semibold transition-all duration-300 ${
-              activeTab === tab.key
-                ? "bg-blue-600 text-white rounded-lg shadow-md"
-                : "bg-white text-gray-600 hover:bg-blue-100 hover:text-blue-700 rounded-lg"
+            onClick={() => handleTypeTabClick(tab.key)}
+            className={`flex-1 text-center py-2 text-sm font-semibold transition-all duration-300 rounded-lg ${
+              activePickupType === tab.key ||
+              (tab.key === "all" && activeTab === "all")
+                ? "bg-blue-600 text-white shadow-md"
+                : "bg-white text-gray-600 hover:bg-blue-100 hover:text-blue-700"
             }`}
           >
             {tab.label}
@@ -185,13 +214,33 @@ const handleFormSubmit = async (data) => {
         ))}
       </div>
 
+      {/* Row 2: Log Type Sub-Tabs (only when pickup or nodal selected) */}
+      {activePickupType !== "all" && (
+        <div className="flex space-x-2 mb-4">
+          {logTabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => handleLogTabClick(tab.key)}
+              className={`flex-1 text-center py-2 text-sm font-semibold transition-all duration-300 rounded-lg border ${
+                activeLogType === tab.key
+                  ? "bg-blue-500 text-white shadow-sm border-blue-500"
+                  : "bg-white text-gray-500 hover:bg-blue-50 hover:text-blue-600 border-gray-200"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Spacing when no sub-tabs shown */}
+      {activePickupType === "all" && <div className="mb-4" />}
+
       {/* Shifts Table */}
       <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           {loading ? (
-            <div className="p-8 text-center text-gray-500">
-              Loading shifts...
-            </div>
+            <div className="p-8 text-center text-gray-500">Loading shifts...</div>
           ) : (
             <table className="w-full min-w-[600px]">
               <thead className="bg-gray-50">
@@ -230,11 +279,8 @@ const handleFormSubmit = async (data) => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredShifts.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan="7"
-                      className="px-6 py-8 text-center text-gray-500"
-                    >
-                      {searchTerm ? "No shifts found." : "No shifts available."}
+                    <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                      {searchTerm ? "No shifts match your search." : "No shifts available."}
                     </td>
                   </tr>
                 ) : (
@@ -250,9 +296,7 @@ const handleFormSubmit = async (data) => {
                       </td>
                       <td className="px-6 py-4">{shift.shift_code}</td>
                       <td className="px-6 py-4">{shift.log_type}</td>
-                      <td className="px-6 py-4">
-                        {formatTime(shift.shift_time)}
-                      </td>
+                      <td className="px-6 py-4">{formatTime(shift.shift_time)}</td>
                       <td className="px-6 py-4">{shift.pickup_type}</td>
                       <td className="px-6 py-4 text-center">
                         <ReusableToggleButton
@@ -268,7 +312,7 @@ const handleFormSubmit = async (data) => {
                         <ReusableButton
                           module="shift"
                           action="update"
-                          icon={Edit} // Lucide Edit icon
+                          icon={Edit}
                           title="Edit Shift"
                           onClick={() => handleEdit(shift)}
                           className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all"

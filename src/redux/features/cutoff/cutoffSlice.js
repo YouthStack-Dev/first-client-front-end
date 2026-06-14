@@ -9,11 +9,12 @@ import {
 const cutoffSlice = createSlice({
   name: "cutoff",
   initialState: {
-    data: null,         // Single cutoff record
-    escortConfig: null, // Escort configuration
-    tenantConfig: null, // Tenant configuration (includes escort + OTP settings)
+    data: null,
+    loaded: false,          // ← NEW
+    escortConfig: null,
+    tenantConfig: null,
+    tenantLoaded: false,    // ← NEW
     formData: {
-      // Cutoff fields
       booking_login_cutoff: "0:00",
       cancel_login_cutoff: "0:00",
       booking_logout_cutoff: "0:00",
@@ -22,8 +23,6 @@ const cutoffSlice = createSlice({
       adhoc_booking_cutoff: "0:00",
       allow_adhoc_booking: false,
       allow_medical_emergency_booking: false,
-
-      // Tenant configuration fields
       escort_required_start_time: "20:00:00",
       escort_required_end_time: "06:00:00",
       escort_required_for_women: false,
@@ -36,22 +35,17 @@ const cutoffSlice = createSlice({
       schedule_reminder_minutes: 30,
       one_trip_per_shift_enabled: false,
       auto_move_on_conflict: false,
-
-      // ── NEW: driver duty hours ────────────────────────────────────────────
       driver_max_duty_minutes: 600,
       driver_rest_enforcement: "warn",
-
-      // ── NEW: delay & dark hour settings ─────────────────────────────────
       dark_hour_boarding_mode: "off",
       delay_driver_grace_minutes: 10,
       delay_employee_grace_minutes: 5,
-      // ── NEW: ETA / geofence / staleness thresholds
       eta_change_threshold_minutes: 5,
       geofence_arrival_radius_meters: 300,
       stale_driver_threshold_minutes: 5,
     },
-    status: "idle",       // idle | loading | succeeded | failed | saving | saved
-    tenantStatus: "idle", // idle | loading | succeeded | failed | saving | saved
+    status: "idle",
+    tenantStatus: "idle",
     error: null,
     tenantError: null,
   },
@@ -71,26 +65,25 @@ const cutoffSlice = createSlice({
     setTenantStatus: (state, action) => {
       state.tenantStatus = action.payload;
     },
+    resetLoaded: (state) => {          // ← NEW: force re-fetch on next mount
+      state.loaded = false;
+      state.tenantLoaded = false;
+    },
   },
 
   extraReducers: (builder) => {
     builder
-      // ── Fetch Cutoffs ──────────────────────────────────────────────────────
       .addCase(fetchCutoffsThunk.pending, (state) => {
         state.status = "loading";
         state.error = null;
       })
       .addCase(fetchCutoffsThunk.fulfilled, (state, action) => {
         state.status = "succeeded";
-        const cutoff =
-          action.payload?.cutoffs?.[0] || action.payload?.data || null;
+        state.loaded = true;           // ← NEW
+        const cutoff = action.payload?.cutoffs?.[0] || action.payload?.data || null;
         state.data = cutoff;
-
         if (cutoff) {
-          state.formData = {
-            ...state.formData,
-            ...mapCutoffApiDataToForm(cutoff),
-          };
+          state.formData = { ...state.formData, ...mapCutoffApiDataToForm(cutoff) };
         }
       })
       .addCase(fetchCutoffsThunk.rejected, (state, action) => {
@@ -98,21 +91,16 @@ const cutoffSlice = createSlice({
         state.error = action.payload || "Failed to load cutoff data";
       })
 
-      // ── Save Cutoffs ───────────────────────────────────────────────────────
       .addCase(saveCutoffThunk.pending, (state) => {
         state.status = "saving";
         state.error = null;
       })
       .addCase(saveCutoffThunk.fulfilled, (state, action) => {
         state.status = "saved";
-        const cutoff =
-          action.payload?.cutoff || action.payload?.data || action.payload;
+        const cutoff = action.payload?.cutoff || action.payload?.data || action.payload;
         if (cutoff) {
           state.data = cutoff;
-          state.formData = {
-            ...state.formData,
-            ...mapCutoffApiDataToForm(cutoff),
-          };
+          state.formData = { ...state.formData, ...mapCutoffApiDataToForm(cutoff) };
         }
       })
       .addCase(saveCutoffThunk.rejected, (state, action) => {
@@ -120,30 +108,24 @@ const cutoffSlice = createSlice({
         state.error = action.payload || "Failed to save cutoff data";
       })
 
-      // ── Fetch Tenant Config ────────────────────────────────────────────────
       .addCase(fetchEscortConfigThunk.pending, (state) => {
         state.tenantStatus = "loading";
         state.tenantError = null;
       })
       .addCase(fetchEscortConfigThunk.fulfilled, (state, action) => {
         state.tenantStatus = "succeeded";
+        state.tenantLoaded = true;     // ← NEW
         const tenantConfig = action.payload?.data || action.payload;
         state.tenantConfig = tenantConfig;
-
         if (tenantConfig) {
-          state.formData = {
-            ...state.formData,
-            ...mapTenantApiDataToForm(tenantConfig),
-          };
+          state.formData = { ...state.formData, ...mapTenantApiDataToForm(tenantConfig) };
         }
       })
       .addCase(fetchEscortConfigThunk.rejected, (state, action) => {
         state.tenantStatus = "failed";
-        state.tenantError =
-          action.payload || "Failed to load tenant configuration";
+        state.tenantError = action.payload || "Failed to load tenant configuration";
       })
 
-      // ── Save Tenant Config ─────────────────────────────────────────────────
       .addCase(saveEscortConfigThunk.pending, (state) => {
         state.tenantStatus = "saving";
         state.tenantError = null;
@@ -152,23 +134,17 @@ const cutoffSlice = createSlice({
         state.tenantStatus = "saved";
         const tenantConfig = action.payload?.data || action.payload;
         state.tenantConfig = tenantConfig;
-
         if (tenantConfig) {
-          state.formData = {
-            ...state.formData,
-            ...mapTenantApiDataToForm(tenantConfig),
-          };
+          state.formData = { ...state.formData, ...mapTenantApiDataToForm(tenantConfig) };
         }
       })
       .addCase(saveEscortConfigThunk.rejected, (state, action) => {
         state.tenantStatus = "failed";
-        state.tenantError =
-          action.payload || "Failed to save tenant configuration";
+        state.tenantError = action.payload || "Failed to save tenant configuration";
       });
   },
 });
 
-// ── Helper: map cutoff API response → formData ─────────────────────────────
 const mapCutoffApiDataToForm = (apiData) => {
   const defaults = {
     booking_login_cutoff: "4:00",
@@ -180,7 +156,6 @@ const mapCutoffApiDataToForm = (apiData) => {
     allow_adhoc_booking: false,
     allow_medical_emergency_booking: false,
   };
-
   const fieldMapping = {
     booking_login_cutoff: apiData.booking_login_cutoff,
     cancel_login_cutoff: apiData.cancel_login_cutoff,
@@ -191,17 +166,14 @@ const mapCutoffApiDataToForm = (apiData) => {
     allow_adhoc_booking: apiData.allow_adhoc_booking,
     allow_medical_emergency_booking: apiData.allow_medical_emergency_booking,
   };
-
   const formData = {};
   Object.keys(defaults).forEach((key) => {
     const apiValue = fieldMapping[key];
     formData[key] = apiValue !== undefined ? apiValue : defaults[key];
   });
-
   return formData;
 };
 
-// ── Helper: map tenant API response → formData ─────────────────────────────
 const mapTenantApiDataToForm = (apiData) => {
   const defaults = {
     escort_required_start_time: "20:00:00",
@@ -216,84 +188,57 @@ const mapTenantApiDataToForm = (apiData) => {
     schedule_reminder_minutes: 30,
     one_trip_per_shift_enabled: false,
     auto_move_on_conflict: false,
-    // ── NEW ────────────────────────────────────────────────────────────────
     driver_max_duty_minutes: 600,
     driver_rest_enforcement: "warn",
     dark_hour_boarding_mode: "off",
     delay_driver_grace_minutes: 10,
     delay_employee_grace_minutes: 5,
-    // ── NEW: ETA / geofence / staleness thresholds
     eta_change_threshold_minutes: 5,
     geofence_arrival_radius_meters: 300,
     stale_driver_threshold_minutes: 5,
   };
-
   const tenantData = apiData?.config || apiData;
-
   const fieldMapping = {
-    // Escort fields
-    escort_required_start_time:
-      tenantData?.escort_required_start_time || tenantData?.start_time,
-    escort_required_end_time:
-      tenantData?.escort_required_end_time || tenantData?.end_time,
-    escort_required_for_women:
-      tenantData?.escort_required_for_women || tenantData?.required_for_women,
-
-    // OTP fields
+    escort_required_start_time: tenantData?.escort_required_start_time || tenantData?.start_time,
+    escort_required_end_time: tenantData?.escort_required_end_time || tenantData?.end_time,
+    escort_required_for_women: tenantData?.escort_required_for_women || tenantData?.required_for_women,
     login_boarding_otp: tenantData?.login_boarding_otp,
     login_deboarding_otp: tenantData?.login_deboarding_otp,
     logout_boarding_otp: tenantData?.logout_boarding_otp,
     logout_deboarding_otp: tenantData?.logout_deboarding_otp,
-
-    // Vehicle limits
     speed_limit_kmph: tenantData?.speed_limit_kmph,
     schedule_reminder_enabled: tenantData?.schedule_reminder_enabled,
     schedule_reminder_minutes: tenantData?.schedule_reminder_minutes,
     one_trip_per_shift_enabled: tenantData?.one_trip_per_shift_enabled,
     auto_move_on_conflict: tenantData?.auto_move_on_conflict,
-
-    // ── NEW ────────────────────────────────────────────────────────────────
     driver_max_duty_minutes: tenantData?.driver_max_duty_minutes,
     driver_rest_enforcement: tenantData?.driver_rest_enforcement,
     dark_hour_boarding_mode: tenantData?.dark_hour_boarding_mode,
     delay_driver_grace_minutes: tenantData?.delay_driver_grace_minutes,
     delay_employee_grace_minutes: tenantData?.delay_employee_grace_minutes,
-    // ── NEW: ETA / geofence / staleness thresholds
     eta_change_threshold_minutes: tenantData?.eta_change_threshold_minutes,
     geofence_arrival_radius_meters: tenantData?.geofence_arrival_radius_meters,
     stale_driver_threshold_minutes: tenantData?.stale_driver_threshold_minutes,
   };
-
   const formData = {};
   Object.keys(defaults).forEach((key) => {
     const apiValue = fieldMapping[key];
-
-    // Convert string 'true'/'false' to boolean if needed
     if (typeof apiValue === "string") {
-      if (apiValue.toLowerCase() === "true") {
-        formData[key] = true;
-      } else if (apiValue.toLowerCase() === "false") {
-        formData[key] = false;
-      } else {
-        formData[key] = apiValue !== undefined ? apiValue : defaults[key];
-      }
+      if (apiValue.toLowerCase() === "true") formData[key] = true;
+      else if (apiValue.toLowerCase() === "false") formData[key] = false;
+      else formData[key] = apiValue !== undefined ? apiValue : defaults[key];
     } else {
       formData[key] = apiValue !== undefined ? apiValue : defaults[key];
     }
   });
-
   return formData;
 };
 
-// ── Helper: combine both mappings (backward compatibility) ─────────────────
+const mapApiDataToForm = (cutoffData, tenantData) => ({
+  ...mapCutoffApiDataToForm(cutoffData || {}),
+  ...mapTenantApiDataToForm(tenantData || {}),
+});
 
-const mapApiDataToForm = (cutoffData, tenantData) => {
-  return {
-    ...mapCutoffApiDataToForm(cutoffData || {}),
-    ...mapTenantApiDataToForm(tenantData || {}),
-  };
-};
-
-export const { updateFormField, resetForm, setTenantStatus } =
+export const { updateFormField, resetForm, setTenantStatus, resetLoaded } =
   cutoffSlice.actions;
 export default cutoffSlice.reducer;

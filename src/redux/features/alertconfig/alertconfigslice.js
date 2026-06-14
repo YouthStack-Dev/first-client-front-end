@@ -10,9 +10,13 @@ import {
 } from "./alertconfigTrunk";
 
 const initialState = {
-  byId: {},     // { [config_id]: config }
-  allIds: [],   // [config_id]
-  loading: false,
+  byId: {},
+  allIds: [],
+  loaded: false,          // ← NEW
+  loading: {              // ← FIXED: was a flat boolean, page reads loading.fetch
+    fetch: false,
+    mutate: false,
+  },
   error: null,
 };
 
@@ -36,6 +40,7 @@ const alertconfigSlice = createSlice({
     clearConfigs(state) {
       state.byId = {};
       state.allIds = [];
+      state.loaded = false;   // ← reset loaded too
       state.error = null;
     },
   },
@@ -44,11 +49,12 @@ const alertconfigSlice = createSlice({
     builder
       /* ========= GET ========= */
       .addCase(getAlertConfigThunk.pending, (state) => {
-        state.loading = true;
+        state.loading.fetch = true;
         state.error = null;
       })
       .addCase(getAlertConfigThunk.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loading.fetch = false;
+        state.loaded = true;        // ← NEW
         const configs = action.payload;
         if (!Array.isArray(configs)) return;
         state.byId = {};
@@ -60,36 +66,37 @@ const alertconfigSlice = createSlice({
         });
       })
       .addCase(getAlertConfigThunk.rejected, (state, action) => {
-        state.loading = false;
+        state.loading.fetch = false;
         state.error = action.payload?.message || "Something went wrong";
       })
 
       /* ========= CREATE ========= */
       .addCase(createAlertConfigThunk.pending, (state) => {
-        state.loading = true;
+        state.loading.mutate = true;
         state.error = null;
       })
       .addCase(createAlertConfigThunk.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loading.mutate = false;
         const config = action.payload;
         if (!config?.config_id) return;
         state.byId[config.config_id] = config;
         if (!state.allIds.includes(config.config_id)) {
           state.allIds.push(config.config_id);
         }
+        // No need to reset loaded — create already updates byId/allIds in place
       })
       .addCase(createAlertConfigThunk.rejected, (state, action) => {
-        state.loading = false;
+        state.loading.mutate = false;
         state.error = action.payload?.message || "Failed to create config";
       })
 
       /* ========= UPDATE ========= */
       .addCase(updateAlertConfigThunk.pending, (state) => {
-        state.loading = true;
+        state.loading.mutate = true;
         state.error = null;
       })
       .addCase(updateAlertConfigThunk.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loading.mutate = false;
         const updatedConfig = action.payload;
         if (!updatedConfig?.config_id) return;
         state.byId[updatedConfig.config_id] = {
@@ -98,48 +105,46 @@ const alertconfigSlice = createSlice({
         };
       })
       .addCase(updateAlertConfigThunk.rejected, (state, action) => {
-        state.loading = false;
+        state.loading.mutate = false;
         state.error = action.payload?.message || "Failed to update config";
       })
 
       /* ========= ACKNOWLEDGE ========= */
-      // Note: acknowledge/escalate/close operate on live alerts (not config store),
-      // so we only track loading/error here. The page manages local alert state.
       .addCase(acknowledgeAlertConfigThunk.pending, (state) => {
-        state.loading = true;
+        state.loading.mutate = true;
         state.error = null;
       })
       .addCase(acknowledgeAlertConfigThunk.fulfilled, (state) => {
-        state.loading = false;
+        state.loading.mutate = false;
       })
       .addCase(acknowledgeAlertConfigThunk.rejected, (state, action) => {
-        state.loading = false;
+        state.loading.mutate = false;
         state.error = action.payload?.message || "Failed to acknowledge alert";
       })
 
       /* ========= ESCALATE ========= */
       .addCase(escalateAlertConfigThunk.pending, (state) => {
-        state.loading = true;
+        state.loading.mutate = true;
         state.error = null;
       })
       .addCase(escalateAlertConfigThunk.fulfilled, (state) => {
-        state.loading = false;
+        state.loading.mutate = false;
       })
       .addCase(escalateAlertConfigThunk.rejected, (state, action) => {
-        state.loading = false;
+        state.loading.mutate = false;
         state.error = action.payload?.message || "Failed to escalate alert";
       })
 
       /* ========= CLOSE ========= */
       .addCase(closeAlertThunk.pending, (state) => {
-        state.loading = true;
+        state.loading.mutate = true;
         state.error = null;
       })
       .addCase(closeAlertThunk.fulfilled, (state) => {
-        state.loading = false;
+        state.loading.mutate = false;
       })
       .addCase(closeAlertThunk.rejected, (state, action) => {
-        state.loading = false;
+        state.loading.mutate = false;
         state.error = action.payload?.message || "Failed to close alert";
       });
   },
