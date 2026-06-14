@@ -80,6 +80,12 @@ export const vendorSidebarConfig = [
         path: "/vendor/reports-management",
         permission: "report.read",
       },
+      {
+        title: "Contract Management",
+        icon: FileText,
+        path: "/vendor/contracts",
+        permission: "contract.read",
+      },
     ],
   },
   {
