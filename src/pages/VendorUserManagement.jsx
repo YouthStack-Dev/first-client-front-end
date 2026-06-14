@@ -30,7 +30,7 @@ import {
   fetchVendorUsersThunk,
   deleteVendorUserThunk,
   toggleVendorUserStatusThunk,
-} from "../redux/features/vendorUser/vendorUserThunks";
+} from "../redux/features/Vendoruser/Vendoruserthunks";
 
 import {
   selectVendorUsers,
@@ -38,7 +38,7 @@ import {
   selectVendorUsersLoading,
   selectVendorUsersLastFetched,
   selectVendorUsersLastParams,
-} from "../redux/features/vendorUser/vendorUserSlice";
+} from "../redux/features/Vendoruser/Vendoruserslice";
 
 import VendorUsersModal from "../components/modals/VendorUsersModal";
 
