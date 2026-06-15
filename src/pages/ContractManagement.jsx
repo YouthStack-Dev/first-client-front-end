@@ -48,14 +48,20 @@ const ContractManagement = () => {
 
   const permissions = useSelector((state) => state.auth?.permissions || []);
 
+  // authSlice sets user.type = "vendor" when user.vendor_user exists
+  const currentUser = useSelector((state) => state.auth?.user);
+  const isVendorUser = currentUser?.type === "vendor";
+  const vendorUserVendorId = currentUser?.vendor_user?.vendor_id ?? currentUser?.vendor_id;
+
   const hasPermission = (module, action) => {
     const modulePermission = permissions.find((p) => p.module === module);
     return modulePermission?.action?.includes(action);
   };
 
+  // Only fetch vendor list for admin/superadmin — skip for vendor users
   const { vendorList: vendors, loading: vendorsLoading } = useVendorOptions(
     null,
-    true
+    !isVendorUser
   );
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -77,6 +83,13 @@ const ContractManagement = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // Auto-set vendor_id for vendor users — no dropdown needed
+  useEffect(() => {
+    if (isVendorUser && vendorUserVendorId) {
+      setSelectedVendorId(String(vendorUserVendorId));
+    }
+  }, [isVendorUser, vendorUserVendorId]);
 
   useEffect(() => {
     if (hasPermission("contract", "read") && selectedVendorId) {
@@ -260,6 +273,7 @@ const ContractManagement = () => {
   return (
     <div className="px-4 py-3">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+        {/* Search */}
         <div className="relative w-full max-w-sm">
           <Search
             size={16}
@@ -276,23 +290,26 @@ const ContractManagement = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <select
-            value={selectedVendorId}
-            onChange={(e) => setSelectedVendorId(e.target.value)}
-            className="min-w-[220px] rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">
-              {vendorsLoading ? "Loading vendors..." : "Select Vendor"}
-            </option>
-            {vendors.map((vendor) => (
-              <option
-                key={vendor.vendor_id ?? vendor.id}
-                value={vendor.vendor_id ?? vendor.id}
-              >
-                {vendor.name || vendor.vendor_name}
+          {/* Vendor dropdown — only for admin/superadmin */}
+          {!isVendorUser && (
+            <select
+              value={selectedVendorId}
+              onChange={(e) => setSelectedVendorId(e.target.value)}
+              className="min-w-[220px] rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">
+                {vendorsLoading ? "Loading vendors..." : "Select Vendor"}
               </option>
-            ))}
-          </select>
+              {vendors.map((vendor) => (
+                <option
+                  key={vendor.vendor_id ?? vendor.id}
+                  value={vendor.vendor_id ?? vendor.id}
+                >
+                  {vendor.name || vendor.vendor_name}
+                </option>
+              ))}
+            </select>
+          )}
 
           {/* Sync button */}
           {selectedVendorId && (

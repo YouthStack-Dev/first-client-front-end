@@ -53,7 +53,6 @@ const DEFAULT_PAGINATION = {
   PAGE_SIZE: 10,
 };
 
-// How long before cached data is considered stale
 const STALE_TIME_MS = 5 * 60 * 1000; // 5 minutes
 
 const VendorUserManagement = () => {
@@ -77,8 +76,15 @@ const VendorUserManagement = () => {
   const lastFetched = useSelector(selectVendorUsersLastFetched);
   const lastParams  = useSelector(selectVendorUsersLastParams);
 
-  const { type: userType, tenant_id } = useSelector(selectCurrentUser);
-  const { vendorOptions, loading: vendorLoading } = useVendorOptions(null, true);
+  const currentUser = useSelector(selectCurrentUser);
+  const { type: userType, tenant_id } = currentUser || {};
+
+  // authSlice sets type = "vendor" when user.vendor_user exists
+  const isVendorUser = userType === "vendor";
+  const vendorUserVendorId = currentUser?.vendor_user?.vendor_id ?? currentUser?.vendor_id;
+
+  // Only fetch vendor list for admin/superadmin
+  const { vendorOptions, loading: vendorLoading } = useVendorOptions(null, !isVendorUser);
 
   const {
     data: companies = [],
@@ -99,13 +105,16 @@ const VendorUserManagement = () => {
     }
   }, [dispatch, companies]);
 
+  // Auto-set vendor ID when logged in as vendor user
+  useEffect(() => {
+    if (isVendorUser && vendorUserVendorId) {
+      setSelectedVendorId(String(vendorUserVendorId));
+    }
+  }, [isVendorUser, vendorUserVendorId]);
+
   // ── Core fetch with staleness + params-changed check ──────────────────────
-  // tenantId: for admin users the API needs tenant_id as a query param;
-  //           for employee users it is enforced from the token automatically.
-  // selectedCompanyId changes which tenant_id we pass (admin switching context).
   const fetchIfNeeded = useCallback(
     (page, size, search, vendorId, companyId, force = false) => {
-      // Admin can filter by company, which changes the effective tenant_id
       const effectiveTenantId = companyId || tenant_id || undefined;
 
       const params = {
@@ -196,8 +205,6 @@ const VendorUserManagement = () => {
     const id = deleteConfirm.userId;
     setDeleteConfirm({ open: false, userId: null });
 
-    // DELETE /api/v1/vendor-users/{id}?tenant_id=...
-    // tenant_id required as query param for admin; automatic for employee
     const result = await dispatch(
       deleteVendorUserThunk({
         id,
@@ -213,8 +220,6 @@ const VendorUserManagement = () => {
   };
 
   const handleToggleVendorUser = async (user) => {
-    // PATCH /api/v1/vendor-users/{id}/toggle-status?tenant_id=...
-    // Optimistic update applied in slice pending; rolled back on rejected
     const result = await dispatch(
       toggleVendorUserStatusThunk({
         user,
@@ -237,10 +242,9 @@ const VendorUserManagement = () => {
   };
 
   const handleVendorUserSuccess = () => {
-    // Force refetch after create/edit — list content changed
     fetchIfNeeded(
       currentPage, itemsPerPage, searchTerm, selectedVendorId, selectedCompanyId,
-      true // force
+      true
     );
     if (modalMode === MODAL_MODES.CREATE) {
       toast.success("Vendor user created successfully!");
@@ -271,31 +275,34 @@ const VendorUserManagement = () => {
         }
         rightElements={
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Vendor Filter */}
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10">
-                <Truck className="w-4 h-4 text-gray-500" />
+            {/* Vendor dropdown — only for admin/superadmin */}
+            {!isVendorUser && (
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10">
+                  <Truck className="w-4 h-4 text-gray-500" />
+                </div>
+                <select
+                  value={selectedVendorId}
+                  onChange={handleVendorChange}
+                  disabled={vendorLoading}
+                  className="appearance-none pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed min-w-[200px]"
+                >
+                  <option value="">Select Vendor</option>
+                  {vendorOptions.map((vendor) => (
+                    <option key={vendor.value} value={vendor.value}>
+                      {vendor.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
               </div>
-              <select
-                value={selectedVendorId}
-                onChange={handleVendorChange}
-                disabled={vendorLoading}
-                className="appearance-none pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed min-w-[200px]"
-              >
-                <option value="">Select Vendor</option>
-                {vendorOptions.map((vendor) => (
-                  <option key={vendor.value} value={vendor.value}>
-                    {vendor.label}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
+            )}
 
+            {/* Company filter — only for admin */}
             {userType === "admin" && (
               <SelectField
                 label="Select Company"
@@ -383,7 +390,7 @@ const VendorUserManagement = () => {
                   Search: {searchTerm}
                 </span>
               )}
-              {selectedVendorId && (
+              {selectedVendorId && !isVendorUser && (
                 <span className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 text-indigo-700 text-sm font-medium rounded-full">
                   <Truck className="w-3 h-3" />
                   {vendorOptions.find((v) => v.value === selectedVendorId)?.label}

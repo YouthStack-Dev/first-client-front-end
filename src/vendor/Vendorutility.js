@@ -15,6 +15,7 @@ export const vendorPathTitleMap = {
 
   // Reports
   "/reports-management": "Reports Management",
+  "/contracts": "Contract Management",
 
   // Configuration
   "/cutoff": "System Configuration",

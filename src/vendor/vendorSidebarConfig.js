@@ -46,12 +46,12 @@ export const vendorSidebarConfig = [
         path: "/vendor/escort-management",
         permission: "escort.read",
       },
-      {
-        title: "Vendor Users",
-        icon: Users,
-        path: "/vendor/vendor-user-management",
-        permission: "vendor_user.read",
-      },
+      // {
+      //   title: "Vendor Users",
+      //   icon: Users,
+      //   path: "/vendor/vendor-user-management",
+      //   permission: "vendor_user.read",
+      // },
     ],
   },
   {
@@ -79,6 +79,12 @@ export const vendorSidebarConfig = [
         icon: FileText,
         path: "/vendor/reports-management",
         permission: "report.read",
+      },
+      {
+        title: "Contract Management",
+        icon: FileText,
+        path: "/vendor/contracts",
+        permission: "contract.read",
       },
     ],
   },

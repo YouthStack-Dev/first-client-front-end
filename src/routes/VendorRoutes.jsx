@@ -26,6 +26,7 @@ import ChatSessionsPage from "../pages/ChatSessionsPage";
 import LivedriversPage from "../pages/Livedrivermap";
 import ShiftRoutingManagement from "../components/RouteManagement/ShiftRoutingManagement";
 import RouteScheduledBookings from "../components/RouteManagement/RouteScheduledBookings";
+import ContractManagement from "../pages/ContractManagement";
 
 export const VendorRoutes = () => (
   <Route element={<VendorLayout type="vendor" />}>
@@ -52,6 +53,7 @@ export const VendorRoutes = () => (
       path="shift/:shiftId/:shiftType/:date/routing-map"
       element={<ShiftRoutingManagement />}
     />
+    <Route path="contracts" element={<ContractManagement />} />
 
     {/* ── Bookings ───────────────────────────────────────────── */}
     <Route path="booking"                element={<BookingManagement />} />
