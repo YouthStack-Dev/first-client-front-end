@@ -46,12 +46,12 @@ export const vendorSidebarConfig = [
         path: "/vendor/escort-management",
         permission: "escort.read",
       },
-      {
-        title: "Vendor Users",
-        icon: Users,
-        path: "/vendor/vendor-user-management",
-        permission: "vendor_user.read",
-      },
+      // {
+      //   title: "Vendor Users",
+      //   icon: Users,
+      //   path: "/vendor/vendor-user-management",
+      //   permission: "vendor_user.read",
+      // },
     ],
   },
   {
